@@ -217,6 +217,7 @@
 
 <script>
 let ATEND = [];
+let USERS = {};
 let sb = null;
 
 // ---- helpers ----
@@ -237,8 +238,10 @@ function mapRow(r){
   return {
     id: r.id,
     data: fmtDate(r.sessao_fim || r.criado_em),
-    atendente: r.atendente_nome || "Não identificado",
-    setor: r.setor || "—",
+    atendenteId: r.atendente_id || null,
+    atendente: r.atendente_nome || (USERS[r.atendente_id] && USERS[r.atendente_id].nome) || "Não identificado",
+    setor: r.setor || (USERS[r.atendente_id] && USERS[r.atendente_id].setor) || "—",
+    atendenteAtivo: USERS[r.atendente_id] ? USERS[r.atendente_id].ativo : null,
     cliente: r.cliente_nome || "—",
     assunto: r.assunto_principal || "—",
     nota: num(r.nota_final),
@@ -258,6 +261,12 @@ function mapRow(r){
 }
 
 async function loadData(){
+  // carrega colaboradores para resolver nome, setor e ativo pelo atendente_id
+  const u = await sb.schema("atendimentos").from("usuarios").select("id,nome,setor,ativo").limit(2000);
+  if(u.error){ console.warn("usuarios:", u.error.message); }
+  USERS = {};
+  (u.data||[]).forEach(x=>{ USERS[x.id] = { nome:x.nome, setor:x.setor, ativo:x.ativo }; });
+
   const { data, error } = await sb.schema("atendimentos").from("analises")
     .select("*").order("sessao_fim",{ ascending:false, nullsFirst:false }).limit(1000);
   if(error){ console.error(error); document.getElementById("detBody").innerHTML = `<tr><td colspan="9" class="empty">Erro ao carregar: ${esc(error.message)}</td></tr>`; return; }
@@ -300,7 +309,7 @@ function renderCx(){
 function renderPerf(){
   const body=document.getElementById("perfBody"); body.innerHTML="";
   const map=new Map();
-  ATEND.forEach(a=>{ if(a.nota===null) return; const key=a.atendente; if(!map.has(key)) map.set(key,{nome:key,setor:a.setor,notas:[]}); map.get(key).notas.push(a.nota); });
+  ATEND.forEach(a=>{ if(a.nota===null) return; if(a.atendenteAtivo===false) return; const key=a.atendente; if(!map.has(key)) map.set(key,{nome:key,setor:a.setor,notas:[]}); map.get(key).notas.push(a.nota); });
   const rows=[...map.values()].map(g=>{
     const qtd=g.notas.length, media=g.notas.reduce((s,n)=>s+n,0)/qtd;
     const abaixo=g.notas.filter(n=>n<7).length, acima=qtd-abaixo, pctBom=acima/qtd*100;
