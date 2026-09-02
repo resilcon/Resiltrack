@@ -339,8 +339,8 @@ function renderDet(filter=""){
     const idx=ATEND.indexOf(a); const cm=canalMeta[a.canal]||canalMeta.whatsapp;
     const tr=el("tr");
     tr.innerHTML=`<td class="sub num" style="white-space:nowrap">${a.data}</td>
-      <td class="r-name" style="white-space:nowrap">${esc(a.atendente)}</td>
-      <td>${esc(a.cliente)}<div class="sub">${esc(a.setor)}</div></td>
+      <td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td>
+      <td>${esc(a.cliente)}</td>
       <td>${esc(a.assunto)}</td>
       <td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span></td>
       <td><span class="chip"><span class="dot" style="background:${a.complexidade?cxColor[a.complexidade]||'var(--muted)':'var(--muted)'}"></span>${a.complexidade?cxLabel[a.complexidade]||"—":"—"}</span></td>
