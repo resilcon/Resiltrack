@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resiltrack</title>
+<meta name="description" content="Painel de qualidade de atendimento da Resilcon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f4f5fa;--surface:#fff;--surface-2:#fafbff;--ink:#1a1b28;--ink-2:#4a4d63;--muted:#83879c;
+    --border:#e7e9f2;--border-strong:#d6d9e8;--accent:#6d3bd6;--accent-soft:#efe9fd;--accent-deep:#4c2a95;
+    --good:#128a5b;--good-soft:#e3f4ec;--warn:#b7791f;--warn-soft:#fbf1dd;--crit:#cf4257;--crit-soft:#fbe6ea;
+    --shadow:0 1px 2px rgba(26,27,40,.04),0 6px 20px rgba(26,27,40,.05);--shadow-lg:0 12px 40px rgba(26,27,40,.18);--radius:14px;
+  }
+  :root:not([data-theme="light"]){@media (prefers-color-scheme:dark){
+    --bg:#0f1017;--surface:#181a24;--surface-2:#1e212d;--ink:#edeef5;--ink-2:#b9bcce;--muted:#808498;
+    --border:#262a38;--border-strong:#333849;--accent:#9b6cf0;--accent-soft:#26203a;--accent-deep:#c4a6f7;
+    --good:#3ec489;--good-soft:#14312a;--warn:#e0a63c;--warn-soft:#322a17;--crit:#f0687e;--crit-soft:#331a22;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);--shadow-lg:0 16px 50px rgba(0,0,0,.6);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0f1017;--surface:#181a24;--surface-2:#1e212d;--ink:#edeef5;--ink-2:#b9bcce;--muted:#808498;
+    --border:#262a38;--border-strong:#333849;--accent:#9b6cf0;--accent-soft:#26203a;--accent-deep:#c4a6f7;
+    --good:#3ec489;--good-soft:#14312a;--warn:#e0a63c;--warn-soft:#322a17;--crit:#f0687e;--crit-soft:#331a22;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);--shadow-lg:0 16px 50px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:"Sora",system-ui,sans-serif;margin:0;text-wrap:balance}
+  .num{font-variant-numeric:tabular-nums}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px 72px}
+  img{max-width:100%}
+
+  header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .bar{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px}
+  .logo{width:38px;height:38px;flex:none}
+  .brand h1{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .brand p{margin:0;font-size:12px;color:var(--muted)}
+  .spacer{flex:1}
+  .user-chip{font-size:12px;color:var(--muted)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;display:grid;place-items:center}
+  .icon-btn:hover{border-color:var(--border-strong);color:var(--ink)}
+  .txt-btn{border:1px solid var(--border);background:var(--surface);color:var(--ink-2);font:inherit;font-size:12px;font-weight:600;padding:8px 12px;border-radius:9px;cursor:pointer}
+  .txt-btn:hover{border-color:var(--border-strong);color:var(--ink)}
+
+  section{margin-top:30px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .sec-head h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .sec-head .hint{font-size:12px;color:var(--muted)}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start}
+  .tile .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none}
+  .tile .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .tile .val{font-family:"Sora",sans-serif;font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-top:3px}
+  .tile .val small{font-size:14px;color:var(--muted);font-weight:600;margin-left:4px}
+  .ic.violet{background:var(--accent-soft);color:var(--accent)}.ic.amber{background:var(--warn-soft);color:var(--warn)}
+  .ic.green{background:var(--good-soft);color:var(--good)}.ic.red{background:var(--crit-soft);color:var(--crit)}
+  .cx{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .cx .tile{padding:15px 18px}.cx .val{font-size:24px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:720px}
+  thead th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}tbody tr:hover{background:var(--surface-2)}
+  .r-name{font-weight:600}.sub{font-size:12px;color:var(--muted)}.right{text-align:right}.center{text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .pill.good{color:var(--good);background:var(--good-soft)}.pill.warn{color:var(--warn);background:var(--warn-soft)}.pill.crit{color:var(--crit);background:var(--crit-soft)}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:7px;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-2);white-space:nowrap}
+  .chip.err{color:var(--crit);background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
+  .canal{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+  .nota{font-family:"Sora",sans-serif;font-weight:700;font-size:14px;padding:5px 9px;border-radius:8px;display:inline-block;min-width:44px;text-align:center}
+  .nota.g{color:var(--good);background:var(--good-soft)}.nota.a{color:var(--warn);background:var(--warn-soft)}.nota.r{color:var(--crit);background:var(--crit-soft)}.nota.n{color:var(--muted);background:var(--surface-2)}
+  .score-wrap{display:flex;align-items:center;gap:10px}
+  .meter{width:76px;height:7px;border-radius:4px;background:var(--border);overflow:hidden}.meter>span{display:block;height:100%;border-radius:4px}
+  .score-num{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
+  .view-btn{border:1px solid var(--border);background:var(--surface);color:var(--accent);font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .view-btn:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .search{position:relative;flex:1;min-width:220px;max-width:340px}
+  .search input{width:100%;padding:9px 12px 9px 34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit}
+  .search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);align-items:center;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .empty{padding:48px 20px;text-align:center;color:var(--muted)}
+
+  .overlay{position:fixed;inset:0;background:rgba(15,16,23,.55);backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow-y:auto}
+  .overlay.open{display:flex}
+  .modal{width:100%;max-width:720px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden}
+  .modal-head{background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;padding:22px 24px;display:flex;gap:16px;align-items:flex-start}
+  .modal-head .mh-l{flex:1}.modal-head .m-sub{font-size:12px;opacity:.85}.modal-head h3{font-size:19px;font-weight:700;margin:2px 0 8px}
+  .modal-head .m-chips{display:flex;gap:8px;flex-wrap:wrap}.modal-head .m-chip{font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px;font-weight:500}
+  .m-score{text-align:center;flex:none}.m-score .big{font-family:"Sora",sans-serif;font-size:34px;font-weight:700;line-height:1}.m-score .of{font-size:12px;opacity:.8}.m-score .tag{font-size:11px;font-weight:600;margin-top:6px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:999px;display:inline-block}
+  .modal-body{padding:22px 24px;display:flex;flex-direction:column;gap:20px}
+  .panel{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .panel h4{font-family:"Sora",sans-serif;font-size:13px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
+  .field .k{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}.field .v{font-size:13.5px;color:var(--ink);margin-top:1px}
+  .prose{font-size:13.5px;color:var(--ink-2);line-height:1.6}
+  .axis{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px dashed var(--border)}.axis:last-child{border-bottom:none}
+  .axis .ax-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+  .axis .ax-main{flex:1}.axis .ax-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .axis .ax-name{font-weight:600;font-size:13.5px}.axis .ax-note{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
+  .axis .ax-just{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  ul.melhorias{margin:0;padding-left:18px}ul.melhorias li{font-size:13px;color:var(--ink-2);margin-bottom:6px;line-height:1.5}
+  .close-x{background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;display:grid;place-items:center;flex:none}.close-x:hover{background:rgba(255,255,255,.28)}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:40px}
+
+  /* login */
+  #login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:80;padding:20px}
+  .login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:32px 28px;text-align:center}
+  .login-card .logo{margin:0 auto 14px}
+  .login-card h2{font-size:22px;font-weight:700;margin-bottom:4px}
+  .login-card p{color:var(--muted);font-size:13px;margin:0 0 22px}
+  .fld{text-align:left;margin-bottom:14px}
+  .fld label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+  .fld input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);font:inherit}
+  .fld input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .login-card button[type=submit]{width:100%;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer;margin-top:4px}
+  .login-card button[type=submit]:hover{background:var(--accent-deep)}
+  .login-err{color:var(--crit);font-size:12.5px;margin-top:12px;min-height:16px}
+  .hidden{display:none!important}
+
+  @media (max-width:820px){.kpis,.cx{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.modal-head{flex-wrap:wrap}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= CONFIGURAÇÃO ================= -->
+<script>
+  // Preencha com os dados do seu projeto Supabase (Project Settings > API):
+  const SUPABASE_URL = "https://aumfhrqrnudmprvmvesb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_bDvvjpuVzD54iAlAHXMhmw_asJ0XMKF";
+</script>
+<!-- =============================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<div id="login">
+  <form class="login-card" id="loginForm">
+    <svg class="logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="2" opacity=".25"/>
+      <circle cx="20" cy="20" r="11.5" stroke="var(--accent)" stroke-width="2" opacity=".45"/>
+      <path d="M20 20 L34 11" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="20" cy="20" r="3.4" fill="var(--accent)"/><circle cx="29.5" cy="13" r="2.4" fill="var(--good)"/>
+    </svg>
+    <h2>Resiltrack</h2>
+    <p>Qualidade de atendimento · Resilcon</p>
+    <div class="fld"><label>E-mail</label><input type="email" id="email" autocomplete="username" required></div>
+    <div class="fld"><label>Senha</label><input type="password" id="senha" autocomplete="current-password" required></div>
+    <button type="submit" id="loginBtn">Entrar</button>
+    <div class="login-err" id="loginErr"></div>
+  </form>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="bar">
+      <svg class="logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="2" opacity=".25"/>
+        <circle cx="20" cy="20" r="11.5" stroke="var(--accent)" stroke-width="2" opacity=".45"/>
+        <path d="M20 20 L34 11" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="3.4" fill="var(--accent)"/><circle cx="29.5" cy="13" r="2.4" fill="var(--good)"/>
+      </svg>
+      <div class="brand"><h1>Resiltrack</h1><p>Qualidade de atendimento · Resilcon</p></div>
+      <div class="spacer"></div>
+      <span class="user-chip" id="userChip"></span>
+      <button class="icon-btn" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="txt-btn" id="outBtn">Sair</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section><div class="kpis" id="kpis"></div></section>
+    <section>
+      <div class="sec-head"><h2>Complexidade dos atendimentos</h2><span class="hint">distribuição do período</span></div>
+      <div class="cx" id="cx"></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Performance por Colaborador</h2><span class="hint">score, notas e volume por colaborador</span></div>
+      <div class="legend" style="margin-bottom:12px">
+        <span><span class="dot" style="background:var(--good)"></span> ≥ 80% notas ≥ 7</span>
+        <span><span class="dot" style="background:var(--warn)"></span> 60–80%</span>
+        <span><span class="dot" style="background:var(--crit)"></span> &lt; 60%</span>
+      </div>
+      <div class="card table-scroll"><table>
+        <thead><tr><th>Colaborador</th><th>Setor</th><th class="center">Score</th><th class="center">Qtd</th><th class="center">Média</th><th class="center">Notas &lt; 7</th><th class="center">Notas ≥ 7</th><th>Status</th></tr></thead>
+        <tbody id="perfBody"></tbody>
+      </table></div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Dados Detalhados</h2><span class="hint">todos os atendimentos analisados</span></div>
+      <div class="toolbar"><div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="q" type="search" placeholder="Buscar por cliente, atendente ou assunto...">
+      </div></div>
+      <div class="card table-scroll"><table>
+        <thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th>Assunto</th><th class="center">Nota</th><th>Compl.</th><th>Sinais</th><th>Canal</th><th></th></tr></thead>
+        <tbody id="detBody"></tbody>
+      </table></div>
+    </section>
+    <footer>Resiltrack · dados ao vivo do Supabase</footer>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+let ATEND = [];
+let sb = null;
+
+// ---- helpers ----
+const num = v => (v===null||v===undefined||v==="")?null:Number(v);
+const fmt1 = n => n===null?"—":Number(n).toFixed(1).replace(".",",");
+const notaClass = n => n===null?"n":(n>=8?"g":(n>=6?"a":"r"));
+const scoreColor = n => n===null?"var(--muted)":(n>=8?"var(--good)":(n>=6?"var(--warn)":"var(--crit)"));
+const cxLabel = { baixa:"Baixa", media:"Média", alta:"Alta", sem_classificacao:"Sem classif." };
+const cxColor = { baixa:"var(--good)", media:"var(--warn)", alta:"var(--crit)" };
+const canalMeta = { whatsapp:{t:"WhatsApp",c:"var(--good)"}, telefone:{t:"Telefone",c:"var(--accent)"} };
+const el = (t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const asArr = v => Array.isArray(v)?v:(typeof v==="string"?(()=>{try{return JSON.parse(v)}catch{return []}})():[]);
+const fmtDate = s => { if(!s) return "—"; const d=new Date(s); return isNaN(d)?"—":d.toLocaleDateString("pt-BR"); };
+const esc = s => (s??"").toString().replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+
+// mapeia uma linha do banco para o formato da tela
+function mapRow(r){
+  return {
+    id: r.id,
+    data: fmtDate(r.sessao_fim || r.criado_em),
+    atendente: r.atendente_nome || "Não identificado",
+    setor: r.setor || "—",
+    cliente: r.cliente_nome || "—",
+    assunto: r.assunto_principal || "—",
+    nota: num(r.nota_final),
+    complexidade: r.complexidade || null,
+    canal: r.canal || "whatsapp",
+    tipo: r.tipo_atendimento || null,
+    cnpj: r.cnpj || "—",
+    resumo: r.resumo || "Sem resumo.",
+    cx_just: r.complexidade_justificativa || "—",
+    r:{ v:num(r.nota_resolucao), j:r.nota_resolucao_justificativa||"—" },
+    ra:{ v:num(r.nota_rapidez), j:r.nota_rapidez_justificativa||"—" },
+    s:{ v:num(r.nota_satisfacao), j:r.nota_satisfacao_justificativa||"—" },
+    erros: asArr(r.erros),
+    oport: r.oportunidade_comercial || null,
+    melhorias: asArr(r.oportunidades_de_melhoria),
+  };
+}
+
+async function loadData(){
+  const { data, error } = await sb.schema("atendimentos").from("analises")
+    .select("*").order("sessao_fim",{ ascending:false, nullsFirst:false }).limit(1000);
+  if(error){ console.error(error); document.getElementById("detBody").innerHTML = `<tr><td colspan="9" class="empty">Erro ao carregar: ${esc(error.message)}</td></tr>`; return; }
+  ATEND = (data||[]).map(mapRow);
+  renderAll();
+}
+
+function renderAll(){ renderKpis(); renderCx(); renderPerf(); renderDet(document.getElementById("q").value); }
+
+function renderKpis(){
+  const box = document.getElementById("kpis"); box.innerHTML="";
+  const comNota = ATEND.filter(a=>a.nota!==null);
+  const total = ATEND.length;
+  const media = comNota.length? comNota.reduce((s,a)=>s+a.nota,0)/comNota.length : null;
+  const abaixo = comNota.filter(a=>a.nota<7).length;
+  const acima = comNota.filter(a=>a.nota>=7).length;
+  const pct = n => comNota.length? Math.round(n/comNota.length*100)+"%" : "—";
+  const tiles=[
+    {ic:"violet",svg:'<circle cx="9" cy="8" r="3.2"/><path d="M15 21v-1a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v1"/><circle cx="17" cy="7" r="2.6"/><path d="M21 21v-1a4 4 0 0 0-3-3.8"/>',lbl:"Total de atendimentos",val:total},
+    {ic:"amber",svg:'<path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/>',lbl:"Média geral",val:fmt1(media)},
+    {ic:"red",svg:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',lbl:"Notas < 7",val:abaixo,sub:pct(abaixo)},
+    {ic:"green",svg:'<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',lbl:"Notas ≥ 7",val:acima,sub:pct(acima)},
+  ];
+  box.append(...tiles.map(t=>el("div","tile",
+    `<div class="ic ${t.ic}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg></div>
+     <div><div class="lbl">${t.lbl}</div><div class="val num">${t.val}${t.sub?`<small>${t.sub}</small>`:""}</div></div>`)));
+}
+
+function renderCx(){
+  const box=document.getElementById("cx"); box.innerHTML="";
+  const counts={baixa:0,media:0,alta:0,sem:0};
+  ATEND.forEach(a=>{ if(a.complexidade&&counts[a.complexidade]!==undefined) counts[a.complexidade]++; else counts.sem++; });
+  const cells=[{k:"baixa"},{k:"media"},{k:"alta"},{k:"sem",label:"Sem classificação",color:"var(--muted)"}];
+  box.append(...cells.map(c=>{
+    const color=c.color||cxColor[c.k]; const label=c.label||"Complexidade "+cxLabel[c.k]; const n=counts[c.k]||0;
+    return el("div","tile",`<div class="ic" style="background:color-mix(in srgb, ${color} 14%, transparent);color:${color}"><span class="dot" style="background:${color};width:11px;height:11px"></span></div><div><div class="lbl">${label}</div><div class="val num">${n}</div></div>`);
+  }));
+}
+
+function renderPerf(){
+  const body=document.getElementById("perfBody"); body.innerHTML="";
+  const map=new Map();
+  ATEND.forEach(a=>{ if(a.nota===null) return; const key=a.atendente; if(!map.has(key)) map.set(key,{nome:key,setor:a.setor,notas:[]}); map.get(key).notas.push(a.nota); });
+  const rows=[...map.values()].map(g=>{
+    const qtd=g.notas.length, media=g.notas.reduce((s,n)=>s+n,0)/qtd;
+    const abaixo=g.notas.filter(n=>n<7).length, acima=qtd-abaixo, pctBom=acima/qtd*100;
+    const status=pctBom>=80?"good":(pctBom>=60?"warn":"crit");
+    return {...g,qtd,media,abaixo,acima,pctBom,score:media,status};
+  }).sort((a,b)=>b.score-a.score);
+  if(!rows.length){ body.innerHTML=`<tr><td colspan="8" class="empty">Ainda sem análises com nota.</td></tr>`; return; }
+  const stTxt={good:"Ótimo",warn:"Atenção",crit:"Crítico"};
+  rows.forEach(r=>{
+    const tr=el("tr");
+    tr.innerHTML=`<td class="r-name">${esc(r.nome)}</td><td class="sub">${esc(r.setor)}</td>
+      <td class="center"><div class="score-wrap" style="justify-content:center"><span class="score-num" style="color:${scoreColor(r.score)}">${fmt1(r.score)}</span><span class="meter"><span style="width:${r.score*10}%;background:${scoreColor(r.score)}"></span></span></div></td>
+      <td class="center num">${r.qtd}</td><td class="center num">${fmt1(r.media)}</td>
+      <td class="center"><span class="num" style="color:var(--crit);font-weight:600">${r.abaixo}</span></td>
+      <td class="center"><span class="num" style="color:var(--good);font-weight:600">${r.acima}</span> <span class="sub">(${Math.round(r.pctBom)}%)</span></td>
+      <td><span class="pill ${r.status}"><span class="dot" style="background:currentColor"></span>${stTxt[r.status]}</span></td>`;
+    body.appendChild(tr);
+  });
+}
+
+function renderDet(filter=""){
+  const body=document.getElementById("detBody"); body.innerHTML="";
+  const f=(filter||"").trim().toLowerCase();
+  const rows=ATEND.filter(a=>!f||(a.cliente+a.atendente+a.assunto+a.setor).toLowerCase().includes(f));
+  if(!rows.length){ body.innerHTML=`<tr><td colspan="9" class="empty">${ATEND.length? "Nenhum atendimento encontrado." : "Ainda não há análises no banco. Rode a coleta no n8n."}</td></tr>`; return; }
+  rows.forEach(a=>{
+    const idx=ATEND.indexOf(a); const cm=canalMeta[a.canal]||canalMeta.whatsapp;
+    const tr=el("tr");
+    tr.innerHTML=`<td class="sub num" style="white-space:nowrap">${a.data}</td>
+      <td class="r-name" style="white-space:nowrap">${esc(a.atendente)}</td>
+      <td>${esc(a.cliente)}<div class="sub">${esc(a.setor)}</div></td>
+      <td>${esc(a.assunto)}</td>
+      <td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span></td>
+      <td><span class="chip"><span class="dot" style="background:${a.complexidade?cxColor[a.complexidade]||'var(--muted)':'var(--muted)'}"></span>${a.complexidade?cxLabel[a.complexidade]||"—":"—"}</span></td>
+      <td>${a.erros.length? a.erros.map(e=>`<span class="chip err">${esc(e)}</span>`).join(" ") : '<span class="sub">—</span>'}</td>
+      <td><span class="canal"><span class="dot" style="background:${cm.c}"></span>${cm.t}</span></td>
+      <td class="right"><button class="view-btn" data-i="${idx}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Ver</button></td>`;
+    body.appendChild(tr);
+  });
+}
+
+const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
+const tipoTxt={dialogo:"Diálogo",documentos:"Envio de documentos",transferencia:"Transferência",outro:"Outro"};
+function openModal(i){
+  const a=ATEND[i]; const tag=a.nota===null?"Sem nota":(a.nota>=8?"Bom":(a.nota>=6?"Regular":"Crítico"));
+  const cm=canalMeta[a.canal]||canalMeta.whatsapp;
+  const axis=(name,o,icon)=>`<div class="axis"><div class="ax-ic">${icon}</div><div class="ax-main"><div class="ax-top"><span class="ax-name">${name}</span><span class="ax-note" style="color:${scoreColor(o.v)}">${fmt1(o.v)}<span style="color:var(--muted);font-weight:400;font-size:12px">/10</span></span></div><div class="ax-just">${esc(o.j)}</div></div></div>`;
+  modal.innerHTML=`
+    <div class="modal-head">
+      <div class="mh-l"><div class="m-sub num">${a.data} · ${esc(a.cliente)}</div><h3>${esc(a.assunto)}</h3>
+        <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">${cm.t}</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}</div></div>
+      <div class="m-score"><div class="big num">${fmt1(a.nota)}</div><div class="of">/10</div><div class="tag">${tag}</div></div>
+      <button class="close-x" id="closeX" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="panel"><h4>Informações do atendimento</h4>
+        <div class="grid2">
+          <div class="field"><div class="k">Atendente</div><div class="v">${esc(a.atendente)}</div></div>
+          <div class="field"><div class="k">Cliente</div><div class="v">${esc(a.cliente)}</div></div>
+          <div class="field"><div class="k">CNPJ</div><div class="v num">${esc(a.cnpj)}</div></div>
+          <div class="field"><div class="k">Setor</div><div class="v">${esc(a.setor)}</div></div>
+          <div class="field"><div class="k">Complexidade</div><div class="v"><span class="chip"><span class="dot" style="background:${a.complexidade?cxColor[a.complexidade]||'var(--muted)':'var(--muted)'}"></span>${a.complexidade?cxLabel[a.complexidade]||'—':'—'}</span></div></div>
+          <div class="field"><div class="k">Sinais</div><div class="v">${a.erros.length?a.erros.map(e=>`<span class="chip err">${esc(e)}</span>`).join(" "):'<span class="sub">nenhum</span>'}</div></div>
+        </div>
+        <div style="margin-top:12px" class="field"><div class="k">Justificativa da complexidade</div><div class="v prose">${esc(a.cx_just)}</div></div>
+      </div>
+      <div class="panel"><h4>Resumo da avaliação</h4><div class="prose">${esc(a.resumo)}</div></div>
+      <div class="panel"><h4>Detalhamento das notas</h4>
+        ${axis("Resolução",a.r,'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>')}
+        ${axis("Rapidez",a.ra,'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2L4.5 13H11l-1 9 8.5-11H12l1-9z"/></svg>')}
+        ${axis("Satisfação",a.s,'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 1 1-4.9-7.7L21 3l-1 4"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/></svg>')}
+      </div>
+      ${a.oport?`<div class="panel" style="border-color:color-mix(in srgb,var(--accent) 30%,var(--border))"><h4><span style="color:var(--accent)">◆</span> Oportunidade comercial detectada</h4><div class="prose">O cliente demonstrou possível interesse em: <strong style="color:var(--ink)">${esc(a.oport)}</strong>.</div></div>`:""}
+      ${a.melhorias.length?`<div class="panel"><h4>Oportunidades de melhoria</h4><ul class="melhorias">${a.melhorias.map(m=>`<li>${esc(m)}</li>`).join("")}</ul></div>`:""}
+    </div>`;
+  overlay.classList.add("open"); document.body.style.overflow="hidden";
+  document.getElementById("closeX").addEventListener("click",closeModal);
+}
+function closeModal(){ overlay.classList.remove("open"); document.body.style.overflow=""; }
+document.getElementById("detBody").addEventListener("click",e=>{const b=e.target.closest(".view-btn");if(b)openModal(+b.dataset.i);});
+overlay.addEventListener("click",e=>{if(e.target===overlay)closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+document.getElementById("q").addEventListener("input",e=>renderDet(e.target.value));
+document.getElementById("themeBtn").addEventListener("click",()=>{const root=document.documentElement;const dark=matchMedia("(prefers-color-scheme:dark)").matches;const cur=root.getAttribute("data-theme")||(dark?"dark":"light");root.setAttribute("data-theme",cur==="dark"?"light":"dark");});
+
+// ---- auth ----
+function showApp(session){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("userChip").textContent = session?.user?.email || "";
+  loadData();
+}
+function showLogin(){ document.getElementById("app").classList.add("hidden"); document.getElementById("login").classList.remove("hidden"); }
+
+document.getElementById("loginForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const btn=document.getElementById("loginBtn"), err=document.getElementById("loginErr");
+  err.textContent=""; btn.disabled=true; btn.textContent="Entrando...";
+  const { data, error } = await sb.auth.signInWithPassword({ email:document.getElementById("email").value.trim(), password:document.getElementById("senha").value });
+  btn.disabled=false; btn.textContent="Entrar";
+  if(error){ err.textContent = "E-mail ou senha inválidos."; return; }
+  showApp(data.session);
+});
+document.getElementById("outBtn").addEventListener("click", async ()=>{ await sb.auth.signOut(); showLogin(); });
+
+// ---- init ----
+(async function init(){
+  if(!window.supabase || SUPABASE_URL.includes("SEU-PROJETO")){
+    document.getElementById("loginErr").textContent="Configure SUPABASE_URL e SUPABASE_KEY no topo do arquivo.";
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data } = await sb.auth.getSession();
+  if(data.session) showApp(data.session); else showLogin();
+})();
+</script>
+</body>
+</html>
