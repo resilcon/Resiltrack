@@ -152,6 +152,23 @@
   .opt.on{border-color:var(--accent);background:var(--accent-soft)}
   .opt .ot{font-weight:600;font-size:13px}.opt .os{font-size:11.5px;color:var(--muted)}
   footer{text-align:center;color:var(--muted);font-size:12px;margin-top:40px}
+  .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0 16px}
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px}
+  .seg button{border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .seg button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+  select.fsel{font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;max-width:230px}
+  select.fsel:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .fdate{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--muted)}
+  .fdate input{border:none;background:none;font:inherit;font-size:12.5px;color:var(--ink);color-scheme:light}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .pager .pg{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+  .pager .pg button{border:1px solid var(--border);background:var(--surface);color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:600;min-width:32px;height:32px;border-radius:8px;cursor:pointer;padding:0 8px}
+  .pager .pg button:hover:not(:disabled){border-color:var(--border-strong);color:var(--ink)}
+  .pager .pg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .pager .pg button:disabled{opacity:.4;cursor:default}
+  .link-name{color:var(--ink);font-weight:600;cursor:pointer;border:none;background:none;font:inherit;padding:0;text-align:left}
+  .link-name:hover{color:var(--accent);text-decoration:underline}
+  td[title],span[title],.chip[title]{cursor:help}
 
   /* login */
   #login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:80;padding:20px}
@@ -225,6 +242,9 @@
 <script>
 let ATEND=[], RAW=[], USERS={}, EMPRESAS={}, CONTATOS={}, CONTESTS={}, sb=null, ME="";
 let TAB="dashboard";
+let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
+let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
+const PAGE_SIZE=30;
 
 // ---------- helpers ----------
 const num = v => (v===null||v===undefined||v==="")?null:Number(v);
@@ -241,6 +261,29 @@ const scoreColor = n => n===null?"var(--muted)":(n>=8?"var(--good)":(n>=6?"var(-
 const cxLabel = {baixa:"Baixa",media:"Média",alta:"Alta",sem_classificacao:"Sem classif."};
 const cxColor = {baixa:"var(--good)",media:"var(--warn)",alta:"var(--crit)"};
 const satMeta = {positivo:{t:"Positivo",c:"good"},neutro:{t:"Neutro",c:"neutral"},negativo:{t:"Negativo",c:"crit"}};
+const escAttr = s => esc(s).replace(/"/g,"&quot;");
+const perfStatus = p => p===null?"ausente":(p>=85?"good":(p>=70?"warn":"crit"));
+const perfTxt = {good:"Na meta",warn:"Atenção",crit:"Crítico",ausente:"Ausente"};
+const desfechoCurto = d => d==="sem_retorno_cliente"?"Sem retorno":(desfechoTxt[d]||d||"—");
+function setoresList(){ const s=new Set(); Object.values(USERS).forEach(u=>{ if(u.setor) s.add(u.setor); }); ATEND.forEach(a=>{ if(a.setor&&a.setor!=="—") s.add(a.setor); }); return [...s].sort(); }
+function colabsList(){ const m=new Map(); Object.entries(USERS).forEach(([id,u])=>{ if(u.ativo!==false) m.set(id,u.nome); }); ATEND.forEach(a=>{ if(a.atendente_id&&!m.has(a.atendente_id)) m.set(a.atendente_id,a.atendente); }); return [...m.entries()].map(([id,nome])=>({id,nome})).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")); }
+function filtraDash(){ const now=Date.now(); let ini=null,fim=null;
+  if(DFIL.preset==="7d") ini=now-7*864e5; else if(DFIL.preset==="30d") ini=now-30*864e5;
+  else if(DFIL.preset==="custom"){ if(DFIL.ini) ini=new Date(DFIL.ini+"T00:00:00").getTime(); if(DFIL.fim) fim=new Date(DFIL.fim+"T23:59:59").getTime(); }
+  return ATEND.filter(a=>{ if(ini&&a.ts<ini) return false; if(fim&&a.ts>fim) return false;
+    if(DFIL.setor&&a.setor!==DFIL.setor) return false;
+    if(DFIL.colab&&(a.atendente_id||a.atendente)!==DFIL.colab) return false; return true; });
+}
+function pagerHTML(total,page,totalP,start,shown){ const from=total?start+1:0,to=start+shown; let btns="";
+  const add=(p,lbl,on,dis)=>{ btns+=`<button data-pg="${p}" class="${on?'on':''}" ${dis?'disabled':''}>${lbl}</button>`; };
+  add(Math.max(1,page-1),"‹",false,page<=1);
+  let s=Math.max(1,page-2),e=Math.min(totalP,s+4); s=Math.max(1,e-4);
+  if(s>1){ add(1,"1",false,false); if(s>2) btns+='<span class="sub">…</span>'; }
+  for(let p=s;p<=e;p++) add(p,String(p),p===page,false);
+  if(e<totalP){ if(e<totalP-1) btns+='<span class="sub">…</span>'; add(totalP,String(totalP),false,false); }
+  add(Math.min(totalP,page+1),"›",false,page>=totalP);
+  return `<div class="pager"><span>Mostrando ${from}–${to} de ${total}</span><div class="pg">${btns}</div></div>`;
+}
 
 // palavras que sugerem risco de troca de contabilidade
 const CHURN_KW = ["troca de contab","trocar de contab","migrar de contab","migração de contab","nova contabilidade","contabilidade anterior","transição contábil","transicao contabil","documentos para transição","balancete","balancetes","encerrar o contrato","rescisão de contrato","rescisao de contrato","distrato","cancelar o contrato","sair da resilcon","encerramento da empresa","muito insatisfeit","estou insatisfeit","pessimo atendimento","péssimo atendimento"];
@@ -284,7 +327,8 @@ function mapRow(r){
     oport:r.oportunidade_comercial||null, melhorias:asArr(r.oportunidades_de_melhoria),
     satisfacao:r.satisfacao_cliente||null, transcript:r.transcript||"",
     desfecho:r.desfecho||null, aderencia:{v:num(r.aderencia_jeito_resilcon),j:r.aderencia_justificativa||"—"},
-    errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null
+    errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null,
+    docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null
   };
   a.cliente = clienteNome(a);
   a.empresa_id = empresaIdDe(a);
@@ -327,7 +371,7 @@ function renderTabs(){
   TABS.forEach(([k,l])=>{ const b=el("button",k===TAB?"on":"",l); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
 function render(){ renderTabs(); const v=document.getElementById("view");
-  if(TAB==="dashboard") v.innerHTML=viewDashboard();
+  if(TAB==="dashboard") viewDashboard(v);
   else if(TAB==="detalhes") viewDetalhes(v);
   else if(TAB==="clientes") viewClientes(v);
   else if(TAB==="colaboradores") viewColaboradores(v);
@@ -339,8 +383,26 @@ function render(){ renderTabs(); const v=document.getElementById("view");
 
 // ---------- DASHBOARD ----------
 function comNota(list){ return list.filter(a=>a.nota!==null); }
-function viewDashboard(){
-  const cn=comNota(ATEND), total=ATEND.length;
+function dashFiltros(){
+  const setores=setoresList(), colabs=colabsList();
+  const seg=(k,l)=>`<button data-preset="${k}" class="${DFIL.preset===k?'on':''}">${l}</button>`;
+  return `<div class="filters">
+    <div class="seg">${seg("tudo","Tudo")}${seg("7d","7 dias")}${seg("30d","30 dias")}</div>
+    <span class="fdate">De <input type="date" id="fIni" value="${escAttr(DFIL.ini)}"> até <input type="date" id="fFim" value="${escAttr(DFIL.fim)}"></span>
+    <select class="fsel" id="fSetor"><option value="">Todos os departamentos</option>${setores.map(s=>`<option value="${escAttr(s)}" ${DFIL.setor===s?'selected':''}>${esc(s)}</option>`).join("")}</select>
+    <select class="fsel" id="fColab"><option value="">Todos os colaboradores</option>${colabs.map(c=>`<option value="${escAttr(c.id)}" ${DFIL.colab===c.id?'selected':''}>${esc(c.nome)}</option>`).join("")}</select>
+    <select class="fsel" id="fSort">
+      <option value="media_desc" ${DFIL.sort==='media_desc'?'selected':''}>Ordenar: maior média</option>
+      <option value="pct_desc" ${DFIL.sort==='pct_desc'?'selected':''}>Ordenar: maior % ≥ 7</option>
+      <option value="qtd_desc" ${DFIL.sort==='qtd_desc'?'selected':''}>Ordenar: mais atendimentos</option>
+      <option value="nome" ${DFIL.sort==='nome'?'selected':''}>Ordenar: nome (A-Z)</option>
+    </select>
+    <div class="search" style="min-width:180px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fBusca" type="search" placeholder="Buscar colaborador..."></div>
+  </div>`;
+}
+function viewDashboard(v){
+  const base=filtraDash();
+  const cn=comNota(base), total=base.length;
   const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const abaixo=cn.filter(a=>a.nota<7).length, acima=cn.filter(a=>a.nota>=7).length;
   const pct=n=>cn.length?Math.round(n/cn.length*100)+"%":"—";
@@ -351,68 +413,117 @@ function viewDashboard(){
     {ic:"green",svg:'<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',lbl:"Notas ≥ 7",val:acima,sub:pct(acima)}
   ];
   const counts={baixa:0,media:0,alta:0,sem:0};
-  ATEND.forEach(a=>{ if(a.complexidade&&counts[a.complexidade]!==undefined)counts[a.complexidade]++; else counts.sem++; });
+  base.forEach(a=>{ if(a.complexidade&&counts[a.complexidade]!==undefined)counts[a.complexidade]++; else counts.sem++; });
   const cxCells=[{k:"baixa"},{k:"media"},{k:"alta"},{k:"sem",label:"Sem classificação",color:"var(--muted)"}];
-  // performance por colaborador (só ativos)
+  // performance por colaborador (a partir do filtro), com ausentes
   const map=new Map();
-  ATEND.forEach(a=>{ if(a.nota===null)return; if(a.atendenteAtivo===false)return; const k=a.atendente;
-    if(!map.has(k))map.set(k,{nome:k,setor:a.setor,notas:[]}); map.get(k).notas.push(a.nota); });
-  const rows=[...map.values()].map(g=>{ const qtd=g.notas.length, m=g.notas.reduce((s,n)=>s+n,0)/qtd;
-    const ab=g.notas.filter(n=>n<7).length, ac=qtd-ab, p=ac/qtd*100;
-    return {...g,qtd,media:m,abaixo:ab,acima:ac,pct:p,status:p>=80?"good":(p>=60?"warn":"crit")};
-  }).sort((a,b)=>b.media-a.media);
-  const stTxt={good:"Ótimo",warn:"Atenção",crit:"Crítico"};
+  base.forEach(a=>{ const k=a.atendente_id||a.atendente;
+    if(!map.has(k))map.set(k,{key:k,nome:a.atendente,setor:a.setor,notas:[]});
+    if(a.nota!==null) map.get(k).notas.push(a.nota); });
+  Object.entries(USERS).forEach(([id,u])=>{ if(u.ativo===false) return;
+    if(DFIL.colab&&id!==DFIL.colab) return; if(DFIL.setor&&u.setor!==DFIL.setor) return;
+    if(!map.has(id)) map.set(id,{key:id,nome:u.nome,setor:u.setor,notas:[]}); });
+  let rows=[...map.values()].map(g=>{ const qtd=g.notas.length; const m=qtd?g.notas.reduce((s,n)=>s+n,0)/qtd:null;
+    const ab=g.notas.filter(n=>n<7).length, ac=qtd-ab, p=qtd?ac/qtd*100:null;
+    return {...g,qtd,media:m,abaixo:ab,acima:ac,pct:p,status:perfStatus(p)}; });
+  const srt=DFIL.sort;
+  rows.sort((a,b)=> srt==="nome"?(a.nome||"").localeCompare(b.nome||"") : srt==="qtd_desc"?b.qtd-a.qtd : srt==="pct_desc"?((b.pct??-1)-(a.pct??-1)) : ((b.media??-1)-(a.media??-1)) );
 
-  return `
+  v.innerHTML = dashFiltros() + `
   <section><div class="kpis">${tiles.map(t=>`<div class="tile"><div class="ic ${t.ic}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg></div><div><div class="lbl">${t.lbl}</div><div class="val num">${t.val}${t.sub?`<small>${t.sub}</small>`:""}</div></div></div>`).join("")}</div></section>
-  <section><div class="sec-head"><h2>Complexidade dos atendimentos</h2><span class="hint">distribuição do período</span></div>
+  <section><div class="sec-head"><h2>Complexidade dos atendimentos</h2><span class="hint">no período filtrado</span></div>
     <div class="cx">${cxCells.map(c=>{const color=c.color||cxColor[c.k];const label=c.label||"Complexidade "+cxLabel[c.k];const n=counts[c.k]||0;
       return `<div class="tile"><div class="ic" style="background:color-mix(in srgb,${color} 14%,transparent);color:${color}"><span class="dot" style="background:${color};width:11px;height:11px"></span></div><div><div class="lbl">${label}</div><div class="val num">${n}</div></div></div>`;}).join("")}</div></section>
-  <section><div class="sec-head"><h2>Performance por Colaborador</h2><span class="hint">colaboradores ativos</span></div>
-    <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--good)"></span> ≥ 80% notas ≥ 7</span><span><span class="dot" style="background:var(--warn)"></span> 60–80%</span><span><span class="dot" style="background:var(--crit)"></span> &lt; 60%</span></div>
+  <section><div class="sec-head"><h2>Performance por Colaborador</h2><span class="hint">clique no nome para abrir o preview</span></div>
+    <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--crit)"></span> Crítico &lt; 70%</span><span><span class="dot" style="background:var(--warn)"></span> Atenção 70–85%</span><span><span class="dot" style="background:var(--good)"></span> Na meta ≥ 85%</span><span><span class="dot" style="background:var(--muted)"></span> Ausente</span></div>
     <div class="card"><table><thead><tr><th>Colaborador</th><th class="hide-md">Setor</th><th class="center">Score</th><th class="center">Qtd</th><th class="center hide-md">Média</th><th class="center hide-md">Notas &lt; 7</th><th class="center">Notas ≥ 7</th><th>Status</th></tr></thead><tbody>${
-      rows.length?rows.map(r=>`<tr><td class="r-name">${esc(r.nome)}</td><td class="sub hide-md">${esc(r.setor)}</td>
-      <td class="center"><div class="score-wrap" style="justify-content:center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span><span class="meter"><span style="width:${r.media*10}%;background:${scoreColor(r.media)}"></span></span></div></td>
+      rows.length?rows.map(r=>`<tr data-name="${escAttr((r.nome||'').toLowerCase())}"><td><button class="link-name" data-col="${escAttr(String(r.key))}">${esc(r.nome)}</button></td><td class="sub hide-md">${esc(r.setor||'—')}</td>
+      <td class="center">${r.media===null?'<span class="sub">—</span>':`<div class="score-wrap" style="justify-content:center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span><span class="meter"><span style="width:${r.media*10}%;background:${scoreColor(r.media)}"></span></span></div>`}</td>
       <td class="center num">${r.qtd}</td><td class="center num hide-md">${fmt1(r.media)}</td>
       <td class="center hide-md"><span class="num" style="color:var(--crit);font-weight:600">${r.abaixo}</span></td>
-      <td class="center"><span class="num" style="color:var(--good);font-weight:600">${r.acima}</span> <span class="sub">(${Math.round(r.pct)}%)</span></td>
-      <td><span class="pill ${r.status}"><span class="dot" style="background:currentColor"></span>${stTxt[r.status]}</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Ainda sem análises com nota.</td></tr>`
+      <td class="center">${r.pct===null?'<span class="sub">—</span>':`<span class="num" style="color:var(--good);font-weight:600">${r.acima}</span> <span class="sub">(${Math.round(r.pct)}%)</span>`}</td>
+      <td><span class="pill ${r.status==='ausente'?'neutral':r.status}"><span class="dot" style="background:currentColor"></span>${perfTxt[r.status]}</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum colaborador no filtro.</td></tr>`
     }</tbody></table></div></section>`;
+
+  v.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{ DFIL.preset=b.dataset.preset; DFIL.ini=""; DFIL.fim=""; render(); });
+  const fIni=v.querySelector("#fIni"), fFim=v.querySelector("#fFim");
+  if(fIni) fIni.onchange=()=>{ DFIL.ini=fIni.value; DFIL.preset="custom"; render(); };
+  if(fFim) fFim.onchange=()=>{ DFIL.fim=fFim.value; DFIL.preset="custom"; render(); };
+  v.querySelector("#fSetor").onchange=e=>{ DFIL.setor=e.target.value; render(); };
+  v.querySelector("#fColab").onchange=e=>{ DFIL.colab=e.target.value; render(); };
+  v.querySelector("#fSort").onchange=e=>{ DFIL.sort=e.target.value; render(); };
+  const fb=v.querySelector("#fBusca"); if(fb) fb.oninput=()=>{ const f=fb.value.trim().toLowerCase();
+    v.querySelectorAll("tr[data-name]").forEach(tr=>{ tr.hidden=f&&!tr.getAttribute("data-name").includes(f); }); };
 }
 
 // ---------- DADOS DETALHADOS ----------
 function sinaisPreview(a){
   const list=[...a.sinais];
+  if(a.docErrado) list.unshift("Documento enviado errado ao cliente");
   if(a.churn) list.unshift("Possível troca de contabilidade");
   if(!list.length) return '<span class="sub">—</span>';
   const first=esc(list[0]); const extra=list.length-1;
+  const docChip=a.docErrado?`<span class="chip churn" title="${escAttr(a.docErradoDetalhe||'Documento enviado errado ao cliente')}">⚠ doc errado</span> `:"";
   const churnChip=a.churn?`<span class="chip churn">⚠ troca?</span> `:"";
-  return `${churnChip}<span class="chip err" title="${esc(list.join(' · '))}">${first.length>46?first.slice(0,46)+'…':first}</span>${extra>0?` <span class="sub">+${extra}</span>`:""}`;
+  return `${docChip}${churnChip}<span class="chip err" title="${escAttr(list.join(' · '))}">${first.length>46?first.slice(0,46)+'…':first}</span>${extra>0?` <span class="sub">+${extra}</span>`:""}`;
 }
 function viewDetalhes(v){
-  v.innerHTML=`<div class="page-head"><h2>Dados Detalhados</h2><p>todos os atendimentos analisados</p></div>
-  <div class="toolbar"><div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="q" type="search" placeholder="Buscar por cliente, atendente ou assunto..."></div></div>
-  <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="hide-md">Assunto</th><th class="center">Nota</th><th class="hide-md">Compl.</th><th>Sinais</th><th class="right">Ações</th></tr></thead><tbody id="detBody"></tbody></table></div>`;
-  const q=document.getElementById("q");
-  const draw=(f="")=>{ const body=document.getElementById("detBody"); f=(f||"").trim().toLowerCase();
-    const rows=ATEND.filter(a=>!f||(a.cliente+a.atendente+a.assunto+a.setor).toLowerCase().includes(f));
-    if(!rows.length){ body.innerHTML=`<tr><td colspan="8" class="empty">${ATEND.length?"Nenhum atendimento encontrado.":"Ainda não há análises."}</td></tr>`; return; }
+  const setores=setoresList(), colabs=colabsList();
+  const desfOpts=Object.keys(desfechoTxt).map(k=>`<option value="${k}" ${TFIL.desfecho===k?'selected':''}>${desfechoTxt[k]}</option>`).join("");
+  const complOpts=["baixa","media","alta"].map(k=>`<option value="${k}" ${TFIL.compl===k?'selected':''}>${cxLabel[k]}</option>`).join("");
+  v.innerHTML=`<div class="page-head"><h2>Dados Detalhados</h2><p>passe o mouse nos dados para ver detalhes · use os filtros e a ordenação</p></div>
+  <div class="filters">
+    <div class="search" style="min-width:220px;max-width:320px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="q" type="search" placeholder="Buscar cliente, atendente ou assunto..." value="${escAttr(TFIL.q)}"></div>
+    <select class="fsel" id="fColab"><option value="">Colaborador: todos</option>${colabs.map(c=>`<option value="${escAttr(c.id)}" ${TFIL.colab===c.id?'selected':''}>${esc(c.nome)}</option>`).join("")}</select>
+    <select class="fsel" id="fSetor"><option value="">Setor: todos</option>${setores.map(s=>`<option value="${escAttr(s)}" ${TFIL.setor===s?'selected':''}>${esc(s)}</option>`).join("")}</select>
+    <select class="fsel" id="fCompl"><option value="">Complexidade: todas</option>${complOpts}</select>
+    <select class="fsel" id="fDesf"><option value="">Desfecho: todos</option>${desfOpts}</select>
+    <select class="fsel" id="fNota"><option value="">Nota: todas</option><option value="ge8" ${TFIL.nota==='ge8'?'selected':''}>≥ 8</option><option value="7to8" ${TFIL.nota==='7to8'?'selected':''}>7 a 8</option><option value="lt7" ${TFIL.nota==='lt7'?'selected':''}>&lt; 7</option></select>
+    <select class="fsel" id="fSort"><option value="data_desc" ${TFIL.sort==='data_desc'?'selected':''}>Mais recentes</option><option value="data_asc" ${TFIL.sort==='data_asc'?'selected':''}>Mais antigos</option><option value="nota_desc" ${TFIL.sort==='nota_desc'?'selected':''}>Maior nota</option><option value="nota_asc" ${TFIL.sort==='nota_asc'?'selected':''}>Menor nota</option></select>
+  </div>
+  <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="hide-md">Assunto</th><th class="center">Nota</th><th class="hide-md">Compl.</th><th>Sinais</th><th class="right">Ações</th></tr></thead><tbody id="detBody"></tbody></table><div id="detPager"></div></div>`;
+  const bindSel=(id,key)=>{ const e=v.querySelector(id); if(e) e.onchange=()=>{ TFIL[key]=e.value; TFIL.page=1; draw(); }; };
+  bindSel("#fColab","colab"); bindSel("#fSetor","setor"); bindSel("#fCompl","compl"); bindSel("#fDesf","desfecho"); bindSel("#fNota","nota"); bindSel("#fSort","sort");
+  const q=v.querySelector("#q"); q.oninput=()=>{ TFIL.q=q.value; TFIL.page=1; draw(); };
+  function filtered(){ let rows=ATEND.slice(); const f=(TFIL.q||"").trim().toLowerCase();
+    if(f) rows=rows.filter(a=>(a.cliente+a.atendente+a.assunto+a.setor).toLowerCase().includes(f));
+    if(TFIL.colab) rows=rows.filter(a=>(a.atendente_id||a.atendente)===TFIL.colab);
+    if(TFIL.setor) rows=rows.filter(a=>a.setor===TFIL.setor);
+    if(TFIL.compl) rows=rows.filter(a=>a.complexidade===TFIL.compl);
+    if(TFIL.desfecho) rows=rows.filter(a=>a.desfecho===TFIL.desfecho);
+    if(TFIL.nota==="ge8") rows=rows.filter(a=>a.nota!==null&&a.nota>=8);
+    else if(TFIL.nota==="7to8") rows=rows.filter(a=>a.nota!==null&&a.nota>=7&&a.nota<8);
+    else if(TFIL.nota==="lt7") rows=rows.filter(a=>a.nota!==null&&a.nota<7);
+    const s=TFIL.sort;
+    rows.sort((a,b)=> s==="data_asc"?a.ts-b.ts : s==="nota_desc"?((b.nota??-1)-(a.nota??-1)) : s==="nota_asc"?((a.nota??99)-(b.nota??99)) : b.ts-a.ts);
+    return rows;
+  }
+  function draw(){ const all=filtered(); const totalP=Math.max(1,Math.ceil(all.length/PAGE_SIZE));
+    if(TFIL.page>totalP) TFIL.page=totalP; if(TFIL.page<1) TFIL.page=1;
+    const start=(TFIL.page-1)*PAGE_SIZE, rows=all.slice(start,start+PAGE_SIZE);
+    const body=v.querySelector("#detBody");
+    if(!all.length){ body.innerHTML=`<tr><td colspan="8" class="empty">${ATEND.length?"Nenhum atendimento encontrado.":"Ainda não há análises."}</td></tr>`; v.querySelector("#detPager").innerHTML=""; return; }
     body.innerHTML=rows.map(a=>{ const i=ATEND.indexOf(a);
-      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}${a.hora?`<div class="sub" style="font-size:11px">${a.hora}</div>`:""}</td>
-      <td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td>
-      <td>${esc(a.cliente)}</td>
-      <td class="hide-md">${esc(a.assunto)}</td>
-      <td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span></td>
-      <td class="hide-md"><span class="chip"><span class="dot" style="background:${a.complexidade?cxColor[a.complexidade]||'var(--muted)':'var(--muted)'}"></span>${a.complexidade?cxLabel[a.complexidade]||"—":"—"}</span></td>
-      <td>${sinaisPreview(a)}</td>
-      <td class="right"><div class="row-actions">
-        <button class="view-btn" data-eval="${i}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Avaliação</button>
-        ${a.empresa_id?`<button class="view-btn ghost" data-emp="${a.empresa_id}">Cliente</button>`:""}
-      </div></td></tr>`;
+      const notaTip=`Resolução ${fmt1(a.r.v)} · Rapidez ${fmt1(a.ra.v)} · Satisfação ${fmt1(a.s.v)} · Final ${fmt1(a.nota)}`;
+      const desfTip=a.desfecho?` · Desfecho: ${desfechoTxt[a.desfecho]||a.desfecho}`:"";
+      return `<tr>
+        <td class="sub num" style="white-space:nowrap" title="Início do atendimento: ${escAttr(a.dataHora)}">${a.data}${a.hora?`<div class="sub" style="font-size:11px">${a.hora}</div>`:""}</td>
+        <td class="r-name" style="white-space:nowrap" title="Setor: ${escAttr(a.setor)}">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td>
+        <td title="${a.cliente!=='—'?'Cliente: '+escAttr(a.cliente):'Cliente não vinculado'}">${esc(a.cliente)}${a.desfecho?`<div class="sub" style="font-size:11px">${esc(desfechoCurto(a.desfecho))}</div>`:""}</td>
+        <td class="hide-md">${esc(a.assunto)}</td>
+        <td class="center"><span class="nota ${notaClass(a.nota)} num" title="${escAttr(notaTip+desfTip)}">${fmt1(a.nota)}</span></td>
+        <td class="hide-md"><span class="chip" title="${escAttr(a.cx_just||'Complexidade '+(cxLabel[a.complexidade]||''))}"><span class="dot" style="background:${a.complexidade?cxColor[a.complexidade]||'var(--muted)':'var(--muted)'}"></span>${a.complexidade?cxLabel[a.complexidade]||"—":"—"}</span></td>
+        <td>${sinaisPreview(a)}</td>
+        <td class="right"><div class="row-actions">
+          <button class="view-btn" data-eval="${i}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Avaliação</button>
+          ${a.empresa_id?`<button class="view-btn ghost" data-emp="${a.empresa_id}">Cliente</button>`:""}
+        </div></td></tr>`;
     }).join("");
+    v.querySelector("#detPager").innerHTML=pagerHTML(all.length,TFIL.page,totalP,start,rows.length);
+    v.querySelectorAll("#detPager [data-pg]").forEach(b=>b.onclick=()=>{ TFIL.page=+b.dataset.pg; draw(); window.scrollTo({top:0,behavior:"smooth"}); });
     bindActions();
-  };
-  q.addEventListener("input",()=>draw(q.value)); draw("");
+  }
+  draw();
 }
 
 // ---------- CLIENTES ----------
@@ -519,11 +630,12 @@ function openModal(html){ modal.innerHTML=html; overlay.classList.add("open"); m
   const x=modal.querySelector("[data-close]"); if(x)x.onclick=closeModal; }
 
 const tipoTxt={dialogo:"Diálogo",documentos:"Envio de documentos",transferencia:"Transferência",outro:"Outro"};
-function transcriptHTML(t){ if(!t) return '<div class="sub">Sem transcrição.</div>';
+function transcriptHTML(t,nomeAt,nomeCl){ if(!t) return '<div class="sub">Sem transcrição.</div>';
   return t.split("\n").filter(l=>l.trim()).map(l=>{ const m=l.match(/^(?:\[([^\]]+)\]\s*)?(ATENDENTE|CLIENTE):\s?([\s\S]*)$/);
     if(!m) return `<div class="msg cl">${esc(l)}</div>`;
     const who=m[2]==="ATENDENTE"?"at":"cl"; const when=m[1]?`<span class="when">${esc(m[1])}</span>`:"";
-    return `<div class="msg ${who}"><span class="who">${m[2]}${when}</span>${esc(m[3])}</div>`; }).join("");
+    const nome=m[2]==="ATENDENTE"?(nomeAt||"Atendente"):(nomeCl&&nomeCl!=="—"?nomeCl:"Cliente");
+    return `<div class="msg ${who}"><span class="who">${esc(nome)}${when}</span>${esc(m[3])}</div>`; }).join("");
 }
 function openAvaliacao(i){
   const a=ATEND[i]; const tag=a.nota===null?"Sem nota":(a.nota>=8?"Bom":(a.nota>=6?"Regular":"Crítico"));
@@ -553,7 +665,8 @@ function openAvaliacao(i){
       ${a.melhorias.length?`<div class="panel"><h4>Oportunidades de melhoria</h4><ul class="melhorias">${a.melhorias.map(m=>`<li>${esc(m)}</li>`).join("")}</ul></div>`:""}
       ${a.errosPt.length?`<div class="panel"><h4>Apontamentos de português</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${a.errosPt.map(e=>`<span class="chip">${esc(e)}</span>`).join("")}</div></div>`:""}
       ${(a.riscoTroca==="possivel"||a.riscoTroca==="provavel")?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Risco de troca de contabilidade · ${a.riscoTroca}</h4><div class="prose">${esc(a.churnMotivo||"Sinais identificados na conversa.")}</div></div>`:""}
-      <div class="panel"><h4>Conversa completa</h4><div class="conversa">${transcriptHTML(a.transcript)}</div></div>
+      ${a.docErrado?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Documento enviado errado ao cliente</h4><div class="prose">${esc(a.docErradoDetalhe||"O atendente enviou um documento incorreto durante o atendimento.")}</div></div>`:""}
+      <div class="panel"><h4>Conversa completa</h4><div class="conversa">${transcriptHTML(a.transcript,a.atendente,a.cliente)}</div></div>
     </div>`);
 }
 
