@@ -169,6 +169,44 @@
   .link-name{color:var(--ink);font-weight:600;cursor:pointer;border:none;background:none;font:inherit;padding:0;text-align:left}
   .link-name:hover{color:var(--accent);text-decoration:underline}
   td[title],span[title],.chip[title]{cursor:help}
+  th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:var(--ink)}
+  th.sortable .arw{opacity:.5;font-size:10px;margin-left:3px}
+
+  /* submenu da dashboard */
+  .subnav{display:flex;gap:4px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin:22px 0 4px;box-shadow:var(--shadow)}
+  .subnav button{flex:1;min-width:150px;border:none;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);padding:10px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+  .subnav button:hover{color:var(--ink)}
+  .subnav button.on{background:var(--accent-soft);color:var(--accent)}
+
+  /* mini kpi (pendências) */
+  .mini-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+  .mini-kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .mini-kpi .n{font-family:"Sora",sans-serif;font-size:24px;font-weight:700;line-height:1.1}
+  .mini-kpi .l{font-size:12px;color:var(--muted);margin-top:3px}
+
+  /* risco / status cliente */
+  .risco{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums;padding:4px 9px;border-radius:8px;display:inline-block;min-width:40px;text-align:center;font-size:13px}
+  .risco.saudavel{color:var(--good);background:var(--good-soft)}.risco.alerta{color:var(--warn);background:var(--warn-soft)}.risco.critico{color:var(--crit);background:var(--crit-soft)}
+  .st-ic{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px}
+  .st-ic.saudavel{color:var(--good);background:var(--good-soft)}.st-ic.alerta{color:var(--warn);background:var(--warn-soft)}.st-ic.critico{color:var(--crit);background:var(--crit-soft)}
+
+  /* card de equipe (análise por setor) */
+  .team{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+  .team.risco{border-color:color-mix(in srgb,var(--crit) 35%,transparent);background:color-mix(in srgb,var(--crit-soft) 55%,var(--surface))}
+  .team .th{display:flex;align-items:flex-start;gap:12px}
+  .team .rank{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:"Sora",sans-serif;font-weight:700;background:var(--accent-soft);color:var(--accent);flex:none}
+  .team .rank.gold{background:#fdf3d6;color:#b7791f}.team .rank.silver{background:#eef0f5;color:#6b7280}.team .rank.bronze{background:#f6e9dd;color:#a9611f}
+  .team .tname{font-family:"Sora",sans-serif;font-weight:700;font-size:16px}
+  .team .tmeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .team .tscores{display:flex;gap:22px;margin-left:auto;text-align:right}
+  .team .tscores .sc .v{font-family:"Sora",sans-serif;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+  .team .tscores .sc .k{font-size:11px;color:var(--muted)}
+  .team .tclientes{display:flex;gap:14px;font-size:12.5px;flex-wrap:wrap}
+  .team .tclientes span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+  .team .tacts{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px}
+
+  /* aviso / vazio elegante */
+  .notice{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);border-radius:12px;padding:16px 18px;color:var(--accent-deep);font-size:13px;line-height:1.6}
 
   /* login */
   #login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:80;padding:20px}
@@ -196,6 +234,7 @@
   const SUPABASE_KEY = "sb_publishable_bDvvjpuVzD54iAlAHXMhmw_asJ0XMKF";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <div id="login">
   <form class="login-card" id="loginForm">
@@ -242,8 +281,10 @@
 <script>
 let ATEND=[], RAW=[], USERS={}, EMPRESAS={}, CONTATOS={}, CONTESTS={}, sb=null, ME="";
 let TAB="dashboard";
+let DSUB="colab"; // colab | health | setores | servico
 let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
 let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
+let HFIL={status:"",q:"",sort:"risco_desc"};
 const PAGE_SIZE=30;
 
 // ---------- helpers ----------
@@ -328,7 +369,8 @@ function mapRow(r){
     satisfacao:r.satisfacao_cliente||null, transcript:r.transcript||"",
     desfecho:r.desfecho||null, aderencia:{v:num(r.aderencia_jeito_resilcon),j:r.aderencia_justificativa||"—"},
     errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null,
-    docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null
+    docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null,
+    servico:r.servico||null
   };
   a.cliente = clienteNome(a);
   a.empresa_id = empresaIdDe(a);
@@ -383,6 +425,17 @@ function render(){ renderTabs(); const v=document.getElementById("view");
 
 // ---------- DASHBOARD ----------
 function comNota(list){ return list.filter(a=>a.nota!==null); }
+function viewDashboard(v){
+  const subs=[["colab","Performance por Colaborador"],["health","Health Score Clientes"],["setores","Análise por Setor"],["servico","Análise por Serviço"]];
+  v.innerHTML=`<div class="subnav">${subs.map(([k,l])=>`<button data-sub="${k}" class="${DSUB===k?'on':''}">${esc(l)}</button>`).join("")}</div><div id="dsub"></div>`;
+  v.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{ DSUB=b.dataset.sub; viewDashboard(v); });
+  const c=v.querySelector("#dsub");
+  if(DSUB==="health") viewHealth(c);
+  else if(DSUB==="setores") viewSetorAnalise(c);
+  else if(DSUB==="servico") viewServico(c);
+  else viewPerfColab(c);
+  bindActions();
+}
 function dashFiltros(){
   const setores=setoresList(), colabs=colabsList();
   const seg=(k,l)=>`<button data-preset="${k}" class="${DFIL.preset===k?'on':''}">${l}</button>`;
@@ -400,7 +453,7 @@ function dashFiltros(){
     <div class="search" style="min-width:180px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fBusca" type="search" placeholder="Buscar colaborador..."></div>
   </div>`;
 }
-function viewDashboard(v){
+function viewPerfColab(v){
   const base=filtraDash();
   const cn=comNota(base), total=base.length;
   const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
@@ -454,6 +507,206 @@ function viewDashboard(v){
   v.querySelector("#fSort").onchange=e=>{ DFIL.sort=e.target.value; render(); };
   const fb=v.querySelector("#fBusca"); if(fb) fb.oninput=()=>{ const f=fb.value.trim().toLowerCase();
     v.querySelectorAll("tr[data-name]").forEach(tr=>{ tr.hidden=f&&!tr.getAttribute("data-name").includes(f); }); };
+}
+
+// ---------- HEALTH SCORE CLIENTES ----------
+function reclamacoesEmpresa(empId){ let n=0; ATEND.forEach(a=>{ if(a.empresa_id===empId && CONTESTS[a.id]) n++; }); return n; }
+function clienteScore(empId){
+  const ag=empresaAgg(empId);
+  const cn=ag.list.filter(a=>a.nota!==null);
+  const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab;
+  const ratio=cn.length?ab/cn.length:0;
+  const reclam=reclamacoesEmpresa(empId);
+  let risco=ag.media!==null?(10-ag.media)/2:2.5;
+  if(ag.churn) risco+=1.2;
+  risco+=Math.min(1,ratio*2);
+  risco+=Math.min(1,reclam*0.5);
+  risco=Math.max(1,Math.min(5,risco));
+  let status="saudavel";
+  if(ag.churn||risco>=3.5||(ag.media!==null&&ag.media<6.5)) status="critico";
+  else if(risco>=2.5||ratio>=0.25||reclam>0||(ag.media!==null&&ag.media<7.5)) status="alerta";
+  return {...ag,ab,ac,ratio,reclam,risco:Math.round(risco*10)/10,status,notas:cn.length};
+}
+const stTxt={saudavel:"Saudável",alerta:"Alerta",critico:"Crítico"};
+const stIcon={saudavel:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
+  alerta:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>',
+  critico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>'};
+function viewHealth(v){
+  const ids=[...new Set(ATEND.map(a=>a.empresa_id).filter(Boolean))];
+  const clientes=ids.map(id=>({id,emp:EMPRESAS[id],sc:clienteScore(id)})).filter(x=>x.emp);
+  const nCrit=clientes.filter(x=>x.sc.status==="critico").length;
+  const nAlerta=clientes.filter(x=>x.sc.status==="alerta").length;
+  const nSaud=clientes.filter(x=>x.sc.status==="saudavel").length;
+  const tot=clientes.length, pc=n=>tot?((n/tot*100).toFixed(1)+"% do total"):"—";
+  // pendências de vínculo
+  const semVinc=ATEND.filter(a=>!a.empresa_id&&a.contact_id);
+  const contatosSem=[...new Set(semVinc.map(a=>a.contact_id))];
+  const notasBaixasSem=semVinc.filter(a=>a.nota!==null&&a.nota<7).length;
+  // filtro + ordenação da tabela
+  let rows=clientes.slice();
+  if(HFIL.status) rows=rows.filter(x=>x.sc.status===HFIL.status);
+  const fq=(HFIL.q||"").trim().toLowerCase();
+  if(fq) rows=rows.filter(x=>((x.emp.nome||"")+(x.emp.apelido||"")+(x.emp.cnpj||"")).toLowerCase().includes(fq));
+  const srt=HFIL.sort, ordST={critico:0,alerta:1,saudavel:2};
+  rows.sort((a,b)=> srt==="nome"?(( a.emp.apelido||a.emp.nome||"").localeCompare(b.emp.apelido||b.emp.nome||""))
+    : srt==="media_desc"?((b.sc.media??-1)-(a.sc.media??-1))
+    : srt==="media_asc"?((a.sc.media??99)-(b.sc.media??99))
+    : srt==="qtd_desc"?(b.sc.count-a.sc.count)
+    : srt==="status"?(ordST[a.sc.status]-ordST[b.sc.status])
+    : (b.sc.risco-a.sc.risco));
+  const kpis=[
+    {ic:"violet",svg:'<circle cx="9" cy="8" r="3.2"/><path d="M15 21v-1a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v1"/><circle cx="17" cy="7" r="2.6"/><path d="M21 21v-1a4 4 0 0 0-3-3.8"/>',lbl:"Total de clientes",val:tot,sub:""},
+    {ic:"red",svg:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',lbl:"Críticos",val:nCrit,sub:pc(nCrit)},
+    {ic:"amber",svg:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',lbl:"Alerta",val:nAlerta,sub:pc(nAlerta)},
+    {ic:"green",svg:'<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',lbl:"Saudáveis",val:nSaud,sub:pc(nSaud)}
+  ];
+  const th=(k,l,cls)=>`<th class="sortable ${cls||''}" data-sort="${k}">${l}${HFIL.sort===k?'<span class="arw">▼</span>':''}</th>`;
+  v.innerHTML=`
+  <div class="page-head"><h2>Health Score de Clientes</h2><p>saúde do relacionamento com base nas avaliações · risco maior = mais atenção</p></div>
+  <div class="filters">
+    <select class="fsel" id="hStatus"><option value="">Todos os status</option><option value="critico" ${HFIL.status==='critico'?'selected':''}>Só críticos</option><option value="alerta" ${HFIL.status==='alerta'?'selected':''}>Só alerta</option><option value="saudavel" ${HFIL.status==='saudavel'?'selected':''}>Só saudáveis</option></select>
+    <select class="fsel" id="hSort">
+      <option value="risco_desc" ${HFIL.sort==='risco_desc'?'selected':''}>Ordenar: maior risco</option>
+      <option value="media_asc" ${HFIL.sort==='media_asc'?'selected':''}>Ordenar: menor média</option>
+      <option value="media_desc" ${HFIL.sort==='media_desc'?'selected':''}>Ordenar: maior média</option>
+      <option value="qtd_desc" ${HFIL.sort==='qtd_desc'?'selected':''}>Ordenar: mais atendimentos</option>
+      <option value="nome" ${HFIL.sort==='nome'?'selected':''}>Ordenar: nome (A-Z)</option>
+    </select>
+    <div class="search" style="min-width:200px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="hBusca" type="search" placeholder="Buscar cliente ou CNPJ..." value="${escAttr(HFIL.q)}"></div>
+  </div>
+  <section><div class="kpis">${kpis.map(t=>`<div class="tile"><div class="ic ${t.ic}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg></div><div><div class="lbl">${t.lbl}</div><div class="val num">${t.val}${t.sub?`<small>${t.sub}</small>`:""}</div></div></div>`).join("")}</div></section>
+  ${contatosSem.length?`<section><div class="sec-head"><h2>Pendências de vínculo</h2><span class="hint">contatos avaliados que ainda não estão ligados a uma empresa · o risco deles fica de fora da conta acima</span></div>
+    <div class="mini-kpis">
+      <div class="mini-kpi"><div class="n num" style="color:var(--crit)">${contatosSem.length}</div><div class="l">Contatos sem vínculo</div></div>
+      <div class="mini-kpi"><div class="n num">${semVinc.length}</div><div class="l">Avaliações afetadas</div></div>
+      <div class="mini-kpi"><div class="n num" style="color:var(--warn)">${notasBaixasSem}</div><div class="l">Notas &lt; 7 sem vínculo</div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><table><thead><tr><th>Contato</th><th class="center">Atend.</th><th class="center hide-md">Média</th><th class="center">Notas &lt; 7</th><th class="hide-md">Setores</th><th class="hide-md">Último</th><th class="right">Ação</th></tr></thead><tbody>${
+      contatosSem.map(cid=>{ const c=CONTATOS[cid]||{}; const l=ATEND.filter(a=>a.contact_id===cid);
+        const cn=l.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+        const ab=cn.filter(a=>a.nota<7).length; const setores=[...new Set(l.map(a=>a.setor).filter(s=>s&&s!=="—"))];
+        const ult=l.map(a=>a.ts).sort((x,y)=>y-x)[0];
+        return `<tr><td class="r-name">${esc(c.nome||cid)}<div class="sub num">${esc(c.telefone||"")}</div></td><td class="center num">${l.length}</td><td class="center hide-md"><span class="score-num" style="color:${scoreColor(m)}">${fmt1(m)}</span></td><td class="center num">${ab?`<span style="color:var(--crit);font-weight:600">${ab}</span>`:'<span class="sub">—</span>'}</td><td class="sub hide-md">${esc(setores.slice(0,2).join(", ")||"—")}${setores.length>2?` +${setores.length-2}`:""}</td><td class="sub hide-md num">${fmtDate(new Date(ult).toISOString())}</td><td class="right"><button class="view-btn" data-link="${esc(cid)}">Vincular</button></td></tr>`;
+      }).join("")
+    }</tbody></table></div></section>`:""}
+  <section><div class="sec-head"><h2>Análise por cliente</h2><span class="hint">${rows.length} de ${tot} · clique no cliente para abrir</span></div>
+    <div class="card"><table><thead><tr>${th("nome","Cliente")}${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center hide-md">Notas &lt; 7</th><th class="center hide-md">Notas ≥ 7</th><th class="center hide-md">Reclam.</th>${th("risco_desc","Risco","center")}${th("status","Status","center")}</tr></thead><tbody>${
+      rows.length?rows.map(x=>`<tr><td><button class="link-name" data-emp="${x.id}">${esc(x.emp.apelido||x.emp.nome)}</button><div class="sub num">${esc(fmtCnpj(x.emp.cnpj))}</div></td>
+        <td class="center num">${x.sc.count}</td>
+        <td class="center"><span class="score-num" style="color:${scoreColor(x.sc.media)}">${fmt1(x.sc.media)}</span></td>
+        <td class="center num hide-md">${x.sc.ab?`<span style="color:var(--crit);font-weight:600">${x.sc.ab}</span>`:'<span class="sub">0</span>'}</td>
+        <td class="center num hide-md" style="color:var(--good)">${x.sc.ac}</td>
+        <td class="center num hide-md">${x.sc.reclam?`<span style="color:var(--crit);font-weight:600">${x.sc.reclam}</span>`:'<span class="sub">—</span>'}</td>
+        <td class="center"><span class="risco ${x.sc.status}" title="Score de risco de 1 a 5 (maior = mais atenção)">${x.sc.risco.toFixed(1).replace(".",",")}</span></td>
+        <td class="center"><span class="st-ic ${x.sc.status}" title="${stTxt[x.sc.status]}">${stIcon[x.sc.status]}</span></td></tr>`).join("")
+      :`<tr><td colspan="8" class="empty">Nenhum cliente no filtro.</td></tr>`
+    }</tbody></table></div></section>`;
+  const hs=v.querySelector("#hStatus"); if(hs) hs.onchange=()=>{ HFIL.status=hs.value; viewHealth(v); };
+  const ho=v.querySelector("#hSort"); if(ho) ho.onchange=()=>{ HFIL.sort=ho.value; viewHealth(v); };
+  const hb=v.querySelector("#hBusca"); if(hb) hb.oninput=()=>{ HFIL.q=hb.value; const cur=hb; viewHealth(v); const nb=v.querySelector("#hBusca"); if(nb){ nb.focus(); nb.setSelectionRange(cur.value.length,cur.value.length); } };
+  v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ HFIL.sort=t.dataset.sort; viewHealth(v); });
+  bindActions();
+}
+
+// ---------- ANÁLISE POR SETOR (ranking de equipes) ----------
+function setorAgg(setor){
+  const list=ATEND.filter(a=>a.setor===setor);
+  const cn=list.filter(a=>a.nota!==null);
+  const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+  const satVals=list.map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x));
+  const satisf=satVals.length?satVals.reduce((s,n)=>s+n,0)/satVals.length:null;
+  const colabs=[...new Set(list.map(a=>a.atendente_id||a.atendente))];
+  const empIds=[...new Set(list.map(a=>a.empresa_id).filter(Boolean))];
+  let cr=0,al=0,sa=0; empIds.forEach(id=>{ const st=clienteScore(id).status; if(st==="critico")cr++;else if(st==="alerta")al++;else sa++; });
+  return {setor,list,qtd:list.length,media,satisf,colabs,empIds,cr,al,sa};
+}
+function viewSetorAnalise(v){
+  const setores=setoresList().filter(s=>s&&s!=="—");
+  let teams=setores.map(setorAgg).filter(t=>t.qtd>0).sort((a,b)=>(b.satisf??-1)-(a.satisf??-1));
+  const medalha=i=>i===0?"gold":i===1?"silver":i===2?"bronze":"";
+  v.innerHTML=`
+  <div class="page-head"><h2>Análise por Setor</h2><p>ranking de equipes por satisfação · clique em ver equipe para o detalhe dos colaboradores</p></div>
+  ${teams.length?`<div class="grid-cards" style="grid-template-columns:1fr;gap:14px">${teams.map((t,i)=>{
+    const risco=t.empIds.length&&t.cr/t.empIds.length>=0.5;
+    return `<div class="team ${risco?'risco':''}">
+      <div class="th"><div class="rank ${medalha(i)}">${i+1}</div>
+        <div><div class="tname">${esc(t.setor)}${risco?' <span class="chip churn" style="vertical-align:middle">⚠ clientes em risco</span>':''}</div>
+        <div class="tmeta">${t.colabs.length} colaborador(es) · ${t.qtd} avaliação(ões) · ${t.empIds.length} cliente(s)</div></div>
+        <div class="tscores"><div class="sc"><div class="v" style="color:${scoreColor(t.media)}">${fmt1(t.media)}</div><div class="k">Score equipe</div></div><div class="sc"><div class="v" style="color:${scoreColor(t.satisf)}">${fmt1(t.satisf)}</div><div class="k">Satisfação</div></div></div>
+      </div>
+      <div class="tclientes"><span><span class="dot" style="background:var(--crit)"></span>${t.cr} em risco</span><span><span class="dot" style="background:var(--warn)"></span>${t.al} em atenção</span><span><span class="dot" style="background:var(--good)"></span>${t.sa} saudáveis</span></div>
+      <div class="tacts"><button class="view-btn" data-team="${escAttr(t.setor)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M15 21v-1a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v1"/></svg>Ver equipe</button><button class="view-btn ghost" data-teamevo="${escAttr(t.setor)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 7-7"/></svg>Ver evolução</button></div>
+    </div>`;
+  }).join("")}</div>`:`<div class="notice">Ainda não há atendimentos com setor definido para montar o ranking.</div>`}`;
+  v.querySelectorAll("[data-team]").forEach(b=>b.onclick=()=>openSetorEquipe(b.dataset.team));
+  v.querySelectorAll("[data-teamevo]").forEach(b=>b.onclick=()=>{ DFIL.setor=b.dataset.teamevo; TAB="setor"; render(); });
+}
+function openSetorEquipe(setor){
+  const t=setorAgg(setor);
+  const map=new Map();
+  t.list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{key:k,nome:a.atendente,list:[]}); map.get(k).list.push(a); });
+  let colabs=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+    const ab=cn.filter(a=>a.nota<7).length; return {...g,qtd:g.list.length,media:m,ab}; }).sort((a,b)=>(b.media??-1)-(a.media??-1));
+  const criticos=colabs.filter(c=>c.media!==null&&c.media<7);
+  const linha=(c,idx)=>`<div class="mini-row"><div class="mr-l"><div class="t">${idx!=null?`<span class="sub num">${idx}º </span>`:""}<button class="link-name" data-col="${escAttr(String(c.key))}">${esc(c.nome)}</button></div><div class="s">${c.qtd} atend. · ${c.ab} nota(s) &lt; 7</div></div><span class="nota ${notaClass(c.media)} num">${fmt1(c.media)}</span></div>`;
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Equipe · ${t.colabs.length} colaborador(es)</div><h3>${esc(setor)}</h3>
+      <div class="m-chips"><span class="m-chip">${t.qtd} avaliação(ões)</span><span class="m-chip">${t.empIds.length} cliente(s)</span>${t.cr?`<span class="m-chip">⚠ ${t.cr} em risco</span>`:""}</div></div>
+      <div class="m-score"><div class="big">${fmt1(t.satisf)}</div><div class="of">satisf.</div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Resumo da equipe</h4><div class="grid2">
+        <div class="field"><div class="k">Score da equipe</div><div class="v" style="color:${scoreColor(t.media)};font-weight:600">${fmt1(t.media)}</div></div>
+        <div class="field"><div class="k">Satisfação</div><div class="v" style="color:${scoreColor(t.satisf)};font-weight:600">${fmt1(t.satisf)}</div></div>
+        <div class="field"><div class="k">Clientes saudáveis</div><div class="v" style="color:var(--good)">${t.sa}</div></div>
+        <div class="field"><div class="k">Clientes em risco</div><div class="v" style="color:var(--crit)">${t.cr}</div></div>
+      </div></div>
+      ${criticos.length?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Colaboradores em atenção (média &lt; 7)</h4><div class="mini-list">${criticos.map(c=>linha(c)).join("")}</div></div>`:""}
+      <div class="panel"><h4>Ranking dos melhores atendentes</h4><div class="mini-list">${colabs.map((c,i)=>linha(c,i+1)).join("")}</div></div>
+    </div>`);
+  modal.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>{ closeModal(); openColaborador(b.dataset.col); });
+}
+
+// ---------- ANÁLISE POR SERVIÇO ----------
+function viewServico(v){
+  const withServ=ATEND.filter(a=>a.servico);
+  if(!withServ.length){
+    v.innerHTML=`<div class="page-head"><h2>Análise por Serviço</h2><p>desempenho e taxa de erro por tipo de serviço</p></div>
+    <div class="notice"><strong>Essa tela acende sozinha assim que a IA começar a classificar o serviço de cada atendimento.</strong><br>
+    Hoje a base ainda não guarda o serviço (Orientação, Impostos, Folha, Rescisão, Admissão, Férias e afins). No próximo passo eu adiciono essa classificação no robô do n8n. A partir daí, todo atendimento novo aparece aqui automaticamente, e os antigos entram se você optar por reprocessar.</div>`;
+    return;
+  }
+  const map=new Map();
+  withServ.forEach(a=>{ const k=a.servico; if(!map.has(k))map.set(k,[]); map.get(k).push(a); });
+  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>a.nota!==null);
+    const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+    const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
+    return {servico,qtd:list.length,media,comErro,pct:list.length?comErro/list.length*100:0}; })
+    .sort((a,b)=>b.qtd-a.qtd);
+  const semServ=ATEND.length-withServ.length;
+  v.innerHTML=`<div class="page-head"><h2>Análise por Serviço</h2><p>desempenho e taxa de erro por tipo de serviço${semServ?` · ${semServ} atendimento(s) ainda sem serviço classificado`:""}</p></div>
+  <div class="card"><table><thead><tr><th>Serviço</th><th class="center">Qtd</th><th class="center">Média</th><th>Com erro</th><th class="right">Ação</th></tr></thead><tbody>${
+    rows.map(r=>`<tr><td class="r-name">${esc(r.servico)}</td><td class="center num">${r.qtd}</td><td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span></td>
+      <td><div class="score-wrap"><span class="num" style="font-weight:600;color:${r.pct>=25?'var(--crit)':(r.pct>=15?'var(--warn)':'var(--ink-2)')}">${r.comErro} <span class="sub">(${r.pct.toFixed(1)}%)</span></span><span class="meter" style="width:90px"><span style="width:${Math.min(100,r.pct)}%;background:${r.pct>=25?'var(--crit)':(r.pct>=15?'var(--warn)':'var(--good)')}"></span></span></div></td>
+      <td class="right"><button class="view-btn" data-serv="${escAttr(r.servico)}">Ver</button></td></tr>`).join("")
+  }</tbody></table></div>`;
+  v.querySelectorAll("[data-serv]").forEach(b=>b.onclick=()=>openServico(b.dataset.serv));
+}
+function openServico(servico){
+  const list=ATEND.filter(a=>a.servico===servico).sort((a,b)=>b.ts-a.ts);
+  const cn=list.filter(a=>a.nota!==null); const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+  const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Serviço</div><h3>${esc(servico)}</h3>
+      <div class="m-chips"><span class="m-chip">${list.length} atendimento(s)</span><span class="m-chip">${comErro} com erro</span></div></div>
+      <div class="m-score"><div class="big">${fmt1(media)}</div><div class="of">/10</div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Atendimentos (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
+        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.cliente)}${a.erros&&a.erros.length?' · <span style="color:var(--crit)">com erro</span>':''}</div><div class="s">${a.data} · ${esc(a.atendente)}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
+      }).join("")}</div></div>
+    </div>`);
+  modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
 }
 
 // ---------- DADOS DETALHADOS ----------
@@ -645,7 +898,10 @@ function openAvaliacao(i){
     <div class="modal-head"><div class="mh-l"><div class="m-sub num">${a.dataHora} · ${esc(a.cliente)}</div><h3>${esc(a.assunto)}</h3>
       <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">WhatsApp</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}${a.churn?`<span class="m-chip">⚠ possível troca</span>`:""}</div></div>
       <div class="m-score"><div class="big">${fmt1(a.nota)}</div><div class="of">/10</div><div class="tag">${tag}</div></div>
-      <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:none">
+      <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="close-x" data-pdf="${i}" title="Baixar esta avaliação em PDF" aria-label="Baixar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
+      </div></div>
     <div class="modal-body">
       <div class="panel"><h4>Informações</h4><div class="grid2">
         <div class="field"><div class="k">Atendente</div><div class="v">${esc(a.atendente)}</div></div>
@@ -668,6 +924,52 @@ function openAvaliacao(i){
       ${a.docErrado?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Documento enviado errado ao cliente</h4><div class="prose">${esc(a.docErradoDetalhe||"O atendente enviou um documento incorreto durante o atendimento.")}</div></div>`:""}
       <div class="panel"><h4>Conversa completa</h4><div class="conversa">${transcriptHTML(a.transcript,a.atendente,a.cliente)}</div></div>
     </div>`);
+  const pb=modal.querySelector("[data-pdf]"); if(pb) pb.onclick=()=>baixarAvaliacaoPDF(i,pb);
+}
+
+// ---------- PDF da avaliação ----------
+function baixarAvaliacaoPDF(i,btn){
+  const a=ATEND[i];
+  if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
+  if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
+  const H="#1a1b28", M="#83879c", B="#e7e9f2", AC="#6d3bd6", GD="#128a5b", WN="#b7791f", CR="#cf4257";
+  const notaCor = n => n===null?M:(n>=8?GD:(n>=6?WN:CR));
+  const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
+  const box=(titulo,conteudo)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(titulo)}</div>${conteudo}</div>`;
+  const eixo=(nome,o)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #f0f1f6"><div style="flex:1"><div style="font-weight:600;font-size:12.5px;color:${H}">${nome}</div><div style="font-size:11.5px;color:${M};margin-top:2px">${esc(o.j)}</div></div><div style="font-weight:700;font-size:14px;color:${notaCor(o.v)};white-space:nowrap">${fmt1(o.v)}<span style="color:${M};font-weight:400;font-size:11px">/10</span></div></div>`;
+  const linhas=(a.transcript||"").split("\n").filter(l=>l.trim()).map(l=>{ const m=l.match(/^(?:\[([^\]]+)\]\s*)?(ATENDENTE|CLIENTE):\s?([\s\S]*)$/);
+    if(!m) return `<div style="font-size:11.5px;color:${M};padding:3px 0">${esc(l)}</div>`;
+    const isAt=m[2]==="ATENDENTE"; const nome=isAt?esc(a.atendente):(a.cliente!=="—"?esc(a.cliente):"Cliente");
+    const when=m[1]?` <span style="color:${M};font-weight:400">${esc(m[1])}</span>`:"";
+    return `<div style="padding:4px 0"><span style="font-size:10.5px;font-weight:700;color:${isAt?AC:GD}">${nome}${when}</span><div style="font-size:12px;color:${H};white-space:pre-wrap;word-break:break-word">${esc(m[3])}</div></div>`; }).join("");
+  const chips=arr=>arr.map(e=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}</span>`).join("");
+  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
+      <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Avaliação de atendimento</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(a.assunto)}</div>
+      <div style="font-size:12px;color:${M};margin-top:4px">${esc(a.dataHora)} · ${esc(a.cliente)}</div></div>
+      <div style="text-align:center;min-width:80px"><div style="font-size:34px;font-weight:700;line-height:1;color:${notaCor(a.nota)}">${fmt1(a.nota)}</div><div style="font-size:11px;color:${M}">nota final /10</div></div>
+    </div>
+    ${box("Informações",`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr><td style="padding:3px 0;color:${M};width:42%">Atendente</td><td style="padding:3px 0;font-weight:600">${esc(a.atendente)}</td></tr>
+      <tr><td style="padding:3px 0;color:${M}">Setor</td><td style="padding:3px 0">${esc(a.setor)}</td></tr>
+      <tr><td style="padding:3px 0;color:${M}">Cliente</td><td style="padding:3px 0">${esc(a.cliente)}${emp?" · "+esc(fmtCnpj(emp.cnpj)):""}</td></tr>
+      <tr><td style="padding:3px 0;color:${M}">Complexidade</td><td style="padding:3px 0">${a.complexidade?(cxLabel[a.complexidade]||a.complexidade):"—"}</td></tr>
+      <tr><td style="padding:3px 0;color:${M}">Desfecho</td><td style="padding:3px 0">${a.desfecho?(desfechoTxt[a.desfecho]||a.desfecho):"—"}</td></tr>
+      <tr><td style="padding:3px 0;color:${M}">Aderência ao padrão Resilcon</td><td style="padding:3px 0">${fmt1(a.aderencia.v)}/10</td></tr>
+      ${a.servico?`<tr><td style="padding:3px 0;color:${M}">Serviço</td><td style="padding:3px 0">${esc(a.servico)}</td></tr>`:""}</table>`)}
+    ${box("Resumo",`<div style="font-size:12.5px;line-height:1.6;color:#4a4d63">${esc(a.resumo)}</div>`)}
+    ${box("Notas por eixo",`${eixo("Resolução",a.r)}${eixo("Rapidez",a.ra)}${eixo("Satisfação",a.s)}`)}
+    ${(a.erros.length||a.sinais.length)?box("Erros e sinais de risco",chips([...a.erros,...a.sinais])):""}
+    ${a.melhorias.length?box("Oportunidades de melhoria",`<ul style="margin:0;padding-left:16px;font-size:12.5px;color:#4a4d63;line-height:1.6">${a.melhorias.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`):""}
+    ${a.docErrado?box("Documento enviado errado ao cliente",`<div style="font-size:12.5px;color:${CR}">${esc(a.docErradoDetalhe||"O atendente enviou um documento incorreto durante o atendimento.")}</div>`):""}
+    ${box("Conversa completa",`<div style="max-height:none">${linhas||'<span style="color:'+M+'">Sem transcrição.</span>'}</div>`)}
+    <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
+  </div>`;
+  const cont=document.createElement("div"); cont.innerHTML=html; document.body.appendChild(cont);
+  const nomeArq=("avaliacao_"+(a.cliente!=="—"?a.cliente:"atendimento")+"_"+a.data).replace(/[^\p{L}\p{N}]+/gu,"_").replace(/_+/g,"_").replace(/^_|_$/g,"").toLowerCase()+".pdf";
+  html2pdf().set({margin:[8,8,8,8],filename:nomeArq,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}})
+    .from(cont.firstElementChild).save().then(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } })
+    .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 
 function openEmpresa(empId){
