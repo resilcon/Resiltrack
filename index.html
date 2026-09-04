@@ -208,6 +208,42 @@
   /* aviso / vazio elegante */
   .notice{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);border-radius:12px;padding:16px 18px;color:var(--accent-deep);font-size:13px;line-height:1.6}
 
+  /* evolução setor — grade semanal */
+  .mesnav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 16px}
+  .mesnav .navb{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;display:grid;place-items:center}
+  .mesnav .navb:hover{border-color:var(--border-strong);color:var(--ink)}
+  .mesnav .hoje{border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .mesnav .hoje:hover{border-color:var(--accent);color:var(--accent)}
+  .kpi-big{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .kpi-big .box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+  .kpi-big .box .cap{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .kpi-big .box .big{font-family:"Sora",sans-serif;font-size:42px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:4px 0 2px}
+  .kpi-big .box .sub2{font-size:12.5px;color:var(--muted)}
+  .kpi-big .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:12px;background:var(--border)}
+  .kpi-big .bar span{display:block;height:100%}
+  .kpi-big .barleg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+  .kpi-big .barleg span{display:inline-flex;align-items:center;gap:6px}
+  .grid-setor{overflow-x:auto}
+  .grid-setor table{min-width:1000px;border-collapse:separate;border-spacing:0}
+  .grid-setor thead th{background:var(--surface-2);position:sticky;top:0}
+  .grid-setor td,.grid-setor th{padding:8px 8px}
+  .grid-setor td.setor-c{font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1}
+  .grid-setor thead th.setor-c{position:sticky;left:0;z-index:2}
+  .gcell{border-radius:9px;padding:7px 8px;text-align:center;min-width:82px;line-height:1.25}
+  .gcell .celm{font-family:"Sora",sans-serif;font-weight:700;font-size:15px}
+  .gcell .cela{font-size:10.5px;opacity:.8}
+  .gcell .celp{font-size:10px;margin-top:2px}
+  .gcell.g9{background:#d7f0e2;color:#0f7a4f}.gcell.g{background:#e6f5ee;color:#128a5b}
+  .gcell.a{background:#fbf1dd;color:#a86f18}.gcell.r{background:#fbe6ea;color:#c23a50}.gcell.n{color:var(--muted)}
+  .gcell.mes{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 40%,transparent)}
+  td.gclick{cursor:pointer}td.gclick:hover .gcell{outline:2px solid var(--accent);outline-offset:1px}
+  td.gsel .gcell{outline:2px solid var(--accent);outline-offset:1px}
+  .nivbar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--border);min-width:80px}
+  .nivbar span{display:block;height:100%}
+  .nivleg{display:flex;gap:8px;font-size:10.5px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+  .drill{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  @media (max-width:900px){.kpi-big,.drill{grid-template-columns:1fr}}
+
   /* login */
   #login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:80;padding:20px}
   .login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:32px 28px;text-align:center}
@@ -848,21 +884,155 @@ function viewContestacoes(v){
   }</tbody></table></div>`;
 }
 
-// ---------- EVOLUÇÃO SETOR ----------
+// ---------- EVOLUÇÃO SETOR (grade semanal) ----------
+let SFIL={ano:null,mes:null,sel:null,sort:"pct_desc"};
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const MESCURTO=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+function mesesComDados(){ const s=new Set(); ATEND.forEach(a=>{ if(!a.ts)return; const d=new Date(a.ts); s.add(d.getFullYear()+"|"+d.getMonth()); });
+  return [...s].map(k=>{const[y,m]=k.split("|").map(Number);return{ano:y,mes:m};}).sort((a,b)=>a.ano-b.ano||a.mes-b.mes); }
+function semanasDoMes(ano,mes){ const last=new Date(ano,mes+1,0).getDate(); const buckets=new Map();
+  for(let d=1;d<=last;d++){ const dt=new Date(ano,mes,d); const dow=(dt.getDay()+6)%7; const monday=new Date(ano,mes,d-dow).getTime();
+    if(!buckets.has(monday))buckets.set(monday,[]); buckets.get(monday).push(d); }
+  return [...buckets.entries()].sort((a,b)=>a[0]-b[0]).map(([k,dias],i)=>{ const di=dias[0],df=dias[dias.length-1];
+    return {n:i+1,ini:new Date(ano,mes,di,0,0,0).getTime(),fim:new Date(ano,mes,df,23,59,59).getTime(),
+      label:`${String(di).padStart(2,"0")}–${String(df).padStart(2,"0")}/${String(mes+1).padStart(2,"0")}`}; });
+}
+function aggList(list){ const cn=list.filter(a=>a.nota!==null); const q=cn.length;
+  const media=q?cn.reduce((s,a)=>s+a.nota,0)/q:null; const ac=cn.filter(a=>a.nota>=7).length;
+  return {n:list.length,q,media,ac,pctAc:q?ac/q*100:null,pctAb:q?(q-ac)/q*100:null}; }
+function atendRange(ini,fim){ return ATEND.filter(a=>a.ts>=ini&&a.ts<=fim); }
+function celClass(m){ return m===null?"n":(m>=8.5?"g9":(m>=7?"g":(m>=6?"a":"r"))); }
+function celHTML(ag,extra){ if(!ag||!ag.n) return `<div class="gcell n ${extra||''}"><span class="sub">—</span></div>`;
+  return `<div class="gcell ${celClass(ag.media)} ${extra||''}"><div class="celm num">${fmt1(ag.media)}</div><div class="cela num">${ag.n} atend.</div><div class="celp">${ag.pctAc===null?"":Math.round(ag.pctAc)+"% acima"}</div></div>`; }
+function nivelHTML(list){ const c={baixa:0,media:0,alta:0,sem:0}; list.forEach(a=>{ if(a.complexidade&&c[a.complexidade]!==undefined)c[a.complexidade]++; else c.sem++; });
+  const tot=list.length||1; const seg=(n,col)=>`<span style="width:${n/tot*100}%;background:${col}"></span>`;
+  return `<div class="nivbar">${seg(c.baixa,"var(--good)")}${seg(c.media,"var(--warn)")}${seg(c.alta,"var(--crit)")}${seg(c.sem,"var(--border-strong)")}</div>
+    <div class="nivleg"><span>${c.baixa} N1</span><span>${c.media} N2</span><span>${c.alta} N3</span>${c.sem?`<span>${c.sem} s/cl</span>`:""}</div>`; }
+
 function viewSetor(v){
-  // agrupa por setor -> médias
-  const map=new Map();
-  ATEND.forEach(a=>{ if(a.nota===null)return; const k=a.setor||"—"; if(!map.has(k))map.set(k,[]); map.get(k).push(a.nota); });
-  const rows=[...map.entries()].map(([setor,notas])=>{ const q=notas.length,m=notas.reduce((s,n)=>s+n,0)/q,ac=notas.filter(n=>n>=7).length,p=ac/q*100;
-    return {setor,q,media:m,pct:p}; }).sort((a,b)=>b.pct-a.pct);
-  const cn=comNota(ATEND); const gMedia=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const gPct=cn.length?Math.round(cn.filter(a=>a.nota>=7).length/cn.length*100):0;
-  v.innerHTML=`<div class="page-head"><h2>Evolução por Setor</h2><p>desempenho por setor, ordenado por % de notas ≥ 7</p></div>
-  <section><div class="kpis" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><div class="ic green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 7-7"/></svg></div><div><div class="lbl">Média geral</div><div class="val num">${fmt1(gMedia)}</div></div></div><div class="tile"><div class="ic violet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></div><div><div class="lbl">Notas ≥ 7</div><div class="val num">${gPct}%</div></div></div></div></section>
-  <section><div class="card"><table><thead><tr><th>Setor</th><th class="center">Atend.</th><th class="center">Média</th><th class="center">% ≥ 7</th><th>Desempenho</th></tr></thead><tbody>${
-    rows.length?rows.map(r=>{ const st=r.pct>=80?"good":(r.pct>=60?"warn":"crit");
-      return `<tr><td class="r-name">${esc(r.setor)}</td><td class="center num">${r.q}</td><td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span></td><td class="center num">${Math.round(r.pct)}%</td><td><div class="score-wrap"><span class="meter" style="width:120px"><span style="width:${r.pct}%;background:${st==='good'?'var(--good)':(st==='warn'?'var(--warn)':'var(--crit)')}"></span></span></div></td></tr>`;
-    }).join(""):`<tr><td colspan="5" class="empty">Sem dados.</td></tr>`
-  }</tbody></table></div></section>`;
+  const meses=mesesComDados();
+  if(SFIL.ano===null){ const ult=meses[meses.length-1]||{ano:new Date().getFullYear(),mes:new Date().getMonth()}; SFIL.ano=ult.ano; SFIL.mes=ult.mes; }
+  const ano=SFIL.ano, mes=SFIL.mes;
+  const mIni=new Date(ano,mes,1).getTime(), mFim=new Date(ano,mes+1,0,23,59,59).getTime();
+  const pAno=mes===0?ano-1:ano, pMes=mes===0?11:mes-1;
+  const pIni=new Date(pAno,pMes,1).getTime(), pFim=new Date(pAno,pMes+1,0,23,59,59).getTime();
+  const yIni=new Date(ano,0,1).getTime();
+  const semanas=semanasDoMes(ano,mes);
+  const setores=[...new Set(ATEND.filter(a=>a.ts>=mIni&&a.ts<=mFim).map(a=>a.setor||"—"))];
+  // agrega por setor
+  let rows=setores.map(setor=>{ const inSetor=t=>t.filter(a=>(a.setor||"—")===setor);
+    const mesList=inSetor(atendRange(mIni,mFim));
+    const prevList=inSetor(atendRange(pIni,pFim));
+    const sem=semanas.map(s=>({...s,ag:aggList(inSetor(atendRange(s.ini,s.fim))),list:inSetor(atendRange(s.ini,s.fim))}));
+    return {setor,mesList,mesAg:aggList(mesList),prevAg:aggList(prevList),sem}; })
+    .filter(r=>r.mesAg.n>0);
+  const srt=SFIL.sort;
+  rows.sort((a,b)=> srt==="nome"?a.setor.localeCompare(b.setor)
+    : srt==="media_desc"?((b.mesAg.media??-1)-(a.mesAg.media??-1))
+    : srt==="qtd_desc"?(b.mesAg.n-a.mesAg.n)
+    : ((b.mesAg.pctAc??-1)-(a.mesAg.pctAc??-1)) );
+  // kpis do mês e do ano
+  const mesAll=aggList(atendRange(mIni,mFim)), yearAll=aggList(atendRange(yIni,mFim));
+  const barHTML=ag=>{ const ac=ag.pctAc??0,ab=ag.pctAb??0; return `<div class="bar"><span style="width:${ac}%;background:var(--good)"></span><span style="width:${ab}%;background:var(--crit)"></span></div>
+    <div class="barleg"><span><span class="dot" style="background:var(--good)"></span>${Math.round(ac)}% acima de 7</span><span><span class="dot" style="background:var(--crit)"></span>${Math.round(ab)}% abaixo de 7</span></div>`; };
+  // navegação de mês
+  const idx=meses.findIndex(x=>x.ano===ano&&x.mes===mes);
+  const anosDisp=[...new Set(meses.map(x=>x.ano))];
+  v.innerHTML=`
+  <div class="page-head"><h2>Evolução por Setor</h2><p>desempenho semanal por setor, ordenado por % de notas ≥ 7</p></div>
+  <div class="mesnav">
+    <button class="navb" id="mPrev" ${idx<=0?"disabled":""}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <select class="fsel" id="mSel">${MESES.map((m,i)=>`<option value="${i}" ${i===mes?"selected":""}>${m}</option>`).join("")}</select>
+    <select class="fsel" id="aSel" style="max-width:110px">${anosDisp.map(y=>`<option value="${y}" ${y===ano?"selected":""}>${y}</option>`).join("")}</select>
+    <button class="navb" id="mNext" ${idx>=meses.length-1?"disabled":""}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="hoje" id="mHoje">Mês atual</button>
+    <select class="fsel" id="sSort" style="margin-left:auto">
+      <option value="pct_desc" ${srt==="pct_desc"?"selected":""}>Ordenar: maior % ≥ 7</option>
+      <option value="media_desc" ${srt==="media_desc"?"selected":""}>Ordenar: maior média</option>
+      <option value="qtd_desc" ${srt==="qtd_desc"?"selected":""}>Ordenar: mais atendimentos</option>
+      <option value="nome" ${srt==="nome"?"selected":""}>Ordenar: setor (A-Z)</option>
+    </select>
+  </div>
+  <section><div class="kpi-big">
+    <div class="box"><div class="cap">${MESES[mes]} ${ano}</div><div class="big num" style="color:${scoreColor(mesAll.media)}">${fmt1(mesAll.media)}</div><div class="sub2 num">${mesAll.n} atendimento(s)</div>${barHTML(mesAll)}</div>
+    <div class="box"><div class="cap">Acumulado ${ano} (jan–${MESCURTO[mes].toLowerCase()})</div><div class="big num" style="color:${scoreColor(yearAll.media)}">${fmt1(yearAll.media)}</div><div class="sub2 num">${yearAll.n} atendimento(s)</div>${barHTML(yearAll)}</div>
+  </div></section>
+  <div class="notice" style="margin-top:16px;background:var(--surface-2);color:var(--ink-2);border-color:var(--border)">Semanas de segunda a domingo. Clique numa semana ou na coluna do mês, em qualquer setor, para ver o top 3 de colaboradores e clientes daquele período, com os apontamentos e sugestões.</div>
+  <section><div class="card grid-setor"><table><thead><tr>
+    <th class="setor-c">Setor</th>
+    ${semanas.map(s=>`<th class="center">SEM ${s.n}<div class="sub" style="font-weight:400">${s.label}</div></th>`).join("")}
+    <th class="center">${MESCURTO[mes]}<div class="sub" style="font-weight:400">mês</div></th>
+    <th class="center">Nível</th>
+    <th class="center">${MESCURTO[pMes]}<div class="sub" style="font-weight:400">mês ant.</div></th>
+  </tr></thead><tbody>${
+    rows.length?rows.map(r=>`<tr>
+      <td class="setor-c">${esc(r.setor)}<div class="sub" style="font-weight:400">${r.mesAg.n} atend. no mês</div></td>
+      ${r.sem.map((s,i)=>{ const isSel=SFIL.sel&&SFIL.sel.setor===r.setor&&SFIL.sel.tipo==="sem"&&SFIL.sel.i===i;
+        return `<td class="center ${s.ag.n?"gclick":""} ${isSel?"gsel":""}" ${s.ag.n?`data-sel="${escAttr(r.setor)}|sem|${i}"`:""}>${celHTML(s.ag)}</td>`; }).join("")}
+      <td class="center gclick ${SFIL.sel&&SFIL.sel.setor===r.setor&&SFIL.sel.tipo==="mes"?"gsel":""}" data-sel="${escAttr(r.setor)}|mes|0">${celHTML(r.mesAg,"mes")}</td>
+      <td>${nivelHTML(r.mesList)}</td>
+      <td class="center">${celHTML(r.prevAg)}</td>
+    </tr>`).join(""):`<tr><td colspan="${semanas.length+4}" class="empty">Sem atendimentos neste mês.</td></tr>`
+  }</tbody></table></div>
+  <div class="sub" style="margin-top:8px">Nível: N1 baixa complexidade, N2 média, N3 alta, s/cl sem classificação.</div>
+  </section>
+  <div id="drill"></div>`;
+  // navegação
+  const goto=(i)=>{ if(i<0||i>=meses.length)return; SFIL.ano=meses[i].ano; SFIL.mes=meses[i].mes; SFIL.sel=null; viewSetor(v); };
+  v.querySelector("#mPrev").onclick=()=>goto(idx-1);
+  v.querySelector("#mNext").onclick=()=>goto(idx+1);
+  v.querySelector("#mHoje").onclick=()=>{ const u=meses[meses.length-1]; if(u){SFIL.ano=u.ano;SFIL.mes=u.mes;} SFIL.sel=null; viewSetor(v); };
+  v.querySelector("#mSel").onchange=e=>{ SFIL.mes=+e.target.value; SFIL.sel=null; viewSetor(v); };
+  v.querySelector("#aSel").onchange=e=>{ SFIL.ano=+e.target.value; SFIL.sel=null; viewSetor(v); };
+  v.querySelector("#sSort").onchange=e=>{ SFIL.sort=e.target.value; viewSetor(v); };
+  v.querySelectorAll("[data-sel]").forEach(td=>td.onclick=()=>{ const[setor,tipo,i]=td.dataset.sel.split("|"); SFIL.sel={setor,tipo,i:+i}; renderDrill(v); });
+  if(SFIL.sel) renderDrill(v);
+}
+function renderDrill(v){
+  const d=v.querySelector("#drill"); if(!d)return; const sel=SFIL.sel;
+  const ano=SFIL.ano,mes=SFIL.mes;
+  let ini,fim,titulo;
+  if(sel.tipo==="mes"){ ini=new Date(ano,mes,1).getTime(); fim=new Date(ano,mes+1,0,23,59,59).getTime(); titulo=`${MESES[mes]} ${ano}`; }
+  else { const s=semanasDoMes(ano,mes)[sel.i]; ini=s.ini; fim=s.fim; titulo=`Semana ${s.n} · ${s.label}`; }
+  const list=ATEND.filter(a=>(a.setor||"—")===sel.setor && a.ts>=ini && a.ts<=fim);
+  const baixas=list.filter(a=>a.nota!==null&&a.nota<7);
+  const totAb=baixas.length||1;
+  // top colaboradores por impacto em notas < 7
+  const mc=new Map(); list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!mc.has(k))mc.set(k,{key:k,nome:a.atendente,list:[]}); mc.get(k).list.push(a); });
+  const cols=[...mc.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
+    return {key:g.key,nome:g.nome,total:g.list.length,media:m,ab,contrib:ab/totAb*100}; }).filter(c=>c.ab>0).sort((a,b)=>b.ab-a.ab).slice(0,3);
+  // top clientes por menor média
+  const me=new Map(); list.forEach(a=>{ if(!a.empresa_id)return; if(!me.has(a.empresa_id))me.set(a.empresa_id,[]); me.get(a.empresa_id).push(a); });
+  const clis=[...me.entries()].map(([id,l])=>{ const cn=l.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
+    return {nome:(EMPRESAS[id]&&(EMPRESAS[id].apelido||EMPRESAS[id].nome))||"—",total:l.length,media:m,ab}; }).filter(c=>c.media!==null).sort((a,b)=>a.media-b.media).slice(0,3);
+  // apontamentos (erros) e sugestões (melhorias)
+  const cErr=new Map(); list.forEach(a=>a.erros.forEach(e=>cErr.set(e,(cErr.get(e)||0)+1)));
+  const topErr=[...cErr.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const cMel=new Map(); list.forEach(a=>a.melhorias.forEach(m=>cMel.set(m,(cMel.get(m)||0)+1)));
+  const topMel=[...cMel.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const ag=aggList(list);
+  d.innerHTML=`
+  <section><div class="sec-head"><h2>${esc(sel.setor)} · ${titulo}</h2><span class="hint">${ag.n} atendimento(s) · média ${fmt1(ag.media)} · ${baixas.length} nota(s) &lt; 7</span></div>
+  <div class="drill">
+    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Sora;font-weight:600;font-size:13px">Top 3 colaboradores · maior impacto em notas &lt; 7</div>
+      <table><thead><tr><th>Colaborador</th><th class="center">Total</th><th class="center">Média</th><th class="center">Notas &lt; 7</th><th class="center">Contrib.</th></tr></thead><tbody>${
+        cols.length?cols.map(c=>`<tr><td class="r-name"><button class="link-name" data-col="${escAttr(String(c.key))}">${esc(c.nome)}</button></td><td class="center num">${c.total}</td><td class="center"><span class="nota ${notaClass(c.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(c.media)}</span></td><td class="center num" style="color:var(--crit);font-weight:600">${c.ab}</td><td class="center num">${Math.round(c.contrib)}%</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Nenhuma nota abaixo de 7 no período. Ótimo sinal.</td></tr>`
+      }</tbody></table></div>
+    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Sora;font-weight:600;font-size:13px">Top 3 clientes · notas mais baixas</div>
+      <table><thead><tr><th>Cliente</th><th class="center">Total</th><th class="center">Média</th><th class="center">Notas &lt; 7</th></tr></thead><tbody>${
+        clis.length?clis.map(c=>`<tr><td class="r-name">${esc(c.nome)}</td><td class="center num">${c.total}</td><td class="center"><span class="nota ${notaClass(c.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(c.media)}</span></td><td class="center num">${c.ab?`<span style="color:var(--crit);font-weight:600">${c.ab}</span>`:'<span class="sub">0</span>'}</td></tr>`).join(""):`<tr><td colspan="4" class="empty">Sem clientes vinculados no período.</td></tr>`
+      }</tbody></table></div>
+  </div>
+  <div class="drill">
+    <div class="card" style="padding:16px 18px"><div style="font-family:Sora;font-weight:600;font-size:13px;margin-bottom:10px">Apontamentos do período</div>${
+      topErr.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${topErr.map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div>`:'<div class="sub">Nenhum erro apontado no período.</div>'
+    }</div>
+    <div class="card" style="padding:16px 18px"><div style="font-family:Sora;font-weight:600;font-size:13px;margin-bottom:10px">Sugestões de melhoria</div>${
+      topMel.length?`<ul class="melhorias">${topMel.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Sem sugestões registradas no período.</div>'
+    }</div>
+  </div></section>`;
+  d.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>openColaborador(b.dataset.col));
+  d.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
 // ---------- AÇÕES (bind) ----------
