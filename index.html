@@ -322,6 +322,7 @@ let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
 let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
 let HFIL={status:"",q:"",sort:"risco_desc"};
 let CFIL={q:"",status:"",servico:"",sort:"atend_desc"};
+let CLFIL={q:"",setor:"",sort:"media_desc"};
 const PAGE_SIZE=30;
 
 // ---------- helpers ----------
@@ -922,12 +923,50 @@ function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,"
 // ---------- COLABORADORES ----------
 function viewColaboradores(v){
   const map=new Map();
-  ATEND.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
-  const rows=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
-    return {...g,qtd:g.list.length,media:m}; }).sort((a,b)=>(b.media??-1)-(a.media??-1));
-  v.innerHTML=`<div class="page-head"><h2>Preview Colaborador</h2><p>desempenho individual — clique para abrir</p></div>
-  <div class="grid-cards">${rows.map(r=>`<div class="ecard" data-col="${esc(r.id||r.nome)}"><div class="top"><div><div class="en">${esc(r.nome)}</div><div class="ecnpj">${esc(r.setor)}${r.ativo===false?' · inativo':''}</div></div><span class="health ${r.media===null?'neutro':(r.media>=8?'fa':(r.media>=6?'neutro':'sensivel'))}">${fmt1(r.media)}</span></div>
-    <div class="stats"><div class="st"><div class="n">${r.qtd}</div><div class="l">atend.</div></div><div class="st"><div class="n">${cn2(r.list)}</div><div class="l">notas ≥ 7</div></div></div></div>`).join("")}</div>`;
+  ATEND.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
+  let rows=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+    const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length?ac/cn.length*100:null;
+    return {...g,qtd:g.list.length,media:m,ab,ac,pct,status:perfStatus(pct)}; });
+  const setores=setoresList();
+  if(CLFIL.setor) rows=rows.filter(r=>r.setor===CLFIL.setor);
+  const fq=(CLFIL.q||"").trim().toLowerCase();
+  if(fq) rows=rows.filter(r=>(r.nome||"").toLowerCase().includes(fq));
+  const srt=CLFIL.sort;
+  rows.sort((a,b)=> srt==="nome"?(a.nome||"").localeCompare(b.nome||"")
+    : srt==="qtd_desc"?b.qtd-a.qtd
+    : srt==="media_asc"?((a.media??99)-(b.media??99))
+    : srt==="pct_desc"?((b.pct??-1)-(a.pct??-1))
+    : ((b.media??-1)-(a.media??-1)) );
+  const th=(k,l,cls)=>`<th class="sortable ${cls||''}" data-sort="${k}">${l}${CLFIL.sort===k?'<span class="arw">▼</span>':''}</th>`;
+  v.innerHTML=`<div class="page-head"><h2>Preview Colaborador</h2><p>desempenho individual · filtre, ordene e clique em relatório para o detalhe completo</p></div>
+  <div class="filters">
+    <div class="search" style="min-width:220px;max-width:320px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="clQ" type="search" placeholder="Buscar colaborador..." value="${escAttr(CLFIL.q)}"></div>
+    <select class="fsel" id="clSetor"><option value="">Todos os departamentos</option>${setores.map(s=>`<option value="${escAttr(s)}" ${CLFIL.setor===s?'selected':''}>${esc(s)}</option>`).join("")}</select>
+    <select class="fsel" id="clSort">
+      <option value="media_desc" ${srt==='media_desc'?'selected':''}>Ordenar: maior média</option>
+      <option value="media_asc" ${srt==='media_asc'?'selected':''}>Ordenar: menor média</option>
+      <option value="qtd_desc" ${srt==='qtd_desc'?'selected':''}>Ordenar: mais atendimentos</option>
+      <option value="pct_desc" ${srt==='pct_desc'?'selected':''}>Ordenar: maior % ≥ 7</option>
+      <option value="nome" ${srt==='nome'?'selected':''}>Ordenar: nome (A-Z)</option>
+    </select>
+  </div>
+  <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--crit)"></span> Crítico &lt; 70%</span><span><span class="dot" style="background:var(--warn)"></span> Atenção 70–85%</span><span><span class="dot" style="background:var(--good)"></span> Na meta ≥ 85%</span></div>
+  <div class="card grid-setor"><table style="min-width:780px"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="right">Ação</th></tr></thead><tbody>${
+    rows.length?rows.map(r=>`<tr><td><button class="link-name" data-col="${escAttr(String(r.key))}">${esc(r.nome)}</button>${r.ativo===false?'<div class="sub">inativo</div>':''}</td>
+      <td class="sub hide-md">${esc(r.setor||'—')}</td>
+      <td class="center num">${r.qtd}</td>
+      <td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span></td>
+      <td class="center num hide-md">${r.ab?`<span style="color:var(--crit);font-weight:600">${r.ab}</span>`:'<span class="sub">0</span>'}</td>
+      <td class="center">${r.pct===null?'<span class="sub">—</span>':`<span class="num" style="color:var(--good);font-weight:600">${r.ac}</span> <span class="sub">(${Math.round(r.pct)}%)</span>`}</td>
+      <td class="center"><span class="pill ${r.status==='ausente'?'neutral':r.status}"><span class="dot" style="background:currentColor"></span>${perfTxt[r.status]}</span></td>
+      <td class="right"><button class="view-btn" data-col="${escAttr(String(r.key))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M9 13h6M9 17h6M8 21h8a2 2 0 0 0 2-2V8l-5-5H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z"/></svg>Relatório</button></td></tr>`).join("")
+    :`<tr><td colspan="8" class="empty">Nenhum colaborador no filtro.</td></tr>`
+  }</tbody></table></div>`;
+  const clq=v.querySelector("#clQ"); if(clq) clq.oninput=()=>{ CLFIL.q=clq.value; const val=clq.value; viewColaboradores(v); const nb=v.querySelector("#clQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
+  const cls=v.querySelector("#clSetor"); if(cls) cls.onchange=()=>{ CLFIL.setor=cls.value; viewColaboradores(v); };
+  const clo=v.querySelector("#clSort"); if(clo) clo.onchange=()=>{ CLFIL.sort=clo.value; viewColaboradores(v); };
+  v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CLFIL.sort=t.dataset.sort; viewColaboradores(v); });
+  bindActions();
 }
 function cn2(list){ return list.filter(a=>a.nota!==null&&a.nota>=7).length; }
 
@@ -1286,29 +1325,131 @@ function baixarClientePDF(empId,btn){
     .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 
+function colaboradorReport(key){
+  const list=ATEND.filter(a=>(a.atendente_id||a.atendente)===key);
+  if(!list.length) return null;
+  const nome=list[0].atendente, setor=list[0].setor;
+  const ms=[...new Set(list.map(a=>{const d=new Date(a.ts);return d.getFullYear()+"|"+d.getMonth();}))].map(k=>{const[y,m]=k.split("|").map(Number);return{ano:y,mes:m};}).sort((a,b)=>a.ano-b.ano||a.mes-b.mes);
+  const per=ms[ms.length-1]||{ano:new Date().getFullYear(),mes:new Date().getMonth()};
+  const mIni=new Date(per.ano,per.mes,1).getTime(), mFim=new Date(per.ano,per.mes+1,0,23,59,59).getTime();
+  const mesList=list.filter(a=>a.ts>=mIni&&a.ts<=mFim);
+  const semanas=semanasDoMes(per.ano,per.mes).map(s=>{ const wl=mesList.filter(a=>a.ts>=s.ini&&a.ts<=s.fim); return {...s,list:wl,ag:aggList(wl)}; }).filter(s=>s.ag.n>0);
+  semanas.forEach((s,i)=>{ if(i===0){s.trend="flat";} else { const prev=semanas[i-1].ag.media, cur=s.ag.media; s.trend=(prev===null||cur===null)?"flat":(cur>prev+0.1?"up":(cur<prev-0.1?"down":"flat")); } });
+  const comData=semanas.filter(s=>s.ag.media!==null);
+  let evol=null;
+  if(comData.length>=2){ const a0=comData[0].ag.media, a1=comData[comData.length-1].ag.media; const delta=a1-a0;
+    evol={de:a0,para:a1,delta,pct:a0?delta/a0*100:0,dir:delta>0.05?"up":(delta<-0.05?"down":"flat")}; }
+  const st=aggList(mesList);
+  const teamList=ATEND.filter(a=>(a.setor||"—")===setor && a.ts>=mIni && a.ts<=mFim);
+  const teamAg=aggList(teamList);
+  const teamColabs=new Set(teamList.map(a=>a.atendente_id||a.atendente)).size;
+  const partic=teamAg.n?st.n/teamAg.n*100:0;
+  const difMedia=(st.media!==null&&teamAg.media!==null)?st.media-teamAg.media:null;
+  const difPct=(st.pctAc!==null&&teamAg.pctAc!==null)?st.pctAc-teamAg.pctAc:null;
+  const rM=avg(mesList.map(a=>a.r.v)), raM=avg(mesList.map(a=>a.ra.v)), sM=avg(mesList.map(a=>a.s.v)), adM=avg(mesList.map(a=>a.aderencia.v));
+  const forcas=[];
+  if(rM!==null&&rM>=8.5) forcas.push(`Excelência na resolução, com média ${fmt1(rM)} nesse eixo.`);
+  if(raM!==null&&raM>=8.5) forcas.push(`Respostas rápidas e dentro do prazo, média ${fmt1(raM)} em rapidez.`);
+  if(sM!==null&&sM>=8.5) forcas.push(`Clientes satisfeitos ao final, média ${fmt1(sM)} em satisfação.`);
+  if(adM!==null&&adM>=8) forcas.push(`Forte aderência ao jeito Resilcon de atender, média ${fmt1(adM)}.`);
+  if(st.pctAc!==null&&st.pctAc>=85) forcas.push(`Consistência: ${Math.round(st.pctAc)}% das notas ficaram acima de 7.`);
+  if(!forcas.length){ const eixos=[["resolução",rM],["rapidez",raM],["satisfação",sM]].filter(e=>e[1]!==null).sort((a,b)=>b[1]-a[1]);
+    if(eixos[0]) forcas.push(`Melhor desempenho em ${eixos[0][0]}, média ${fmt1(eixos[0][1])}.`); else forcas.push("Sem destaque de desempenho no período."); }
+  const melMap=new Map(); mesList.forEach(a=>a.melhorias.forEach(m=>{ if(!melMap.has(m))melMap.set(m,a.ticket_id); }));
+  const melhorias=[...melMap.entries()].slice(0,4).map(([m,tk])=>({texto:m,ticket:tk}));
+  const baixas=mesList.filter(a=>a.nota!==null&&a.nota<7).sort((a,b)=>a.nota-b.nota).slice(0,3)
+    .map(a=>({cliente:a.cliente,motivo:(a.erros[0]||a.melhorias[0]||a.assunto||"atendimento abaixo do esperado"),ticket:a.ticket_id,nota:a.nota}));
+  const errMap=new Map(); mesList.forEach(a=>a.erros.forEach(e=>errMap.set(e,(errMap.get(e)||0)+1)));
+  const topErr=[...errMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
+  const analise=`${nome} teve média ${fmt1(st.media)} em ${st.n} atendimento(s), com ${st.pctAc===null?"—":Math.round(st.pctAc)+"%"} das avaliações acima de 7.${(st.pctAb&&st.pctAb>0)?` ${Math.round(st.pctAb)}% ficaram abaixo de 7${topErr.length?", com atenção em "+topErr.join(" e "):""}.`:""}`;
+  const plano=[]; melhorias.slice(0,3).forEach(m=>plano.push(m.texto));
+  if(evol&&evol.dir==="down") plano.push("Acompanhar de perto a queda entre as semanas e retomar o padrão das primeiras.");
+  if(!plano.length) plano.push("Manter o padrão de atendimento e acompanhar os indicadores semana a semana.");
+  return {key,nome,setor,per,mIni,mFim,mesList,semanas,evol,st,teamAg,teamColabs,partic,difMedia,difPct,rM,raM,sM,adM,forcas,melhorias,baixas,analise,plano};
+}
+const trendIco = t => t==="up"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.2"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>':(t==="down"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2.2"><path d="M3 7l6 6 4-4 7 7"/><path d="M21 16v-4h-4"/></svg>':'<span class="sub">—</span>');
+const stDotPct = pct => `<span class="dot" style="background:${pct===null?'var(--muted)':(pct>=80?'var(--good)':(pct>=60?'var(--warn)':'var(--crit)'))}"></span>`;
 function openColaborador(key){
-  const list=ATEND.filter(a=>(a.atendente_id||a.atendente)===key).sort((a,b)=>b.ts-a.ts);
-  if(!list.length)return; const nome=list[0].atendente, setor=list[0].setor;
-  const cn=list.filter(a=>a.nota!==null); const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
-  const ac=cn.filter(a=>a.nota>=7).length, ab=cn.length-ac;
-  const rM=avg(list.map(a=>a.r.v)), raM=avg(list.map(a=>a.ra.v)), sM=avg(list.map(a=>a.s.v));
+  const R=colaboradorReport(key); if(!R)return;
+  const list=R.mesList.slice().sort((a,b)=>b.ts-a.ts);
+  const perLbl=`${new Date(R.mIni).toLocaleDateString("pt-BR")} a ${new Date(R.mFim).toLocaleDateString("pt-BR")}`;
+  const evolBox=R.evol?`<div class="notice" style="${R.evol.dir==='down'?'background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 25%,transparent);color:var(--crit)':(R.evol.dir==='up'?'background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 25%,transparent);color:var(--good)':'')}">
+    <strong>${R.evol.dir==='down'?'Piorou':(R.evol.dir==='up'?'Melhorou':'Estável')} ${Math.abs(R.evol.pct).toFixed(1)}%</strong> entre a primeira e a última semana. Média ${fmt1(R.evol.de)} → ${fmt1(R.evol.para)} (${R.evol.delta>=0?'+':''}${R.evol.delta.toFixed(2).replace(".",",")} pontos).</div>`:'<div class="sub">Menos de duas semanas com dados no período.</div>';
+  const cmp=(titulo,voce,equipe,dif)=>`<div class="field"><div class="k">${titulo}</div><div style="margin-top:4px"><div style="display:flex;justify-content:space-between"><span class="sub">Você</span><strong class="num">${voce}</strong></div><div style="display:flex;justify-content:space-between"><span class="sub">Equipe</span><span class="num">${equipe}</span></div>${dif!=null?`<div style="display:flex;justify-content:space-between;margin-top:2px"><span class="sub">Diferença</span><span class="num" style="color:${dif>=0?'var(--good)':'var(--crit)'};font-weight:600">${dif>=0?'+':''}${dif}</span></div>`:""}</div></div>`;
   openModal(`
-    <div class="modal-head"><div class="mh-l"><div class="m-sub">${esc(setor)}</div><h3>${esc(nome)}</h3>
-      <div class="m-chips"><span class="m-chip">${list.length} atendimento(s)</span><span class="m-chip">${ac} nota(s) ≥ 7</span></div></div>
-      <div class="m-score"><div class="big">${fmt1(media)}</div><div class="of">/10</div></div>
-      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="modal-body">
-      <div class="panel"><h4>Médias por eixo</h4><div class="grid2">
-        <div class="field"><div class="k">Resolução</div><div class="v">${fmt1(rM)}</div></div>
-        <div class="field"><div class="k">Rapidez</div><div class="v">${fmt1(raM)}</div></div>
-        <div class="field"><div class="k">Satisfação</div><div class="v">${fmt1(sM)}</div></div>
-        <div class="field"><div class="k">Notas &lt; 7</div><div class="v" style="color:var(--crit)">${ab}</div></div>
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Relatório individual · ${esc(R.setor)}</div><h3>${esc(R.nome)}</h3>
+      <div class="m-chips"><span class="m-chip">${perLbl}</span><span class="m-chip">${R.st.n} atendimento(s)</span></div></div>
+      <div class="m-score"><div class="big">${fmt1(R.st.media)}</div><div class="of">/10</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:none">
+      <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="close-x" data-colpdf="${escAttr(String(key))}" title="Exportar relatório em PDF" aria-label="Exportar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
       </div></div>
-      <div class="panel"><h4>Atendimentos</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
+    <div class="modal-body">
+      <div class="panel"><h4>Evolução semanal</h4>${evolBox}
+        <div class="card" style="margin-top:12px"><table><thead><tr><th>Semana</th><th class="hide-md">Período</th><th class="center">Qtd</th><th class="center">Média</th><th class="center">&lt; 7</th><th class="center">≥ 7</th><th class="center">Status</th><th class="center">Tend.</th></tr></thead><tbody>${
+          R.semanas.map(s=>{ const ab=s.ag.q-s.ag.ac; return `<tr><td class="r-name">SEM ${s.n}</td><td class="sub hide-md num">${s.label}</td><td class="center num">${s.ag.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(s.ag.media)}">${fmt1(s.ag.media)}</span></td><td class="center num" style="color:var(--crit)">${ab}</td><td class="center num" style="color:var(--good)">${s.ag.ac}</td><td class="center">${stDotPct(s.ag.pctAc)}</td><td class="center">${trendIco(s.trend)}</td></tr>`; }).join("")||`<tr><td colspan="8" class="empty">Sem semanas com dados.</td></tr>`
+        }</tbody></table></div></div>
+      <div class="panel"><h4>Estatísticas do período</h4><div class="cx" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tile"><div><div class="lbl">Total</div><div class="val num">${R.st.n}</div></div></div>
+        <div class="tile"><div><div class="lbl">Média</div><div class="val num" style="color:${scoreColor(R.st.media)}">${fmt1(R.st.media)}</div></div></div>
+        <div class="tile"><div><div class="lbl">Notas &lt; 7</div><div class="val num" style="color:var(--crit)">${R.st.q-R.st.ac} <small>${R.st.pctAb===null?"":Math.round(R.st.pctAb)+"%"}</small></div></div></div>
+        <div class="tile"><div><div class="lbl">Notas ≥ 7</div><div class="val num" style="color:var(--good)">${R.st.ac} <small>${R.st.pctAc===null?"":Math.round(R.st.pctAc)+"%"}</small></div></div></div>
+      </div></div>
+      <div class="panel"><h4>Comparativo com a equipe (${esc(R.setor)})</h4><div class="grid2" style="grid-template-columns:repeat(3,1fr)">
+        ${cmp("Atendimentos",R.st.n,R.teamAg.n,null)}
+        ${cmp("Média de nota",fmt1(R.st.media),fmt1(R.teamAg.media),R.difMedia==null?null:(R.difMedia).toFixed(2).replace(".",","))}
+        ${cmp("Notas ≥ 7 (%)",(R.st.pctAc===null?"—":Math.round(R.st.pctAc)+"%"),(R.teamAg.pctAc===null?"—":Math.round(R.teamAg.pctAc)+"%"),R.difPct==null?null:Math.round(R.difPct)+" pts")}
+      </div><div class="sub" style="margin-top:8px">Equipe composta por ${R.teamColabs} colaborador(es) · sua participação: ${R.partic.toFixed(1).replace(".",",")}%</div>
+      ${(R.difMedia!=null&&R.difMedia<0)?`<div class="notice" style="margin-top:10px;background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 25%,transparent);color:var(--warn)">Oportunidade de desenvolvimento: está ${Math.abs(R.difMedia).toFixed(2).replace(".",",")} pontos abaixo da média da equipe.</div>`:(R.difMedia!=null?`<div class="notice" style="margin-top:10px;background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 25%,transparent);color:var(--good)">Acima da média da equipe em ${R.difMedia.toFixed(2).replace(".",",")} pontos.</div>`:"")}</div>
+      <div class="panel"><h4>Principais forças</h4><ul class="melhorias">${R.forcas.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></div>
+      ${R.melhorias.length?`<div class="panel"><h4>Pontos de melhoria</h4><ul class="melhorias">${R.melhorias.map(m=>`<li>${esc(m.texto)}${m.ticket?` <span class="sub">(#${esc(m.ticket)})</span>`:""}</li>`).join("")}</ul></div>`:""}
+      <div class="panel"><h4>Análise de performance</h4><div class="prose">${esc(R.analise)}</div></div>
+      ${R.baixas.length?`<div class="panel"><h4>Clientes mais afetados</h4><div class="mini-list">${R.baixas.map(b=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(b.cliente)}</div><div class="s">${esc(b.motivo)}${b.ticket?` · #${esc(b.ticket)}`:""}</div></div><span class="nota ${notaClass(b.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(b.nota)}</span></div>`).join("")}</div></div>`:""}
+      <div class="panel"><h4>Plano de ação</h4><ul class="melhorias">${R.plano.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>
+      <div class="panel"><h4>Atendimentos do período (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
         return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}</div><div class="s">${a.data} · ${esc(a.cliente)}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
       }).join("")}</div></div>
     </div>`);
   modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
+  const cb=modal.querySelector("[data-colpdf]"); if(cb) cb.onclick=()=>baixarColaboradorPDF(key,cb);
+}
+function baixarColaboradorPDF(key,btn){
+  const R=colaboradorReport(key); if(!R)return;
+  if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
+  if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",WN="#b7791f",CR="#cf4257";
+  const cor=n=>n===null?M:(n>=8?GD:(n>=6?WN:CR));
+  const perLbl=`${new Date(R.mIni).toLocaleDateString("pt-BR")} a ${new Date(R.mFim).toLocaleDateString("pt-BR")}`;
+  const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
+  const lista=arr=>`<ul style="margin:0;padding-left:16px;font-size:12.5px;color:#4a4d63;line-height:1.6">${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+  const semTable=`<table style="width:100%;font-size:11.5px;border-collapse:collapse"><tr style="color:${M}"><td>Semana</td><td>Período</td><td style="text-align:center">Qtd</td><td style="text-align:center">Média</td><td style="text-align:center">&lt;7</td><td style="text-align:center">≥7</td></tr>${R.semanas.map(s=>`<tr><td style="padding:2px 0">SEM ${s.n}</td><td>${s.label}</td><td style="text-align:center">${s.ag.n}</td><td style="text-align:center;color:${cor(s.ag.media)};font-weight:600">${fmt1(s.ag.media)}</td><td style="text-align:center;color:${CR}">${s.ag.q-s.ag.ac}</td><td style="text-align:center;color:${GD}">${s.ag.ac}</td></tr>`).join("")}</table>`;
+  const evolTxt=R.evol?`<div style="font-size:12.5px;color:${R.evol.dir==='down'?CR:(R.evol.dir==='up'?GD:H)}"><strong>${R.evol.dir==='down'?'Piorou':(R.evol.dir==='up'?'Melhorou':'Estável')} ${Math.abs(R.evol.pct).toFixed(1)}%</strong> entre a primeira e a última semana. Média ${fmt1(R.evol.de)} → ${fmt1(R.evol.para)}.</div>`:'';
+  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
+      <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório individual</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(R.nome)}</div>
+      <div style="font-size:12px;color:${M};margin-top:4px">${esc(R.setor)} · ${perLbl} · gerado em ${new Date().toLocaleDateString("pt-BR")}</div></div>
+      <div style="text-align:center;min-width:80px"><div style="font-size:34px;font-weight:700;line-height:1;color:${cor(R.st.media)}">${fmt1(R.st.media)}</div><div style="font-size:11px;color:${M}">média /10</div></div>
+    </div>
+    ${box("Evolução semanal",evolTxt+semTable)}
+    ${box("Estatísticas do período",`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr><td style="color:${M}">Total</td><td style="font-weight:600">${R.st.n}</td><td style="color:${M}">Média</td><td style="font-weight:600;color:${cor(R.st.media)}">${fmt1(R.st.media)}</td></tr><tr><td style="color:${M}">Notas abaixo de 7</td><td style="font-weight:600;color:${CR}">${R.st.q-R.st.ac} (${R.st.pctAb===null?"—":Math.round(R.st.pctAb)+"%"})</td><td style="color:${M}">Notas 7 ou mais</td><td style="font-weight:600;color:${GD}">${R.st.ac} (${R.st.pctAc===null?"—":Math.round(R.st.pctAc)+"%"})</td></tr></table>`)}
+    ${box("Comparativo com a equipe ("+esc(R.setor)+")",`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:${M}"><td></td><td style="text-align:center">Você</td><td style="text-align:center">Equipe</td><td style="text-align:center">Diferença</td></tr>
+      <tr><td>Atendimentos</td><td style="text-align:center">${R.st.n}</td><td style="text-align:center">${R.teamAg.n}</td><td style="text-align:center">${R.partic.toFixed(1).replace(".",",")}%</td></tr>
+      <tr><td>Média de nota</td><td style="text-align:center">${fmt1(R.st.media)}</td><td style="text-align:center">${fmt1(R.teamAg.media)}</td><td style="text-align:center;color:${R.difMedia>=0?GD:CR}">${R.difMedia==null?"—":(R.difMedia>=0?"+":"")+R.difMedia.toFixed(2).replace(".",",")}</td></tr>
+      <tr><td>Notas ≥ 7 (%)</td><td style="text-align:center">${R.st.pctAc===null?"—":Math.round(R.st.pctAc)+"%"}</td><td style="text-align:center">${R.teamAg.pctAc===null?"—":Math.round(R.teamAg.pctAc)+"%"}</td><td style="text-align:center;color:${R.difPct>=0?GD:CR}">${R.difPct==null?"—":(R.difPct>=0?"+":"")+Math.round(R.difPct)+" pts"}</td></tr></table>
+      <div style="font-size:11.5px;color:${M};margin-top:6px">Equipe composta por ${R.teamColabs} colaborador(es).</div>`)}
+    ${box("Principais forças",lista(R.forcas.map(esc)))}
+    ${R.melhorias.length?box("Pontos de melhoria",lista(R.melhorias.map(m=>esc(m.texto)+(m.ticket?` (#${esc(m.ticket)})`:"")))):""}
+    ${box("Análise de performance",`<div style="font-size:12.5px;color:#4a4d63;line-height:1.6">${esc(R.analise)}</div>`)}
+    ${R.baixas.length?box("Clientes mais afetados",lista(R.baixas.map(b=>esc(b.cliente)+" — "+esc(b.motivo)+(b.ticket?` (#${esc(b.ticket)})`:"")))):""}
+    ${box("Plano de ação",lista(R.plano.map(esc)))}
+    <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
+  </div>`;
+  const cont=document.createElement("div"); cont.innerHTML=html; document.body.appendChild(cont);
+  const nomeArq=("relatorio_"+(R.nome||"colaborador")).replace(/[^\p{L}\p{N}]+/gu,"_").replace(/_+/g,"_").replace(/^_|_$/g,"").toLowerCase()+".pdf";
+  html2pdf().set({margin:[8,8,8,8],filename:nomeArq,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}})
+    .from(cont.firstElementChild).save().then(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } })
+    .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 function avg(arr){ const v=arr.filter(x=>x!==null&&!isNaN(x)); return v.length?v.reduce((s,n)=>s+n,0)/v.length:null; }
 
