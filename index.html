@@ -344,6 +344,8 @@ const escAttr = s => esc(s).replace(/"/g,"&quot;");
 const perfStatus = p => p===null?"ausente":(p>=85?"good":(p>=70?"warn":"crit"));
 const perfTxt = {good:"Na meta",warn:"Atenção",crit:"Crítico",ausente:"Ausente"};
 const desfechoCurto = d => d==="sem_retorno_cliente"?"Sem retorno":(desfechoTxt[d]||d||"—");
+// atendimentos sem atendente real (robô encerrou sem encaminhar) — escondidos das telas de colaborador
+const semAtendente = a => a.atendente==="Não identificado";
 const fmtDur = min => (min===null||min===undefined||isNaN(min)||min<=0)?"—":(min<60?Math.round(min)+"min":((min/60)>=10?Math.round(min/60):(min/60).toFixed(1).replace(".",","))+"h");
 const fmtDataCurta = ts => ts?new Date(ts).toLocaleDateString("pt-BR"):"—";
 function setoresList(){ const s=new Set(); Object.values(USERS).forEach(u=>{ if(u.setor) s.add(u.setor); }); ATEND.forEach(a=>{ if(a.setor&&a.setor!=="—") s.add(a.setor); }); return [...s].sort(); }
@@ -527,7 +529,7 @@ function viewPerfColab(v){
   const cxCells=[{k:"baixa"},{k:"media"},{k:"alta"},{k:"sem",label:"Sem classificação",color:"var(--muted)"}];
   // performance por colaborador (a partir do filtro), com ausentes
   const map=new Map();
-  base.forEach(a=>{ const k=a.atendente_id||a.atendente;
+  base.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente;
     if(!map.has(k))map.set(k,{key:k,nome:a.atendente,setor:a.setor,notas:[]});
     if(a.nota!==null) map.get(k).notas.push(a.nota); });
   Object.entries(USERS).forEach(([id,u])=>{ if(u.ativo===false) return;
@@ -672,7 +674,7 @@ function setorAgg(setor){
   const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const satVals=list.map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x));
   const satisf=satVals.length?satVals.reduce((s,n)=>s+n,0)/satVals.length:null;
-  const colabs=[...new Set(list.map(a=>a.atendente_id||a.atendente))];
+  const colabs=[...new Set(list.filter(a=>!semAtendente(a)).map(a=>a.atendente_id||a.atendente))];
   const empIds=[...new Set(list.map(a=>a.empresa_id).filter(Boolean))];
   let cr=0,al=0,sa=0; empIds.forEach(id=>{ const st=clienteScore(id).status; if(st==="critico")cr++;else if(st==="alerta")al++;else sa++; });
   return {setor,list,qtd:list.length,media,satisf,colabs,empIds,cr,al,sa};
@@ -701,7 +703,7 @@ function viewSetorAnalise(v){
 function openSetorEquipe(setor){
   const t=setorAgg(setor);
   const map=new Map();
-  t.list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{key:k,nome:a.atendente,list:[]}); map.get(k).list.push(a); });
+  t.list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{key:k,nome:a.atendente,list:[]}); map.get(k).list.push(a); });
   let colabs=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const ab=cn.filter(a=>a.nota<7).length; return {...g,qtd:g.list.length,media:m,ab}; }).sort((a,b)=>(b.media??-1)-(a.media??-1));
   const criticos=colabs.filter(c=>c.media!==null&&c.media<7);
@@ -855,7 +857,7 @@ function empresaAgg(empId){
   const aderV=list.map(a=>a.aderencia.v).filter(x=>x!==null&&!isNaN(x)); const aderMedia=aderV.length?aderV.reduce((s,n)=>s+n,0)/aderV.length:null;
   const servicos={}; list.forEach(a=>{ if(a.servico) servicos[a.servico]=(servicos[a.servico]||0)+1; });
   const desfechos={}; list.forEach(a=>{ if(a.desfecho) desfechos[a.desfecho]=(desfechos[a.desfecho]||0)+1; });
-  const colMap=new Map(); list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{key:k,nome:a.atendente,notas:[],n:0}); const g=colMap.get(k); g.n++; if(a.nota!==null)g.notas.push(a.nota); });
+  const colMap=new Map(); list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{key:k,nome:a.atendente,notas:[],n:0}); const g=colMap.get(k); g.n++; if(a.nota!==null)g.notas.push(a.nota); });
   const colabs=[...colMap.values()].map(g=>({key:g.key,nome:g.nome,n:g.n,media:g.notas.length?g.notas.reduce((s,n)=>s+n,0)/g.notas.length:null})).sort((a,b)=>b.n-a.n);
   const notasBaixas=cn.filter(a=>a.nota<7).length, notasAltas=cn.length-notasBaixas;
   const erros={}; list.forEach(a=>a.erros.forEach(e=>erros[e]=(erros[e]||0)+1));
@@ -939,7 +941,7 @@ function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,"
 // ---------- COLABORADORES ----------
 function viewColaboradores(v){
   const map=new Map();
-  ATEND.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
+  ATEND.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
   let rows=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length?ac/cn.length*100:null;
     return {...g,qtd:g.list.length,media:m,ab,ac,pct,status:perfStatus(pct)}; });
@@ -1112,7 +1114,7 @@ function renderDrill(v){
   const baixas=list.filter(a=>a.nota!==null&&a.nota<7);
   const totAb=baixas.length||1;
   // top colaboradores por impacto em notas < 7
-  const mc=new Map(); list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!mc.has(k))mc.set(k,{key:k,nome:a.atendente,list:[]}); mc.get(k).list.push(a); });
+  const mc=new Map(); list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!mc.has(k))mc.set(k,{key:k,nome:a.atendente,list:[]}); mc.get(k).list.push(a); });
   const cols=[...mc.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
     return {key:g.key,nome:g.nome,total:g.list.length,media:m,ab,contrib:ab/totAb*100}; }).filter(c=>c.ab>0).sort((a,b)=>b.ab-a.ab).slice(0,3);
   // top clientes por menor média
@@ -1358,7 +1360,7 @@ function colaboradorReport(key){
   const st=aggList(mesList);
   const teamList=ATEND.filter(a=>(a.setor||"—")===setor && a.ts>=mIni && a.ts<=mFim);
   const teamAg=aggList(teamList);
-  const teamColabs=new Set(teamList.map(a=>a.atendente_id||a.atendente)).size;
+  const teamColabs=new Set(teamList.filter(a=>!semAtendente(a)).map(a=>a.atendente_id||a.atendente)).size;
   const partic=teamAg.n?st.n/teamAg.n*100:0;
   const difMedia=(st.media!==null&&teamAg.media!==null)?st.media-teamAg.media:null;
   const difPct=(st.pctAc!==null&&teamAg.pctAc!==null)?st.pctAc-teamAg.pctAc:null;
