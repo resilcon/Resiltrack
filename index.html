@@ -346,6 +346,26 @@ const perfTxt = {good:"Na meta",warn:"Atenção",crit:"Crítico",ausente:"Ausent
 const desfechoCurto = d => d==="sem_retorno_cliente"?"Sem retorno":(desfechoTxt[d]||d||"—");
 // atendimentos sem atendente real (robô encerrou sem encaminhar) — escondidos das telas de colaborador
 const semAtendente = a => a.atendente==="Não identificado";
+// serviço: usa o campo servico (quando a IA classificar) ou deriva do assunto por palavra-chave
+const SERVICOS_KW = [
+  ["Admissão", ["admiss","registro de funcion","registro do funcion","novo colaborador","novo funcion","ficha de registro","contrataç","admitir"]],
+  ["Rescisão", ["rescis","demiss","desligamento","aviso prévio","aviso previo","homolog","termo de rescis"]],
+  ["Férias", ["féria","ferias","abono pecuni"]],
+  ["Folha de pagamento", ["folha","holerite","contracheque","salári","salari","décimo terceiro","decimo terceiro"," 13º"," 13o","adiantamento","vale transporte","vale-transporte","benefíci","benefici"]],
+  ["Obrigações acessórias", ["sped","efd","esocial","e-social","reinf","dctf","dirf"," rais","caged","gfip","obrigaç acess","obrigacao acess","declaraç acess","fgts digital"]],
+  ["Impostos", ["imposto","tribut"," das","darf"," gps","icms"," iss "," pis","cofins","irpj","csll","simples nacional","guia","apuraç","dctfweb","boleto de imposto"]],
+  ["Certidões", ["certid","cnd","negativa de déb","negativa de deb","regularidade fiscal"]],
+  ["Abertura e alteração", ["abertura de empresa","abrir empresa","alteraç contratual","alteracao contratual","alteraç cadastral","baixa de empresa","encerramento de empresa"," mei ","inscriç estadual","inscriç municipal"]],
+  ["Contratos e societário", ["societ","sócio","socio","distrato","quadro social","procuraç","contrato social"]],
+  ["Relatórios", ["relatóri","relatori","balancete","balanço","balanco"," dre","demonstraç","extrato contáb","razão contáb"]],
+  ["Orientação", ["dúvida","duvida","orientaç","informaç","como faço","como faco","consulta","esclarec","ajuda","pergunta"]]
+];
+function servicoDe(a){
+  if(a.servico) return a.servico;
+  const t=(" "+(a.assunto||"")+" "+(a.resumo||"")+" ").toLowerCase();
+  for(const [nome,kws] of SERVICOS_KW){ if(kws.some(k=>t.includes(k))) return nome; }
+  return "Outros";
+}
 const fmtDur = min => (min===null||min===undefined||isNaN(min)||min<=0)?"—":(min<60?Math.round(min)+"min":((min/60)>=10?Math.round(min/60):(min/60).toFixed(1).replace(".",","))+"h");
 const fmtDataCurta = ts => ts?new Date(ts).toLocaleDateString("pt-BR"):"—";
 function setoresList(){ const s=new Set(); Object.values(USERS).forEach(u=>{ if(u.setor) s.add(u.setor); }); ATEND.forEach(a=>{ if(a.setor&&a.setor!=="—") s.add(a.setor); }); return [...s].sort(); }
@@ -545,7 +565,8 @@ function viewPerfColab(v){
   <section><div class="kpis">${tiles.map(t=>`<div class="tile"><div class="ic ${t.ic}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.svg}</svg></div><div><div class="lbl">${t.lbl}</div><div class="val num">${t.val}${t.sub?`<small>${t.sub}</small>`:""}</div></div></div>`).join("")}</div></section>
   <section><div class="sec-head"><h2>Complexidade dos atendimentos</h2><span class="hint">no período filtrado</span></div>
     <div class="cx">${cxCells.map(c=>{const color=c.color||cxColor[c.k];const label=c.label||"Complexidade "+cxLabel[c.k];const n=counts[c.k]||0;
-      return `<div class="tile"><div class="ic" style="background:color-mix(in srgb,${color} 14%,transparent);color:${color}"><span class="dot" style="background:${color};width:11px;height:11px"></span></div><div><div class="lbl">${label}</div><div class="val num">${n}</div></div></div>`;}).join("")}</div></section>
+      return `<div class="tile cx-tile" data-cx="${c.k}" title="Clique para ver os serviços desse nível" style="cursor:pointer"><div class="ic" style="background:color-mix(in srgb,${color} 14%,transparent);color:${color}"><span class="dot" style="background:${color};width:11px;height:11px"></span></div><div><div class="lbl">${label}</div><div class="val num">${n}</div></div></div>`;}).join("")}</div>
+    <div class="sub" style="margin-top:8px">Clique num card de complexidade para ver os serviços e os que mais dão problema.</div></section>
   <section><div class="sec-head"><h2>Performance por Colaborador</h2><span class="hint">clique no nome para abrir o preview</span></div>
     <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--crit)"></span> Crítico &lt; 70%</span><span><span class="dot" style="background:var(--warn)"></span> Atenção 70–85%</span><span><span class="dot" style="background:var(--good)"></span> Na meta ≥ 85%</span><span><span class="dot" style="background:var(--muted)"></span> Ausente</span></div>
     <div class="card"><table><thead><tr><th>Colaborador</th><th class="hide-md">Setor</th><th class="center">Score</th><th class="center">Qtd</th><th class="center hide-md">Média</th><th class="center hide-md">Notas &lt; 7</th><th class="center">Notas ≥ 7</th><th>Status</th></tr></thead><tbody>${
@@ -557,6 +578,7 @@ function viewPerfColab(v){
       <td><span class="pill ${r.status==='ausente'?'neutral':r.status}"><span class="dot" style="background:currentColor"></span>${perfTxt[r.status]}</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Nenhum colaborador no filtro.</td></tr>`
     }</tbody></table></div></section>`;
 
+  v.querySelectorAll("[data-cx]").forEach(t=>t.onclick=()=>openComplexidade(t.dataset.cx));
   v.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{ DFIL.preset=b.dataset.preset; DFIL.ini=""; DFIL.fim=""; render(); });
   const fIni=v.querySelector("#fIni"), fFim=v.querySelector("#fFim");
   if(fIni) fIni.onchange=()=>{ DFIL.ini=fIni.value; DFIL.preset="custom"; render(); };
@@ -728,22 +750,15 @@ function openSetorEquipe(setor){
 
 // ---------- ANÁLISE POR SERVIÇO ----------
 function viewServico(v){
-  const withServ=ATEND.filter(a=>a.servico);
-  if(!withServ.length){
-    v.innerHTML=`<div class="page-head"><h2>Análise por Serviço</h2><p>desempenho e taxa de erro por tipo de serviço</p></div>
-    <div class="notice"><strong>Essa tela acende sozinha assim que a IA começar a classificar o serviço de cada atendimento.</strong><br>
-    Hoje a base ainda não guarda o serviço (Orientação, Impostos, Folha, Rescisão, Admissão, Férias e afins). No próximo passo eu adiciono essa classificação no robô do n8n. A partir daí, todo atendimento novo aparece aqui automaticamente, e os antigos entram se você optar por reprocessar.</div>`;
-    return;
-  }
   const map=new Map();
-  withServ.forEach(a=>{ const k=a.servico; if(!map.has(k))map.set(k,[]); map.get(k).push(a); });
+  ATEND.forEach(a=>{ const k=servicoDe(a); if(!map.has(k))map.set(k,[]); map.get(k).push(a); });
   let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>a.nota!==null);
     const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
     return {servico,qtd:list.length,media,comErro,pct:list.length?comErro/list.length*100:0}; })
     .sort((a,b)=>b.qtd-a.qtd);
-  const semServ=ATEND.length-withServ.length;
-  v.innerHTML=`<div class="page-head"><h2>Análise por Serviço</h2><p>desempenho e taxa de erro por tipo de serviço${semServ?` · ${semServ} atendimento(s) ainda sem serviço classificado`:""}</p></div>
+  const temReal=ATEND.some(a=>a.servico);
+  v.innerHTML=`<div class="page-head"><h2>Análise por Serviço</h2><p>desempenho e taxa de erro por tipo de serviço${temReal?"":" · derivado do assunto até a IA classificar formalmente"}</p></div>
   <div class="card"><table><thead><tr><th>Serviço</th><th class="center">Qtd</th><th class="center">Média</th><th>Com erro</th><th class="right">Ação</th></tr></thead><tbody>${
     rows.map(r=>`<tr><td class="r-name">${esc(r.servico)}</td><td class="center num">${r.qtd}</td><td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span></td>
       <td><div class="score-wrap"><span class="num" style="font-weight:600;color:${r.pct>=25?'var(--crit)':(r.pct>=15?'var(--warn)':'var(--ink-2)')}">${r.comErro} <span class="sub">(${r.pct.toFixed(1)}%)</span></span><span class="meter" style="width:90px"><span style="width:${Math.min(100,r.pct)}%;background:${r.pct>=25?'var(--crit)':(r.pct>=15?'var(--warn)':'var(--good)')}"></span></span></div></td>
@@ -751,8 +766,37 @@ function viewServico(v){
   }</tbody></table></div>`;
   v.querySelectorAll("[data-serv]").forEach(b=>b.onclick=()=>openServico(b.dataset.serv));
 }
+function openComplexidade(nivel){
+  const base=filtraDash();
+  const lista=base.filter(a=> nivel==="sem" ? !a.complexidade : a.complexidade===nivel );
+  const nomeNivel = nivel==="sem"?"Sem classificação":("Complexidade "+(cxLabel[nivel]||nivel));
+  const cor = nivel==="sem"?"var(--muted)":(cxColor[nivel]||"var(--muted)");
+  const map=new Map();
+  lista.forEach(a=>{ const s=servicoDe(a); if(!map.has(s))map.set(s,[]); map.get(s).push(a); });
+  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>a.nota!==null);
+    const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+    const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
+    return {servico,qtd:list.length,media,comErro,pct:list.length?comErro/list.length*100:0}; });
+  const porQtd=rows.slice().sort((a,b)=>b.qtd-a.qtd);
+  const porErro=rows.slice().filter(r=>r.comErro>0).sort((a,b)=>b.comErro-a.comErro);
+  const totalErro=lista.filter(a=>a.erros&&a.erros.length>0).length;
+  const corErro=p=>p>=25?'var(--crit)':(p>=15?'var(--warn)':'var(--good)');
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Complexidade</div><h3>${nomeNivel}</h3>
+      <div class="m-chips"><span class="m-chip">${lista.length} atendimento(s)</span><span class="m-chip">${totalErro} com erro</span><span class="m-chip">${rows.length} serviço(s)</span></div></div>
+      <div class="m-score"><div class="big">${lista.length}</div><div class="of">atend.</div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Serviços nesse nível de complexidade</h4>
+        <div class="card"><table><thead><tr><th>Serviço</th><th class="center">Qtd</th><th class="center">Média</th><th>Com erro</th></tr></thead><tbody>${
+          porQtd.length?porQtd.map(r=>`<tr><td class="r-name"><button class="link-name" data-serv2="${escAttr(r.servico)}">${esc(r.servico)}</button></td><td class="center num">${r.qtd}</td><td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${fmt1(r.media)}</span></td><td><div class="score-wrap"><span class="num" style="font-weight:600;color:${r.pct>=25?'var(--crit)':(r.pct>=15?'var(--warn)':'var(--ink-2)')}">${r.comErro} <span class="sub">(${r.pct.toFixed(1)}%)</span></span><span class="meter" style="width:80px"><span style="width:${Math.min(100,r.pct)}%;background:${corErro(r.pct)}"></span></span></div></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Sem atendimentos nesse nível.</td></tr>`
+        }</tbody></table></div></div>
+      ${porErro.length?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 20%,transparent)"><h4>Serviços que mais dão problema</h4><div class="mini-list">${porErro.slice(0,6).map(r=>`<div class="mini-row"><div class="mr-l"><div class="t"><button class="link-name" data-serv2="${escAttr(r.servico)}">${esc(r.servico)}</button></div><div class="s">${r.comErro} de ${r.qtd} com erro · ${r.pct.toFixed(1)}%</div></div><span class="nota ${notaClass(r.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(r.media)}</span></div>`).join("")}</div></div>`:`<div class="panel"><div class="sub">Nenhum atendimento com erro apontado nesse nível.</div></div>`}
+    </div>`);
+  modal.querySelectorAll("[data-serv2]").forEach(b=>b.onclick=()=>{ closeModal(); openServico(b.dataset.serv2); });
+}
 function openServico(servico){
-  const list=ATEND.filter(a=>a.servico===servico).sort((a,b)=>b.ts-a.ts);
+  const list=ATEND.filter(a=>servicoDe(a)===servico).sort((a,b)=>b.ts-a.ts);
   const cn=list.filter(a=>a.nota!==null); const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
   openModal(`
