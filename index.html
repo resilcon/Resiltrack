@@ -420,25 +420,41 @@ function mapRow(r){
 }
 
 // ---------- carregar dados ----------
+// Supabase devolve no máximo 1000 linhas por consulta. Buscamos em páginas de 1000
+// com .range() até trazer tudo, senão o painel travava em 1000.
+async function fetchAllRows(table, columns, orderCol){
+  const A="atendimentos", PAGE=1000; let from=0, all=[];
+  while(true){
+    let q=sb.schema(A).from(table).select(columns).range(from,from+PAGE-1);
+    if(orderCol) q=q.order(orderCol,{ascending:false,nullsFirst:false});
+    const {data,error}=await q;
+    if(error) throw error;
+    all=all.concat(data||[]);
+    if(!data || data.length<PAGE) break;
+    from+=PAGE;
+    if(from>500000) break; // trava de segurança
+  }
+  return all;
+}
 async function loadData(){
-  const A = "atendimentos";
   try{
     const [u,e,c,ct] = await Promise.all([
-      sb.schema(A).from("usuarios").select("id,nome,setor,ativo").limit(2000),
-      sb.schema(A).from("empresas").select("id,nome,apelido,cnpj,status").limit(5000),
-      sb.schema(A).from("contatos").select("id,nome,telefone,empresa_id").limit(5000),
-      sb.schema(A).from("contestacoes").select("*").limit(5000)
+      fetchAllRows("usuarios","id,nome,setor,ativo"),
+      fetchAllRows("empresas","id,nome,apelido,cnpj,status"),
+      fetchAllRows("contatos","id,nome,telefone,empresa_id"),
+      fetchAllRows("contestacoes","*").catch(()=>[])
     ]);
-    USERS={}; (u.data||[]).forEach(x=>USERS[x.id]={nome:x.nome,setor:x.setor,ativo:x.ativo});
-    EMPRESAS={}; (e.data||[]).forEach(x=>EMPRESAS[x.id]={nome:x.nome,apelido:x.apelido,cnpj:x.cnpj,status:x.status});
-    CONTATOS={}; (c.data||[]).forEach(x=>CONTATOS[x.id]={nome:x.nome,telefone:x.telefone,empresa_id:x.empresa_id});
-    CONTESTS={}; if(!ct.error){ (ct.data||[]).forEach(x=>CONTESTS[x.atendimento_id]=x); }
+    USERS={}; u.forEach(x=>USERS[x.id]={nome:x.nome,setor:x.setor,ativo:x.ativo});
+    EMPRESAS={}; e.forEach(x=>EMPRESAS[x.id]={nome:x.nome,apelido:x.apelido,cnpj:x.cnpj,status:x.status});
+    CONTATOS={}; c.forEach(x=>CONTATOS[x.id]={nome:x.nome,telefone:x.telefone,empresa_id:x.empresa_id});
+    CONTESTS={}; (ct||[]).forEach(x=>CONTESTS[x.atendimento_id]=x);
   }catch(err){ console.warn("lookups:",err); }
 
-  const { data, error } = await sb.schema(A).from("analises")
-    .select("*").order("sessao_fim",{ascending:false,nullsFirst:false}).limit(2000);
-  if(error){ document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message)}</div>`; return; }
-  RAW = data||[];
+  try{
+    RAW = await fetchAllRows("analises","*","sessao_fim");
+  }catch(error){
+    document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message||error)}</div>`; return;
+  }
   ATEND = RAW.map(mapRow);
   render();
 }
