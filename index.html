@@ -321,6 +321,7 @@ let DSUB="colab"; // colab | health | setores | servico
 let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
 let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
 let HFIL={status:"",q:"",sort:"risco_desc"};
+let CFIL={q:"",status:"",servico:"",sort:"atend_desc"};
 const PAGE_SIZE=30;
 
 // ---------- helpers ----------
@@ -342,6 +343,8 @@ const escAttr = s => esc(s).replace(/"/g,"&quot;");
 const perfStatus = p => p===null?"ausente":(p>=85?"good":(p>=70?"warn":"crit"));
 const perfTxt = {good:"Na meta",warn:"Atenção",crit:"Crítico",ausente:"Ausente"};
 const desfechoCurto = d => d==="sem_retorno_cliente"?"Sem retorno":(desfechoTxt[d]||d||"—");
+const fmtDur = min => (min===null||min===undefined||isNaN(min)||min<=0)?"—":(min<60?Math.round(min)+"min":((min/60)>=10?Math.round(min/60):(min/60).toFixed(1).replace(".",","))+"h");
+const fmtDataCurta = ts => ts?new Date(ts).toLocaleDateString("pt-BR"):"—";
 function setoresList(){ const s=new Set(); Object.values(USERS).forEach(u=>{ if(u.setor) s.add(u.setor); }); ATEND.forEach(a=>{ if(a.setor&&a.setor!=="—") s.add(a.setor); }); return [...s].sort(); }
 function colabsList(){ const m=new Map(); Object.entries(USERS).forEach(([id,u])=>{ if(u.ativo!==false) m.set(id,u.nome); }); ATEND.forEach(a=>{ if(a.atendente_id&&!m.has(a.atendente_id)) m.set(a.atendente_id,a.atendente); }); return [...m.entries()].map(([id,nome])=>({id,nome})).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")); }
 function filtraDash(){ const now=Date.now(); let ini=null,fim=null;
@@ -406,7 +409,8 @@ function mapRow(r){
     desfecho:r.desfecho||null, aderencia:{v:num(r.aderencia_jeito_resilcon),j:r.aderencia_justificativa||"—"},
     errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null,
     docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null,
-    servico:r.servico||null
+    servico:r.servico||null,
+    durMin:(r.sessao_inicio&&r.sessao_fim)?Math.max(0,(new Date(r.sessao_fim)-new Date(r.sessao_inicio))/60000):null
   };
   a.cliente = clienteNome(a);
   a.empresa_id = empresaIdDe(a);
@@ -827,36 +831,91 @@ function empresaAgg(empId){
   let health="neutro";
   if(sat.negativo>0||churn||(media!==null&&media<6)) health="sensivel";
   else if(cn.length&&(media>=8)&&sat.negativo===0) health="fa";
-  const ultima=list.length?list.map(a=>a.ts).sort((a,b)=>b-a)[0]:0;
-  return {list,media,count:list.length,sat,churn,cols,health,ultima};
+  const tsl=list.map(a=>a.ts).filter(Boolean);
+  const ultima=tsl.length?Math.max(...tsl):0, primeira=tsl.length?Math.min(...tsl):0;
+  const durMin=list.reduce((s,a)=>s+(a.durMin||0),0);
+  const satV=list.map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x)); const satMedia=satV.length?satV.reduce((s,n)=>s+n,0)/satV.length:null;
+  const aderV=list.map(a=>a.aderencia.v).filter(x=>x!==null&&!isNaN(x)); const aderMedia=aderV.length?aderV.reduce((s,n)=>s+n,0)/aderV.length:null;
+  const servicos={}; list.forEach(a=>{ if(a.servico) servicos[a.servico]=(servicos[a.servico]||0)+1; });
+  const desfechos={}; list.forEach(a=>{ if(a.desfecho) desfechos[a.desfecho]=(desfechos[a.desfecho]||0)+1; });
+  const colMap=new Map(); list.forEach(a=>{ const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{key:k,nome:a.atendente,notas:[],n:0}); const g=colMap.get(k); g.n++; if(a.nota!==null)g.notas.push(a.nota); });
+  const colabs=[...colMap.values()].map(g=>({key:g.key,nome:g.nome,n:g.n,media:g.notas.length?g.notas.reduce((s,n)=>s+n,0)/g.notas.length:null})).sort((a,b)=>b.n-a.n);
+  const notasBaixas=cn.filter(a=>a.nota<7).length, notasAltas=cn.length-notasBaixas;
+  const erros={}; list.forEach(a=>a.erros.forEach(e=>erros[e]=(erros[e]||0)+1));
+  const melhorias={}; list.forEach(a=>a.melhorias.forEach(m=>melhorias[m]=(melhorias[m]||0)+1));
+  const oports=list.filter(a=>a.oport).map(a=>a.oport);
+  return {list,media,count:list.length,sat,churn,cols,health,ultima,primeira,durMin,satMedia,aderMedia,servicos,desfechos,colabs,notasBaixas,notasAltas,erros,melhorias,oports};
 }
 function viewClientes(v){
-  // empresas que têm atendimento
   const ids=[...new Set(ATEND.map(a=>a.empresa_id).filter(Boolean))];
-  const cards=ids.map(id=>({id,emp:EMPRESAS[id],ag:empresaAgg(id)})).filter(x=>x.emp)
-    .sort((a,b)=>b.ag.ultima-a.ag.ultima);
-  // contatos não vinculados que aparecem em atendimentos
+  const clientes=ids.map(id=>({id,emp:EMPRESAS[id],sc:clienteScore(id)})).filter(x=>x.emp);
+  const servSet=new Set(); ATEND.forEach(a=>{ if(a.servico) servSet.add(a.servico); }); const servs=[...servSet].sort();
   const semEmp=[...new Set(ATEND.filter(a=>!a.empresa_id).map(a=>a.contact_id).filter(Boolean))];
-  const hTxt={fa:"Cliente fã",sensivel:"Cliente sensível",neutro:"Neutro"};
-  v.innerHTML=`<div class="page-head"><h2>Clientes</h2><p>empresas atendidas, satisfação e vínculos</p></div>
-  ${semEmp.length?`<section><div class="sec-head"><h2>Contatos não vinculados</h2><span class="hint">${semEmp.length} contato(s) sem empresa — vincule ao CNPJ</span></div>
-    <div class="card"><table><thead><tr><th>Contato</th><th class="hide-md">Telefone</th><th>Atendimentos</th><th class="right">Ação</th></tr></thead><tbody>${
+  const nCrit=clientes.filter(x=>x.sc.status==="critico").length, nAl=clientes.filter(x=>x.sc.status==="alerta").length;
+  // filtros
+  let rows=clientes.slice();
+  if(CFIL.status) rows=rows.filter(x=>x.sc.status===CFIL.status);
+  if(CFIL.servico) rows=rows.filter(x=>x.sc.servicos[CFIL.servico]);
+  const fq=(CFIL.q||"").trim().toLowerCase();
+  if(fq) rows=rows.filter(x=>((x.emp.nome||"")+(x.emp.apelido||"")+(x.emp.cnpj||"")).toLowerCase().includes(fq));
+  const srt=CFIL.sort;
+  rows.sort((a,b)=> srt==="nome"?((a.emp.apelido||a.emp.nome||"").localeCompare(b.emp.apelido||b.emp.nome||""))
+    : srt==="horas_desc"?(b.sc.durMin-a.sc.durMin)
+    : srt==="sat_desc"?((b.sc.satMedia??-1)-(a.sc.satMedia??-1))
+    : srt==="sat_asc"?((a.sc.satMedia??99)-(b.sc.satMedia??99))
+    : srt==="media_desc"?((b.sc.media??-1)-(a.sc.media??-1))
+    : srt==="media_asc"?((a.sc.media??99)-(b.sc.media??99))
+    : srt==="risco_desc"?(b.sc.risco-a.sc.risco)
+    : srt==="recente"?(b.sc.ultima-a.sc.ultima)
+    : (b.sc.count-a.sc.count) );
+  const th=(k,l,cls)=>`<th class="sortable ${cls||''}" data-sort="${k}">${l}${CFIL.sort===k?'<span class="arw">▼</span>':''}</th>`;
+  const stPill=st=>`<span class="st-ic ${st}" title="${stTxt[st]}">${stIcon[st]}</span>`;
+  v.innerHTML=`<div class="page-head"><h2>Clientes · CRM</h2><p>relatório completo por cliente · ranqueie por atendimentos, tempo, satisfação, risco e serviço</p></div>
+  <section>
+  <div class="filters">
+    <div class="search" style="min-width:220px;max-width:320px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="cQ" type="search" placeholder="Buscar cliente ou CNPJ..." value="${escAttr(CFIL.q)}"></div>
+    <select class="fsel" id="cStatus"><option value="">Todos os status</option><option value="critico" ${CFIL.status==='critico'?'selected':''}>Críticos</option><option value="alerta" ${CFIL.status==='alerta'?'selected':''}>Alerta</option><option value="saudavel" ${CFIL.status==='saudavel'?'selected':''}>Saudáveis</option></select>
+    ${servs.length?`<select class="fsel" id="cServ"><option value="">Todos os serviços</option>${servs.map(s=>`<option value="${escAttr(s)}" ${CFIL.servico===s?'selected':''}>${esc(s)}</option>`).join("")}</select>`:""}
+    <select class="fsel" id="cSort">
+      <option value="atend_desc" ${srt==='atend_desc'?'selected':''}>Ordenar: mais atendimentos</option>
+      <option value="horas_desc" ${srt==='horas_desc'?'selected':''}>Ordenar: mais tempo de atendimento</option>
+      <option value="sat_desc" ${srt==='sat_desc'?'selected':''}>Ordenar: melhor satisfação</option>
+      <option value="sat_asc" ${srt==='sat_asc'?'selected':''}>Ordenar: pior satisfação</option>
+      <option value="media_desc" ${srt==='media_desc'?'selected':''}>Ordenar: maior média</option>
+      <option value="media_asc" ${srt==='media_asc'?'selected':''}>Ordenar: menor média</option>
+      <option value="risco_desc" ${srt==='risco_desc'?'selected':''}>Ordenar: maior risco</option>
+      <option value="recente" ${srt==='recente'?'selected':''}>Ordenar: mais recentes</option>
+      <option value="nome" ${srt==='nome'?'selected':''}>Ordenar: nome (A-Z)</option>
+    </select>
+  </div>
+  <div class="sec-head"><h2>Clientes</h2><span class="hint">${rows.length} de ${clientes.length} · ${nCrit} crítico(s), ${nAl} em alerta · clique para o relatório completo</span></div>
+  <div class="card grid-setor"><table style="min-width:820px"><thead><tr>${th("nome","Cliente")}${th("atend_desc","Atend.","center")}${th("horas_desc","Tempo","center")}${th("media_desc","Média","center")}${th("sat_desc","Satisfação","center")}<th class="center hide-md">Notas &lt; 7</th><th class="center hide-md">Serviço top</th>${th("risco_desc","Risco","center")}<th class="center">Status</th>${th("recente","Último","center")}<th class="right">Ação</th></tr></thead><tbody>${
+    rows.length?rows.map(x=>{ const topServ=Object.entries(x.sc.servicos).sort((a,b)=>b[1]-a[1])[0];
+      return `<tr><td><button class="link-name" data-emp="${x.id}">${esc(x.emp.apelido||x.emp.nome)}</button><div class="sub num">${esc(fmtCnpj(x.emp.cnpj))}</div></td>
+      <td class="center num">${x.sc.count}</td>
+      <td class="center num" title="Da abertura ao encerramento dos tickets">${fmtDur(x.sc.durMin)}</td>
+      <td class="center"><span class="score-num" style="color:${scoreColor(x.sc.media)}">${fmt1(x.sc.media)}</span></td>
+      <td class="center"><span class="score-num" style="color:${scoreColor(x.sc.satMedia)}">${fmt1(x.sc.satMedia)}</span></td>
+      <td class="center num hide-md">${x.sc.notasBaixas?`<span style="color:var(--crit);font-weight:600">${x.sc.notasBaixas}</span>`:'<span class="sub">0</span>'}</td>
+      <td class="center sub hide-md">${topServ?esc(topServ[0]):"—"}</td>
+      <td class="center"><span class="risco ${x.sc.status}" title="Risco de 1 a 5 (maior = mais atenção)">${x.sc.risco.toFixed(1).replace(".",",")}</span></td>
+      <td class="center">${stPill(x.sc.status)}</td>
+      <td class="center sub num">${fmtDataCurta(x.sc.ultima)}</td>
+      <td class="right"><button class="view-btn" data-emp="${x.id}">Abrir</button></td></tr>`;
+    }).join(""):`<tr><td colspan="11" class="empty">Nenhum cliente no filtro.</td></tr>`
+  }</tbody></table></div></section>
+  ${semEmp.length?`<section><div class="sec-head"><h2>Contatos não vinculados</h2><span class="hint">${semEmp.length} contato(s) sem empresa — vincule ao CNPJ para entrarem no CRM</span></div>
+    <div class="card"><table><thead><tr><th>Contato</th><th class="hide-md">Telefone</th><th class="center">Atend.</th><th class="right">Ação</th></tr></thead><tbody>${
       semEmp.map(cid=>{ const c=CONTATOS[cid]||{}; const n=ATEND.filter(a=>a.contact_id===cid).length;
-        return `<tr><td class="r-name">${esc(c.nome||cid)}</td><td class="sub hide-md num">${esc(c.telefone||"—")}</td><td class="num">${n}</td><td class="right"><button class="view-btn" data-link="${esc(cid)}">Vincular empresa</button></td></tr>`;
+        return `<tr><td class="r-name">${esc(c.nome||cid)}</td><td class="sub hide-md num">${esc(c.telefone||"—")}</td><td class="center num">${n}</td><td class="right"><button class="view-btn" data-link="${esc(cid)}">Vincular empresa</button></td></tr>`;
       }).join("")
-    }</tbody></table></div></section>`:""}
-  <section><div class="sec-head"><h2>Empresas</h2><span class="hint">${cards.length} com atendimento</span></div>
-  <div class="toolbar"><div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="qc" type="search" placeholder="Buscar empresa..."></div></div>
-  <div class="grid-cards" id="empGrid"></div></section>`;
-  const draw=(f="")=>{ f=(f||"").trim().toLowerCase(); const g=document.getElementById("empGrid");
-    const list=cards.filter(x=>!f||((x.emp.nome||"")+(x.emp.apelido||"")+(x.emp.cnpj||"")).toLowerCase().includes(f));
-    if(!list.length){ g.innerHTML=`<div class="empty">Nenhuma empresa encontrada.</div>`; return; }
-    g.innerHTML=list.map(x=>`<div class="ecard" data-emp="${x.id}"><div class="top"><div><div class="en">${esc(x.emp.apelido||x.emp.nome)}</div><div class="ecnpj">${esc(fmtCnpj(x.emp.cnpj))}</div></div><span class="health ${x.ag.health}">${hTxt[x.ag.health]}</span></div>
-      <div class="stats"><div class="st"><div class="n" style="color:${scoreColor(x.ag.media)}">${fmt1(x.ag.media)}</div><div class="l">média</div></div><div class="st"><div class="n">${x.ag.count}</div><div class="l">atend.</div></div><div class="st"><div class="n">${x.ag.cols.length}</div><div class="l">colab.</div></div></div>
-      ${x.ag.churn?`<div style="margin-top:12px"><span class="chip churn">⚠ possível troca de contabilidade</span></div>`:""}</div>`).join("");
-    bindActions();
-  };
-  document.getElementById("qc").addEventListener("input",e=>draw(e.target.value)); draw("");
+    }</tbody></table></div></section>`:""}`;
+  const cq=v.querySelector("#cQ"); if(cq) cq.oninput=()=>{ CFIL.q=cq.value; const val=cq.value; viewClientes(v); const nb=v.querySelector("#cQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
+  const cs=v.querySelector("#cStatus"); if(cs) cs.onchange=()=>{ CFIL.status=cs.value; viewClientes(v); };
+  const cv=v.querySelector("#cServ"); if(cv) cv.onchange=()=>{ CFIL.servico=cv.value; viewClientes(v); };
+  const co=v.querySelector("#cSort"); if(co) co.onchange=()=>{ CFIL.sort=co.value; viewClientes(v); };
+  v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CFIL.sort=t.dataset.sort; viewClientes(v); });
+  bindActions();
 }
 function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,""); if(d.length!==14) return c; return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5"); }
 
@@ -1143,26 +1202,88 @@ function baixarAvaliacaoPDF(i,btn){
 }
 
 function openEmpresa(empId){
-  const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId);
+  const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
   const contatos=Object.entries(CONTATOS).filter(([id,c])=>c.empresa_id===empId).map(([id,c])=>({id,...c}));
-  const hTxt={fa:"Cliente fã",sensivel:"Cliente sensível",neutro:"Neutro"};
-  const list=ag.list.sort((a,b)=>b.ts-a.ts);
+  const list=ag.list.slice().sort((a,b)=>b.ts-a.ts);
+  const servEnt=Object.entries(ag.servicos).sort((a,b)=>b[1]-a[1]);
+  const desfEnt=Object.entries(ag.desfechos).sort((a,b)=>b[1]-a[1]);
+  const errEnt=Object.entries(ag.erros).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const melEnt=Object.entries(ag.melhorias).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const kpi=(l,val,cor)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px${cor?`;color:${cor}`:""}">${val}</div></div>`;
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub num">${esc(fmtCnpj(emp.cnpj))}</div><h3>${esc(emp.apelido||emp.nome)}</h3>
-      <div class="m-chips"><span class="m-chip">${hTxt[ag.health]}</span><span class="m-chip">${ag.count} atendimento(s)</span>${ag.churn?`<span class="m-chip">⚠ possível troca</span>`:""}</div></div>
+      <div class="m-chips"><span class="m-chip">${stTxt[sc.status]}</span><span class="m-chip">${ag.count} atendimento(s)</span><span class="m-chip">risco ${sc.risco.toFixed(1).replace(".",",")}</span>${ag.churn?`<span class="m-chip">⚠ possível troca</span>`:""}</div></div>
       <div class="m-score"><div class="big">${fmt1(ag.media)}</div><div class="of">/10</div></div>
-      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:none">
+      <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="close-x" data-cpdf="${empId}" title="Baixar relatório do cliente em PDF" aria-label="Baixar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
+      </div></div>
     <div class="modal-body">
+      <div class="panel"><h4>Visão geral</h4><div class="grid2">
+        ${kpi("Atendimentos",ag.count)}
+        ${kpi("Tempo total",fmtDur(ag.durMin))}
+        ${kpi("Média das notas",fmt1(ag.media),scoreColor(ag.media))}
+        ${kpi("Satisfação média",fmt1(ag.satMedia),scoreColor(ag.satMedia))}
+        ${kpi("Notas < 7",ag.notasBaixas,ag.notasBaixas?"var(--crit)":"")}
+        ${kpi("Aderência ao padrão",fmt1(ag.aderMedia))}
+        ${kpi("Primeiro atendimento",fmtDataCurta(ag.primeira))}
+        ${kpi("Último atendimento",fmtDataCurta(ag.ultima))}
+      </div></div>
       <div class="panel"><h4>Satisfação</h4><div style="display:flex;gap:8px;flex-wrap:wrap">
         <span class="pill good">Positivo · ${ag.sat.positivo}</span><span class="pill neutral">Neutro · ${ag.sat.neutro}</span><span class="pill crit">Negativo · ${ag.sat.negativo}</span></div></div>
-      <div class="panel"><h4>Razão social</h4><div class="prose">${esc(emp.nome)}</div></div>
-      <div class="panel"><h4>Colaboradores que atendem</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${ag.cols.map(c=>`<span class="chip">${esc(c)}</span>`).join("")||'<span class="sub">—</span>'}</div></div>
+      ${(sc.status!=="saudavel"||ag.churn)?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">Atenção ao relacionamento</h4><div class="prose">Status <strong>${stTxt[sc.status]}</strong>, risco ${sc.risco.toFixed(1).replace(".",",")} de 5.${ag.churn?" Há sinais de possível troca de contabilidade nas conversas.":""}${ag.notasBaixas?` ${ag.notasBaixas} atendimento(s) com nota abaixo de 7.`:""}</div></div>`:""}
+      <div class="panel"><h4>Serviços buscados</h4>${servEnt.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${servEnt.map(([s,n])=>`<span class="chip">${esc(s)} <span class="sub">×${n}</span></span>`).join("")}</div>`:'<div class="sub">Ainda sem serviço classificado. Acende quando a IA começar a classificar.</div>'}</div>
+      <div class="panel"><h4>Desfechos</h4>${desfEnt.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${desfEnt.map(([d,n])=>`<span class="chip">${esc(desfechoTxt[d]||d)} <span class="sub">×${n}</span></span>`).join("")}</div>`:'<span class="sub">—</span>'}</div>
+      <div class="panel"><h4>Colaboradores que atendem (${ag.colabs.length})</h4><div class="mini-list">${ag.colabs.map(c=>`<div class="mini-row"><div class="mr-l"><div class="t"><button class="link-name" data-col2="${escAttr(String(c.key))}">${esc(c.nome)}</button></div><div class="s">${c.n} atendimento(s)</div></div><span class="nota ${notaClass(c.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(c.media)}</span></div>`).join("")||'<span class="sub">—</span>'}</div></div>
+      ${errEnt.length?`<div class="panel"><h4>Apontamentos recorrentes</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${errEnt.map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div></div>`:""}
+      ${(melEnt.length||ag.oports.length)?`<div class="panel"><h4>Oportunidades</h4>${ag.oports.length?`<div class="prose" style="margin-bottom:8px">Comercial: ${ag.oports.map(o=>esc(o)).join(" · ")}</div>`:""}${melEnt.length?`<ul class="melhorias">${melEnt.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:""}</div>`:""}
       <div class="panel"><h4>Contatos (${contatos.length})</h4><div class="mini-list">${contatos.map(c=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(c.nome||c.id)}</div><div class="s num">${esc(c.telefone||"—")}</div></div></div>`).join("")||'<span class="sub">—</span>'}</div></div>
-      <div class="panel"><h4>Atendimentos (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
-        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}</div><div class="s">${a.data} · ${esc(a.atendente)}${a.churn?' · ⚠':''}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
+      <div class="panel"><h4>Histórico de atendimentos (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
+        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}</div><div class="s">${a.dataHora} · ${esc(a.atendente)}${a.desfecho?" · "+esc(desfechoCurto(a.desfecho)):""}${a.churn?' · ⚠':''}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
       }).join("")}</div></div>
     </div>`);
   modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
+  modal.querySelectorAll("[data-col2]").forEach(b=>b.onclick=()=>{ closeModal(); openColaborador(b.dataset.col2); });
+  const cp=modal.querySelector("[data-cpdf]"); if(cp) cp.onclick=()=>baixarClientePDF(empId,cp);
+}
+// ---------- PDF do cliente (CRM) ----------
+function baixarClientePDF(empId,btn){
+  const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
+  if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
+  if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",CR="#cf4257";
+  const list=ag.list.slice().sort((a,b)=>b.ts-a.ts);
+  const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
+  const kv=(k,val)=>`<tr><td style="padding:3px 0;color:${M};width:52%">${k}</td><td style="padding:3px 0;font-weight:600">${val}</td></tr>`;
+  const servEnt=Object.entries(ag.servicos).sort((a,b)=>b[1]-a[1]);
+  const desfEnt=Object.entries(ag.desfechos).sort((a,b)=>b[1]-a[1]);
+  const errEnt=Object.entries(ag.erros).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const chips=arr=>arr.map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("");
+  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
+      <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório de cliente</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(emp.apelido||emp.nome)}</div>
+      <div style="font-size:12px;color:${M};margin-top:4px">${esc(fmtCnpj(emp.cnpj))} · ${esc(emp.nome)}</div></div>
+      <div style="text-align:center;min-width:80px"><div style="font-size:34px;font-weight:700;line-height:1;color:${ag.media===null?M:(ag.media>=8?GD:(ag.media>=6?"#b7791f":CR))}">${fmt1(ag.media)}</div><div style="font-size:11px;color:${M}">média /10</div></div>
+    </div>
+    ${box("Visão geral",`<table style="width:100%;font-size:12.5px;border-collapse:collapse">
+      ${kv("Atendimentos",ag.count)}${kv("Tempo total (abertura→encerramento)",fmtDur(ag.durMin))}${kv("Média das notas",fmt1(ag.media))}${kv("Satisfação média",fmt1(ag.satMedia))}
+      ${kv("Notas abaixo de 7",ag.notasBaixas)}${kv("Aderência ao padrão Resilcon",fmt1(ag.aderMedia))}${kv("Status do relacionamento",stTxt[sc.status]+" (risco "+sc.risco.toFixed(1).replace(".",",")+"/5)")}
+      ${kv("Primeiro atendimento",fmtDataCurta(ag.primeira))}${kv("Último atendimento",fmtDataCurta(ag.ultima))}</table>`)}
+    ${box("Satisfação",`<span style="color:${GD}">Positivo ${ag.sat.positivo}</span> &nbsp; <span style="color:${M}">Neutro ${ag.sat.neutro}</span> &nbsp; <span style="color:${CR}">Negativo ${ag.sat.negativo}</span>`)}
+    ${box("Serviços buscados",servEnt.length?chips(servEnt):'<span style="color:'+M+'">Sem serviço classificado ainda.</span>')}
+    ${box("Desfechos",desfEnt.length?chips(desfEnt.map(([d,n])=>[desfechoTxt[d]||d,n])):'<span style="color:'+M+'">—</span>')}
+    ${box("Colaboradores que atendem",`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:${M}"><td>Colaborador</td><td style="text-align:center">Atend.</td><td style="text-align:center">Média</td></tr>${ag.colabs.map(c=>`<tr><td style="padding:2px 0">${esc(c.nome)}</td><td style="text-align:center">${c.n}</td><td style="text-align:center">${fmt1(c.media)}</td></tr>`).join("")}</table>`)}
+    ${errEnt.length?box("Apontamentos recorrentes",chips(errEnt)):""}
+    ${ag.churn?box("Alerta",`<span style="color:${CR}">Há sinais de possível troca de contabilidade nas conversas deste cliente.</span>`):""}
+    ${box("Histórico de atendimentos",`<table style="width:100%;font-size:11.5px;border-collapse:collapse"><tr style="color:${M}"><td>Data</td><td>Assunto</td><td>Atendente</td><td style="text-align:center">Nota</td></tr>${list.slice(0,60).map(a=>`<tr><td style="padding:2px 6px 2px 0;white-space:nowrap">${a.data}</td><td style="padding:2px 6px 2px 0">${esc(a.assunto)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${a.nota===null?M:(a.nota>=8?GD:(a.nota>=6?"#b7791f":CR))}">${fmt1(a.nota)}</td></tr>`).join("")}</table>${list.length>60?`<div style="font-size:10.5px;color:${M};margin-top:6px">Mostrando os 60 mais recentes de ${list.length}.</div>`:""}`)}
+    <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
+  </div>`;
+  const cont=document.createElement("div"); cont.innerHTML=html; document.body.appendChild(cont);
+  const nomeArq=("cliente_"+(emp.apelido||emp.nome||"cliente")).replace(/[^\p{L}\p{N}]+/gu,"_").replace(/_+/g,"_").replace(/^_|_$/g,"").toLowerCase()+".pdf";
+  html2pdf().set({margin:[8,8,8,8],filename:nomeArq,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}})
+    .from(cont.firstElementChild).save().then(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } })
+    .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 
 function openColaborador(key){
