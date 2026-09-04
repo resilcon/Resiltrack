@@ -1214,11 +1214,20 @@ function openModal(html){ modal.innerHTML=html; overlay.classList.add("open"); m
 
 const tipoTxt={dialogo:"Diálogo",documentos:"Envio de documentos",transferencia:"Transferência",outro:"Outro"};
 function transcriptHTML(t,nomeAt,nomeCl){ if(!t) return '<div class="sub">Sem transcrição.</div>';
-  return t.split("\n").filter(l=>l.trim()).map(l=>{ const m=l.match(/^(?:\[([^\]]+)\]\s*)?(ATENDENTE|CLIENTE):\s?([\s\S]*)$/);
-    if(!m) return `<div class="msg cl">${esc(l)}</div>`;
-    const who=m[2]==="ATENDENTE"?"at":"cl"; const when=m[1]?`<span class="when">${esc(m[1])}</span>`:"";
-    const nome=m[2]==="ATENDENTE"?(nomeAt||"Atendente"):(nomeCl&&nomeCl!=="—"?nomeCl:"Cliente");
-    return `<div class="msg ${who}"><span class="who">${esc(nome)}${when}</span>${esc(m[3])}</div>`; }).join("");
+  const msgs=[];
+  t.split("\n").forEach(l=>{
+    const m=l.match(/^(?:\[([^\]]+)\]\s*)?(ATENDENTE|CLIENTE):\s?([\s\S]*)$/);
+    if(m){ const who=m[2]==="ATENDENTE"?"at":"cl";
+      const nome=m[2]==="ATENDENTE"?(nomeAt||"Atendente"):(nomeCl&&nomeCl!=="—"?nomeCl:"Cliente");
+      msgs.push({who,when:m[1]||"",nome,texto:m[3]});
+    } else if(l.trim()){
+      // linha sem prefixo = continuação da mensagem anterior (mesmo remetente)
+      if(msgs.length) msgs[msgs.length-1].texto += "\n"+l;
+      else msgs.push({who:"cl",when:"",nome:(nomeCl&&nomeCl!=="—"?nomeCl:"Cliente"),texto:l});
+    }
+  });
+  return msgs.map(mo=>{ const when=mo.when?`<span class="when">${esc(mo.when)}</span>`:"";
+    return `<div class="msg ${mo.who}"><span class="who">${esc(mo.nome)}${when}</span>${esc(mo.texto)}</div>`; }).join("");
 }
 function openAvaliacao(i){
   const a=ATEND[i]; const tag=a.nota===null?"Sem nota":(a.nota>=8?"Bom":(a.nota>=6?"Regular":"Crítico"));
