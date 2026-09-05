@@ -244,6 +244,43 @@
   .drill{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
   @media (max-width:900px){.kpi-big,.drill{grid-template-columns:1fr}}
 
+  /* CRM kanban */
+  .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+  .kcol{flex:0 0 300px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:72vh}
+  .kcol-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top-left-radius:12px;border-top-right-radius:12px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .kcol-nome{font-family:"Sora",sans-serif;font-weight:600;font-size:13.5px}
+  .kcol-n{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 9px}
+  .kcol-body{padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:60px}
+  .kcol-body.dragover{background:var(--accent-soft);border-radius:0 0 12px 12px}
+  .kempty{font-size:12px;color:var(--muted);text-align:center;padding:18px 8px;border:1px dashed var(--border);border-radius:10px}
+  .kcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);cursor:grab;transition:border-color .12s,transform .06s}
+  .kcard:hover{border-color:var(--border-strong)}
+  .kcard.dragging{opacity:.5}
+  .kcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .kcard-nome{font-weight:600;font-size:13.5px;line-height:1.25}
+  .kcard-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .kcard-metrics{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:8px}
+  .kcard-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+  .tagchip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid;white-space:nowrap}
+  .kcard-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid var(--border)}
+  .kdias{font-size:11px;color:var(--muted)}.kdias.alerta{color:var(--warn);font-weight:600}
+  .cschip{font-size:10.5px;font-weight:700;color:#fff;background:var(--crit);border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .tagrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .tagrow input[type=text]{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;background:var(--surface-2)}
+  .tagrow input[type=color]{width:40px;height:36px;border:1px solid var(--border);border-radius:9px;background:none;cursor:pointer;padding:2px}
+  .tag-pick{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .tag-opt{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s}
+  .tag-opt:hover{border-color:var(--tc,var(--accent));color:var(--tc,var(--accent))}
+  .tag-opt.on{background:color-mix(in srgb,var(--tc,var(--accent)) 15%,transparent);color:var(--tc,var(--accent));border-color:var(--tc,var(--accent))}
+  .crm-panel{border-color:color-mix(in srgb,var(--accent) 25%,transparent);background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
+  .crm-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+  @media(max-width:640px){.crm-grid{grid-template-columns:1fr}}
+  .crm-field .k{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .cs-seg{display:inline-flex;flex-wrap:wrap}
+  .crm-obs{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;background:var(--surface-2);resize:vertical}
+  .crm-obs:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .crm-save-row{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:14px}
+
   /* login */
   #login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:80;padding:20px}
   .login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:32px 28px;text-align:center}
@@ -324,6 +361,13 @@ let HFIL={status:"",q:"",sort:"risco_desc"};
 let CFIL={q:"",status:"",servico:"",sort:"atend_desc"};
 let CLFIL={q:"",setor:"",sort:"media_desc"};
 const PAGE_SIZE=30;
+// ---- CRM ----
+let CVIEW="quadro"; // quadro | lista | ranking
+let QFIL={q:"",status:"",tag:"",cs:""};
+let CRMCFG={colunas:[],tags:[]};
+let CRMCLI={}; // empresa_id -> {coluna, tags:[], cs_manual, cs_obs}
+const COLUNAS_PADRAO=[{id:"novo",nome:"Novo",cor:"#6d3bd6"},{id:"ativo",nome:"Ativo",cor:"#128a5b"},{id:"atencao",nome:"Precisa atenção",cor:"#b7791f"},{id:"risco",nome:"Em risco",cor:"#cf4257"},{id:"recuperado",nome:"Recuperado",cor:"#2f6df6"}];
+const TAGS_PADRAO=[{id:"vip",nome:"VIP",cor:"#6d3bd6"},{id:"contrato_novo",nome:"Contrato novo",cor:"#128a5b"},{id:"inadimplente",nome:"Inadimplente",cor:"#cf4257"}];
 
 // ---------- helpers ----------
 const num = v => (v===null||v===undefined||v==="")?null:Number(v);
@@ -460,17 +504,22 @@ async function fetchAllRows(table, columns, orderCol){
 }
 async function loadData(){
   try{
-    const [u,e,c,ct] = await Promise.all([
+    const [u,e,c,ct,cfg,cc] = await Promise.all([
       fetchAllRows("usuarios","id,nome,setor,ativo"),
       fetchAllRows("empresas","id,nome,apelido,cnpj,status"),
       fetchAllRows("contatos","id,nome,telefone,empresa_id"),
-      fetchAllRows("contestacoes","*").catch(()=>[])
+      fetchAllRows("contestacoes","*").catch(()=>[]),
+      sb.schema("atendimentos").from("crm_config").select("*").eq("id",1).then(r=>(r.data&&r.data[0])||null).catch(()=>null),
+      fetchAllRows("crm_clientes","*").catch(()=>[])
     ]);
     USERS={}; u.forEach(x=>USERS[x.id]={nome:x.nome,setor:x.setor,ativo:x.ativo});
     EMPRESAS={}; e.forEach(x=>EMPRESAS[x.id]={nome:x.nome,apelido:x.apelido,cnpj:x.cnpj,status:x.status});
     CONTATOS={}; c.forEach(x=>CONTATOS[x.id]={nome:x.nome,telefone:x.telefone,empresa_id:x.empresa_id});
     CONTESTS={}; (ct||[]).forEach(x=>CONTESTS[x.atendimento_id]=x);
-  }catch(err){ console.warn("lookups:",err); }
+    CRMCFG={ colunas:(cfg&&Array.isArray(cfg.colunas)&&cfg.colunas.length)?cfg.colunas:COLUNAS_PADRAO.slice(),
+             tags:(cfg&&Array.isArray(cfg.tags)&&cfg.tags.length)?cfg.tags:TAGS_PADRAO.slice() };
+    CRMCLI={}; (cc||[]).forEach(x=>CRMCLI[x.empresa_id]={coluna:x.coluna,tags:Array.isArray(x.tags)?x.tags:[],cs_manual:(x.cs_manual===null?undefined:x.cs_manual),cs_obs:x.cs_obs});
+  }catch(err){ console.warn("lookups:",err); if(!CRMCFG.colunas.length){ CRMCFG={colunas:COLUNAS_PADRAO.slice(),tags:TAGS_PADRAO.slice()}; } }
 
   try{
     RAW = await fetchAllRows("analises","*","sessao_fim");
@@ -909,7 +958,7 @@ function empresaAgg(empId){
   const oports=list.filter(a=>a.oport).map(a=>a.oport);
   return {list,media,count:list.length,sat,churn,cols,health,ultima,primeira,durMin,satMedia,aderMedia,servicos,desfechos,colabs,notasBaixas,notasAltas,erros,melhorias,oports};
 }
-function viewClientes(v){
+function viewClientesLista(v){
   const ids=[...new Set(ATEND.map(a=>a.empresa_id).filter(Boolean))];
   const clientes=ids.map(id=>({id,emp:EMPRESAS[id],sc:clienteScore(id)})).filter(x=>x.emp);
   const servSet=new Set(); ATEND.forEach(a=>{ if(a.servico) servSet.add(a.servico); }); const servs=[...servSet].sort();
@@ -933,7 +982,7 @@ function viewClientes(v){
     : (b.sc.count-a.sc.count) );
   const th=(k,l,cls)=>`<th class="sortable ${cls||''}" data-sort="${k}">${l}${CFIL.sort===k?'<span class="arw">▼</span>':''}</th>`;
   const stPill=st=>`<span class="st-ic ${st}" title="${stTxt[st]}">${stIcon[st]}</span>`;
-  v.innerHTML=`<div class="page-head"><h2>Clientes · CRM</h2><p>relatório completo por cliente · ranqueie por atendimentos, tempo, satisfação, risco e serviço</p></div>
+  v.innerHTML=`
   <section>
   <div class="filters">
     <div class="search" style="min-width:220px;max-width:320px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="cQ" type="search" placeholder="Buscar cliente ou CNPJ..." value="${escAttr(CFIL.q)}"></div>
@@ -973,12 +1022,164 @@ function viewClientes(v){
         return `<tr><td class="r-name">${esc(c.nome||cid)}</td><td class="sub hide-md num">${esc(c.telefone||"—")}</td><td class="center num">${n}</td><td class="right"><button class="view-btn" data-link="${esc(cid)}">Vincular empresa</button></td></tr>`;
       }).join("")
     }</tbody></table></div></section>`:""}`;
-  const cq=v.querySelector("#cQ"); if(cq) cq.oninput=()=>{ CFIL.q=cq.value; const val=cq.value; viewClientes(v); const nb=v.querySelector("#cQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
-  const cs=v.querySelector("#cStatus"); if(cs) cs.onchange=()=>{ CFIL.status=cs.value; viewClientes(v); };
-  const cv=v.querySelector("#cServ"); if(cv) cv.onchange=()=>{ CFIL.servico=cv.value; viewClientes(v); };
-  const co=v.querySelector("#cSort"); if(co) co.onchange=()=>{ CFIL.sort=co.value; viewClientes(v); };
-  v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CFIL.sort=t.dataset.sort; viewClientes(v); });
+  const cq=v.querySelector("#cQ"); if(cq) cq.oninput=()=>{ CFIL.q=cq.value; const val=cq.value; viewClientesLista(v); const nb=v.querySelector("#cQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
+  const cs=v.querySelector("#cStatus"); if(cs) cs.onchange=()=>{ CFIL.status=cs.value; viewClientesLista(v); };
+  const cv=v.querySelector("#cServ"); if(cv) cv.onchange=()=>{ CFIL.servico=cv.value; viewClientesLista(v); };
+  const co=v.querySelector("#cSort"); if(co) co.onchange=()=>{ CFIL.sort=co.value; viewClientesLista(v); };
+  v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CFIL.sort=t.dataset.sort; viewClientesLista(v); });
   bindActions();
+}
+// ---------- CRM: wrapper, quadro, ranking, helpers, editores ----------
+function diasSemContato(ts){ return ts?Math.floor((Date.now()-ts)/864e5):null; }
+function colunaDe(empId,sc){ const st=CRMCLI[empId];
+  if(st&&st.coluna&&CRMCFG.colunas.some(c=>c.id===st.coluna)) return st.coluna;
+  const auto = sc.status==="critico"?"risco":(sc.status==="alerta"?"atencao":"ativo");
+  return CRMCFG.colunas.some(c=>c.id===auto)?auto:(CRMCFG.colunas[0]&&CRMCFG.colunas[0].id);
+}
+function csAuto(sc){ const d=diasSemContato(sc.ultima);
+  return !!(sc.churn || sc.status==="critico" || (sc.satMedia!==null&&sc.satMedia<6) || (d!==null&&d>45) || sc.reclam>0); }
+function precisaCS(empId,sc){ const m=CRMCLI[empId]&&CRMCLI[empId].cs_manual; if(m===true)return true; if(m===false)return false; return csAuto(sc); }
+function csMotivo(empId,sc){ const m=CRMCLI[empId]&&CRMCLI[empId].cs_manual; if(m===true)return "Marcado manualmente pelo time"; const r=[];
+  if(sc.churn)r.push("sinal de troca de contabilidade"); if(sc.status==="critico")r.push("relacionamento crítico");
+  if(sc.satMedia!==null&&sc.satMedia<6)r.push("satisfação baixa"); const d=diasSemContato(sc.ultima); if(d!==null&&d>45)r.push(d+" dias sem contato");
+  if(sc.reclam>0)r.push(sc.reclam+" reclamação(ões)"); return r.length?("Sugerido por: "+r.join(", ")):"Sem sinais no momento"; }
+async function salvarClienteCRM(empId){ const st=CRMCLI[empId]||{}; try{
+  await sb.schema("atendimentos").from("crm_clientes").upsert({empresa_id:empId,coluna:st.coluna??null,tags:st.tags||[],cs_manual:(st.cs_manual===undefined?null:st.cs_manual),cs_obs:st.cs_obs||null,atualizado_em:new Date().toISOString()},{onConflict:"empresa_id"});
+}catch(e){ console.warn("crm cliente save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do CRM no Supabase."); } }
+async function salvarConfigCRM(){ try{
+  await sb.schema("atendimentos").from("crm_config").upsert({id:1,colunas:CRMCFG.colunas,tags:CRMCFG.tags,atualizado_em:new Date().toISOString()},{onConflict:"id"});
+}catch(e){ console.warn("crm cfg save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do CRM no Supabase."); } }
+const uid=()=>Math.random().toString(36).slice(2,8);
+
+function viewClientes(v){
+  v.innerHTML=`<div class="page-head"><h2>Clientes · CRM</h2><p>quadro de relacionamento, tags, sinal do time de sucesso e ranking</p></div>
+  <div class="filters">
+    <div class="seg"><button data-cview="quadro" class="${CVIEW==='quadro'?'on':''}">Quadro</button><button data-cview="lista" class="${CVIEW==='lista'?'on':''}">Lista</button><button data-cview="ranking" class="${CVIEW==='ranking'?'on':''}">Ranking</button></div>
+    <div style="flex:1"></div>
+    <button class="txt-btn" id="btnTags">Gerenciar tags</button>
+    <button class="txt-btn" id="btnCols">Editar colunas</button>
+  </div>
+  <div id="crmsub"></div>`;
+  v.querySelectorAll("[data-cview]").forEach(b=>b.onclick=()=>{ CVIEW=b.dataset.cview; viewClientes(v); });
+  const bt=v.querySelector("#btnTags"); if(bt) bt.onclick=openGerenciarTags;
+  const bc=v.querySelector("#btnCols"); if(bc) bc.onclick=openEditarColunas;
+  const c=v.querySelector("#crmsub");
+  if(CVIEW==="lista") viewClientesLista(c);
+  else if(CVIEW==="ranking") viewRanking(c);
+  else viewQuadro(c);
+  bindActions();
+}
+
+function cardCliente(x){
+  const emp=x.emp, sc=x.sc, st=CRMCLI[x.id]||{};
+  const tags=(st.tags||[]).map(tid=>CRMCFG.tags.find(t=>t.id===tid)).filter(Boolean);
+  const d=diasSemContato(sc.ultima); const cs=precisaCS(x.id,sc);
+  return `<div class="kcard" draggable="true" data-empcard="${x.id}">
+    <div class="kcard-top"><div class="kcard-nome">${esc(emp.apelido||emp.nome)}</div><span class="risco ${sc.status}" style="font-size:11px;min-width:auto;padding:2px 7px" title="Risco 1 a 5">${sc.risco.toFixed(1).replace(".",",")}</span></div>
+    <div class="kcard-sub num">${esc(fmtCnpj(emp.cnpj))}</div>
+    <div class="kcard-metrics"><span>${sc.count} atend.</span><span>média ${fmt1(sc.media)}</span><span title="Tempo total dos tickets">${fmtDur(sc.durMin)}</span></div>
+    ${tags.length?`<div class="kcard-tags">${tags.map(t=>`<span class="tagchip" style="background:${t.cor}22;color:${t.cor};border-color:${t.cor}66">${esc(t.nome)}</span>`).join("")}</div>`:""}
+    <div class="kcard-foot"><span class="kdias ${d!==null&&d>30?'alerta':''}">${d===null?'sem registro':('há '+d+'d sem contato')}</span>${cs?`<span class="cschip" title="${escAttr(csMotivo(x.id,sc))}">CS contatar</span>`:""}</div>
+  </div>`;
+}
+function viewQuadro(c){
+  const ids=[...new Set(ATEND.map(a=>a.empresa_id).filter(Boolean))];
+  let clientes=ids.map(id=>({id,emp:EMPRESAS[id],sc:clienteScore(id)})).filter(x=>x.emp);
+  const fq=(QFIL.q||"").trim().toLowerCase();
+  if(fq) clientes=clientes.filter(x=>((x.emp.nome||"")+(x.emp.apelido||"")+(x.emp.cnpj||"")).toLowerCase().includes(fq));
+  if(QFIL.status) clientes=clientes.filter(x=>x.sc.status===QFIL.status);
+  if(QFIL.tag) clientes=clientes.filter(x=>((CRMCLI[x.id]&&CRMCLI[x.id].tags)||[]).includes(QFIL.tag));
+  if(QFIL.cs==="sim") clientes=clientes.filter(x=>precisaCS(x.id,x.sc));
+  const porCol={}; CRMCFG.colunas.forEach(col=>porCol[col.id]=[]);
+  clientes.forEach(x=>{ const cid=colunaDe(x.id,x.sc); (porCol[cid]||(porCol[cid]=[])).push(x); });
+  CRMCFG.colunas.forEach(col=>porCol[col.id].sort((a,b)=>b.sc.risco-a.sc.risco));
+  const tagOpts=CRMCFG.tags.map(t=>`<option value="${escAttr(t.id)}" ${QFIL.tag===t.id?'selected':''}>${esc(t.nome)}</option>`).join("");
+  c.innerHTML=`
+  <div class="filters">
+    <div class="search" style="min-width:200px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="qQ" type="search" placeholder="Buscar cliente..." value="${escAttr(QFIL.q)}"></div>
+    <select class="fsel" id="qStatus"><option value="">Todos os status</option><option value="critico" ${QFIL.status==='critico'?'selected':''}>Críticos</option><option value="alerta" ${QFIL.status==='alerta'?'selected':''}>Alerta</option><option value="saudavel" ${QFIL.status==='saudavel'?'selected':''}>Saudáveis</option></select>
+    <select class="fsel" id="qTag"><option value="">Todas as tags</option>${tagOpts}</select>
+    <select class="fsel" id="qCS"><option value="">CS: todos</option><option value="sim" ${QFIL.cs==='sim'?'selected':''}>Precisa CS</option></select>
+    <span class="sub" style="align-self:center">Arraste os cards entre as colunas</span>
+  </div>
+  <div class="kanban">${CRMCFG.colunas.map(col=>{ const items=porCol[col.id]||[];
+    return `<div class="kcol"><div class="kcol-h" style="border-top:3px solid ${col.cor||'var(--accent)'}"><span class="kcol-nome">${esc(col.nome)}</span><span class="kcol-n">${items.length}</span></div>
+      <div class="kcol-body" data-drop="${escAttr(col.id)}">${items.map(cardCliente).join("")||'<div class="kempty">Solte clientes aqui</div>'}</div></div>`;
+  }).join("")}</div>`;
+  const qq=c.querySelector("#qQ"); if(qq) qq.oninput=()=>{ QFIL.q=qq.value; const val=qq.value; viewQuadro(c); const nb=c.querySelector("#qQ"); if(nb){nb.focus();nb.setSelectionRange(val.length,val.length);} };
+  const qs=c.querySelector("#qStatus"); if(qs) qs.onchange=()=>{ QFIL.status=qs.value; viewQuadro(c); };
+  const qt=c.querySelector("#qTag"); if(qt) qt.onchange=()=>{ QFIL.tag=qt.value; viewQuadro(c); };
+  const qc=c.querySelector("#qCS"); if(qc) qc.onchange=()=>{ QFIL.cs=qc.value; viewQuadro(c); };
+  c.querySelectorAll(".kcard").forEach(card=>{
+    card.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",card.dataset.empcard); e.dataTransfer.effectAllowed="move"; card.classList.add("dragging"); });
+    card.addEventListener("dragend",()=>card.classList.remove("dragging"));
+    card.addEventListener("click",()=>{ if(card.classList.contains("dragging"))return; openEmpresa(card.dataset.empcard); });
+  });
+  c.querySelectorAll("[data-drop]").forEach(body=>{
+    body.addEventListener("dragover",e=>{ e.preventDefault(); body.classList.add("dragover"); });
+    body.addEventListener("dragleave",()=>body.classList.remove("dragover"));
+    body.addEventListener("drop",e=>{ e.preventDefault(); body.classList.remove("dragover");
+      const empId=e.dataTransfer.getData("text/plain"); if(!empId)return;
+      if(!CRMCLI[empId])CRMCLI[empId]={tags:[]}; CRMCLI[empId].coluna=body.dataset.drop; salvarClienteCRM(empId);
+      viewQuadro(c); });
+  });
+}
+function viewRanking(c){
+  const ids=[...new Set(ATEND.map(a=>a.empresa_id).filter(Boolean))];
+  const clientes=ids.map(id=>({id,emp:EMPRESAS[id],sc:clienteScore(id)})).filter(x=>x.emp);
+  const porContato=clientes.slice().sort((a,b)=>b.sc.count-a.sc.count).slice(0,15);
+  const porTempo=clientes.slice().sort((a,b)=>b.sc.durMin-a.sc.durMin).slice(0,15);
+  const tabela=(titulo,hint,list,valFn,valLbl)=>`<section><div class="sec-head"><h2>${titulo}</h2><span class="hint">${hint}</span></div>
+    <div class="card"><table><thead><tr><th style="width:40px">#</th><th>Cliente</th><th class="center">${valLbl}</th><th class="center hide-md">Média</th><th class="center">Risco</th></tr></thead><tbody>${
+      list.map((x,i)=>`<tr><td class="sub num">${i+1}</td><td><button class="link-name" data-emp="${x.id}">${esc(x.emp.apelido||x.emp.nome)}</button></td><td class="center num" style="font-weight:600">${valFn(x)}</td><td class="center hide-md"><span class="score-num" style="color:${scoreColor(x.sc.media)}">${fmt1(x.sc.media)}</span></td><td class="center"><span class="risco ${x.sc.status}">${x.sc.risco.toFixed(1).replace(".",",")}</span></td></tr>`).join("")||`<tr><td colspan="5" class="empty">Sem dados.</td></tr>`
+    }</tbody></table></div></section>`;
+  c.innerHTML = tabela("Clientes que mais entram em contato","por número de atendimentos",porContato,x=>x.sc.count,"Atend.")
+    + tabela("Clientes que mais consomem o escritório","por tempo total de atendimento",porTempo,x=>fmtDur(x.sc.durMin),"Tempo");
+  bindActions();
+}
+function openGerenciarTags(){
+  const linhas=CRMCFG.tags.map(t=>`<div class="tagrow" data-tid="${escAttr(t.id)}"><input type="color" value="${escAttr(t.cor||'#6d3bd6')}"><input type="text" value="${escAttr(t.nome)}" placeholder="Nome da tag"><button class="close-x" data-del="${escAttr(t.id)}" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Gerenciar tags</h3><div class="m-chips"><span class="m-chip">nome e cor livres</span></div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Tags</h4><div id="tagList">${linhas||'<div class="sub">Nenhuma tag ainda.</div>'}</div>
+        <button class="btn-line" id="addTag" style="margin-top:6px">+ Nova tag</button></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="salvarTags">Salvar</button></div>
+    </div>`);
+  const list=modal.querySelector("#tagList");
+  modal.querySelector("#addTag").onclick=()=>{ const div=document.createElement("div"); div.className="tagrow"; div.dataset.tid="new_"+uid();
+    div.innerHTML=`<input type="color" value="#6d3bd6"><input type="text" value="" placeholder="Nome da tag"><button class="close-x" data-delrow style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    list.appendChild(div); div.querySelector("[data-delrow]").onclick=()=>div.remove(); };
+  modal.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>b.closest(".tagrow").remove());
+  modal.querySelector("#salvarTags").onclick=async()=>{
+    const novas=[]; list.querySelectorAll(".tagrow").forEach(r=>{ const nome=r.querySelector("input[type=text]").value.trim(); const cor=r.querySelector("input[type=color]").value; let id=r.dataset.tid; if(id.startsWith("new_"))id=nome.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")||uid(); if(nome)novas.push({id,nome,cor}); });
+    CRMCFG.tags=novas; await salvarConfigCRM(); closeModal(); viewClientes(document.getElementById("view"));
+  };
+}
+function openEditarColunas(){
+  const linhas=CRMCFG.colunas.map((col,i)=>`<div class="tagrow" data-cid="${escAttr(col.id)}"><input type="color" value="${escAttr(col.cor||'#6d3bd6')}"><input type="text" value="${escAttr(col.nome)}" placeholder="Nome da coluna"><button class="close-x" data-up title="Subir" style="width:32px;height:32px" ${i===0?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del title="Remover" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Editar colunas</h3><div class="m-chips"><span class="m-chip">arraste os cards depois</span></div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Colunas do quadro</h4><div id="colList">${linhas}</div>
+        <button class="btn-line" id="addCol" style="margin-top:6px">+ Nova coluna</button></div>
+      <div class="sub">Ao remover uma coluna, os clientes que estavam nela voltam a ser posicionados pelo status automaticamente.</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="salvarCols">Salvar</button></div>
+    </div>`);
+  const list=modal.querySelector("#colList");
+  const bindRow=r=>{ const up=r.querySelector("[data-up]"); if(up)up.onclick=()=>{ const prev=r.previousElementSibling; if(prev)list.insertBefore(r,prev); };
+    r.querySelector("[data-del]").onclick=()=>r.remove(); };
+  list.querySelectorAll(".tagrow").forEach(bindRow);
+  modal.querySelector("#addCol").onclick=()=>{ const div=document.createElement("div"); div.className="tagrow"; div.dataset.cid="new_"+uid();
+    div.innerHTML=`<input type="color" value="#6d3bd6"><input type="text" value="" placeholder="Nome da coluna"><button class="close-x" data-up style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    list.appendChild(div); bindRow(div); };
+  modal.querySelector("#salvarCols").onclick=async()=>{
+    const novas=[]; list.querySelectorAll(".tagrow").forEach(r=>{ const nome=r.querySelector("input[type=text]").value.trim(); const cor=r.querySelector("input[type=color]").value; let id=r.dataset.cid; if(id.startsWith("new_"))id=nome.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")||uid(); if(nome)novas.push({id,nome,cor}); });
+    if(!novas.length){ alert("Deixe pelo menos uma coluna."); return; }
+    CRMCFG.colunas=novas; await salvarConfigCRM(); closeModal(); viewClientes(document.getElementById("view"));
+  };
 }
 function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,""); if(d.length!==14) return c; return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5"); }
 
@@ -1313,6 +1514,8 @@ function baixarAvaliacaoPDF(i,btn){
 
 function openEmpresa(empId){
   const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
+  const stC=CRMCLI[empId]||{}; const colAtual=colunaDe(empId,sc); const tagsSel=stC.tags||[];
+  const csM=(stC.cs_manual===true?"sim":(stC.cs_manual===false?"nao":"auto")); const csSug=csAuto(sc);
   const contatos=Object.entries(CONTATOS).filter(([id,c])=>c.empresa_id===empId).map(([id,c])=>({id,...c}));
   const list=ag.list.slice().sort((a,b)=>b.ts-a.ts);
   const servEnt=Object.entries(ag.servicos).sort((a,b)=>b[1]-a[1]);
@@ -1329,6 +1532,20 @@ function openEmpresa(empId){
       <button class="close-x" data-cpdf="${empId}" title="Baixar relatório do cliente em PDF" aria-label="Baixar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
       </div></div>
     <div class="modal-body">
+      <div class="panel crm-panel"><h4>CRM · relacionamento</h4>
+        <div class="crm-grid">
+          <div class="crm-field"><div class="k">Coluna do quadro</div>
+            <select class="fsel" id="crmCol" style="width:100%">${CRMCFG.colunas.map(col=>`<option value="${escAttr(col.id)}" ${col.id===colAtual?'selected':''}>${esc(col.nome)}</option>`).join("")}</select></div>
+          <div class="crm-field"><div class="k">Time de sucesso do cliente</div>
+            <div class="seg cs-seg" id="crmCS"><button data-cs="auto" class="${csM==='auto'?'on':''}">Automático</button><button data-cs="sim" class="${csM==='sim'?'on':''}">Precisa contato</button><button data-cs="nao" class="${csM==='nao'?'on':''}">Não precisa</button></div>
+            <div class="sub" id="crmCSsug" style="margin-top:6px">${csM==='auto'?esc(csMotivo(empId,sc)):(csM==='sim'?'Marcado manualmente: o time deve entrar em contato.':'Marcado manualmente: sem necessidade de contato agora.')}${csM==='auto'?` · sugestão do sistema: <strong>${csSug?'contatar':'tudo certo'}</strong>`:''}</div></div>
+        </div>
+        <div class="crm-field" style="margin-top:12px"><div class="k">Tags do cliente</div>
+          <div class="tag-pick" id="crmTags">${CRMCFG.tags.length?CRMCFG.tags.map(t=>`<button class="tag-opt ${tagsSel.includes(t.id)?'on':''}" data-tag="${escAttr(t.id)}" style="--tc:${t.cor}">${esc(t.nome)}</button>`).join(""):'<span class="sub">Nenhuma tag criada ainda. Use “Gerenciar tags” na aba Clientes.</span>'}</div></div>
+        <div class="crm-field" style="margin-top:12px"><div class="k">Observação do time (opcional)</div>
+          <textarea id="crmObs" class="crm-obs" rows="2" placeholder="Ex.: cliente pediu retorno sobre a folha, ligar até sexta.">${esc(stC.cs_obs||"")}</textarea></div>
+        <div class="crm-save-row"><span class="sub" id="crmSaved"></span><button class="btn-primary" id="crmSalvar">Salvar no CRM</button></div>
+      </div>
       <div class="panel"><h4>Visão geral</h4><div class="grid2">
         ${kpi("Atendimentos",ag.count)}
         ${kpi("Tempo total",fmtDur(ag.durMin))}
@@ -1355,6 +1572,31 @@ function openEmpresa(empId){
   modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
   modal.querySelectorAll("[data-col2]").forEach(b=>b.onclick=()=>{ closeModal(); openColaborador(b.dataset.col2); });
   const cp=modal.querySelector("[data-cpdf]"); if(cp) cp.onclick=()=>baixarClientePDF(empId,cp);
+  // ---- CRM: coluna, CS e tags ----
+  let csEscolha=csM;
+  const marcarAlterado=()=>{ const s=modal.querySelector("#crmSaved"); if(s){ s.textContent="alterações não salvas"; s.style.color="var(--warn,#b7791f)"; } };
+  modal.querySelectorAll("#crmCS [data-cs]").forEach(b=>b.onclick=()=>{
+    csEscolha=b.dataset.cs; modal.querySelectorAll("#crmCS [data-cs]").forEach(x=>x.classList.toggle("on",x===b));
+    const sug=modal.querySelector("#crmCSsug");
+    if(sug) sug.innerHTML=(csEscolha==='auto'?esc(csMotivo(empId,sc))+` · sugestão do sistema: <strong>${csSug?'contatar':'tudo certo'}</strong>`:(csEscolha==='sim'?'Marcado manualmente: o time deve entrar em contato.':'Marcado manualmente: sem necessidade de contato agora.'));
+    marcarAlterado();
+  });
+  modal.querySelectorAll("#crmTags [data-tag]").forEach(b=>b.onclick=()=>{ b.classList.toggle("on"); marcarAlterado(); });
+  const colSel=modal.querySelector("#crmCol"); if(colSel) colSel.onchange=marcarAlterado;
+  const obsEl=modal.querySelector("#crmObs"); if(obsEl) obsEl.oninput=marcarAlterado;
+  const salvarBtn=modal.querySelector("#crmSalvar");
+  if(salvarBtn) salvarBtn.onclick=async()=>{
+    const novasTags=[...modal.querySelectorAll("#crmTags .tag-opt.on")].map(x=>x.dataset.tag);
+    if(!CRMCLI[empId])CRMCLI[empId]={};
+    CRMCLI[empId].coluna=colSel?colSel.value:CRMCLI[empId].coluna;
+    CRMCLI[empId].tags=novasTags;
+    CRMCLI[empId].cs_manual=(csEscolha==="sim"?true:(csEscolha==="nao"?false:null));
+    CRMCLI[empId].cs_obs=obsEl?obsEl.value.trim():"";
+    salvarBtn.disabled=true; salvarBtn.textContent="Salvando...";
+    await salvarClienteCRM(empId);
+    salvarBtn.disabled=false; salvarBtn.textContent="Salvar no CRM";
+    const s=modal.querySelector("#crmSaved"); if(s){ s.textContent="salvo"; s.style.color="var(--good,#128a5b)"; }
+  };
 }
 // ---------- PDF do cliente (CRM) ----------
 function baixarClientePDF(empId,btn){
