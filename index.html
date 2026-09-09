@@ -265,6 +265,7 @@
   .kcard-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid var(--border)}
   .kdias{font-size:11px;color:var(--muted)}.kdias.alerta{color:var(--warn);font-weight:600}
   .cschip{font-size:10.5px;font-weight:700;color:#fff;background:var(--crit);border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .nc-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;white-space:nowrap}
   .tagrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .tagrow input[type=text]{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;background:var(--surface-2)}
   .tagrow input[type=color]{width:40px;height:36px;border:1px solid var(--border);border-radius:9px;background:none;cursor:pointer;padding:2px}
@@ -353,6 +354,12 @@
 
 <script>
 let ATEND=[], RAW=[], USERS={}, EMPRESAS={}, CONTATOS={}, CONTESTS={}, sb=null, ME="";
+// ---- controle de acesso ----
+let ACCESS=null;   // acesso do usuário logado: {email,nivel,departamentos:[],permissoes:[]}
+let ACESSOS=[];    // todos os acessos (painel admin)
+let DEPSETOR=[];   // de/para: [{departamento,setor}]
+const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
+const MODULOS=[["financeiro","Financeiro"],["comercial","Comercial"]];
 let TAB="dashboard";
 let DSUB="colab"; // colab | health | setores | servico
 let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
@@ -477,6 +484,7 @@ function mapRow(r){
     errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null,
     docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null,
     servico:r.servico||null,
+    computavel:(r.computar_nota!==false),
     durMin:(r.sessao_inicio&&r.sessao_fim)?Math.max(0,(new Date(r.sessao_fim)-new Date(r.sessao_inicio))/60000):null
   };
   a.cliente = clienteNome(a);
@@ -504,14 +512,20 @@ async function fetchAllRows(table, columns, orderCol){
 }
 async function loadData(){
   try{
-    const [u,e,c,ct,cfg,cc] = await Promise.all([
+    const [u,e,c,ct,cfg,cc,ac,ds] = await Promise.all([
       fetchAllRows("usuarios","id,nome,setor,ativo"),
       fetchAllRows("empresas","id,nome,apelido,cnpj,status"),
       fetchAllRows("contatos","id,nome,telefone,empresa_id"),
       fetchAllRows("contestacoes","*").catch(()=>[]),
       sb.schema("atendimentos").from("crm_config").select("*").eq("id",1).then(r=>(r.data&&r.data[0])||null).catch(()=>null),
-      fetchAllRows("crm_clientes","*").catch(()=>[])
+      fetchAllRows("crm_clientes","*").catch(()=>[]),
+      fetchAllRows("acessos","*").catch(()=>[]),
+      fetchAllRows("departamento_setores","*").catch(()=>[])
     ]);
+    ACESSOS=(ac||[]); DEPSETOR=(ds||[]);
+    if(!ACESSOS.length){ ACCESS={email:ME,nivel:"admin",departamentos:[],permissoes:[]}; } // ainda não configurado: tudo liberado, nada muda
+    else{ const mr=ACESSOS.find(a=>(a.email||"").toLowerCase()===(ME||"").toLowerCase());
+      ACCESS=mr?{email:mr.email,nivel:mr.nivel||"colaborador",departamentos:mr.departamentos||[],permissoes:mr.permissoes||[]}:{email:ME,nivel:"colaborador",departamentos:[],permissoes:[]}; }
     USERS={}; u.forEach(x=>USERS[x.id]={nome:x.nome,setor:x.setor,ativo:x.ativo});
     EMPRESAS={}; e.forEach(x=>EMPRESAS[x.id]={nome:x.nome,apelido:x.apelido,cnpj:x.cnpj,status:x.status});
     CONTATOS={}; c.forEach(x=>CONTATOS[x.id]={nome:x.nome,telefone:x.telefone,empresa_id:x.empresa_id});
@@ -527,32 +541,58 @@ async function loadData(){
     document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message||error)}</div>`; return;
   }
   ATEND = RAW.map(mapRow);
+  const perm = setoresPermitidos();
+  if(perm) ATEND = ATEND.filter(a=>perm.has(a.setor)); // gestor vê só os setores do seu departamento
   render();
+}
+// ---- helpers de acesso ----
+function isAdmin(){ return !!(ACCESS && ACCESS.nivel==="admin"); }
+function isGestor(){ return !!(ACCESS && ACCESS.nivel==="gestor"); }
+function podeModulo(m){ return isAdmin() || (ACCESS && (ACCESS.permissoes||[]).includes(m)); }
+function setoresPermitidos(){ // Set de setores visíveis; null = todos (admin ou não configurado)
+  if(!ACCESS || isAdmin()) return null;
+  const deps=new Set(ACCESS.departamentos||[]); const s=new Set();
+  DEPSETOR.forEach(m=>{ if(deps.has(m.departamento)) s.add(m.setor); });
+  return s;
+}
+function allowedTabKeys(){
+  if(isAdmin()) return ["dashboard","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
+  const t=[];
+  if(isGestor()) t.push("dashboard","detalhes","colaboradores","contestacoes","setor");
+  if(podeModulo("financeiro")) t.push("financeiro");
+  if(podeModulo("comercial")) t.push("comercial");
+  return t;
 }
 
 // ---------- navegação ----------
-const TABS = [
-  ["dashboard","Dashboard"],["detalhes","Dados Detalhados"],["clientes","Clientes"],
-  ["colaboradores","Preview Colaborador"],["contestacoes","Contestações"],
-  ["setor","Evolução Setor"],["tv","Preview TV"]
-];
+const TABS_ALL = {dashboard:"Dashboard",detalhes:"Dados Detalhados",clientes:"Clientes",colaboradores:"Preview Colaborador",contestacoes:"Contestações",setor:"Evolução Setor",tv:"Preview TV",financeiro:"Financeiro",comercial:"Comercial",admin:"Admin"};
 function renderTabs(){
   const nav=document.getElementById("tabs"); nav.innerHTML="";
-  TABS.forEach(([k,l])=>{ const b=el("button",k===TAB?"on":"",l); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
+  const keys=allowedTabKeys();
+  if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
+  keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
 function render(){ renderTabs(); const v=document.getElementById("view");
+  const keys=allowedTabKeys();
+  if(!keys.length){ v.innerHTML=`<div class="soon" style="margin-top:40px"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><h2 style="font-size:18px;margin-bottom:6px">Acesso não configurado</h2><p>Seu e-mail ainda não tem acesso liberado aqui. Fale com a gestão para definir seu departamento.</p></div>`; return; }
   if(TAB==="dashboard") viewDashboard(v);
   else if(TAB==="detalhes") viewDetalhes(v);
   else if(TAB==="clientes") viewClientes(v);
   else if(TAB==="colaboradores") viewColaboradores(v);
   else if(TAB==="contestacoes") viewContestacoes(v);
   else if(TAB==="setor") viewSetor(v);
+  else if(TAB==="admin") viewAdmin(v);
+  else if(TAB==="financeiro"||TAB==="comercial") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg><h2 style="font-size:18px;margin-bottom:6px">${TABS_ALL[TAB]}</h2><p>Módulo em construção. Em breve com as informações ${TAB==="financeiro"?"financeiras dos clientes":"comerciais e de onboarding"}.</p></div>`;
   else if(TAB==="tv") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg><h2 style="font-size:18px;margin-bottom:6px">Preview TV</h2><p>Tela de mural para a sala do CS. Vamos configurar essa visualização em breve.</p></div>`;
   bindActions();
 }
 
 // ---------- DASHBOARD ----------
-function comNota(list){ return list.filter(a=>a.nota!==null); }
+// okNota: a nota só entra nas médias/contagens se existe E o atendimento é computável
+// (atendimentos só-documento, de um lado só, ou muito curtos vêm com computavel=false).
+const okNota = a => a.nota!==null && a.computavel!==false;
+function comNota(list){ return list.filter(a=>okNota(a)); }
+const ncTag = a => (a && a.computavel===false) ? '<span class="nc-tag" title="Atendimento sem conversa real (só documento, um lado só ou muito curto). A IA avaliou, mas a nota não entra nas médias.">não computado</span>' : '';
 function viewDashboard(v){
   const subs=[["colab","Performance por Colaborador"],["health","Health Score Clientes"],["setores","Análise por Setor"],["servico","Análise por Serviço"]];
   v.innerHTML=`<div class="subnav">${subs.map(([k,l])=>`<button data-sub="${k}" class="${DSUB===k?'on':''}">${esc(l)}</button>`).join("")}</div><div id="dsub"></div>`;
@@ -600,7 +640,7 @@ function viewPerfColab(v){
   const map=new Map();
   base.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente;
     if(!map.has(k))map.set(k,{key:k,nome:a.atendente,setor:a.setor,notas:[]});
-    if(a.nota!==null) map.get(k).notas.push(a.nota); });
+    if(okNota(a)) map.get(k).notas.push(a.nota); });
   Object.entries(USERS).forEach(([id,u])=>{ if(u.ativo===false) return;
     if(DFIL.colab&&id!==DFIL.colab) return; if(DFIL.setor&&u.setor!==DFIL.setor) return;
     if(!map.has(id)) map.set(id,{key:id,nome:u.nome,setor:u.setor,notas:[]}); });
@@ -643,7 +683,7 @@ function viewPerfColab(v){
 function reclamacoesEmpresa(empId){ let n=0; ATEND.forEach(a=>{ if(a.empresa_id===empId && CONTESTS[a.id]) n++; }); return n; }
 function clienteScore(empId){
   const ag=empresaAgg(empId);
-  const cn=ag.list.filter(a=>a.nota!==null);
+  const cn=ag.list.filter(a=>okNota(a));
   const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab;
   const ratio=cn.length?ab/cn.length:0;
   const reclam=reclamacoesEmpresa(empId);
@@ -671,7 +711,7 @@ function viewHealth(v){
   // pendências de vínculo
   const semVinc=ATEND.filter(a=>!a.empresa_id&&a.contact_id);
   const contatosSem=[...new Set(semVinc.map(a=>a.contact_id))];
-  const notasBaixasSem=semVinc.filter(a=>a.nota!==null&&a.nota<7).length;
+  const notasBaixasSem=semVinc.filter(a=>okNota(a)&&a.nota<7).length;
   // filtro + ordenação da tabela
   let rows=clientes.slice();
   if(HFIL.status) rows=rows.filter(x=>x.sc.status===HFIL.status);
@@ -713,7 +753,7 @@ function viewHealth(v){
     </div>
     <div class="card" style="margin-top:14px"><table><thead><tr><th>Contato</th><th class="center">Atend.</th><th class="center hide-md">Média</th><th class="center">Notas &lt; 7</th><th class="hide-md">Setores</th><th class="hide-md">Último</th><th class="right">Ação</th></tr></thead><tbody>${
       contatosSem.map(cid=>{ const c=CONTATOS[cid]||{}; const l=ATEND.filter(a=>a.contact_id===cid);
-        const cn=l.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+        const cn=l.filter(a=>okNota(a)); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
         const ab=cn.filter(a=>a.nota<7).length; const setores=[...new Set(l.map(a=>a.setor).filter(s=>s&&s!=="—"))];
         const ult=l.map(a=>a.ts).sort((x,y)=>y-x)[0];
         return `<tr><td class="r-name">${esc(c.nome||cid)}<div class="sub num">${esc(c.telefone||"")}</div></td><td class="center num">${l.length}</td><td class="center hide-md"><span class="score-num" style="color:${scoreColor(m)}">${fmt1(m)}</span></td><td class="center num">${ab?`<span style="color:var(--crit);font-weight:600">${ab}</span>`:'<span class="sub">—</span>'}</td><td class="sub hide-md">${esc(setores.slice(0,2).join(", ")||"—")}${setores.length>2?` +${setores.length-2}`:""}</td><td class="sub hide-md num">${fmtDate(new Date(ult).toISOString())}</td><td class="right"><button class="view-btn" data-link="${esc(cid)}">Vincular</button></td></tr>`;
@@ -741,7 +781,7 @@ function viewHealth(v){
 // ---------- ANÁLISE POR SETOR (ranking de equipes) ----------
 function setorAgg(setor){
   const list=ATEND.filter(a=>a.setor===setor);
-  const cn=list.filter(a=>a.nota!==null);
+  const cn=list.filter(a=>okNota(a));
   const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const satVals=list.map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x));
   const satisf=satVals.length?satVals.reduce((s,n)=>s+n,0)/satVals.length:null;
@@ -775,7 +815,7 @@ function openSetorEquipe(setor){
   const t=setorAgg(setor);
   const map=new Map();
   t.list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{key:k,nome:a.atendente,list:[]}); map.get(k).list.push(a); });
-  let colabs=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+  let colabs=[...map.values()].map(g=>{ const cn=g.list.filter(a=>okNota(a)); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const ab=cn.filter(a=>a.nota<7).length; return {...g,qtd:g.list.length,media:m,ab}; }).sort((a,b)=>(b.media??-1)-(a.media??-1));
   const criticos=colabs.filter(c=>c.media!==null&&c.media<7);
   const linha=(c,idx)=>`<div class="mini-row"><div class="mr-l"><div class="t">${idx!=null?`<span class="sub num">${idx}º </span>`:""}<button class="link-name" data-col="${escAttr(String(c.key))}">${esc(c.nome)}</button></div><div class="s">${c.qtd} atend. · ${c.ab} nota(s) &lt; 7</div></div><span class="nota ${notaClass(c.media)} num">${fmt1(c.media)}</span></div>`;
@@ -801,7 +841,7 @@ function openSetorEquipe(setor){
 function viewServico(v){
   const map=new Map();
   ATEND.forEach(a=>{ const k=servicoDe(a); if(!map.has(k))map.set(k,[]); map.get(k).push(a); });
-  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>a.nota!==null);
+  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>okNota(a));
     const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
     return {servico,qtd:list.length,media,comErro,pct:list.length?comErro/list.length*100:0}; })
@@ -822,7 +862,7 @@ function openComplexidade(nivel){
   const cor = nivel==="sem"?"var(--muted)":(cxColor[nivel]||"var(--muted)");
   const map=new Map();
   lista.forEach(a=>{ const s=servicoDe(a); if(!map.has(s))map.set(s,[]); map.get(s).push(a); });
-  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>a.nota!==null);
+  let rows=[...map.entries()].map(([servico,list])=>{ const cn=list.filter(a=>okNota(a));
     const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
     return {servico,qtd:list.length,media,comErro,pct:list.length?comErro/list.length*100:0}; });
@@ -846,7 +886,7 @@ function openComplexidade(nivel){
 }
 function openServico(servico){
   const list=ATEND.filter(a=>servicoDe(a)===servico).sort((a,b)=>b.ts-a.ts);
-  const cn=list.filter(a=>a.nota!==null); const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+  const cn=list.filter(a=>okNota(a)); const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const comErro=list.filter(a=>a.erros&&a.erros.length>0).length;
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub">Serviço</div><h3>${esc(servico)}</h3>
@@ -896,9 +936,9 @@ function viewDetalhes(v){
     if(TFIL.setor) rows=rows.filter(a=>a.setor===TFIL.setor);
     if(TFIL.compl) rows=rows.filter(a=>a.complexidade===TFIL.compl);
     if(TFIL.desfecho) rows=rows.filter(a=>a.desfecho===TFIL.desfecho);
-    if(TFIL.nota==="ge8") rows=rows.filter(a=>a.nota!==null&&a.nota>=8);
-    else if(TFIL.nota==="7to8") rows=rows.filter(a=>a.nota!==null&&a.nota>=7&&a.nota<8);
-    else if(TFIL.nota==="lt7") rows=rows.filter(a=>a.nota!==null&&a.nota<7);
+    if(TFIL.nota==="ge8") rows=rows.filter(a=>okNota(a)&&a.nota>=8);
+    else if(TFIL.nota==="7to8") rows=rows.filter(a=>okNota(a)&&a.nota>=7&&a.nota<8);
+    else if(TFIL.nota==="lt7") rows=rows.filter(a=>okNota(a)&&a.nota<7);
     const s=TFIL.sort;
     rows.sort((a,b)=> s==="data_asc"?a.ts-b.ts : s==="nota_desc"?((b.nota??-1)-(a.nota??-1)) : s==="nota_asc"?((a.nota??99)-(b.nota??99)) : b.ts-a.ts);
     return rows;
@@ -934,7 +974,7 @@ function viewDetalhes(v){
 // ---------- CLIENTES ----------
 function empresaAgg(empId){
   const list=ATEND.filter(a=>a.empresa_id===empId);
-  const cn=list.filter(a=>a.nota!==null);
+  const cn=list.filter(a=>okNota(a));
   const media=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
   const sat={positivo:0,neutro:0,negativo:0};
   list.forEach(a=>{ if(a.satisfacao&&sat[a.satisfacao]!==undefined)sat[a.satisfacao]++; });
@@ -946,11 +986,11 @@ function empresaAgg(empId){
   const tsl=list.map(a=>a.ts).filter(Boolean);
   const ultima=tsl.length?Math.max(...tsl):0, primeira=tsl.length?Math.min(...tsl):0;
   const durMin=list.reduce((s,a)=>s+(a.durMin||0),0);
-  const satV=list.map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x)); const satMedia=satV.length?satV.reduce((s,n)=>s+n,0)/satV.length:null;
-  const aderV=list.map(a=>a.aderencia.v).filter(x=>x!==null&&!isNaN(x)); const aderMedia=aderV.length?aderV.reduce((s,n)=>s+n,0)/aderV.length:null;
+  const satV=list.filter(okNota).map(a=>a.s.v).filter(x=>x!==null&&!isNaN(x)); const satMedia=satV.length?satV.reduce((s,n)=>s+n,0)/satV.length:null;
+  const aderV=list.filter(okNota).map(a=>a.aderencia.v).filter(x=>x!==null&&!isNaN(x)); const aderMedia=aderV.length?aderV.reduce((s,n)=>s+n,0)/aderV.length:null;
   const servicos={}; list.forEach(a=>{ if(a.servico) servicos[a.servico]=(servicos[a.servico]||0)+1; });
   const desfechos={}; list.forEach(a=>{ if(a.desfecho) desfechos[a.desfecho]=(desfechos[a.desfecho]||0)+1; });
-  const colMap=new Map(); list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{key:k,nome:a.atendente,notas:[],n:0}); const g=colMap.get(k); g.n++; if(a.nota!==null)g.notas.push(a.nota); });
+  const colMap=new Map(); list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{key:k,nome:a.atendente,notas:[],n:0}); const g=colMap.get(k); g.n++; if(okNota(a))g.notas.push(a.nota); });
   const colabs=[...colMap.values()].map(g=>({key:g.key,nome:g.nome,n:g.n,media:g.notas.length?g.notas.reduce((s,n)=>s+n,0)/g.notas.length:null})).sort((a,b)=>b.n-a.n);
   const notasBaixas=cn.filter(a=>a.nota<7).length, notasAltas=cn.length-notasBaixas;
   const erros={}; list.forEach(a=>a.erros.forEach(e=>erros[e]=(erros[e]||0)+1));
@@ -1187,7 +1227,7 @@ function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,"
 function viewColaboradores(v){
   const map=new Map();
   ATEND.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
-  let rows=[...map.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
+  let rows=[...map.values()].map(g=>{ const cn=g.list.filter(a=>okNota(a)); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null;
     const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length?ac/cn.length*100:null;
     return {...g,qtd:g.list.length,media:m,ab,ac,pct,status:perfStatus(pct)}; });
   const setores=setoresList();
@@ -1231,16 +1271,16 @@ function viewColaboradores(v){
   v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CLFIL.sort=t.dataset.sort; viewColaboradores(v); });
   bindActions();
 }
-function cn2(list){ return list.filter(a=>a.nota!==null&&a.nota>=7).length; }
+function cn2(list){ return list.filter(a=>okNota(a)&&a.nota>=7).length; }
 
 // ---------- CONTESTAÇÕES ----------
 function viewContestacoes(v){
-  const baixas=ATEND.filter(a=>a.nota!==null&&a.nota<7).sort((a,b)=>a.nota-b.nota);
+  const baixas=ATEND.filter(a=>okNota(a)&&a.nota<7).sort((a,b)=>a.nota-b.nota);
   v.innerHTML=`<div class="page-head"><h2>Contestações</h2><p>atendimentos com nota abaixo de 7 — o colaborador pode contestar quando a IA avaliar errado ou o erro for do cliente</p></div>
   <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="center">Nota</th><th>Situação</th><th class="right">Ação</th></tr></thead><tbody>${
     baixas.length?baixas.map(a=>{ const i=ATEND.indexOf(a); const ct=CONTESTS[a.id];
       const stat=ct?`<span class="pill ${ct.status==='aprovada'?'good':(ct.status==='rejeitada'?'crit':'warn')}">${ct.status==='pendente'?'Em análise':(ct.status==='aprovada'?'Aprovada':'Rejeitada')}</span>`:`<span class="sub">—</span>`;
-      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}${a.hora?`<div class="sub" style="font-size:11px">${a.hora}</div>`:""}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span></td><td>${stat}</td><td class="right"><div class="row-actions"><button class="view-btn" data-eval="${i}">Avaliação</button>${ct?"":`<button class="view-btn" data-contest="${i}">Contestar</button>`}</div></td></tr>`;
+      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}${a.hora?`<div class="sub" style="font-size:11px">${a.hora}</div>`:""}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td>${stat}</td><td class="right"><div class="row-actions"><button class="view-btn" data-eval="${i}">Avaliação</button>${ct?"":`<button class="view-btn" data-contest="${i}">Contestar</button>`}</div></td></tr>`;
     }).join(""):`<tr><td colspan="6" class="empty">Nenhum atendimento abaixo de 7. 🎉</td></tr>`
   }</tbody></table></div>`;
 }
@@ -1258,7 +1298,7 @@ function semanasDoMes(ano,mes){ const last=new Date(ano,mes+1,0).getDate(); cons
     return {n:i+1,ini:new Date(ano,mes,di,0,0,0).getTime(),fim:new Date(ano,mes,df,23,59,59).getTime(),
       label:`${String(di).padStart(2,"0")}–${String(df).padStart(2,"0")}/${String(mes+1).padStart(2,"0")}`}; });
 }
-function aggList(list){ const cn=list.filter(a=>a.nota!==null); const q=cn.length;
+function aggList(list){ const cn=list.filter(a=>okNota(a)); const q=cn.length;
   const media=q?cn.reduce((s,a)=>s+a.nota,0)/q:null; const ac=cn.filter(a=>a.nota>=7).length;
   return {n:list.length,q,media,ac,pctAc:q?ac/q*100:null,pctAb:q?(q-ac)/q*100:null}; }
 function atendRange(ini,fim){ return ATEND.filter(a=>a.ts>=ini&&a.ts<=fim); }
@@ -1356,15 +1396,15 @@ function renderDrill(v){
   if(sel.tipo==="mes"){ ini=new Date(ano,mes,1).getTime(); fim=new Date(ano,mes+1,0,23,59,59).getTime(); titulo=`${MESES[mes]} ${ano}`; }
   else { const s=semanasDoMes(ano,mes)[sel.i]; ini=s.ini; fim=s.fim; titulo=`Semana ${s.n} · ${s.label}`; }
   const list=ATEND.filter(a=>(a.setor||"—")===sel.setor && a.ts>=ini && a.ts<=fim);
-  const baixas=list.filter(a=>a.nota!==null&&a.nota<7);
+  const baixas=list.filter(a=>okNota(a)&&a.nota<7);
   const totAb=baixas.length||1;
   // top colaboradores por impacto em notas < 7
   const mc=new Map(); list.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!mc.has(k))mc.set(k,{key:k,nome:a.atendente,list:[]}); mc.get(k).list.push(a); });
-  const cols=[...mc.values()].map(g=>{ const cn=g.list.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
+  const cols=[...mc.values()].map(g=>{ const cn=g.list.filter(a=>okNota(a)); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
     return {key:g.key,nome:g.nome,total:g.list.length,media:m,ab,contrib:ab/totAb*100}; }).filter(c=>c.ab>0).sort((a,b)=>b.ab-a.ab).slice(0,3);
   // top clientes por menor média
   const me=new Map(); list.forEach(a=>{ if(!a.empresa_id)return; if(!me.has(a.empresa_id))me.set(a.empresa_id,[]); me.get(a.empresa_id).push(a); });
-  const clis=[...me.entries()].map(([id,l])=>{ const cn=l.filter(a=>a.nota!==null); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
+  const clis=[...me.entries()].map(([id,l])=>{ const cn=l.filter(a=>okNota(a)); const m=cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null; const ab=cn.filter(a=>a.nota<7).length;
     return {nome:(EMPRESAS[id]&&(EMPRESAS[id].apelido||EMPRESAS[id].nome))||"—",total:l.length,media:m,ab}; }).filter(c=>c.media!==null).sort((a,b)=>a.media-b.media).slice(0,3);
   // apontamentos (erros) e sugestões (melhorias)
   const cErr=new Map(); list.forEach(a=>a.erros.forEach(e=>cErr.set(e,(cErr.get(e)||0)+1)));
@@ -1436,7 +1476,7 @@ function openAvaliacao(i){
   const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub num">${a.dataHora} · ${esc(a.cliente)}</div><h3>${esc(a.assunto)}</h3>
-      <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">WhatsApp</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}${a.churn?`<span class="m-chip">⚠ possível troca</span>`:""}</div></div>
+      <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">WhatsApp</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}${a.churn?`<span class="m-chip">⚠ possível troca</span>`:""}${a.computavel===false?`<span class="m-chip" title="A nota não entra nas médias">não computado</span>`:""}</div></div>
       <div class="m-score"><div class="big">${fmt1(a.nota)}</div><div class="of">/10</div><div class="tag">${tag}</div></div>
       <div style="display:flex;flex-direction:column;gap:8px;flex:none">
       <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -1566,7 +1606,7 @@ function openEmpresa(empId){
       ${(melEnt.length||ag.oports.length)?`<div class="panel"><h4>Oportunidades</h4>${ag.oports.length?`<div class="prose" style="margin-bottom:8px">Comercial: ${ag.oports.map(o=>esc(o)).join(" · ")}</div>`:""}${melEnt.length?`<ul class="melhorias">${melEnt.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:""}</div>`:""}
       <div class="panel"><h4>Contatos (${contatos.length})</h4><div class="mini-list">${contatos.map(c=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(c.nome||c.id)}</div><div class="s num">${esc(c.telefone||"—")}</div></div></div>`).join("")||'<span class="sub">—</span>'}</div></div>
       <div class="panel"><h4>Histórico de atendimentos (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
-        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}</div><div class="s">${a.dataHora} · ${esc(a.atendente)}${a.desfecho?" · "+esc(desfechoCurto(a.desfecho)):""}${a.churn?' · ⚠':''}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
+        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}${ncTag(a)}</div><div class="s">${a.dataHora} · ${esc(a.atendente)}${a.desfecho?" · "+esc(desfechoCurto(a.desfecho)):""}${a.churn?' · ⚠':''}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
       }).join("")}</div></div>
     </div>`);
   modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
@@ -1659,7 +1699,7 @@ function colaboradorReport(key){
   const partic=teamAg.n?st.n/teamAg.n*100:0;
   const difMedia=(st.media!==null&&teamAg.media!==null)?st.media-teamAg.media:null;
   const difPct=(st.pctAc!==null&&teamAg.pctAc!==null)?st.pctAc-teamAg.pctAc:null;
-  const rM=avg(mesList.map(a=>a.r.v)), raM=avg(mesList.map(a=>a.ra.v)), sM=avg(mesList.map(a=>a.s.v)), adM=avg(mesList.map(a=>a.aderencia.v));
+  const mesComp=mesList.filter(okNota); const rM=avg(mesComp.map(a=>a.r.v)), raM=avg(mesComp.map(a=>a.ra.v)), sM=avg(mesComp.map(a=>a.s.v)), adM=avg(mesComp.map(a=>a.aderencia.v));
   const forcas=[];
   if(rM!==null&&rM>=8.5) forcas.push(`Excelência na resolução, com média ${fmt1(rM)} nesse eixo.`);
   if(raM!==null&&raM>=8.5) forcas.push(`Respostas rápidas e dentro do prazo, média ${fmt1(raM)} em rapidez.`);
@@ -1670,7 +1710,7 @@ function colaboradorReport(key){
     if(eixos[0]) forcas.push(`Melhor desempenho em ${eixos[0][0]}, média ${fmt1(eixos[0][1])}.`); else forcas.push("Sem destaque de desempenho no período."); }
   const melMap=new Map(); mesList.forEach(a=>a.melhorias.forEach(m=>{ if(!melMap.has(m))melMap.set(m,a.ticket_id); }));
   const melhorias=[...melMap.entries()].slice(0,4).map(([m,tk])=>({texto:m,ticket:tk}));
-  const baixas=mesList.filter(a=>a.nota!==null&&a.nota<7).sort((a,b)=>a.nota-b.nota).slice(0,3)
+  const baixas=mesList.filter(a=>okNota(a)&&a.nota<7).sort((a,b)=>a.nota-b.nota).slice(0,3)
     .map(a=>({cliente:a.cliente,motivo:(a.erros[0]||a.melhorias[0]||a.assunto||"atendimento abaixo do esperado"),ticket:a.ticket_id,nota:a.nota}));
   const errMap=new Map(); mesList.forEach(a=>a.erros.forEach(e=>errMap.set(e,(errMap.get(e)||0)+1)));
   const topErr=[...errMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
@@ -1720,7 +1760,7 @@ function openColaborador(key){
       ${R.baixas.length?`<div class="panel"><h4>Clientes mais afetados</h4><div class="mini-list">${R.baixas.map(b=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(b.cliente)}</div><div class="s">${esc(b.motivo)}${b.ticket?` · #${esc(b.ticket)}`:""}</div></div><span class="nota ${notaClass(b.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(b.nota)}</span></div>`).join("")}</div></div>`:""}
       <div class="panel"><h4>Plano de ação</h4><ul class="melhorias">${R.plano.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>
       <div class="panel"><h4>Atendimentos do período (${list.length})</h4><div class="mini-list">${list.map(a=>{ const i=ATEND.indexOf(a);
-        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}</div><div class="s">${a.data} · ${esc(a.cliente)}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
+        return `<div class="mini-row"><div class="mr-l"><div class="t">${esc(a.assunto)}${ncTag(a)}</div><div class="s">${a.data} · ${esc(a.cliente)}</div></div><button class="view-btn" data-eval2="${i}"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></button></div>`;
       }).join("")}</div></div>
     </div>`);
   modal.querySelectorAll("[data-eval2]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.eval2));
@@ -1820,6 +1860,90 @@ function openContestar(i){
     const { data, error } = await sb.schema("atendimentos").from("contestacoes").insert(row).select();
     if(error){ modal.querySelector("#ctMsg").textContent="Erro: "+error.message; btn.disabled=false; btn.textContent="Enviar contestação"; return; }
     CONTESTS[a.id]=(data&&data[0])||row; closeModal(); render();
+  };
+}
+
+// ---------- ADMIN: acessos e de/para de departamentos ----------
+const nivelTxt={admin:"Admin",gestor:"Gestor",colaborador:"Colaborador"};
+function setoresData(){ return [...new Set(Object.values(USERS).map(u=>u.setor).filter(s=>s&&s!=="—"))].sort((a,b)=>a.localeCompare(b)); }
+async function salvarAcesso(row){ try{
+  await sb.schema("atendimentos").from("acessos").upsert({email:(row.email||"").trim().toLowerCase(),nivel:row.nivel,departamentos:row.departamentos||[],permissoes:row.permissoes||[],atualizado_em:new Date().toISOString()},{onConflict:"email"});
+  return true;
+}catch(e){ console.warn("acesso save:",e); alert("Não consegui salvar. Confira se você rodou o SQL de acessos no Supabase e se você é admin."); return false; } }
+async function removerAcesso(email){ try{ await sb.schema("atendimentos").from("acessos").delete().eq("email",email); return true; }catch(e){ alert("Não consegui remover: "+(e.message||e)); return false; } }
+async function addDepSetor(dep,setor){ try{ await sb.schema("atendimentos").from("departamento_setores").upsert({departamento:dep,setor},{onConflict:"departamento,setor"}); return true; }catch(e){ alert("Não consegui salvar o vínculo: "+(e.message||e)); return false; } }
+async function removeDepSetor(dep,setor){ try{ await sb.schema("atendimentos").from("departamento_setores").delete().eq("departamento",dep).eq("setor",setor); return true; }catch(e){ alert("Não consegui remover: "+(e.message||e)); return false; } }
+
+function viewAdmin(v){
+  const chips=(arr)=>arr&&arr.length?arr.map(x=>`<span class="chip">${esc(x)}</span>`).join(" "):'<span class="sub">—</span>';
+  v.innerHTML=`<div class="page-head"><h2>Admin · controle de acesso</h2><p>defina o papel e o departamento de cada e-mail, e ligue cada departamento aos setores que ele enxerga</p></div>
+  <section><div class="sec-head"><h2>Acessos</h2><span class="hint">quem entra e o que vê</span></div>
+    <div class="filters"><div style="flex:1"></div><button class="btn-primary" id="addAcesso">+ Adicionar acesso</button></div>
+    <div class="card"><table><thead><tr><th>E-mail</th><th>Papel</th><th>Departamentos</th><th>Módulos</th><th class="right">Ações</th></tr></thead><tbody>${
+      ACESSOS.length?ACESSOS.slice().sort((a,b)=>(a.email||"").localeCompare(b.email||"")).map(a=>`<tr>
+        <td class="num">${esc(a.email)}</td>
+        <td><span class="pill ${a.nivel==='admin'?'good':(a.nivel==='gestor'?'warn':'')}">${nivelTxt[a.nivel]||a.nivel}</span></td>
+        <td>${chips(a.departamentos)}</td>
+        <td>${chips((a.permissoes||[]).map(p=>(MODULOS.find(m=>m[0]===p)||[p,p])[1]))}</td>
+        <td class="right"><div class="row-actions"><button class="view-btn" data-edit-ac="${escAttr(a.email)}">Editar</button><button class="view-btn" data-del-ac="${escAttr(a.email)}">Remover</button></div></td>
+      </tr>`).join(""):`<tr><td colspan="5" class="empty">Nenhum acesso cadastrado ainda. Clique em Adicionar acesso.</td></tr>`
+    }</tbody></table></div></section>
+
+  <section style="margin-top:22px"><div class="sec-head"><h2>De/para de departamentos</h2><span class="hint">cada departamento oficial e os setores do atendimento que ele enxerga</span></div>
+    <div class="card" style="padding:6px 4px">${DEPARTAMENTOS.map(dep=>{
+      const mapd=DEPSETOR.filter(m=>m.departamento===dep).map(m=>m.setor);
+      const livres=setoresData().filter(s=>!mapd.includes(s));
+      return `<div class="tagrow" style="align-items:flex-start;padding:10px 12px;border-bottom:1px solid var(--border);margin:0">
+        <div style="min-width:220px;font-weight:600;font-size:13px;padding-top:6px">${esc(dep)}</div>
+        <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          ${mapd.length?mapd.map(s=>`<span class="chip">${esc(s)} <button class="chip-x" data-unmap="${escAttr(dep)}||${escAttr(s)}" title="Remover" style="border:none;background:none;cursor:pointer;color:var(--crit);font-weight:700">×</button></span>`).join(""):'<span class="sub">nenhum setor ligado</span>'}
+          <select class="fsel" data-mapdep="${escAttr(dep)}" style="max-width:220px"><option value="">+ ligar setor...</option>${livres.map(s=>`<option value="${escAttr(s)}">${esc(s)}</option>`).join("")}</select>
+        </div></div>`;
+    }).join("")}</div>
+    <div class="sub" style="margin-top:8px">Dica: o setor vem do jeito que está escrito no atendimento (ex.: BAADV, Advocacia, Comercial, Departamento Relacionamento). Ligue cada um ao departamento oficial certo.</div>
+  </section>`;
+
+  const bt=v.querySelector("#addAcesso"); if(bt) bt.onclick=()=>openAcessoModal(null);
+  v.querySelectorAll("[data-edit-ac]").forEach(b=>b.onclick=()=>openAcessoModal(ACESSOS.find(a=>a.email===b.dataset.editAc)));
+  v.querySelectorAll("[data-del-ac]").forEach(b=>b.onclick=async()=>{ if(!confirm("Remover o acesso de "+b.dataset.delAc+"?"))return; if(await removerAcesso(b.dataset.delAc)){ ACESSOS=ACESSOS.filter(a=>a.email!==b.dataset.delAc); viewAdmin(v); } });
+  v.querySelectorAll("[data-mapdep]").forEach(sel=>sel.onchange=async()=>{ const dep=sel.dataset.mapdep, setor=sel.value; if(!setor)return; if(await addDepSetor(dep,setor)){ DEPSETOR.push({departamento:dep,setor}); viewAdmin(v); } });
+  v.querySelectorAll("[data-unmap]").forEach(b=>b.onclick=async()=>{ const [dep,setor]=b.dataset.unmap.split("||"); if(await removeDepSetor(dep,setor)){ DEPSETOR=DEPSETOR.filter(m=>!(m.departamento===dep&&m.setor===setor)); viewAdmin(v); } });
+}
+
+function openAcessoModal(ac){
+  const novo=!ac; ac=ac||{email:"",nivel:"gestor",departamentos:[],permissoes:[]};
+  const deps=new Set(ac.departamentos||[]); const perms=new Set(ac.permissoes||[]);
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">CONTROLE DE ACESSO</div><h3>${novo?"Novo acesso":"Editar acesso"}</h3></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>E-mail de acesso</h4><input class="inp" id="acEmail" type="email" placeholder="pessoa@resilcon.com.br" value="${escAttr(ac.email)}" ${novo?"":"disabled"} style="width:100%"></div>
+      <div class="panel"><h4>Papel</h4>
+        <div class="seg" id="acNivel"><button data-n="admin" class="${ac.nivel==='admin'?'on':''}">Admin</button><button data-n="gestor" class="${ac.nivel==='gestor'?'on':''}">Gestor</button><button data-n="colaborador" class="${ac.nivel==='colaborador'?'on':''}">Colaborador</button></div>
+        <div class="sub" style="margin-top:6px">Admin vê tudo e controla os acessos. Gestor vê só os departamentos marcados abaixo. Colaborador não usa este painel.</div></div>
+      <div class="panel" id="acDepsPanel"><h4>Departamentos que enxerga (gestor)</h4><div class="tag-pick">${DEPARTAMENTOS.map(d=>`<button class="tag-opt ${deps.has(d)?'on':''}" data-dep="${escAttr(d)}">${esc(d)}</button>`).join("")}</div></div>
+      <div class="panel"><h4>Módulos extras</h4><div class="tag-pick">${MODULOS.map(m=>`<button class="tag-opt ${perms.has(m[0])?'on':''}" data-perm="${escAttr(m[0])}">${esc(m[1])}</button>`).join("")}</div>
+        <div class="sub" style="margin-top:6px">Libera abas específicas por e-mail, tipo Financeiro pra Luana e Comercial pra Camila.</div></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="acSalvar">Salvar</button></div>
+    </div>`);
+  let nivel=ac.nivel;
+  const syncDeps=()=>{ const p=modal.querySelector("#acDepsPanel"); if(p) p.style.opacity=(nivel==="gestor")?"1":".45"; };
+  syncDeps();
+  modal.querySelectorAll("#acNivel [data-n]").forEach(b=>b.onclick=()=>{ nivel=b.dataset.n; modal.querySelectorAll("#acNivel [data-n]").forEach(x=>x.classList.toggle("on",x===b)); syncDeps(); });
+  modal.querySelectorAll("[data-dep]").forEach(b=>b.onclick=()=>b.classList.toggle("on"));
+  modal.querySelectorAll("[data-perm]").forEach(b=>b.onclick=()=>b.classList.toggle("on"));
+  modal.querySelector("#acSalvar").onclick=async()=>{
+    const email=modal.querySelector("#acEmail").value.trim().toLowerCase();
+    if(!email){ alert("Informe o e-mail."); return; }
+    const departamentos=[...modal.querySelectorAll("[data-dep].on")].map(x=>x.dataset.dep);
+    const permissoes=[...modal.querySelectorAll("[data-perm].on")].map(x=>x.dataset.perm);
+    const row={email,nivel,departamentos:(nivel==="gestor"?departamentos:[]),permissoes};
+    if(await salvarAcesso(row)){
+      const i=ACESSOS.findIndex(a=>(a.email||"").toLowerCase()===email);
+      if(i>=0) ACESSOS[i]={...ACESSOS[i],...row}; else ACESSOS.push(row);
+      if(email===(ME||"").toLowerCase()){ ACCESS={email,nivel:row.nivel,departamentos:row.departamentos,permissoes:row.permissoes}; }
+      closeModal(); viewAdmin(document.getElementById("view"));
+    }
   };
 }
 
