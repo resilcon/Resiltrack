@@ -357,7 +357,10 @@ let ATEND=[], RAW=[], USERS={}, EMPRESAS={}, CONTATOS={}, CONTESTS={}, sb=null, 
 // ---- controle de acesso ----
 let ACCESS=null;   // acesso do usuário logado: {email,nivel,departamentos:[],permissoes:[]}
 let ACESSOS=[];    // todos os acessos (painel admin)
-let DEPSETOR=[];   // de/para: [{departamento,setor}]
+let DEPSETOR=[];   // de/para setor->departamento (agrupamento em massa): [{departamento,setor}]
+let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
+let ATDMAP={};     // atendente_id -> departamento (override)
+let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
 const MODULOS=[["financeiro","Financeiro"],["comercial","Comercial"]];
 let TAB="dashboard";
@@ -512,7 +515,7 @@ async function fetchAllRows(table, columns, orderCol){
 }
 async function loadData(){
   try{
-    const [u,e,c,ct,cfg,cc,ac,ds] = await Promise.all([
+    const [u,e,c,ct,cfg,cc,ac,ds,ad] = await Promise.all([
       fetchAllRows("usuarios","id,nome,setor,ativo"),
       fetchAllRows("empresas","id,nome,apelido,cnpj,status"),
       fetchAllRows("contatos","id,nome,telefone,empresa_id"),
@@ -520,9 +523,11 @@ async function loadData(){
       sb.schema("atendimentos").from("crm_config").select("*").eq("id",1).then(r=>(r.data&&r.data[0])||null).catch(()=>null),
       fetchAllRows("crm_clientes","*").catch(()=>[]),
       fetchAllRows("acessos","*").catch(()=>[]),
-      fetchAllRows("departamento_setores","*").catch(()=>[])
+      fetchAllRows("departamento_setores","*").catch(()=>[]),
+      fetchAllRows("atendente_departamento","*").catch(()=>[])
     ]);
-    ACESSOS=(ac||[]); DEPSETOR=(ds||[]);
+    ACESSOS=(ac||[]); DEPSETOR=(ds||[]); ATDDEP=(ad||[]);
+    ATDMAP={}; ATDDEP.forEach(x=>ATDMAP[String(x.atendente_id)]=x.departamento);
     if(!ACESSOS.length){ ACCESS={email:ME,nivel:"admin",departamentos:[],permissoes:[]}; } // ainda não configurado: tudo liberado, nada muda
     else{ const mr=ACESSOS.find(a=>(a.email||"").toLowerCase()===(ME||"").toLowerCase());
       ACCESS=mr?{email:mr.email,nivel:mr.nivel||"colaborador",departamentos:mr.departamentos||[],permissoes:mr.permissoes||[]}:{email:ME,nivel:"colaborador",departamentos:[],permissoes:[]}; }
@@ -541,20 +546,19 @@ async function loadData(){
     document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message||error)}</div>`; return;
   }
   ATEND = RAW.map(mapRow);
-  const perm = setoresPermitidos();
-  if(perm) ATEND = ATEND.filter(a=>perm.has(a.setor)); // gestor vê só os setores do seu departamento
+  if(ACCESS && ACCESS.nivel!=="admin"){
+    if(ACCESS.nivel==="gestor"){ const deps=new Set(ACCESS.departamentos||[]); ATEND=ATEND.filter(a=>deps.has(deptDoAtendente(a.atendente_id,a.setor))); }
+    else ATEND=[]; // colaborador não vê atendimentos por aqui
+  }
   render();
 }
 // ---- helpers de acesso ----
 function isAdmin(){ return !!(ACCESS && ACCESS.nivel==="admin"); }
 function isGestor(){ return !!(ACCESS && ACCESS.nivel==="gestor"); }
 function podeModulo(m){ return isAdmin() || (ACCESS && (ACCESS.permissoes||[]).includes(m)); }
-function setoresPermitidos(){ // Set de setores visíveis; null = todos (admin ou não configurado)
-  if(!ACCESS || isAdmin()) return null;
-  const deps=new Set(ACCESS.departamentos||[]); const s=new Set();
-  DEPSETOR.forEach(m=>{ if(deps.has(m.departamento)) s.add(m.setor); });
-  return s;
-}
+function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r?r.departamento:null; }
+function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
+function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
 function allowedTabKeys(){
   if(isAdmin()) return ["dashboard","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
   const t=[];
@@ -1874,10 +1878,70 @@ async function removerAcesso(email){ try{ await sb.schema("atendimentos").from("
 async function addDepSetor(dep,setor){ try{ await sb.schema("atendimentos").from("departamento_setores").upsert({departamento:dep,setor},{onConflict:"departamento,setor"}); return true; }catch(e){ alert("Não consegui salvar o vínculo: "+(e.message||e)); return false; } }
 async function removeDepSetor(dep,setor){ try{ await sb.schema("atendimentos").from("departamento_setores").delete().eq("departamento",dep).eq("setor",setor); return true; }catch(e){ alert("Não consegui remover: "+(e.message||e)); return false; } }
 
+async function salvarAtdDep(atId,dep){ try{
+  if(!dep){ await sb.schema("atendimentos").from("atendente_departamento").delete().eq("atendente_id",String(atId)); delete ATDMAP[String(atId)]; ATDDEP=ATDDEP.filter(x=>String(x.atendente_id)!==String(atId)); }
+  else{ await sb.schema("atendimentos").from("atendente_departamento").upsert({atendente_id:String(atId),departamento:dep},{onConflict:"atendente_id"}); ATDMAP[String(atId)]=dep; const e=ATDDEP.find(x=>String(x.atendente_id)===String(atId)); if(e)e.departamento=dep; else ATDDEP.push({atendente_id:String(atId),departamento:dep}); }
+  return true;
+}catch(e){ console.warn(e); alert("Não consegui salvar. Rodou o SQL de atendente_departamento no Supabase?"); return false; } }
+async function setGestorDep(dep,email){
+  email=(email||"").trim().toLowerCase();
+  const t=email?ACESSOS.find(a=>(a.email||"").toLowerCase()===email):null;
+  if(t&&t.nivel==="admin"){ alert("Esse e-mail é admin e já enxerga tudo. Escolha outra pessoa como gestor."); return false; }
+  // tira o departamento dos gestores atuais (um gestor por departamento)
+  for(const a of ACESSOS){ if(a.nivel==="gestor" && (a.departamentos||[]).includes(dep) && (a.email||"").toLowerCase()!==email){
+    const nd=(a.departamentos||[]).filter(d=>d!==dep);
+    if(!(await salvarAcesso({email:a.email,nivel:"gestor",departamentos:nd,permissoes:a.permissoes||[]}))) return false;
+    a.departamentos=nd; } }
+  if(email){ const nd=[...new Set([...((t&&t.departamentos)||[]),dep])];
+    if(!(await salvarAcesso({email,nivel:"gestor",departamentos:nd,permissoes:(t&&t.permissoes)||[]}))) return false;
+    if(t){ t.nivel="gestor"; t.departamentos=nd; } else ACESSOS.push({email,nivel:"gestor",departamentos:nd,permissoes:[]});
+    if(email===(ME||"").toLowerCase()) ACCESS={email,nivel:"gestor",departamentos:nd,permissoes:(t&&t.permissoes)||[]};
+  }
+  return true;
+}
+function atendentesList(){ return Object.entries(USERS).map(([id,u])=>({id,nome:u.nome,setor:u.setor,ativo:u.ativo})).filter(u=>u.nome&&u.nome!=="Não identificado").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")); }
+
 function viewAdmin(v){
   const chips=(arr)=>arr&&arr.length?arr.map(x=>`<span class="chip">${esc(x)}</span>`).join(" "):'<span class="sub">—</span>';
-  v.innerHTML=`<div class="page-head"><h2>Admin · controle de acesso</h2><p>defina o papel e o departamento de cada e-mail, e ligue cada departamento aos setores que ele enxerga</p></div>
-  <section><div class="sec-head"><h2>Acessos</h2><span class="hint">quem entra e o que vê</span></div>
+  const ats=atendentesList();
+  const fq=(ADMFIL||"").trim().toLowerCase();
+  const atsF=fq?ats.filter(a=>((a.nome||"")+(a.setor||"")).toLowerCase().includes(fq)):ats;
+  const contaDep=dep=>ats.filter(a=>deptDoAtendente(a.id,a.setor)===dep).length;
+  v.innerHTML=`<div class="page-head"><h2>Admin · controle de acesso</h2><p>gestor de cada departamento, atendentes por departamento e acessos por e-mail</p></div>
+
+  <section><div class="sec-head"><h2>Departamentos</h2><span class="hint">o gestor e os setores de cada departamento</span></div>
+    <div class="card" style="padding:2px 0">${DEPARTAMENTOS.map(dep=>{
+      const mapd=DEPSETOR.filter(m=>m.departamento===dep).map(m=>m.setor);
+      const livres=setoresData().filter(s=>!mapd.includes(s));
+      const g=gestorDoDep(dep);
+      return `<div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-weight:700;font-size:14px">${esc(dep)} <span class="sub" style="font-weight:500">· ${contaDep(dep)} atendente(s)</span></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="sub">Gestor:</span>
+            <input class="inp" data-gest="${escAttr(dep)}" type="email" placeholder="e-mail do gestor" value="${escAttr(g||'')}" style="width:250px;padding:6px 9px">
+            <button class="btn-line" data-gestsave="${escAttr(dep)}">Salvar</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px">
+          <span class="sub" style="min-width:70px">Setores:</span>
+          ${mapd.length?mapd.map(s=>`<span class="chip">${esc(s)} <button data-unmap="${escAttr(dep)}||${escAttr(s)}" title="Remover" style="border:none;background:none;cursor:pointer;color:var(--crit);font-weight:700">×</button></span>`).join(""):'<span class="sub">nenhum</span>'}
+          <select class="fsel" data-mapdep="${escAttr(dep)}" style="max-width:210px"><option value="">+ ligar setor...</option>${livres.map(s=>`<option value="${escAttr(s)}">${esc(s)}</option>`).join("")}</select>
+        </div></div>`;
+    }).join("")}</div>
+    <div class="sub" style="margin-top:8px">O setor liga um grupo inteiro de uma vez. Para mover um atendente específico, use a lista abaixo.</div>
+  </section>
+
+  <section style="margin-top:22px"><div class="sec-head"><h2>Atendentes por departamento</h2><span class="hint">${ats.length} atendentes · ajuste individual quando o setor não bastar</span></div>
+    <div class="filters"><div class="search" style="min-width:240px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="admQ" type="search" placeholder="Buscar atendente..." value="${escAttr(ADMFIL)}"></div></div>
+    <div class="card"><table><thead><tr><th>Atendente</th><th>Setor (atendimento)</th><th>Departamento</th></tr></thead><tbody>${
+      atsF.map(a=>{ const ov=ATDMAP[String(a.id)]; const dep=deptDoAtendente(a.id,a.setor);
+        return `<tr><td>${esc(a.nome)}</td><td class="sub">${esc(a.setor||'—')}</td>
+        <td><select class="fsel" data-atddep="${escAttr(String(a.id))}" style="max-width:240px"><option value="">${dep&&!ov?`Pelo setor · ${esc(dep)}`:'Pelo setor'+(deptDoSetor(a.setor)?` · ${esc(deptDoSetor(a.setor))}`:' (sem depto)')}</option>${DEPARTAMENTOS.map(d=>`<option value="${escAttr(d)}" ${ov===d?'selected':''}>${esc(d)}</option>`).join("")}</select>${ov?'<span class="nc-tag" title="Definido manualmente">manual</span>':''}</td></tr>`;
+      }).join("")||`<tr><td colspan="3" class="empty">Nenhum atendente encontrado.</td></tr>`
+    }</tbody></table></div></section>
+
+  <section style="margin-top:22px"><div class="sec-head"><h2>Acessos por e-mail</h2><span class="hint">controle fino: admin, gestor, colaborador e módulos</span></div>
     <div class="filters"><div style="flex:1"></div><button class="btn-primary" id="addAcesso">+ Adicionar acesso</button></div>
     <div class="card"><table><thead><tr><th>E-mail</th><th>Papel</th><th>Departamentos</th><th>Módulos</th><th class="right">Ações</th></tr></thead><tbody>${
       ACESSOS.length?ACESSOS.slice().sort((a,b)=>(a.email||"").localeCompare(b.email||"")).map(a=>`<tr>
@@ -1886,28 +1950,17 @@ function viewAdmin(v){
         <td>${chips(a.departamentos)}</td>
         <td>${chips((a.permissoes||[]).map(p=>(MODULOS.find(m=>m[0]===p)||[p,p])[1]))}</td>
         <td class="right"><div class="row-actions"><button class="view-btn" data-edit-ac="${escAttr(a.email)}">Editar</button><button class="view-btn" data-del-ac="${escAttr(a.email)}">Remover</button></div></td>
-      </tr>`).join(""):`<tr><td colspan="5" class="empty">Nenhum acesso cadastrado ainda. Clique em Adicionar acesso.</td></tr>`
-    }</tbody></table></div></section>
+      </tr>`).join(""):`<tr><td colspan="5" class="empty">Nenhum acesso cadastrado ainda.</td></tr>`
+    }</tbody></table></div></section>`;
 
-  <section style="margin-top:22px"><div class="sec-head"><h2>De/para de departamentos</h2><span class="hint">cada departamento oficial e os setores do atendimento que ele enxerga</span></div>
-    <div class="card" style="padding:6px 4px">${DEPARTAMENTOS.map(dep=>{
-      const mapd=DEPSETOR.filter(m=>m.departamento===dep).map(m=>m.setor);
-      const livres=setoresData().filter(s=>!mapd.includes(s));
-      return `<div class="tagrow" style="align-items:flex-start;padding:10px 12px;border-bottom:1px solid var(--border);margin:0">
-        <div style="min-width:220px;font-weight:600;font-size:13px;padding-top:6px">${esc(dep)}</div>
-        <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          ${mapd.length?mapd.map(s=>`<span class="chip">${esc(s)} <button class="chip-x" data-unmap="${escAttr(dep)}||${escAttr(s)}" title="Remover" style="border:none;background:none;cursor:pointer;color:var(--crit);font-weight:700">×</button></span>`).join(""):'<span class="sub">nenhum setor ligado</span>'}
-          <select class="fsel" data-mapdep="${escAttr(dep)}" style="max-width:220px"><option value="">+ ligar setor...</option>${livres.map(s=>`<option value="${escAttr(s)}">${esc(s)}</option>`).join("")}</select>
-        </div></div>`;
-    }).join("")}</div>
-    <div class="sub" style="margin-top:8px">Dica: o setor vem do jeito que está escrito no atendimento (ex.: BAADV, Advocacia, Comercial, Departamento Relacionamento). Ligue cada um ao departamento oficial certo.</div>
-  </section>`;
-
+  v.querySelectorAll("[data-gestsave]").forEach(b=>b.onclick=async()=>{ const dep=b.dataset.gestsave; const inp=v.querySelector(`[data-gest="${CSS.escape(dep)}"]`); if(await setGestorDep(dep,inp?inp.value:"")) viewAdmin(v); });
+  v.querySelectorAll("[data-mapdep]").forEach(sel=>sel.onchange=async()=>{ const dep=sel.dataset.mapdep, setor=sel.value; if(!setor)return; if(await addDepSetor(dep,setor)){ DEPSETOR.push({departamento:dep,setor}); viewAdmin(v); } });
+  v.querySelectorAll("[data-unmap]").forEach(b=>b.onclick=async()=>{ const [dep,setor]=b.dataset.unmap.split("||"); if(await removeDepSetor(dep,setor)){ DEPSETOR=DEPSETOR.filter(m=>!(m.departamento===dep&&m.setor===setor)); viewAdmin(v); } });
+  v.querySelectorAll("[data-atddep]").forEach(sel=>sel.onchange=async()=>{ if(await salvarAtdDep(sel.dataset.atddep,sel.value)) viewAdmin(v); });
+  const q=v.querySelector("#admQ"); if(q) q.oninput=()=>{ ADMFIL=q.value; const val=q.value; viewAdmin(v); const nb=v.querySelector("#admQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
   const bt=v.querySelector("#addAcesso"); if(bt) bt.onclick=()=>openAcessoModal(null);
   v.querySelectorAll("[data-edit-ac]").forEach(b=>b.onclick=()=>openAcessoModal(ACESSOS.find(a=>a.email===b.dataset.editAc)));
   v.querySelectorAll("[data-del-ac]").forEach(b=>b.onclick=async()=>{ if(!confirm("Remover o acesso de "+b.dataset.delAc+"?"))return; if(await removerAcesso(b.dataset.delAc)){ ACESSOS=ACESSOS.filter(a=>a.email!==b.dataset.delAc); viewAdmin(v); } });
-  v.querySelectorAll("[data-mapdep]").forEach(sel=>sel.onchange=async()=>{ const dep=sel.dataset.mapdep, setor=sel.value; if(!setor)return; if(await addDepSetor(dep,setor)){ DEPSETOR.push({departamento:dep,setor}); viewAdmin(v); } });
-  v.querySelectorAll("[data-unmap]").forEach(b=>b.onclick=async()=>{ const [dep,setor]=b.dataset.unmap.split("||"); if(await removeDepSetor(dep,setor)){ DEPSETOR=DEPSETOR.filter(m=>!(m.departamento===dep&&m.setor===setor)); viewAdmin(v); } });
 }
 
 function openAcessoModal(ac){
