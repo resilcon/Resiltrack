@@ -1278,15 +1278,39 @@ function viewColaboradores(v){
 function cn2(list){ return list.filter(a=>okNota(a)&&a.nota>=7).length; }
 
 // ---------- CONTESTAÇÕES ----------
+let KFIL={status:"pendente"};
+const motivoTxt={erro_cliente:"Erro do cliente",ia_errou:"IA avaliou errado"};
+async function decidirContestacao(atId,status,label){
+  if(!confirm(`Confirmar: marcar esta contestação como ${label}?`))return;
+  try{ const {error}=await sb.schema("atendimentos").from("contestacoes").update({status}).eq("atendimento_id",atId); if(error)throw error;
+    if(CONTESTS[atId]) CONTESTS[atId].status=status; render();
+  }catch(e){ alert("Não consegui atualizar a contestação: "+(e.message||e)); }
+}
 function viewContestacoes(v){
-  const baixas=ATEND.filter(a=>okNota(a)&&a.nota<7).sort((a,b)=>a.nota-b.nota);
-  v.innerHTML=`<div class="page-head"><h2>Contestações</h2><p>atendimentos com nota abaixo de 7 — o colaborador pode contestar quando a IA avaliar errado ou o erro for do cliente</p></div>
-  <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="center">Nota</th><th>Situação</th><th class="right">Ação</th></tr></thead><tbody>${
-    baixas.length?baixas.map(a=>{ const i=ATEND.indexOf(a); const ct=CONTESTS[a.id];
-      const stat=ct?`<span class="pill ${ct.status==='aprovada'?'good':(ct.status==='rejeitada'?'crit':'warn')}">${ct.status==='pendente'?'Em análise':(ct.status==='aprovada'?'Aprovada':'Rejeitada')}</span>`:`<span class="sub">—</span>`;
-      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}${a.hora?`<div class="sub" style="font-size:11px">${a.hora}</div>`:""}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td>${stat}</td><td class="right"><div class="row-actions"><button class="view-btn" data-eval="${i}">Avaliação</button>${ct?"":`<button class="view-btn" data-contest="${i}">Contestar</button>`}</div></td></tr>`;
-    }).join(""):`<tr><td colspan="6" class="empty">Nenhum atendimento abaixo de 7. 🎉</td></tr>`
-  }</tbody></table></div>`;
+  const podeDecidir=isAdmin()||isGestor();
+  const ordem={pendente:0,aprovada:1,rejeitada:2};
+  const contestadas=ATEND.filter(a=>CONTESTS[a.id]).sort((a,b)=>{ const sa=ordem[CONTESTS[a.id].status]??3, s2=ordem[CONTESTS[b.id].status]??3; return sa-s2 || b.ts-a.ts; });
+  const nPend=contestadas.filter(a=>CONTESTS[a.id].status==='pendente').length;
+  let lista=contestadas; if(KFIL.status!=='todas') lista=contestadas.filter(a=>CONTESTS[a.id].status===KFIL.status);
+  const semCont=ATEND.filter(a=>okNota(a)&&a.nota<7&&!CONTESTS[a.id]).sort((a,b)=>a.nota-b.nota);
+  const seg=(k,l,n)=>`<button data-kf="${k}" class="${KFIL.status===k?'on':''}">${l}${n!=null?` <span class="sub">(${n})</span>`:''}</button>`;
+  v.innerHTML=`<div class="page-head"><h2>Contestações</h2><p>as contestações que a equipe subiu${podeDecidir?", para você aprovar ou rejeitar":""}${isGestor()?" · apenas do seu departamento":""}</p></div>
+  <div class="filters"><div class="seg" id="kseg">${seg('pendente','Em análise',nPend)}${seg('aprovada','Aprovadas')}${seg('rejeitada','Rejeitadas')}${seg('todas','Todas')}</div></div>
+  <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="center">Nota</th><th>Motivo</th><th>Justificativa do colaborador</th><th>Situação</th><th class="right">Ações</th></tr></thead><tbody>${
+    lista.length?lista.map(a=>{ const i=ATEND.indexOf(a); const ct=CONTESTS[a.id];
+      const stat=`<span class="pill ${ct.status==='aprovada'?'good':(ct.status==='rejeitada'?'crit':'warn')}">${ct.status==='pendente'?'Em análise':(ct.status==='aprovada'?'Aprovada':'Rejeitada')}</span>`;
+      const acoes=`<button class="view-btn" data-eval="${i}">Avaliação</button>`+((podeDecidir&&ct.status==='pendente')?`<button class="view-btn" data-aprovar="${escAttr(String(a.id))}" style="color:var(--good)">Aprovar</button><button class="view-btn" data-rejeitar="${escAttr(String(a.id))}" style="color:var(--crit)">Rejeitar</button>`:'');
+      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td class="sub">${esc(motivoTxt[ct.motivo]||ct.motivo||'—')}</td><td class="sub" style="max-width:300px">${esc(ct.texto||'—')}</td><td>${stat}</td><td class="right"><div class="row-actions">${acoes}</div></td></tr>`;
+    }).join(""):`<tr><td colspan="8" class="empty">Nenhuma contestação${KFIL.status==='todas'?'':' nesse status'}.</td></tr>`
+  }</tbody></table></div>
+  <section style="margin-top:22px"><div class="sec-head"><h2>Notas abaixo de 7 sem contestação</h2><span class="hint">${semCont.length} atendimento(s) para acompanhar</span></div>
+    <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="center">Nota</th><th class="right">Ação</th></tr></thead><tbody>${
+      semCont.length?semCont.slice(0,100).map(a=>{ const i=ATEND.indexOf(a); return `<tr><td class="sub num" style="white-space:nowrap">${a.data}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td class="right"><button class="view-btn" data-eval="${i}">Avaliação</button></td></tr>`; }).join(""):`<tr><td colspan="5" class="empty">Nenhuma nota abaixo de 7 sem contestação.</td></tr>`
+    }</tbody></table>${semCont.length>100?`<div class="sub" style="padding:8px 12px">Mostrando os 100 primeiros de ${semCont.length}.</div>`:""}</div></section>`;
+  v.querySelectorAll("#kseg [data-kf]").forEach(b=>b.onclick=()=>{ KFIL.status=b.dataset.kf; viewContestacoes(v); });
+  v.querySelectorAll("[data-aprovar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.aprovar,'aprovada','Aprovada'));
+  v.querySelectorAll("[data-rejeitar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.rejeitar,'rejeitada','Rejeitada'));
+  bindActions();
 }
 
 // ---------- EVOLUÇÃO SETOR (grade semanal) ----------
