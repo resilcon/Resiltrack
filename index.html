@@ -493,6 +493,12 @@ function mapRow(r){
   a.cliente = clienteNome(a);
   a.empresa_id = empresaIdDe(a);
   a.churn = (a.riscoTroca==="possivel"||a.riscoTroca==="provavel") || churnScan(a);
+  // contestação aprovada ajusta a nota do atendimento
+  const _ct = CONTESTS[a.id];
+  if(_ct && _ct.status==="aprovada"){
+    if(_ct.nova_nota!=null && !isNaN(Number(_ct.nova_nota))){ a.notaIA=a.nota; a.nota=Number(_ct.nova_nota); a.notaAjustada=true; a.computavel=true; }
+    else { a.notaIA=a.nota; a.computavel=false; a.notaAjustada=true; }
+  }
   return a;
 }
 
@@ -1670,7 +1676,7 @@ function openAvaliacao(i){
   const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub num">${a.dataHora} · ${esc(a.cliente)}</div><h3>${esc(a.assunto)}</h3>
-      <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">WhatsApp</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}${a.churn?`<span class="m-chip">⚠ possível troca</span>`:""}${a.computavel===false?`<span class="m-chip" title="A nota não entra nas médias">não computado</span>`:""}</div></div>
+      <div class="m-chips"><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">WhatsApp</span>${a.tipo?`<span class="m-chip">${tipoTxt[a.tipo]||a.tipo}</span>`:""}${a.churn?`<span class="m-chip">⚠ possível troca</span>`:""}${a.notaAjustada?`<span class="m-chip" title="Nota ajustada após contestação aprovada${a.notaIA!=null?'. Nota original da IA: '+fmt1(a.notaIA):''}">nota ajustada</span>`:""}${a.computavel===false?`<span class="m-chip" title="A nota não entra nas médias">não computado</span>`:""}</div></div>
       <div class="m-score"><div class="big">${fmt1(a.nota)}</div><div class="of">/10</div><div class="tag">${tag}</div></div>
       <div style="display:flex;flex-direction:column;gap:8px;flex:none">
       <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
