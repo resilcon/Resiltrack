@@ -1298,10 +1298,10 @@ function viewContestacoes(v){
   v.innerHTML=`<div class="page-head"><h2>Contestações</h2><p>as contestações que a equipe subiu${podeDecidir?", para você aprovar ou rejeitar":""}${isGestor()?" · apenas do seu departamento":""}</p></div>
   <div class="filters"><div class="seg" id="kseg">${seg('pendente','Em análise',nPend)}${seg('aprovada','Aprovadas')}${seg('rejeitada','Rejeitadas')}${seg('todas','Todas')}</div></div>
   <div class="card"><table><thead><tr><th>Data</th><th>Atendente</th><th>Cliente</th><th class="center">Nota</th><th>Motivo</th><th>Justificativa do colaborador</th><th>Situação</th><th class="right">Ações</th></tr></thead><tbody>${
-    lista.length?lista.map(a=>{ const i=ATEND.indexOf(a); const ct=CONTESTS[a.id];
+    lista.length?lista.map(a=>{ const i=ATEND.indexOf(a); const ct=CONTESTS[a.id]; const nAnx=(ct.anexos&&ct.anexos.length)||0;
       const stat=`<span class="pill ${ct.status==='aprovada'?'good':(ct.status==='rejeitada'?'crit':'warn')}">${ct.status==='pendente'?'Em análise':(ct.status==='aprovada'?'Aprovada':'Rejeitada')}</span>`;
-      const acoes=`<button class="view-btn" data-eval="${i}">Avaliação</button>`+((podeDecidir&&ct.status==='pendente')?`<button class="view-btn" data-aprovar="${escAttr(String(a.id))}" style="color:var(--good)">Aprovar</button><button class="view-btn" data-rejeitar="${escAttr(String(a.id))}" style="color:var(--crit)">Rejeitar</button>`:'');
-      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td class="sub">${esc(motivoTxt[ct.motivo]||ct.motivo||'—')}</td><td class="sub" style="max-width:300px">${esc(ct.texto||'—')}</td><td>${stat}</td><td class="right"><div class="row-actions">${acoes}</div></td></tr>`;
+      const acoes=`<button class="view-btn" data-eval="${i}">Avaliação</button>`+(podeDecidir?`<button class="view-btn" data-revisar="${escAttr(String(a.id))}" style="color:var(--accent)">${ct.status==='pendente'?'Revisar':'Ver'}</button>`:'');
+      return `<tr><td class="sub num" style="white-space:nowrap">${a.data}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td class="sub">${esc(motivoTxt[ct.motivo]||ct.motivo||'—')}</td><td class="sub" style="max-width:300px">${esc(ct.texto||'—')}${nAnx?`<div class="sub" style="color:var(--accent);font-weight:600">${nAnx} anexo(s) de prova</div>`:''}</td><td>${stat}</td><td class="right"><div class="row-actions">${acoes}</div></td></tr>`;
     }).join(""):`<tr><td colspan="8" class="empty">Nenhuma contestação${KFIL.status==='todas'?'':' nesse status'}.</td></tr>`
   }</tbody></table></div>
   <section style="margin-top:22px"><div class="sec-head"><h2>Notas abaixo de 7 sem contestação</h2><span class="hint">${semCont.length} atendimento(s) para acompanhar</span></div>
@@ -1309,9 +1309,52 @@ function viewContestacoes(v){
       semCont.length?semCont.slice(0,100).map(a=>{ const i=ATEND.indexOf(a); return `<tr><td class="sub num" style="white-space:nowrap">${a.data}</td><td class="r-name" style="white-space:nowrap">${esc(a.atendente)}<div class="sub">${esc(a.setor)}</div></td><td>${esc(a.cliente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>${ncTag(a)}</td><td class="right"><button class="view-btn" data-eval="${i}">Avaliação</button></td></tr>`; }).join(""):`<tr><td colspan="5" class="empty">Nenhuma nota abaixo de 7 sem contestação.</td></tr>`
     }</tbody></table>${semCont.length>100?`<div class="sub" style="padding:8px 12px">Mostrando os 100 primeiros de ${semCont.length}.</div>`:""}</div></section>`;
   v.querySelectorAll("#kseg [data-kf]").forEach(b=>b.onclick=()=>{ KFIL.status=b.dataset.kf; viewContestacoes(v); });
-  v.querySelectorAll("[data-aprovar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.aprovar,'aprovada','Aprovada'));
-  v.querySelectorAll("[data-rejeitar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.rejeitar,'rejeitada','Rejeitada'));
+  v.querySelectorAll("[data-revisar]").forEach(b=>b.onclick=()=>openRevisarContestacao(b.dataset.revisar));
   bindActions();
+}
+const situacaoTxt={nao_ia:"Não é problema da IA",eh_ia:"É problema da IA"};
+async function salvarRevisao(atId,patch){
+  try{ const {error}=await sb.schema("atendimentos").from("contestacoes").update(patch).eq("atendimento_id",atId); if(error)throw error;
+    Object.assign(CONTESTS[atId],patch); return true;
+  }catch(e){ alert("Não consegui salvar a decisão: "+(e.message||e)); return false; }
+}
+function openRevisarContestacao(atId){
+  const a=ATEND.find(x=>String(x.id)===String(atId)); if(!a)return; const ct=CONTESTS[atId]||{}; const i=ATEND.indexOf(a);
+  const anexos=Array.isArray(ct.anexos)?ct.anexos:[]; const decidida=ct.status==='aprovada'||ct.status==='rejeitada';
+  openModal(`
+    <div class="modal-head"><div class="mh-l"><div class="m-sub num">${a.data} · ${esc(a.cliente)}</div><h3>Contestação</h3>
+      <div class="m-chips"><span class="m-chip">${esc(a.assunto)}</span><span class="m-chip">${esc(a.setor)}</span><span class="m-chip">Nota ${fmt1(a.nota)}</span><span class="m-chip">${motivoTxt[ct.motivo]||ct.motivo||'—'}</span></div></div>
+      <div class="m-score"><div class="big">${fmt1(a.nota)}</div><div class="of">/10</div></div>
+      <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="panel"><h4>Avaliação da IA</h4><button class="btn-line" id="rvEval">Ver avaliação completa</button></div>
+      <div class="panel"><h4>Justificativa do colaborador</h4><div class="prose">${esc(ct.texto||'—')}</div><div class="sub" style="margin-top:6px">${ct.criado_por?('enviado por '+esc(ct.criado_por)):''}</div></div>
+      ${anexos.length?`<div class="panel"><h4>Anexos de prova (${anexos.length})</h4><div style="display:flex;gap:8px;flex-wrap:wrap">${anexos.map(u=>`<a href="${escAttr(u)}" target="_blank" rel="noopener" style="display:block;width:110px;height:110px;border:1px solid var(--border);border-radius:8px;overflow:hidden"><img src="${escAttr(u)}" alt="prova" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML='<div class=\\'sub\\' style=\\'padding:8px\\'>abrir anexo</div>'"></a>`).join("")}</div></div>`:''}
+      ${decidida?`<div class="panel"><h4>Decisão</h4><div class="prose"><span class="pill ${ct.status==='aprovada'?'good':'crit'}">${ct.status==='aprovada'?'Aprovada':'Rejeitada'}</span>${ct.situacao?` · ${situacaoTxt[ct.situacao]||ct.situacao}`:''}${ct.nova_nota!=null?` · nova nota ${fmt1(Number(ct.nova_nota))}`:''}</div>${ct.comentario?`<div class="prose" style="margin-top:8px">${esc(ct.comentario)}</div>`:''}<div class="sub" style="margin-top:6px">${ct.decidido_por?('por '+esc(ct.decidido_por)):''}</div></div>`:`
+      <div class="panel"><h4>Sua decisão</h4>
+        <div class="seg" id="rvAcao"><button data-ac="aprovada" class="on">Aprovar</button><button data-ac="rejeitada">Rejeitar</button></div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="field"><div class="k">Situação da contestação</div>
+            <div class="seg cs-seg" id="rvSit"><button data-sit="nao_ia">Não é problema da IA</button><button data-sit="eh_ia" class="on">É problema da IA</button></div></div>
+          <div class="field"><div class="k">Nova nota (0 a 10, opcional)</div><input class="inp" id="rvNota" type="text" inputmode="decimal" placeholder="ex.: 8,5" style="width:120px"></div>
+        </div>
+        <div class="field" style="margin-top:10px"><div class="k">Comentário sobre a decisão</div><textarea class="crm-obs" id="rvCom" rows="2" placeholder="Ex.: concordo com a contestação, a IA errou na avaliação."></textarea></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="rvSalvar">Salvar decisão</button></div>
+      </div>`}
+    </div>`);
+  const ev=modal.querySelector("#rvEval"); if(ev) ev.onclick=()=>{ closeModal(); openAvaliacao(i); };
+  if(!decidida){
+    let acao="aprovada", sit="eh_ia";
+    modal.querySelectorAll("#rvAcao [data-ac]").forEach(b=>b.onclick=()=>{ acao=b.dataset.ac; modal.querySelectorAll("#rvAcao [data-ac]").forEach(x=>x.classList.toggle("on",x===b)); });
+    modal.querySelectorAll("#rvSit [data-sit]").forEach(b=>b.onclick=()=>{ sit=b.dataset.sit; modal.querySelectorAll("#rvSit [data-sit]").forEach(x=>x.classList.toggle("on",x===b)); });
+    modal.querySelector("#rvSalvar").onclick=async()=>{
+      const notaV=modal.querySelector("#rvNota").value.trim().replace(",",".");
+      const patch={status:acao,situacao:sit,comentario:modal.querySelector("#rvCom").value.trim()||null,decidido_por:ME,decidido_em:new Date().toISOString()};
+      if(notaV!==""&&!isNaN(Number(notaV))) patch.nova_nota=Number(notaV);
+      const btn=modal.querySelector("#rvSalvar"); btn.disabled=true; btn.textContent="Salvando...";
+      if(await salvarRevisao(atId,patch)){ closeModal(); render(); } else { btn.disabled=false; btn.textContent="Salvar decisão"; }
+    };
+  }
 }
 
 // ---------- RELATÓRIO DIÁRIO ----------
