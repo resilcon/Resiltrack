@@ -1386,10 +1386,10 @@ function relatorioDados(dateStr){
   const oports=dia.filter(a=>a.oport).map(a=>({cliente:a.cliente,oport:a.oport,atendente:a.atendente}));
   const errMap=new Map(); dia.forEach(a=>(a.erros||[]).forEach(e=>errMap.set(e,(errMap.get(e)||0)+1)));
   const erros=[...errMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const colMap=new Map(); dia.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{nome:a.atendente,list:[]}); colMap.get(k).list.push(a); });
-  const porAtend=[...colMap.values()].map(g=>{ const a2=aggList(g.list); return {nome:g.nome,n:g.list.length,media:a2.media,ab:a2.q-a2.ac}; }).sort((a,b)=>(a.media??99)-(b.media??99));
-  const troca=dia.filter(a=>a.churn);
-  return {dateStr,dia,ag,agPrev,dur,naoComp,atendentes,riscos,piores,melhores,melhorias,oports,erros,porAtend,troca};
+  const depMapR=new Map(); dia.forEach(a=>{ if(semAtendente(a))return; const dep=deptDoAtendente(a.atendente_id,a.setor)||"Não classificado"; if(!depMapR.has(dep))depMapR.set(dep,[]); depMapR.get(dep).push(a); });
+  const porDep=[...depMapR.entries()].map(([dep,list])=>{ const a2=aggList(list); return {dep,n:list.length,media:a2.media,ab:a2.q-a2.ac}; }).sort((a,b)=>(a.media??99)-(b.media??99));
+  const oportClientes=new Set(oports.map(o=>o.cliente)).size;
+  return {dateStr,dia,ag,agPrev,dur,naoComp,atendentes,piores,melhores,melhorias,oports,oportClientes,erros,porDep};
 }
 function motivoRisco(a){ const r=[]; if(a.churn)r.push('possível troca de contabilidade'); if(a.docErrado)r.push('documento errado ao cliente'); if(a.satisfacao==='negativo')r.push('cliente insatisfeito'); if(okNota(a)&&a.nota<6)r.push('nota crítica'); if(a.sinais&&a.sinais.length)r.push(a.sinais[0]); return r.join(' · ')||'atenção'; }
 function motivoPior(a){ return (a.erros&&a.erros[0])||(a.melhorias&&a.melhorias[0])||a.assunto||'—'; }
@@ -1401,7 +1401,7 @@ function viewRelatorio(v){
   const delta=(R.ag.media!==null&&R.agPrev.media!==null)?R.ag.media-R.agPrev.media:null;
   const tile=(l,val,cor,sub)=>`<div class="tile"><div><div class="lbl">${l}</div><div class="val num" ${cor?`style="color:${cor}"`:""}>${val}${sub?` <small>${sub}</small>`:""}</div></div></div>`;
   const linha=(cli,at,nota,motivo)=>`<tr><td>${esc(cli)}</td><td class="sub">${esc(at)}</td><td class="center"><span class="nota ${notaClass(nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(nota)}</span></td><td class="sub">${esc(motivo)}</td></tr>`;
-  v.innerHTML=`<div class="page-head"><h2>Relatório Diário</h2><p>o resumo do dia com riscos, piores atendimentos, oportunidades e destaques${isGestor()?" · seu departamento":""}</p></div>
+  v.innerHTML=`<div class="page-head"><h2>Relatório Diário</h2><p>o resumo do dia por departamento, piores atendimentos e oportunidades${isGestor()?" · seu departamento":""}</p></div>
   <div class="filters">
     <button class="btn-line" id="rPrev">◂ dia anterior</button>
     <input class="inp" id="rDate" type="date" value="${escAttr(RDATE)}" max="${escAttr(hoje)}" style="width:170px;padding:7px 10px">
@@ -1424,21 +1424,15 @@ function viewRelatorio(v){
       ${tile("Atendentes",R.atendentes,"",R.naoComp?`${R.naoComp} não comp.`:"")}
     </div></div>
 
-    ${R.riscos.length?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">Riscos e alertas do dia (${R.riscos.length})</h4>
-      <div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th><th>Motivo</th></tr></thead><tbody>${R.riscos.slice(0,15).map(a=>linha(a.cliente,a.atendente,a.nota,motivoRisco(a))).join("")}</tbody></table></div>
-      ${R.riscos.length>15?`<div class="sub" style="margin-top:6px">Mostrando 15 de ${R.riscos.length}.</div>`:""}</div>`:`<div class="panel"><h4>Riscos e alertas do dia</h4><div class="sub">Nenhum risco crítico no dia. 👍</div></div>`}
+    <div class="panel"><h4>Desempenho por departamento · do pior para o melhor</h4>${R.porDep.length?`<div class="card" style="box-shadow:none;border:none"><table><thead><tr><th style="width:40px">#</th><th>Departamento</th><th class="center">Atend.</th><th class="center">Média</th><th class="center">Notas &lt; 7</th></tr></thead><tbody>${R.porDep.map((g,i)=>`<tr><td class="sub num">${i+1}</td><td>${esc(g.dep)}</td><td class="center num">${g.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(g.media)}">${fmt1(g.media)}</span></td><td class="center num" style="color:${g.ab?'var(--crit)':'var(--muted)'}">${g.ab}</td></tr>`).join("")}</tbody></table></div>`:'<div class="sub">Sem dados por departamento no dia.</div>'}</div>
 
     <div class="panel"><h4>5 piores atendimentos</h4>${R.piores.length?`<div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th><th>O que puxou pra baixo</th></tr></thead><tbody>${R.piores.map(a=>linha(a.cliente,a.atendente,a.nota,motivoPior(a))).join("")}</tbody></table></div>`:'<div class="sub">Sem notas computadas no dia.</div>'}</div>
 
-    <div class="panel"><h4>Oportunidades de melhoria recorrentes</h4>${R.melhorias.length?`<ul class="melhorias">${R.melhorias.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Nada recorrente apontado no dia.</div>'}</div>
+    <div class="panel"><h4>Oportunidades de melhoria recorrentes</h4>${R.melhorias.length?`<ul class="melhorias">${R.melhorias.slice(0,6).map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Nada recorrente apontado no dia.</div>'}</div>
 
-    ${R.oports.length?`<div class="panel"><h4>Oportunidades comerciais (${R.oports.length})</h4><div class="mini-list">${R.oports.map(o=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(o.cliente)}</div><div class="s">${esc(o.oport)} · ${esc(o.atendente)}</div></div></div>`).join("")}</div></div>`:""}
+    <div class="panel"><h4>Oportunidades comerciais</h4><div class="prose">${R.oports.length?`${R.oports.length} oportunidade(s) comercial(is) identificada(s) em ${R.oportClientes} cliente(s) no dia.`:'Nenhuma oportunidade comercial identificada no dia.'}</div></div>
 
-    ${R.erros.length?`<div class="panel"><h4>Apontamentos recorrentes</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${R.erros.map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div></div>`:""}
-
-    <div class="panel"><h4>Desempenho por atendente</h4>${R.porAtend.length?`<div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Atendente</th><th class="center">Atend.</th><th class="center">Média</th><th class="center">Notas &lt; 7</th></tr></thead><tbody>${R.porAtend.map(g=>`<tr><td>${esc(g.nome)}</td><td class="center num">${g.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(g.media)}">${fmt1(g.media)}</span></td><td class="center num" style="color:${g.ab?'var(--crit)':'var(--muted)'}">${g.ab}</td></tr>`).join("")}</tbody></table></div>`:'<div class="sub">—</div>'}</div>
-
-    ${R.melhores.length?`<div class="panel"><h4>Destaques positivos</h4><div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th></tr></thead><tbody>${R.melhores.filter(a=>a.nota>=8).slice(0,5).map(a=>`<tr><td>${esc(a.cliente)}</td><td class="sub">${esc(a.atendente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></td></tr>`).join("")||'<tr><td colspan="3" class="sub" style="padding:8px">Sem notas 8+ no dia.</td></tr>'}</tbody></table></div></div>`:""}`;
+    ${R.erros.length?`<div class="panel"><h4>Apontamentos recorrentes</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${R.erros.slice(0,6).map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div></div>`:""}`;
   }
   v.appendChild(c);
   const go=d=>{ RDATE=d; viewRelatorio(v); };
@@ -1460,8 +1454,7 @@ function baixarRelatorioPDF(dateStr,btn){
   const delta=(R.ag.media!==null&&R.agPrev.media!==null)?R.ag.media-R.agPrev.media:null;
   const [yy,mm,dd]=dateStr.split("-").map(Number); const dow=DOW[new Date(Date.UTC(yy,mm-1,dd)).getUTCDay()];
   const rowsPiores=R.piores.map(a=>`<tr><td style="padding:2px 6px 2px 0">${esc(a.cliente)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${cor(a.nota)}">${fmt1(a.nota)}</td><td style="padding:2px 6px 2px 0">${esc(motivoPior(a))}</td></tr>`).join("")||`<tr><td colspan="4" style="color:${M}">—</td></tr>`;
-  const rowsRisco=R.riscos.slice(0,15).map(a=>`<tr><td style="padding:2px 6px 2px 0">${esc(a.cliente)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${cor(a.nota)}">${fmt1(a.nota)}</td><td style="padding:2px 6px 2px 0;color:${CR}">${esc(motivoRisco(a))}</td></tr>`).join("")||`<tr><td colspan="4" style="color:${GD}">Nenhum risco crítico.</td></tr>`;
-  const rowsAt=R.porAtend.map(g=>`<tr><td style="padding:2px 6px 2px 0">${esc(g.nome)}</td><td style="text-align:center">${g.n}</td><td style="text-align:center;color:${cor(g.media)};font-weight:600">${fmt1(g.media)}</td><td style="text-align:center;color:${g.ab?CR:M}">${g.ab}</td></tr>`).join("");
+  const rowsDep=R.porDep.map((g,i)=>`<tr><td style="padding:2px 6px 2px 0">${i+1}</td><td style="padding:2px 6px 2px 0">${esc(g.dep)}</td><td style="text-align:center">${g.n}</td><td style="text-align:center;color:${cor(g.media)};font-weight:600">${fmt1(g.media)}</td><td style="text-align:center;color:${g.ab?CR:M}">${g.ab}</td></tr>`).join("");
   const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
       <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório diário${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</div>
@@ -1470,12 +1463,11 @@ function baixarRelatorioPDF(dateStr,btn){
       <div style="text-align:center;min-width:80px"><div style="font-size:34px;font-weight:700;line-height:1;color:${cor(R.ag.media)}">${fmt1(R.ag.media)}</div><div style="font-size:11px;color:${M}">média /10${delta!==null?` (${delta>=0?"+":""}${delta.toFixed(2).replace(".",",")})`:""}</div></div>
     </div>
     ${box("Resumo",tbl([],`<tr><td style="color:${M}">Atendimentos</td><td style="font-weight:600">${R.dia.length}</td><td style="color:${M}">Média</td><td style="font-weight:600;color:${cor(R.ag.media)}">${fmt1(R.ag.media)}</td></tr><tr><td style="color:${M}">Notas abaixo de 7</td><td style="font-weight:600;color:${CR}">${R.ag.q-R.ag.ac}${R.ag.pctAb===null?"":` (${Math.round(R.ag.pctAb)}%)`}</td><td style="color:${M}">Notas 7 ou mais</td><td style="font-weight:600;color:${GD}">${R.ag.ac}${R.ag.pctAc===null?"":` (${Math.round(R.ag.pctAc)}%)`}</td></tr><tr><td style="color:${M}">Tempo total</td><td style="font-weight:600">${fmtDur(R.dur)}</td><td style="color:${M}">Atendentes</td><td style="font-weight:600">${R.atendentes}</td></tr>`))}
-    ${box("Riscos e alertas",tbl(["Cliente","Atendente","Nota","Motivo"],rowsRisco))}
+    ${rowsDep?box("Desempenho por departamento (do pior para o melhor)",tbl(["#","Departamento","Atend.","Média","Notas <7"],rowsDep)):""}
     ${box("5 piores atendimentos",tbl(["Cliente","Atendente","Nota","O que puxou pra baixo"],rowsPiores))}
-    ${R.melhorias.length?box("Oportunidades de melhoria recorrentes",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.melhorias.map(([m,n])=>`<li>${esc(m)}${n>1?` (${n}×)`:""}</li>`).join("")}</ul>`):""}
-    ${R.oports.length?box("Oportunidades comerciais",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.oports.map(o=>`<li>${esc(o.cliente)} — ${esc(o.oport)}</li>`).join("")}</ul>`):""}
-    ${R.erros.length?box("Apontamentos recorrentes",R.erros.map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("")):""}
-    ${rowsAt?box("Desempenho por atendente",tbl(["Atendente","Atend.","Média","Notas <7"],rowsAt)):""}
+    ${R.melhorias.length?box("Oportunidades de melhoria recorrentes",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.melhorias.slice(0,6).map(([m,n])=>`<li>${esc(m)}${n>1?` (${n}×)`:""}</li>`).join("")}</ul>`):""}
+    ${box("Oportunidades comerciais",`<div style="font-size:12px;color:#4a4d63">${R.oports.length?`${R.oports.length} oportunidade(s) em ${R.oportClientes} cliente(s) no dia.`:'Nenhuma no dia.'}</div>`)}
+    ${R.erros.length?box("Apontamentos recorrentes",R.erros.slice(0,6).map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("")):""}
     <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
   </div>`;
   const cont=document.createElement("div"); cont.innerHTML=html; document.body.appendChild(cont);
