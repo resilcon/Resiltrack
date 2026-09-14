@@ -560,16 +560,16 @@ function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r
 function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
 function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
 function allowedTabKeys(){
-  if(isAdmin()) return ["dashboard","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
+  if(isAdmin()) return ["dashboard","relatorio","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
   const t=[];
-  if(isGestor()) t.push("dashboard","detalhes","colaboradores","contestacoes","setor");
+  if(isGestor()) t.push("dashboard","relatorio","detalhes","colaboradores","contestacoes","setor");
   if(podeModulo("financeiro")) t.push("financeiro");
   if(podeModulo("comercial")) t.push("comercial");
   return t;
 }
 
 // ---------- navegação ----------
-const TABS_ALL = {dashboard:"Dashboard",detalhes:"Dados Detalhados",clientes:"Clientes",colaboradores:"Preview Colaborador",contestacoes:"Contestações",setor:"Evolução Setor",tv:"Preview TV",financeiro:"Financeiro",comercial:"Comercial",admin:"Admin"};
+const TABS_ALL = {dashboard:"Dashboard",relatorio:"Relatório Diário",detalhes:"Dados Detalhados",clientes:"Clientes",colaboradores:"Preview Colaborador",contestacoes:"Contestações",setor:"Evolução Setor",tv:"Preview TV",financeiro:"Financeiro",comercial:"Comercial",admin:"Admin"};
 function renderTabs(){
   const nav=document.getElementById("tabs"); nav.innerHTML="";
   const keys=allowedTabKeys();
@@ -585,6 +585,7 @@ function render(){ renderTabs(); const v=document.getElementById("view");
   else if(TAB==="colaboradores") viewColaboradores(v);
   else if(TAB==="contestacoes") viewContestacoes(v);
   else if(TAB==="setor") viewSetor(v);
+  else if(TAB==="relatorio") viewRelatorio(v);
   else if(TAB==="admin") viewAdmin(v);
   else if(TAB==="financeiro"||TAB==="comercial") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg><h2 style="font-size:18px;margin-bottom:6px">${TABS_ALL[TAB]}</h2><p>Módulo em construção. Em breve com as informações ${TAB==="financeiro"?"financeiras dos clientes":"comerciais e de onboarding"}.</p></div>`;
   else if(TAB==="tv") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg><h2 style="font-size:18px;margin-bottom:6px">Preview TV</h2><p>Tela de mural para a sala do CS. Vamos configurar essa visualização em breve.</p></div>`;
@@ -1311,6 +1312,128 @@ function viewContestacoes(v){
   v.querySelectorAll("[data-aprovar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.aprovar,'aprovada','Aprovada'));
   v.querySelectorAll("[data-rejeitar]").forEach(b=>b.onclick=()=>decidirContestacao(b.dataset.rejeitar,'rejeitada','Rejeitada'));
   bindActions();
+}
+
+// ---------- RELATÓRIO DIÁRIO ----------
+let RDATE=null;
+function ymdShift(dateStr,delta){ const [y,m,d]=dateStr.split("-").map(Number); const dt=new Date(Date.UTC(y,m-1,d)); dt.setUTCDate(dt.getUTCDate()+(delta||0)); return dt.toISOString().slice(0,10); }
+function ymdBR(offset){ const now=new Date(Date.now()-3*3600e3); return ymdShift(now.toISOString().slice(0,10),offset||0); }
+function diaBounds(dateStr){ return {ini:new Date(dateStr+"T00:00:00-03:00").getTime(), fim:new Date(dateStr+"T23:59:59.999-03:00").getTime()}; }
+function fmtDataBR(dateStr){ const [y,m,d]=dateStr.split("-"); return `${d}/${m}/${y}`; }
+const DOW=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+function relatorioDados(dateStr){
+  const {ini,fim}=diaBounds(dateStr);
+  const dia=ATEND.filter(a=>a.ts>=ini&&a.ts<=fim);
+  const ag=aggList(dia);
+  const prev=ymdShift(dateStr,-1); const pb=diaBounds(prev); const agPrev=aggList(ATEND.filter(a=>a.ts>=pb.ini&&a.ts<=pb.fim));
+  const dur=dia.reduce((s,a)=>s+(a.durMin||0),0);
+  const naoComp=dia.filter(a=>a.computavel===false).length;
+  const atendentes=new Set(dia.filter(a=>!semAtendente(a)).map(a=>a.atendente_id||a.atendente)).size;
+  const riscos=dia.filter(a=>a.churn||a.docErrado||a.satisfacao==='negativo'||(okNota(a)&&a.nota<6)||(a.sinais&&a.sinais.length));
+  const piores=dia.filter(okNota).sort((a,b)=>a.nota-b.nota).slice(0,5);
+  const melhores=dia.filter(okNota).sort((a,b)=>b.nota-a.nota).slice(0,5);
+  const melMap=new Map(); dia.forEach(a=>(a.melhorias||[]).forEach(m=>melMap.set(m,(melMap.get(m)||0)+1)));
+  const melhorias=[...melMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const oports=dia.filter(a=>a.oport).map(a=>({cliente:a.cliente,oport:a.oport,atendente:a.atendente}));
+  const errMap=new Map(); dia.forEach(a=>(a.erros||[]).forEach(e=>errMap.set(e,(errMap.get(e)||0)+1)));
+  const erros=[...errMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const colMap=new Map(); dia.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!colMap.has(k))colMap.set(k,{nome:a.atendente,list:[]}); colMap.get(k).list.push(a); });
+  const porAtend=[...colMap.values()].map(g=>{ const a2=aggList(g.list); return {nome:g.nome,n:g.list.length,media:a2.media,ab:a2.q-a2.ac}; }).sort((a,b)=>(a.media??99)-(b.media??99));
+  const troca=dia.filter(a=>a.churn);
+  return {dateStr,dia,ag,agPrev,dur,naoComp,atendentes,riscos,piores,melhores,melhorias,oports,erros,porAtend,troca};
+}
+function motivoRisco(a){ const r=[]; if(a.churn)r.push('possível troca de contabilidade'); if(a.docErrado)r.push('documento errado ao cliente'); if(a.satisfacao==='negativo')r.push('cliente insatisfeito'); if(okNota(a)&&a.nota<6)r.push('nota crítica'); if(a.sinais&&a.sinais.length)r.push(a.sinais[0]); return r.join(' · ')||'atenção'; }
+function motivoPior(a){ return (a.erros&&a.erros[0])||(a.melhorias&&a.melhorias[0])||a.assunto||'—'; }
+function viewRelatorio(v){
+  if(!RDATE) RDATE=ymdBR(-1);
+  const hoje=ymdBR(0);
+  const R=relatorioDados(RDATE);
+  const [yy,mm,dd]=RDATE.split("-").map(Number); const dow=DOW[new Date(Date.UTC(yy,mm-1,dd)).getUTCDay()];
+  const delta=(R.ag.media!==null&&R.agPrev.media!==null)?R.ag.media-R.agPrev.media:null;
+  const tile=(l,val,cor,sub)=>`<div class="tile"><div><div class="lbl">${l}</div><div class="val num" ${cor?`style="color:${cor}"`:""}>${val}${sub?` <small>${sub}</small>`:""}</div></div></div>`;
+  const linha=(cli,at,nota,motivo)=>`<tr><td>${esc(cli)}</td><td class="sub">${esc(at)}</td><td class="center"><span class="nota ${notaClass(nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(nota)}</span></td><td class="sub">${esc(motivo)}</td></tr>`;
+  v.innerHTML=`<div class="page-head"><h2>Relatório Diário</h2><p>o resumo do dia com riscos, piores atendimentos, oportunidades e destaques${isGestor()?" · seu departamento":""}</p></div>
+  <div class="filters">
+    <button class="btn-line" id="rPrev">◂ dia anterior</button>
+    <input class="inp" id="rDate" type="date" value="${escAttr(RDATE)}" max="${escAttr(hoje)}" style="width:170px;padding:7px 10px">
+    <button class="btn-line" id="rNext" ${RDATE>=hoje?"disabled":""}>dia seguinte ▸</button>
+    <button class="btn-line" id="rOntem">Ontem</button>
+    <div style="flex:1"></div>
+    <span class="sub" style="align-self:center;margin-right:8px">${dow}, ${fmtDataBR(RDATE)}</span>
+    <button class="btn-primary" id="rPdf">Baixar PDF</button>
+  </div>`;
+  const c=document.createElement("div");
+  if(!R.dia.length){ c.innerHTML=`<div class="soon" style="margin-top:20px"><h2 style="font-size:17px;margin-bottom:6px">Sem atendimentos nesse dia</h2><p>Não houve atendimentos avaliados em ${fmtDataBR(RDATE)}.</p></div>`; }
+  else{
+    c.innerHTML=`
+    <div class="panel"><h4>Resumo do dia</h4><div class="cx" style="grid-template-columns:repeat(6,1fr)">
+      ${tile("Atendimentos",R.dia.length)}
+      ${tile("Média",fmt1(R.ag.media),scoreColor(R.ag.media),delta!==null?`${delta>=0?'▲':'▼'} ${Math.abs(delta).toFixed(2).replace(".",",")}`:"")}
+      ${tile("Notas < 7",R.ag.q-R.ag.ac,"var(--crit)",R.ag.pctAb===null?"":Math.round(R.ag.pctAb)+"%")}
+      ${tile("Notas ≥ 7",R.ag.ac,"var(--good)",R.ag.pctAc===null?"":Math.round(R.ag.pctAc)+"%")}
+      ${tile("Tempo total",fmtDur(R.dur))}
+      ${tile("Atendentes",R.atendentes,"",R.naoComp?`${R.naoComp} não comp.`:"")}
+    </div></div>
+
+    ${R.riscos.length?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">Riscos e alertas do dia (${R.riscos.length})</h4>
+      <div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th><th>Motivo</th></tr></thead><tbody>${R.riscos.slice(0,15).map(a=>linha(a.cliente,a.atendente,a.nota,motivoRisco(a))).join("")}</tbody></table></div>
+      ${R.riscos.length>15?`<div class="sub" style="margin-top:6px">Mostrando 15 de ${R.riscos.length}.</div>`:""}</div>`:`<div class="panel"><h4>Riscos e alertas do dia</h4><div class="sub">Nenhum risco crítico no dia. 👍</div></div>`}
+
+    <div class="panel"><h4>5 piores atendimentos</h4>${R.piores.length?`<div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th><th>O que puxou pra baixo</th></tr></thead><tbody>${R.piores.map(a=>linha(a.cliente,a.atendente,a.nota,motivoPior(a))).join("")}</tbody></table></div>`:'<div class="sub">Sem notas computadas no dia.</div>'}</div>
+
+    <div class="panel"><h4>Oportunidades de melhoria recorrentes</h4>${R.melhorias.length?`<ul class="melhorias">${R.melhorias.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Nada recorrente apontado no dia.</div>'}</div>
+
+    ${R.oports.length?`<div class="panel"><h4>Oportunidades comerciais (${R.oports.length})</h4><div class="mini-list">${R.oports.map(o=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(o.cliente)}</div><div class="s">${esc(o.oport)} · ${esc(o.atendente)}</div></div></div>`).join("")}</div></div>`:""}
+
+    ${R.erros.length?`<div class="panel"><h4>Apontamentos recorrentes</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${R.erros.map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div></div>`:""}
+
+    <div class="panel"><h4>Desempenho por atendente</h4>${R.porAtend.length?`<div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Atendente</th><th class="center">Atend.</th><th class="center">Média</th><th class="center">Notas &lt; 7</th></tr></thead><tbody>${R.porAtend.map(g=>`<tr><td>${esc(g.nome)}</td><td class="center num">${g.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(g.media)}">${fmt1(g.media)}</span></td><td class="center num" style="color:${g.ab?'var(--crit)':'var(--muted)'}">${g.ab}</td></tr>`).join("")}</tbody></table></div>`:'<div class="sub">—</div>'}</div>
+
+    ${R.melhores.length?`<div class="panel"><h4>Destaques positivos</h4><div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th class="center">Nota</th></tr></thead><tbody>${R.melhores.filter(a=>a.nota>=8).slice(0,5).map(a=>`<tr><td>${esc(a.cliente)}</td><td class="sub">${esc(a.atendente)}</td><td class="center"><span class="nota ${notaClass(a.nota)} num" style="min-width:auto;padding:2px 8px">${fmt1(a.nota)}</span></td></tr>`).join("")||'<tr><td colspan="3" class="sub" style="padding:8px">Sem notas 8+ no dia.</td></tr>'}</tbody></table></div></div>`:""}`;
+  }
+  v.appendChild(c);
+  const go=d=>{ RDATE=d; viewRelatorio(v); };
+  v.querySelector("#rPrev").onclick=()=>go(ymdShift(RDATE,-1));
+  const nx=v.querySelector("#rNext"); if(nx&&!nx.disabled) nx.onclick=()=>go(ymdShift(RDATE,1));
+  v.querySelector("#rOntem").onclick=()=>go(ymdBR(-1));
+  v.querySelector("#rDate").onchange=e=>{ if(e.target.value) go(e.target.value); };
+  v.querySelector("#rPdf").onclick=e=>baixarRelatorioPDF(RDATE,e.target);
+}
+function baixarRelatorioPDF(dateStr,btn){
+  if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
+  const R=relatorioDados(dateStr);
+  if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",WN="#b7791f",CR="#cf4257";
+  const cor=n=>n===null?M:(n>=8?GD:(n>=6?WN:CR));
+  const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
+  const tbl=(head,rows)=>`<table style="width:100%;font-size:11.5px;border-collapse:collapse"><tr style="color:${M}">${head.map(h=>`<td style="padding:2px 6px 2px 0">${h}</td>`).join("")}</tr>${rows}</table>`;
+  const esco=R.ag;
+  const delta=(R.ag.media!==null&&R.agPrev.media!==null)?R.ag.media-R.agPrev.media:null;
+  const [yy,mm,dd]=dateStr.split("-").map(Number); const dow=DOW[new Date(Date.UTC(yy,mm-1,dd)).getUTCDay()];
+  const rowsPiores=R.piores.map(a=>`<tr><td style="padding:2px 6px 2px 0">${esc(a.cliente)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${cor(a.nota)}">${fmt1(a.nota)}</td><td style="padding:2px 6px 2px 0">${esc(motivoPior(a))}</td></tr>`).join("")||`<tr><td colspan="4" style="color:${M}">—</td></tr>`;
+  const rowsRisco=R.riscos.slice(0,15).map(a=>`<tr><td style="padding:2px 6px 2px 0">${esc(a.cliente)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${cor(a.nota)}">${fmt1(a.nota)}</td><td style="padding:2px 6px 2px 0;color:${CR}">${esc(motivoRisco(a))}</td></tr>`).join("")||`<tr><td colspan="4" style="color:${GD}">Nenhum risco crítico.</td></tr>`;
+  const rowsAt=R.porAtend.map(g=>`<tr><td style="padding:2px 6px 2px 0">${esc(g.nome)}</td><td style="text-align:center">${g.n}</td><td style="text-align:center;color:${cor(g.media)};font-weight:600">${fmt1(g.media)}</td><td style="text-align:center;color:${g.ab?CR:M}">${g.ab}</td></tr>`).join("");
+  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
+      <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório diário${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</div>
+      <div style="font-size:20px;font-weight:700;margin-top:4px">${dow}, ${fmtDataBR(dateStr)}</div>
+      <div style="font-size:12px;color:${M};margin-top:4px">${R.dia.length} atendimento(s)${R.naoComp?` · ${R.naoComp} não computado(s)`:""}</div></div>
+      <div style="text-align:center;min-width:80px"><div style="font-size:34px;font-weight:700;line-height:1;color:${cor(R.ag.media)}">${fmt1(R.ag.media)}</div><div style="font-size:11px;color:${M}">média /10${delta!==null?` (${delta>=0?"+":""}${delta.toFixed(2).replace(".",",")})`:""}</div></div>
+    </div>
+    ${box("Resumo",tbl([],`<tr><td style="color:${M}">Atendimentos</td><td style="font-weight:600">${R.dia.length}</td><td style="color:${M}">Média</td><td style="font-weight:600;color:${cor(R.ag.media)}">${fmt1(R.ag.media)}</td></tr><tr><td style="color:${M}">Notas abaixo de 7</td><td style="font-weight:600;color:${CR}">${R.ag.q-R.ag.ac}${R.ag.pctAb===null?"":` (${Math.round(R.ag.pctAb)}%)`}</td><td style="color:${M}">Notas 7 ou mais</td><td style="font-weight:600;color:${GD}">${R.ag.ac}${R.ag.pctAc===null?"":` (${Math.round(R.ag.pctAc)}%)`}</td></tr><tr><td style="color:${M}">Tempo total</td><td style="font-weight:600">${fmtDur(R.dur)}</td><td style="color:${M}">Atendentes</td><td style="font-weight:600">${R.atendentes}</td></tr>`))}
+    ${box("Riscos e alertas",tbl(["Cliente","Atendente","Nota","Motivo"],rowsRisco))}
+    ${box("5 piores atendimentos",tbl(["Cliente","Atendente","Nota","O que puxou pra baixo"],rowsPiores))}
+    ${R.melhorias.length?box("Oportunidades de melhoria recorrentes",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.melhorias.map(([m,n])=>`<li>${esc(m)}${n>1?` (${n}×)`:""}</li>`).join("")}</ul>`):""}
+    ${R.oports.length?box("Oportunidades comerciais",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.oports.map(o=>`<li>${esc(o.cliente)} — ${esc(o.oport)}</li>`).join("")}</ul>`):""}
+    ${R.erros.length?box("Apontamentos recorrentes",R.erros.map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("")):""}
+    ${rowsAt?box("Desempenho por atendente",tbl(["Atendente","Atend.","Média","Notas <7"],rowsAt)):""}
+    <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
+  </div>`;
+  const cont=document.createElement("div"); cont.innerHTML=html; document.body.appendChild(cont);
+  const nomeArq=`relatorio_${dateStr}.pdf`;
+  html2pdf().set({margin:[8,8,8,8],filename:nomeArq,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}})
+    .from(cont.firstElementChild).save().then(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } })
+    .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 
 // ---------- EVOLUÇÃO SETOR (grade semanal) ----------
