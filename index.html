@@ -11,7 +11,7 @@
 <style>
   :root{
     --bg:#f4f5fa;--surface:#fff;--surface-2:#fafbff;--ink:#1a1b28;--ink-2:#4a4d63;--muted:#83879c;
-    --border:#e7e9f2;--border-strong:#d6d9e8;--accent:#6d3bd6;--accent-soft:#efe9fd;--accent-deep:#4c2a95;
+    --border:#e7e9f2;--border-strong:#d6d9e8;--accent:#006789;--accent-soft:#e0eef2;--accent-deep:#00506a;
     --good:#128a5b;--good-soft:#e3f4ec;--warn:#b7791f;--warn-soft:#fbf1dd;--crit:#cf4257;--crit-soft:#fbe6ea;
     --shadow:0 1px 2px rgba(26,27,40,.04),0 6px 20px rgba(26,27,40,.05);--shadow-lg:0 12px 40px rgba(26,27,40,.18);--radius:14px;
     color-scheme:light;
@@ -299,6 +299,77 @@
 
   @media (max-width:900px){.kpis,.cx{grid-template-columns:repeat(2,1fr)}.grid2,.opt-grid{grid-template-columns:1fr}.modal-head{flex-wrap:wrap}
     .hide-md{display:none!important}}
+
+  /* ===== menu lateral (visão) ===== */
+  #siderail{position:fixed;left:0;top:0;bottom:0;width:214px;background:var(--surface);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto;z-index:30;display:flex;flex-direction:column;gap:4px}
+  #siderail .srl-brand{display:flex;align-items:center;gap:9px;padding:4px 8px 12px}
+  #siderail .srl-brand svg{width:26px;height:26px}
+  #siderail .srl-brand b{font-size:15px;font-weight:700;letter-spacing:-.02em}
+  #app.appwrap{padding-left:214px}
+  .srl-title{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:12px 10px 4px}
+  .srl-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;border:1px solid transparent;background:none;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;width:100%}
+  .srl-item:hover{background:var(--surface-2);color:var(--ink)}
+  .srl-item.on{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 22%,transparent)}
+  .srl-item svg{width:18px;height:18px;flex:none}
+  .srl-sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 8px;padding-left:8px;border-left:1px solid var(--border)}
+  .srl-sub button{background:none;border:none;font:inherit;font-size:12.5px;color:var(--muted);font-weight:600;text-align:left;padding:7px 10px;border-radius:8px;cursor:pointer}
+  .srl-sub button:hover{color:var(--ink);background:var(--surface-2)}
+  @media (max-width:900px){
+    #siderail{position:static;width:auto;inset:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;border-right:none;border-bottom:1px solid var(--border);padding:8px 12px;gap:6px;scrollbar-width:none}
+    #siderail::-webkit-scrollbar{display:none}
+    #app.appwrap{padding-left:0}
+    #siderail .srl-brand,.srl-title,.srl-sub{display:none}
+    .srl-item{width:auto;white-space:nowrap}
+  }
+
+  /* ===== painel do gestor ===== */
+  .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:13px;margin-top:14px}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:15px;display:flex;flex-direction:column;gap:5px;position:relative;min-height:132px}
+  .kpi-card .kn{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.25;padding-right:52px}
+  .kpi-card .km{font-size:11px;color:var(--muted)}
+  .kpi-card .kv{font-size:25px;font-weight:700;letter-spacing:-.02em;margin-top:3px;line-height:1.1}
+  .kpi-card .kv .un{font-size:12px;font-weight:600;color:var(--muted);margin-left:3px}
+  .kpi-card .kv.good{color:var(--good)}.kpi-card .kv.warn{color:var(--warn)}.kpi-card .kv.crit{color:var(--crit)}
+  .kpi-card .kv.todo{font-size:15px;font-weight:600;color:var(--muted)}
+  .kpi-card .kf{font-size:10px;color:var(--muted);margin-top:auto;padding-top:9px;border-top:1px dashed var(--border);line-height:1.4}
+  .kpi-badge{position:absolute;top:13px;right:13px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:6px}
+  .kpi-badge.auto{background:var(--good-soft);color:var(--good)}
+  .kpi-badge.man{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+  .kpi-edit{position:absolute;bottom:11px;right:11px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;display:grid;place-items:center}
+  .kpi-edit:hover{border-color:var(--accent);color:var(--accent)}
+  .kpi-edit svg{width:13px;height:13px}
+  .gsec{margin-top:30px}
+  .gsec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .gsec-h h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .gsec-h span{font-size:12px;color:var(--muted)}
+  .rev-dep{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
+  .rev-list{display:flex;flex-direction:column;gap:8px}
+  .rev-task{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .rev-top{display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer}
+  .rev-top:hover{background:var(--surface-2)}
+  .rev-check{width:20px;height:20px;border-radius:6px;border:1.6px solid var(--border-strong);flex:none;display:grid;place-items:center;cursor:pointer;background:var(--surface)}
+  .rev-check.done{background:var(--good);border-color:var(--good)}
+  .rev-check svg{width:13px;height:13px;color:#fff;opacity:0}
+  .rev-check.done svg{opacity:1}
+  .rev-ttl{font-size:13.5px;font-weight:600;color:var(--ink);flex:1}
+  .rev-task.done .rev-ttl{color:var(--muted);text-decoration:line-through}
+  .rev-arrow{color:var(--muted);transition:transform .18s;flex:none}
+  .rev-task.open .rev-arrow{transform:rotate(90deg)}
+  .rev-detail{display:none;padding:0 15px 14px 47px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .rev-task.open .rev-detail{display:block}
+  .acc{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-top:10px;overflow:hidden}
+  .acc>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:11px;font-size:14.5px;font-weight:700;color:var(--ink)}
+  .acc>summary::-webkit-details-marker{display:none}
+  .acc>summary .acc-ic{width:32px;height:32px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+  .acc>summary .acc-cta{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .acc[open]>summary{border-bottom:1px solid var(--border)}
+  .acc-body{padding:16px}
+  .intg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .intg-card{border:1px dashed var(--border-strong);border-radius:11px;padding:14px;background:var(--surface-2)}
+  .intg-card .it{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .intg-card .it .tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:6px}
+  .intg-card .id{font-size:12px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+  .intg-card .src{font-size:10.5px;color:var(--muted);margin-top:9px;padding-top:8px;border-top:1px dashed var(--border)}
 </style>
 </head>
 <body>
@@ -327,7 +398,8 @@
   </form>
 </div>
 
-<div id="app" class="hidden">
+<div id="app" class="hidden appwrap">
+  <aside id="siderail"></aside>
   <header>
     <div class="bar">
       <svg class="logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -364,6 +436,9 @@ let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
 const MODULOS=[["financeiro","Financeiro"],["comercial","Comercial"]];
 let TAB="dashboard";
+let MODE="atendimentos"; // atendimentos | gestor
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos") MODE=_m; }catch(e){}
+let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let DSUB="colab"; // colab | health | setores | servico
 let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
 let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
@@ -376,8 +451,8 @@ let CVIEW="quadro"; // quadro | lista | ranking
 let QFIL={q:"",status:"",tag:"",cs:""};
 let CRMCFG={colunas:[],tags:[]};
 let CRMCLI={}; // empresa_id -> {coluna, tags:[], cs_manual, cs_obs}
-const COLUNAS_PADRAO=[{id:"novo",nome:"Novo",cor:"#6d3bd6"},{id:"ativo",nome:"Ativo",cor:"#128a5b"},{id:"atencao",nome:"Precisa atenção",cor:"#b7791f"},{id:"risco",nome:"Em risco",cor:"#cf4257"},{id:"recuperado",nome:"Recuperado",cor:"#2f6df6"}];
-const TAGS_PADRAO=[{id:"vip",nome:"VIP",cor:"#6d3bd6"},{id:"contrato_novo",nome:"Contrato novo",cor:"#128a5b"},{id:"inadimplente",nome:"Inadimplente",cor:"#cf4257"}];
+const COLUNAS_PADRAO=[{id:"novo",nome:"Novo",cor:"#006789"},{id:"ativo",nome:"Ativo",cor:"#128a5b"},{id:"atencao",nome:"Precisa atenção",cor:"#b7791f"},{id:"risco",nome:"Em risco",cor:"#cf4257"},{id:"recuperado",nome:"Recuperado",cor:"#2f6df6"}];
+const TAGS_PADRAO=[{id:"vip",nome:"VIP",cor:"#006789"},{id:"contrato_novo",nome:"Contrato novo",cor:"#128a5b"},{id:"inadimplente",nome:"Inadimplente",cor:"#cf4257"}];
 
 // ---------- helpers ----------
 const num = v => (v===null||v===undefined||v==="")?null:Number(v);
@@ -562,6 +637,7 @@ async function loadData(){
 function isAdmin(){ return !!(ACCESS && ACCESS.nivel==="admin"); }
 function isGestor(){ return !!(ACCESS && ACCESS.nivel==="gestor"); }
 function podeModulo(m){ return isAdmin() || (ACCESS && (ACCESS.permissoes||[]).includes(m)); }
+function podePainelGestor(){ return isAdmin() || isGestor(); }
 function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r?r.departamento:null; }
 function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
 function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
@@ -582,7 +658,11 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderTabs(); const v=document.getElementById("view");
+function render(){ renderSide(); const v=document.getElementById("view");
+  const tabsEl=document.getElementById("tabs");
+  if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
+  if(MODE==="gestor" && !podePainelGestor()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  tabsEl.classList.remove("hidden"); renderTabs();
   const keys=allowedTabKeys();
   if(!keys.length){ v.innerHTML=`<div class="soon" style="margin-top:40px"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><h2 style="font-size:18px;margin-bottom:6px">Acesso não configurado</h2><p>Seu e-mail ainda não tem acesso liberado aqui. Fale com a gestão para definir seu departamento.</p></div>`; return; }
   if(TAB==="dashboard") viewDashboard(v);
@@ -596,6 +676,202 @@ function render(){ renderTabs(); const v=document.getElementById("view");
   else if(TAB==="financeiro"||TAB==="comercial") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg><h2 style="font-size:18px;margin-bottom:6px">${TABS_ALL[TAB]}</h2><p>Módulo em construção. Em breve com as informações ${TAB==="financeiro"?"financeiras dos clientes":"comerciais e de onboarding"}.</p></div>`;
   else if(TAB==="tv") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg><h2 style="font-size:18px;margin-bottom:6px">Preview TV</h2><p>Tela de mural para a sala do CS. Vamos configurar essa visualização em breve.</p></div>`;
   bindActions();
+}
+
+// ---------- MENU LATERAL / MODO ----------
+const _LOGO_SVG='<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="2" opacity=".25"/><circle cx="20" cy="20" r="11.5" stroke="var(--accent)" stroke-width="2" opacity=".45"/><path d="M20 20 L34 11" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="20" r="3.4" fill="var(--accent)"/><circle cx="29.5" cy="13" r="2.4" fill="var(--good)"/></svg>';
+const _ICO_ATEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+const _ICO_GESTOR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="14" width="3" height="3"/></svg>';
+function renderSide(){
+  const s=document.getElementById("siderail"); if(!s) return;
+  const gestorOK=podePainelGestor();
+  let h=`<div class="srl-brand">${_LOGO_SVG}<b>Resiltrack</b></div>`;
+  h+=`<div class="srl-title">Visão</div>`;
+  h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos">${_ICO_ATEND}Atendimentos</button>`;
+  if(gestorOK) h+=`<button class="srl-item ${MODE==='gestor'?'on':''}" data-mode="gestor">${_ICO_GESTOR}Painel do Gestor</button>`;
+  if(gestorOK && MODE==='gestor'){
+    h+=`<div class="srl-sub">`+
+      [["wallboard","Wallboard"],["revisao","Revisão diária"],["pessoas","Pessoas"],["clientes","Clientes"],["processos","Processos"]]
+      .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div>`;
+  }
+  s.innerHTML=h;
+  s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+  s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
+}
+function setMode(m){ if(m===MODE) return; MODE=m; try{localStorage.setItem("resiltrack_mode",m);}catch(e){} window.scrollTo(0,0); render(); }
+
+// ---------- PAINEL DO GESTOR ----------
+const GEST_KPIS=[
+  {id:"reducao_horas",nome:"Redução de horas/cliente",mede:"Ganho de eficiência",medir:"Horas antes − horas depois",tipo:"manual",unid:"h"},
+  {id:"horas_econ",nome:"Horas economizadas",mede:"Tempo liberado por mês",medir:"Horas antes − horas depois",tipo:"manual",unid:"h"},
+  {id:"custo_cliente",nome:"Custo por cliente",mede:"Custo de atendimento",medir:"Custo total / nº de clientes",tipo:"manual",unid:"R$"},
+  {id:"produtividade",nome:"Produtividade",mede:"Capacidade operacional",medir:"Entregas / horas trabalhadas",tipo:"manual",unid:""},
+  {id:"adocao",nome:"Adoção das inovações",mede:"Uso dos novos processos",medir:"Usuários corretos / previstos × 100",tipo:"manual",unid:"%"},
+  {id:"cobertura",nome:"Cobertura de avaliação",mede:"% de atendimentos avaliados",medir:"Avaliados / total × 100",tipo:"auto",unid:"%"},
+  {id:"nota_media",nome:"Nota média de auditoria",mede:"Qualidade e conformidade",medir:"Soma das notas / atendimentos avaliados",tipo:"auto",unid:"nota"},
+  {id:"tempo_resol",nome:"Tempo médio de atendimento",mede:"Agilidade na solução",medir:"Tempo total / atendimentos",tipo:"auto",unid:"min"},
+  {id:"reincidencia",nome:"Reincidência de chamados",mede:"Problemas que voltaram",medir:"Repetidos / total × 100",tipo:"manual",unid:"%"},
+  {id:"retrabalho",nome:"Redução de retrabalho",mede:"Menos correções",medir:"(Antes − atual) / antes × 100",tipo:"manual",unid:"%"},
+  {id:"demandas_elim",nome:"Demandas eliminadas",mede:"Migradas para automação",medir:"Manuais eliminadas no período",tipo:"manual",unid:""},
+  {id:"economia",nome:"Economia financeira",mede:"Retorno dos projetos",medir:"Horas × custo/hora + custos eliminados",tipo:"manual",unid:"R$"},
+  {id:"projetos_result",nome:"Projetos com resultado",mede:"Efetividade",medir:"Meta atingida / concluídos × 100",tipo:"manual",unid:"%"}
+];
+let KPIVAL={};
+function loadKpiVals(){ try{KPIVAL=JSON.parse(localStorage.getItem("resiltrack_kpi")||"{}")||{};}catch(e){KPIVAL={};} }
+function saveKpiVals(){ try{localStorage.setItem("resiltrack_kpi",JSON.stringify(KPIVAL));}catch(e){} }
+function kpiAuto(id){
+  const com=comNota(ATEND), total=ATEND.length;
+  if(id==="cobertura") return total? (com.length/total*100):null;
+  if(id==="nota_media") return com.length? (com.reduce((s,a)=>s+a.nota,0)/com.length):null;
+  if(id==="tempo_resol"){ const ds=ATEND.map(a=>a.durMin).filter(x=>typeof x==="number"&&x>0); return ds.length? (ds.reduce((s,x)=>s+x,0)/ds.length):null; }
+  return null;
+}
+function kpiRender(k){
+  let disp="";
+  if(k.tipo==="auto"){
+    const val=kpiAuto(k.id);
+    if(val==null){ disp=`<span class="kv todo">sem dados</span>`; }
+    else if(k.id==="nota_media"){ const cls=val>=8?"good":(val>=6?"warn":"crit"); disp=`<span class="kv ${cls}">${val.toFixed(1)}<span class="un">/10</span></span>`; }
+    else if(k.id==="cobertura"){ const cls=val>=90?"good":(val>=70?"warn":"crit"); disp=`<span class="kv ${cls}">${Math.round(val)}<span class="un">%</span></span>`; }
+    else if(k.id==="tempo_resol"){ disp=`<span class="kv">${val.toFixed(0)}<span class="un">min</span></span>`; }
+  } else {
+    const raw=KPIVAL[k.id];
+    if(raw==null||raw===""){ disp=`<span class="kv todo">a configurar</span>`; }
+    else if(k.unid==="R$"){ disp=`<span class="kv">R$ ${esc(String(raw))}</span>`; }
+    else if(k.unid&&k.unid!=="nota"){ disp=`<span class="kv">${esc(String(raw))}<span class="un">${esc(k.unid)}</span></span>`; }
+    else { disp=`<span class="kv">${esc(String(raw))}</span>`; }
+  }
+  const badge=k.tipo==="auto"?`<span class="kpi-badge auto">auto</span>`:`<span class="kpi-badge man">manual</span>`;
+  const edit=(k.tipo==="manual"&&podePainelGestor())?`<button class="kpi-edit" data-kpi="${esc(k.id)}" title="Definir valor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`:"";
+  return `<div class="kpi-card">${badge}<div class="kn">${esc(k.nome)}</div><div class="km">${esc(k.mede)}</div>${disp}<div class="kf">Como medir: ${esc(k.medir)}</div>${edit}</div>`;
+}
+function wallboardHTML(){
+  return `<div class="gsec-h" style="margin-top:8px"><h3>Wallboard de KPIs</h3><span>indicadores do supervisor de inovação</span></div>`
+    +`<div class="wall">`+GEST_KPIS.map(kpiRender).join("")+`</div>`;
+}
+function openKpiEdit(id){
+  const k=GEST_KPIS.find(x=>x.id===id); if(!k) return;
+  const cur=KPIVAL[id]!=null?KPIVAL[id]:"";
+  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">Definir KPI</div><h3 style="margin:2px 0 0;font-size:18px">${esc(k.nome)}</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
+  <div style="padding:20px 24px">
+    <p style="font-size:13px;color:var(--ink-2);margin:0 0 4px">${esc(k.mede)}</p>
+    <p style="font-size:11.5px;color:var(--muted);margin:0 0 14px">Como medir: ${esc(k.medir)}</p>
+    <label style="font-size:12px;font-weight:600;color:var(--ink-2)">Valor${k.unid?` (${esc(k.unid)})`:""}</label>
+    <input id="kpiIn" class="inp" style="margin-top:6px" value="${esc(String(cur))}" placeholder="ex: 12,5">
+    <p style="font-size:11px;color:var(--muted);margin:10px 0 0">Salvo neste navegador por enquanto. Quando quiser esse número compartilhado entre os gestores, a gente liga no banco.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+      <button class="btn-line" data-close>Cancelar</button>
+      <button class="btn-primary" id="kpiSave">Salvar</button>
+    </div>
+  </div>`);
+  document.getElementById("kpiSave").onclick=()=>{ const val=document.getElementById("kpiIn").value.trim(); if(val==="") delete KPIVAL[id]; else KPIVAL[id]=val; saveKpiVals(); closeModal(); render(); };
+}
+
+// revisão diária
+function _depTok(d){ return (d||"").toLowerCase().replace(/^departamento\s+(de\s+)?/,"").trim(); }
+const REV_COMUM=[
+  {id:"atend",titulo:"Revisar atendimentos de ontem",detalhe:"Abra a visão Atendimentos e confira os atendimentos do dia anterior, com atenção aos de nota baixa e aos marcados como risco. O Relatório Diário traz o resumo pronto."},
+  {id:"contest",titulo:"Tratar contestações pendentes",detalhe:"Veja as contestações abertas pela equipe e aprove ou rejeite, ajustando a nota quando fizer sentido. Toda pendência do dia deve sair com um retorno."},
+  {id:"risco",titulo:"Checar clientes em risco",detalhe:"Olhe os clientes com sinal de churn ou insatisfação e defina uma ação de contato para hoje."},
+  {id:"pend",titulo:"Revisar pendências do departamento",detalhe:"Passe pelas demandas em aberto do time e priorize o que precisa sair hoje."}
+];
+const REV_DEP={
+  "sucesso do cliente":[{id:"nps",titulo:"Acompanhar nota e satisfação do dia",detalhe:"Confira a nota média do time e os atendimentos com baixa satisfação para agir rápido."},{id:"onb",titulo:"Revisar onboarding de novos clientes",detalhe:"Verifique se os clientes recém-chegados estão avançando nas etapas de ativação."}],
+  "fiscal":[{id:"obr",titulo:"Conferir obrigações e prazos do dia",detalhe:"Cheque as obrigações fiscais com vencimento hoje e amanhã e confirme entregas."}],
+  "contábil":[{id:"fech",titulo:"Acompanhar fechamentos em andamento",detalhe:"Veja o status dos fechamentos contábeis do período e o que trava cada um."}],
+  "pessoal":[{id:"folha",titulo:"Verificar rotinas de folha e admissões",detalhe:"Confira admissões, desligamentos e prazos da folha do dia."}],
+  "financeiro":[{id:"conc",titulo:"Revisar conciliações e cobranças",detalhe:"Acompanhe conciliações pendentes e a régua de cobrança dos clientes."}],
+  "comercial":[{id:"pipe",titulo:"Revisar pipeline e follow-ups",detalhe:"Passe pelas oportunidades em aberto e os retornos combinados para hoje."}],
+  "tributário":[{id:"trib",titulo:"Acompanhar teses e recuperações",detalhe:"Cheque andamentos de teses tributárias e créditos em análise."}],
+  "societário":[{id:"soc",titulo:"Revisar processos societários em aberto",detalhe:"Veja alterações contratuais e registros em andamento nos órgãos."}],
+  "regulatório":[{id:"reg",titulo:"Conferir exigências regulatórias",detalhe:"Acompanhe licenças, alvarás e exigências com prazo."}],
+  "jurídico":[{id:"jur",titulo:"Acompanhar prazos e demandas jurídicas",detalhe:"Cheque prazos processuais e solicitações internas do dia."}]
+};
+function _todayStr(){ const d=new Date(); const o=new Date(d.getTime()-3*3600*1000); return o.toISOString().slice(0,10); }
+function _revKey(dt,dep,id){ return dt+"|"+dep+"|"+id; }
+function _loadRev(){ try{return JSON.parse(localStorage.getItem("resiltrack_rev")||"{}")||{};}catch(e){return {};} }
+function _saveRev(o){ try{localStorage.setItem("resiltrack_rev",JSON.stringify(o));}catch(e){} }
+function _revDeps(){ return isGestor()? (ACCESS.departamentos||[]) : DEPARTAMENTOS; }
+function _revDepAtual(){ const deps=_revDeps(); return REVDEP || (deps[0]||""); }
+function revisaoHTML(){
+  const deps=_revDeps(), dep=_revDepAtual();
+  let selector="";
+  if(isAdmin() || deps.length>1){
+    const opts=(isAdmin()?DEPARTAMENTOS:deps);
+    selector=`<div class="rev-dep"><span style="font-size:12px;color:var(--muted);font-weight:600">Departamento</span><select id="revDepSel" class="inp" style="width:auto;min-width:230px">`+
+      opts.map(d=>`<option value="${esc(d)}" ${d===dep?"selected":""}>${esc(d)}</option>`).join("")+`</select></div>`;
+  }
+  const tasks=[...REV_COMUM, ...(REV_DEP[_depTok(dep)]||[])];
+  const done=_loadRev(), today=_todayStr();
+  const doneCount=tasks.filter(t=>done[_revKey(today,dep,t.id)]).length;
+  const list=tasks.map(t=>{
+    const on=!!done[_revKey(today,dep,t.id)];
+    return `<div class="rev-task ${on?"done":""}">
+      <div class="rev-top">
+        <div class="rev-check ${on?"done":""}" data-rtoggle="${esc(t.id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
+        <div class="rev-ttl" data-rexp="${esc(t.id)}">${esc(t.titulo)}</div>
+        <svg class="rev-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-rexp="${esc(t.id)}"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="rev-detail">${esc(t.detalhe)}</div>
+    </div>`;
+  }).join("");
+  return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>${doneCount}/${tasks.length} concluídas hoje${dep?" · "+esc(dep):""}</span></div>${selector}<div class="rev-list">${list}</div></div>`;
+}
+function toggleRev(id){ const dep=_revDepAtual(); const done=_loadRev(), k=_revKey(_todayStr(),dep,id); if(done[k]) delete done[k]; else done[k]=true; _saveRev(done); render(); }
+
+// blocos pessoas / clientes / processos
+const _ICO_PEOPLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a3 3 0 0 1 0 5.8M21 20a5 5 0 0 0-4-4.9"/></svg>';
+const _ICO_CLI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V8l7-4 7 4v13"/><path d="M3 21h18"/><rect x="8" y="12" width="4" height="4"/></svg>';
+const _ICO_PROC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/></svg>';
+function _intgCard(tool,titulo,desc){ return `<div class="intg-card"><div class="it">${esc(titulo)} <span class="tag">${esc(tool)}</span></div><div class="id">${esc(desc)}</div><div class="src">Integração a configurar</div></div>`; }
+function _miniStat(l,v){ return `<div class="card" style="padding:14px;box-shadow:none"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600">${esc(l)}</div><div style="font-size:24px;font-weight:700;margin-top:4px">${esc(String(v))}</div></div>`; }
+function blocosHTML(){
+  const emps=Object.values(EMPRESAS||{});
+  const totalCli=emps.length;
+  const ativos=emps.filter(e=>String(e.status||"").toLowerCase().includes("ativ")).length;
+  return `<div class="gsec">
+    <details class="acc" id="g-pessoas"><summary><span class="acc-ic">${_ICO_PEOPLE}</span>Pessoas<span class="acc-cta">férias, avaliações e produtividade</span></summary>
+      <div class="acc-body"><div class="intg">
+        ${_intgCard("Cohros","Provisão de férias","Saldo e provisão de férias de cada colaborador, para planejar a escala sem furos.")}
+        ${_intgCard("Cohros","Avaliações","Avaliações de desempenho e feedbacks registrados, ligados a cada pessoa do time.")}
+        ${_intgCard("Tangerino","Ponto e férias","Marcações de ponto, banco de horas e período de férias, direto do controle de ponto.")}
+        ${_intgCard("Workmonitor","Produtividade","Tempo produtivo e uso de sistemas por colaborador, leitura de capacidade operacional via API.")}
+      </div></div>
+    </details>
+    <details class="acc" id="g-clientes"><summary><span class="acc-ic">${_ICO_CLI}</span>Clientes<span class="acc-cta">${totalCli} na base</span></summary>
+      <div class="acc-body">
+        <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+          ${_miniStat("Clientes na base",totalCli)}
+          ${_miniStat("Ativos",ativos)}
+          ${_miniStat("Em atenção","—")}
+        </div>
+        <div class="intg" style="margin-top:12px">
+          ${_intgCard("Resiltrack","Carteira e saúde","A saúde por cliente já vive na visão Clientes. Aqui vamos trazer o recorte por departamento e os alertas de churn.")}
+        </div>
+      </div>
+    </details>
+    <details class="acc" id="g-processos"><summary><span class="acc-ic">${_ICO_PROC}</span>Processos<span class="acc-cta">automação e demandas</span></summary>
+      <div class="acc-body"><div class="intg">
+        ${_intgCard("Automação","Demandas eliminadas","Rotinas manuais migradas para automação no período, alimentando o KPI de demandas eliminadas.")}
+        ${_intgCard("Processos","Retrabalho","Correções e retrabalho por processo, para acompanhar a redução ao longo do tempo.")}
+      </div></div>
+    </details>
+  </div>`;
+}
+function bindGestor(v){
+  v.querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>openKpiEdit(b.dataset.kpi));
+  const sel=document.getElementById("revDepSel"); if(sel) sel.onchange=()=>{ REVDEP=sel.value; render(); };
+  v.querySelectorAll("[data-rexp]").forEach(b=>b.onclick=()=>{ const t=b.closest(".rev-task"); if(t) t.classList.toggle("open"); });
+  v.querySelectorAll("[data-rtoggle]").forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); toggleRev(b.dataset.rtoggle); });
+}
+function viewGestor(v){
+  loadKpiVals();
+  v.innerHTML =
+    `<div class="page-head"><h2>Painel do Gestor</h2><p>indicadores, revisão diária e blocos de gestão${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</p></div>`
+    + `<div id="g-wallboard">`+wallboardHTML()+`</div>`
+    + revisaoHTML()
+    + blocosHTML();
+  bindGestor(v);
 }
 
 // ---------- DASHBOARD ----------
@@ -1189,7 +1465,7 @@ function viewRanking(c){
   bindActions();
 }
 function openGerenciarTags(){
-  const linhas=CRMCFG.tags.map(t=>`<div class="tagrow" data-tid="${escAttr(t.id)}"><input type="color" value="${escAttr(t.cor||'#6d3bd6')}"><input type="text" value="${escAttr(t.nome)}" placeholder="Nome da tag"><button class="close-x" data-del="${escAttr(t.id)}" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
+  const linhas=CRMCFG.tags.map(t=>`<div class="tagrow" data-tid="${escAttr(t.id)}"><input type="color" value="${escAttr(t.cor||'#006789')}"><input type="text" value="${escAttr(t.nome)}" placeholder="Nome da tag"><button class="close-x" data-del="${escAttr(t.id)}" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Gerenciar tags</h3><div class="m-chips"><span class="m-chip">nome e cor livres</span></div></div>
       <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1200,7 +1476,7 @@ function openGerenciarTags(){
     </div>`);
   const list=modal.querySelector("#tagList");
   modal.querySelector("#addTag").onclick=()=>{ const div=document.createElement("div"); div.className="tagrow"; div.dataset.tid="new_"+uid();
-    div.innerHTML=`<input type="color" value="#6d3bd6"><input type="text" value="" placeholder="Nome da tag"><button class="close-x" data-delrow style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    div.innerHTML=`<input type="color" value="#006789"><input type="text" value="" placeholder="Nome da tag"><button class="close-x" data-delrow style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
     list.appendChild(div); div.querySelector("[data-delrow]").onclick=()=>div.remove(); };
   modal.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>b.closest(".tagrow").remove());
   modal.querySelector("#salvarTags").onclick=async()=>{
@@ -1209,7 +1485,7 @@ function openGerenciarTags(){
   };
 }
 function openEditarColunas(){
-  const linhas=CRMCFG.colunas.map((col,i)=>`<div class="tagrow" data-cid="${escAttr(col.id)}"><input type="color" value="${escAttr(col.cor||'#6d3bd6')}"><input type="text" value="${escAttr(col.nome)}" placeholder="Nome da coluna"><button class="close-x" data-up title="Subir" style="width:32px;height:32px" ${i===0?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del title="Remover" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
+  const linhas=CRMCFG.colunas.map((col,i)=>`<div class="tagrow" data-cid="${escAttr(col.id)}"><input type="color" value="${escAttr(col.cor||'#006789')}"><input type="text" value="${escAttr(col.nome)}" placeholder="Nome da coluna"><button class="close-x" data-up title="Subir" style="width:32px;height:32px" ${i===0?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del title="Remover" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Editar colunas</h3><div class="m-chips"><span class="m-chip">arraste os cards depois</span></div></div>
       <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1224,7 +1500,7 @@ function openEditarColunas(){
     r.querySelector("[data-del]").onclick=()=>r.remove(); };
   list.querySelectorAll(".tagrow").forEach(bindRow);
   modal.querySelector("#addCol").onclick=()=>{ const div=document.createElement("div"); div.className="tagrow"; div.dataset.cid="new_"+uid();
-    div.innerHTML=`<input type="color" value="#6d3bd6"><input type="text" value="" placeholder="Nome da coluna"><button class="close-x" data-up style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+    div.innerHTML=`<input type="color" value="#006789"><input type="text" value="" placeholder="Nome da coluna"><button class="close-x" data-up style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
     list.appendChild(div); bindRow(div); };
   modal.querySelector("#salvarCols").onclick=async()=>{
     const novas=[]; list.querySelectorAll(".tagrow").forEach(r=>{ const nome=r.querySelector("input[type=text]").value.trim(); const cor=r.querySelector("input[type=color]").value; let id=r.dataset.cid; if(id.startsWith("new_"))id=nome.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")||uid(); if(nome)novas.push({id,nome,cor}); });
@@ -1383,14 +1659,19 @@ function relatorioDados(dateStr){
   const melhores=dia.filter(okNota).sort((a,b)=>b.nota-a.nota).slice(0,5);
   const melMap=new Map(); dia.forEach(a=>(a.melhorias||[]).forEach(m=>melMap.set(m,(melMap.get(m)||0)+1)));
   const melhorias=[...melMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const oports=dia.filter(a=>a.oport).map(a=>({cliente:a.cliente,oport:a.oport,atendente:a.atendente}));
+  const oportsAll=dia.filter(a=>a.oport);
+  const oports=oportsAll.map(a=>({cliente:a.cliente,oport:a.oport,atendente:a.atendente}));
+  const ehPerdida=a=>(a.desfecho==='sem_retorno_cliente'||a.desfecho==='nao_resolvido'||a.satisfacao==='negativo'||a.churn||a.riscoTroca==='possivel'||a.riscoTroca==='provavel'||(okNota(a)&&a.nota<6));
+  const scorePerda=a=>{ let s=0; if(a.churn||a.riscoTroca==='possivel'||a.riscoTroca==='provavel')s+=3; const emp=a.empresa_id&&EMPRESAS[a.empresa_id]; if(emp&&String(emp.status||'').toLowerCase().includes('ativ'))s+=2; if(a.satisfacao==='negativo')s+=1; if(a.desfecho==='sem_retorno_cliente')s+=2; else if(a.desfecho==='nao_resolvido')s+=1; if(okNota(a)&&a.nota<6)s+=1; return s; };
+  const oportsPerdidas=oportsAll.filter(ehPerdida).map(a=>({id:a.id,cliente:a.cliente,atendente:a.atendente,oport:a.oport,nota:a.nota,motivo:motivoPerda(a),score:scorePerda(a)})).sort((x,y)=>y.score-x.score).slice(0,5);
   const errMap=new Map(); dia.forEach(a=>(a.erros||[]).forEach(e=>errMap.set(e,(errMap.get(e)||0)+1)));
   const erros=[...errMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
   const depMapR=new Map(); dia.forEach(a=>{ if(semAtendente(a))return; const dep=deptDoAtendente(a.atendente_id,a.setor)||"Não classificado"; if(!depMapR.has(dep))depMapR.set(dep,[]); depMapR.get(dep).push(a); });
   const porDep=[...depMapR.entries()].map(([dep,list])=>{ const a2=aggList(list); return {dep,n:list.length,media:a2.media,ab:a2.q-a2.ac}; }).sort((a,b)=>(a.media??99)-(b.media??99));
   const oportClientes=new Set(oports.map(o=>o.cliente)).size;
-  return {dateStr,dia,ag,agPrev,dur,naoComp,atendentes,piores,melhores,melhorias,oports,oportClientes,erros,porDep};
+  return {dateStr,dia,ag,agPrev,dur,naoComp,atendentes,piores,melhores,melhorias,oports,oportClientes,oportsPerdidas,erros,porDep};
 }
+function motivoPerda(a){ const r=[]; if(a.churn||a.riscoTroca==='possivel'||a.riscoTroca==='provavel')r.push('cliente em risco de troca'); if(a.desfecho==='sem_retorno_cliente')r.push('cliente não retornou'); if(a.desfecho==='nao_resolvido')r.push('não resolvido'); if(a.satisfacao==='negativo')r.push('cliente insatisfeito'); if(okNota(a)&&a.nota<6)r.push('atendimento nota baixa'); return r.join(' · ')||'sem encaminhamento comercial'; }
 function motivoRisco(a){ const r=[]; if(a.churn)r.push('possível troca de contabilidade'); if(a.docErrado)r.push('documento errado ao cliente'); if(a.satisfacao==='negativo')r.push('cliente insatisfeito'); if(okNota(a)&&a.nota<6)r.push('nota crítica'); if(a.sinais&&a.sinais.length)r.push(a.sinais[0]); return r.join(' · ')||'atenção'; }
 function motivoPior(a){ return (a.erros&&a.erros[0])||(a.melhorias&&a.melhorias[0])||a.assunto||'—'; }
 function viewRelatorio(v){
@@ -1430,7 +1711,11 @@ function viewRelatorio(v){
 
     <div class="panel"><h4>Oportunidades de melhoria recorrentes</h4>${R.melhorias.length?`<ul class="melhorias">${R.melhorias.slice(0,6).map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Nada recorrente apontado no dia.</div>'}</div>
 
-    <div class="panel"><h4>Oportunidades comerciais</h4><div class="prose">${R.oports.length?`${R.oports.length} oportunidade(s) comercial(is) identificada(s) em ${R.oportClientes} cliente(s) no dia.`:'Nenhuma oportunidade comercial identificada no dia.'}</div></div>
+    <div class="panel"><h4>Oportunidades comerciais</h4>
+      <div class="prose">${R.oports.length?`${R.oports.length} oportunidade(s) comercial(is) identificada(s) em ${R.oportClientes} cliente(s) no dia${R.oportsPerdidas.length?`, sendo ${R.oportsPerdidas.length} que ficaram para trás e valem uma recuperação.`:'.'}`:'Nenhuma oportunidade comercial identificada no dia.'}</div>
+      ${R.oportsPerdidas.length?`<h4 style="margin-top:16px">5 oportunidades mais promissoras que ficaram para trás</h4>
+      <div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Atendente</th><th>Oportunidade</th><th>Por que ficou para trás</th><th></th></tr></thead><tbody>${R.oportsPerdidas.map(o=>`<tr><td>${esc(o.cliente)}</td><td class="sub">${esc(o.atendente)}</td><td>${esc(o.oport)}</td><td class="sub">${esc(o.motivo)}</td><td class="center"><button class="view-btn ghost" data-openat="${o.id}">ver atendimento</button></td></tr>`).join("")}</tbody></table></div>`:(R.oports.length?'<div class="sub" style="margin-top:8px">Todas as oportunidades do dia seguiram com bom encaminhamento.</div>':'')}
+    </div>
 
     ${R.erros.length?`<div class="panel"><h4>Apontamentos recorrentes</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${R.erros.slice(0,6).map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div></div>`:""}`;
   }
@@ -1441,12 +1726,13 @@ function viewRelatorio(v){
   v.querySelector("#rOntem").onclick=()=>go(ymdBR(-1));
   v.querySelector("#rDate").onchange=e=>{ if(e.target.value) go(e.target.value); };
   v.querySelector("#rPdf").onclick=e=>baixarRelatorioPDF(RDATE,e.target);
+  v.querySelectorAll("[data-openat]").forEach(b=>b.onclick=()=>openAvaliacao(+b.dataset.openat));
 }
 function baixarRelatorioPDF(dateStr,btn){
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
   const R=relatorioDados(dateStr);
   if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
-  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",WN="#b7791f",CR="#cf4257";
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#006789",GD="#128a5b",WN="#b7791f",CR="#cf4257";
   const cor=n=>n===null?M:(n>=8?GD:(n>=6?WN:CR));
   const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
   const tbl=(head,rows)=>`<table style="width:100%;font-size:11.5px;border-collapse:collapse"><tr style="color:${M}">${head.map(h=>`<td style="padding:2px 6px 2px 0">${h}</td>`).join("")}</tr>${rows}</table>`;
@@ -1466,7 +1752,7 @@ function baixarRelatorioPDF(dateStr,btn){
     ${rowsDep?box("Desempenho por departamento (do pior para o melhor)",tbl(["#","Departamento","Atend.","Média","Notas <7"],rowsDep)):""}
     ${box("5 piores atendimentos",tbl(["Cliente","Atendente","Nota","O que puxou pra baixo"],rowsPiores))}
     ${R.melhorias.length?box("Oportunidades de melhoria recorrentes",`<ul style="margin:0;padding-left:16px;font-size:12px;color:#4a4d63;line-height:1.6">${R.melhorias.slice(0,6).map(([m,n])=>`<li>${esc(m)}${n>1?` (${n}×)`:""}</li>`).join("")}</ul>`):""}
-    ${box("Oportunidades comerciais",`<div style="font-size:12px;color:#4a4d63">${R.oports.length?`${R.oports.length} oportunidade(s) em ${R.oportClientes} cliente(s) no dia.`:'Nenhuma no dia.'}</div>`)}
+    ${box("Oportunidades comerciais",`<div style="font-size:12px;color:#4a4d63">${R.oports.length?`${R.oports.length} oportunidade(s) em ${R.oportClientes} cliente(s) no dia${R.oportsPerdidas.length?`, sendo ${R.oportsPerdidas.length} que ficaram para trás.`:'.'}`:'Nenhuma no dia.'}</div>${R.oportsPerdidas.length?`<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:11px"><thead><tr><th style="text-align:left;color:#83879c;border-bottom:1px solid #e7e9f2;padding:4px">Cliente</th><th style="text-align:left;color:#83879c;border-bottom:1px solid #e7e9f2;padding:4px">Atendente</th><th style="text-align:left;color:#83879c;border-bottom:1px solid #e7e9f2;padding:4px">Oportunidade</th><th style="text-align:left;color:#83879c;border-bottom:1px solid #e7e9f2;padding:4px">Por que ficou para trás</th></tr></thead><tbody>${R.oportsPerdidas.map(o=>`<tr><td style="padding:4px;border-bottom:1px solid #f0f1f6">${esc(o.cliente)}</td><td style="padding:4px;border-bottom:1px solid #f0f1f6;color:#4a4d63">${esc(o.atendente)}</td><td style="padding:4px;border-bottom:1px solid #f0f1f6">${esc(o.oport)}</td><td style="padding:4px;border-bottom:1px solid #f0f1f6;color:#4a4d63">${esc(o.motivo)}</td></tr>`).join("")}</tbody></table>`:''}`)}
     ${R.erros.length?box("Apontamentos recorrentes",R.erros.slice(0,6).map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("")):""}
     <div style="margin-top:16px;font-size:10.5px;color:${M};text-align:center;border-top:1px solid ${B};padding-top:10px">Gerado pela Resiltrack · ${new Date().toLocaleString("pt-BR")}</div>
   </div>`;
@@ -1704,7 +1990,7 @@ function baixarAvaliacaoPDF(i,btn){
   const a=ATEND[i];
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
   if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
-  const H="#1a1b28", M="#83879c", B="#e7e9f2", AC="#6d3bd6", GD="#128a5b", WN="#b7791f", CR="#cf4257";
+  const H="#1a1b28", M="#83879c", B="#e7e9f2", AC="#006789", GD="#128a5b", WN="#b7791f", CR="#cf4257";
   const notaCor = n => n===null?M:(n>=8?GD:(n>=6?WN:CR));
   const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
   const box=(titulo,conteudo)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(titulo)}</div>${conteudo}</div>`;
@@ -1835,7 +2121,7 @@ function baixarClientePDF(empId,btn){
   const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
   if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
-  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",CR="#cf4257";
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#006789",GD="#128a5b",CR="#cf4257";
   const list=ag.list.slice().sort((a,b)=>b.ts-a.ts);
   const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
   const kv=(k,val)=>`<tr><td style="padding:3px 0;color:${M};width:52%">${k}</td><td style="padding:3px 0;font-weight:600">${val}</td></tr>`;
@@ -1962,7 +2248,7 @@ function baixarColaboradorPDF(key,btn){
   const R=colaboradorReport(key); if(!R)return;
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
   if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
-  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#6d3bd6",GD="#128a5b",WN="#b7791f",CR="#cf4257";
+  const H="#1a1b28",M="#83879c",B="#e7e9f2",AC="#006789",GD="#128a5b",WN="#b7791f",CR="#cf4257";
   const cor=n=>n===null?M:(n>=8?GD:(n>=6?WN:CR));
   const perLbl=`${new Date(R.mIni).toLocaleDateString("pt-BR")} a ${new Date(R.mFim).toLocaleDateString("pt-BR")}`;
   const box=(t,c)=>`<div style="border:1px solid ${B};border-radius:10px;padding:12px 14px;margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${AC};margin-bottom:8px">${esc(t)}</div>${c}</div>`;
