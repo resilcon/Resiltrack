@@ -626,7 +626,7 @@ async function loadData(){
   }catch(error){
     document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message||error)}</div>`; return;
   }
-  ATEND = RAW.map(mapRow);
+  ATEND = RAW.map(mapRow).filter(a=>!semAtendente(a)); // fora do horário / sem retorno do cliente: ninguém atendeu, não avalia nem mostra
   if(ACCESS && ACCESS.nivel!=="admin"){
     if(ACCESS.nivel==="gestor"){ const deps=new Set(ACCESS.departamentos||[]); ATEND=ATEND.filter(a=>deps.has(deptDoAtendente(a.atendente_id,a.setor))); }
     else ATEND=[]; // colaborador não vê atendimentos por aqui
@@ -2308,7 +2308,7 @@ function openVincular(contactId){
     const btn=modal.querySelector("#salvarVinc"); btn.disabled=true; btn.textContent="Salvando...";
     const { error } = await sb.schema("atendimentos").from("contatos").update({empresa_id:empId}).eq("id",contactId);
     if(error){ modal.querySelector("#vincMsg").textContent="Erro: "+error.message; btn.disabled=false; btn.textContent="Vincular"; return; }
-    CONTATOS[contactId].empresa_id=empId; ATEND=RAW.map(mapRow); closeModal(); render();
+    CONTATOS[contactId].empresa_id=empId; ATEND=RAW.map(mapRow).filter(a=>!semAtendente(a)); closeModal(); render();
   };
 }
 
