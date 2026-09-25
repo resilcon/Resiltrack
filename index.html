@@ -826,7 +826,16 @@ function openKpiEdit(id){
 }
 
 // revisão diária
-function _depTok(d){ return (d||"").toLowerCase().replace(/^departamento\s+(de\s+)?/,"").trim(); }
+function _depTok(d){
+  let s=(d||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  s=s.replace(/^departamento\s+(de\s+)?/,"").trim();
+  // o G-Click e o Resiltrack às vezes nomeiam o mesmo departamento de formas diferentes
+  // (ex.: G-Click manda "Contabilidade" e aqui está cadastrado "Departamento Contábil").
+  // Agrupa pela raiz da palavra pra casar essas variantes.
+  const raizes=["contab","fiscal","pessoal","financeir","comercial","societar","tribut","juridic","regulator","sucesso"];
+  for(const r of raizes){ if(s.includes(r)) return r; }
+  return s;
+}
 const REV_COMUM=[
   {id:"atend",titulo:"Revisar atendimentos de ontem",detalhe:"Abra a visão Atendimentos e confira os atendimentos do dia anterior, com atenção aos de nota baixa e aos marcados como risco. O Relatório Diário traz o resumo pronto."},
   {id:"contest",titulo:"Tratar contestações pendentes",detalhe:"Veja as contestações abertas pela equipe e aprove ou rejeite, ajustando a nota quando fizer sentido. Toda pendência do dia deve sair com um retorno."},
@@ -2426,15 +2435,15 @@ function openColaborador(key){
       </div></div>
     <div class="modal-body">
       ${_operacaoColabHTML(key)}
-      <div class="panel"><h4>Evolução semanal</h4>${evolBox}
-        <div class="card" style="margin-top:12px"><table><thead><tr><th>Semana</th><th class="hide-md">Período</th><th class="center">Qtd</th><th class="center">Média</th><th class="center">&lt; 7</th><th class="center">≥ 7</th><th class="center">Status</th><th class="center">Tend.</th></tr></thead><tbody>${
+      <div class="panel"><h4>Evolução semanal</h4><div class="sub" style="margin-bottom:8px">Como a nota média dos atendimentos avaliados deste colaborador variou semana a semana em ${esc(perLbl)}. "SEM 1" é a primeira semana do período, e assim por diante.</div>${evolBox}
+        <div class="card" style="margin-top:12px"><table><thead><tr><th>Semana</th><th class="hide-md">Período</th><th class="center" title="Atendimentos avaliados nessa semana">Atendimentos</th><th class="center">Nota média</th><th class="center" title="Atendimentos avaliados com nota abaixo de 7">Nota &lt; 7</th><th class="center" title="Atendimentos avaliados com nota 7 ou mais">Nota ≥ 7</th><th class="center">Status</th><th class="center" title="Tendência em relação à semana anterior">Tend.</th></tr></thead><tbody>${
           R.semanas.map(s=>{ const ab=s.ag.q-s.ag.ac; return `<tr><td class="r-name">SEM ${s.n}</td><td class="sub hide-md num">${s.label}</td><td class="center num">${s.ag.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(s.ag.media)}">${fmt1(s.ag.media)}</span></td><td class="center num" style="color:var(--crit)">${ab}</td><td class="center num" style="color:var(--good)">${s.ag.ac}</td><td class="center">${stDotPct(s.ag.pctAc)}</td><td class="center">${trendIco(s.trend)}</td></tr>`; }).join("")||`<tr><td colspan="8" class="empty">Sem semanas com dados.</td></tr>`
         }</tbody></table></div></div>
-      <div class="panel"><h4>Estatísticas do período</h4><div class="cx" style="grid-template-columns:repeat(4,1fr)">
-        <div class="tile"><div><div class="lbl">Total</div><div class="val num">${R.st.n}</div></div></div>
-        <div class="tile"><div><div class="lbl">Média</div><div class="val num" style="color:${scoreColor(R.st.media)}">${fmt1(R.st.media)}</div></div></div>
-        <div class="tile"><div><div class="lbl">Notas &lt; 7</div><div class="val num" style="color:var(--crit)">${R.st.q-R.st.ac} <small>${R.st.pctAb===null?"":Math.round(R.st.pctAb)+"%"}</small></div></div></div>
-        <div class="tile"><div><div class="lbl">Notas ≥ 7</div><div class="val num" style="color:var(--good)">${R.st.ac} <small>${R.st.pctAc===null?"":Math.round(R.st.pctAc)+"%"}</small></div></div></div>
+      <div class="panel"><h4>Estatísticas do período</h4><div class="sub" style="margin-bottom:8px">Resumo de todos os atendimentos avaliados deste colaborador em ${esc(perLbl)} (soma das semanas acima).</div><div class="cx" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tile"><div><div class="lbl">Total de atendimentos</div><div class="val num">${R.st.n}</div></div></div>
+        <div class="tile"><div><div class="lbl">Nota média</div><div class="val num" style="color:${scoreColor(R.st.media)}">${fmt1(R.st.media)}</div></div></div>
+        <div class="tile"><div><div class="lbl">Atendimentos com nota &lt; 7</div><div class="val num" style="color:var(--crit)">${R.st.q-R.st.ac} <small>${R.st.pctAb===null?"":Math.round(R.st.pctAb)+"%"}</small></div></div></div>
+        <div class="tile"><div><div class="lbl">Atendimentos com nota ≥ 7</div><div class="val num" style="color:var(--good)">${R.st.ac} <small>${R.st.pctAc===null?"":Math.round(R.st.pctAc)+"%"}</small></div></div></div>
       </div></div>
       <div class="panel"><h4>Comparativo com a equipe (${esc(R.setor)})</h4><div class="grid2" style="grid-template-columns:repeat(3,1fr)">
         ${cmp("Atendimentos",R.st.n,R.teamAg.n,null)}
