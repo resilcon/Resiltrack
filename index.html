@@ -418,7 +418,8 @@
   .wb-list-h{font-size:11.5px;font-weight:700;color:#c7cbdb;text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px}
   .wb-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #232733}
   .wb-row:first-child{border-top:none}
-  .wb-row .rn{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#eef0f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .wb-row .rn{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#eef0f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;display:flex;align-items:center}
+  .wb-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;flex:none}
   .wb-row .rn:hover{color:var(--accent)}
   .wb-row .rbar{flex:none;width:120px;height:6px;border-radius:4px;background:#2a2f3c;overflow:hidden}
   .wb-row .rbar i{display:block;height:100%;background:linear-gradient(90deg,#ffb648,#ff6b7f)}
@@ -890,13 +891,31 @@ function _ring(pct,cor,size){
   const p=Math.max(0,Math.min(100,pct||0));
   return `<div class="ring" style="width:${size}px;height:${size}px;background:conic-gradient(${cor} ${p*3.6}deg, #262b37 0)"><div class="hole" style="width:${size-20}px;height:${size-20}px"><b>${Math.round(p)}%</b></div></div>`;
 }
-function openObrigModal(dep,mes,nome){
-  const hoje=_todayStr();
-  const itens=(GTAREFAS||[]).filter(t=>(t.departamento||"Sem departamento")===dep && (t.obrigacao||"(sem nome)")===nome && t.pendente && String(t.data_vencimento||"").slice(0,7)===mes)
-    .sort((a,b)=>String(a.data_vencimento||"9999").localeCompare(String(b.data_vencimento||"9999")));
-  const linhas=itens.map(t=>`<tr><td>${esc(t.cliente||"—")}</td><td style="${t.atrasada?'color:var(--crit);font-weight:600':''}">${esc(fmtVenc(t.data_vencimento))}</td><td class="sub">${esc(t.status_desc||t.status||"")}</td></tr>`).join("");
-  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">${esc(dep)} · ${esc(_monthLabel(mes))}</div><h3 style="margin:2px 0 0;font-size:18px">${esc(nome)}</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
-  <div style="padding:16px 24px 22px;max-height:60vh;overflow:auto"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${linhas||'<tr><td colspan="3" class="sub">Sem pendências.</td></tr>'}</tbody></table></div>`);
+function _mesBounds(ym){ const [y,m]=ym.split("-").map(Number); const ini=new Date(y,m-1,1,0,0,0,0).getTime(); const fim=new Date(y,m,1,0,0,0,0).getTime()-1; return {ini,fim}; }
+// colaboradores do departamento (visão da Revisão Diária): qualidade de atendimento real (ATEND),
+// já que o G-Click não traz responsável por tarefa — G-Click entra só como contexto do departamento.
+function _colabsDoDepartamento(dep,mes){
+  const {ini,fim}=_mesBounds(mes);
+  const tok=_depTok(dep);
+  const map=new Map();
+  ATEND.forEach(a=>{
+    if(semAtendente(a)) return;
+    const depAt=deptDoAtendente(a.atendente_id,a.setor)||a.setor||"Sem departamento";
+    if(_depTok(depAt)!==tok) return;
+    const key=a.atendente_id||a.atendente;
+    if(!map.has(key)) map.set(key,{key,nome:a.atendente,list:[]});
+    if(a.ts>=ini && a.ts<=fim) map.get(key).list.push(a);
+  });
+  return [...map.values()].map(g=>{
+    const cn=g.list.filter(a=>okNota(a));
+    const media=cn.length? cn.reduce((s,a)=>s+a.nota,0)/cn.length : null;
+    const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length? ac/cn.length*100 : null;
+    const durTot=g.list.reduce((s,a)=>s+(a.durMin||0),0);
+    return {key:g.key,nome:g.nome,qtd:g.list.length,media,ab,ac,pct,status:perfStatus(pct),durTot};
+  }).sort((a,b)=>{
+    const peso=s=>s==='crit'?0:(s==='warn'?1:(s==='ausente'?2:3));
+    return peso(a.status)-peso(b.status) || b.qtd-a.qtd;
+  });
 }
 function revisaoHTML(){
   if(GTAREFAS===null){
@@ -953,20 +972,20 @@ function revisaoHTML(){
       <div class="wb-ring-item">${_ring(pctAtrGeral,"var(--warn)",78)}<div class="lbl">Taxa de atraso<br>geral (departamento)</div></div>
     </div>
   </div>`;
-  const grp={};
-  doMes.forEach(t=>{ const k=t.obrigacao||"(sem nome)"; if(!grp[k])grp[k]={nome:k,total:0,atr:0}; grp[k].total++; if(t.atrasada)grp[k].atr++; });
-  const grupos=Object.values(grp).sort((a,b)=>b.atr-a.atr||b.total-a.total).slice(0,8);
-  const lista=grupos.map(g=>{
-    const pct=g.total? Math.round(g.atr/g.total*100):0;
+  const colabs=_colabsDoDepartamento(dep,mes);
+  const linhasColab=colabs.map(c=>{
+    const pctShow=c.pct==null?0:Math.round(c.pct);
+    const corBar=c.status==='crit'?'#ff6b7f':(c.status==='warn'?'#ffb648':(c.status==='good'?'#3ddc97':'#4a5063'));
+    const corDot=c.status==='crit'?'var(--crit)':(c.status==='warn'?'var(--warn)':(c.status==='good'?'var(--good)':'#5a6072'));
     return `<div class="wb-row">
-      <div class="rn" data-obrig="${esc(g.nome)}" title="${esc(g.nome)} — ver clientes">${esc(g.nome)}</div>
-      <div class="rbar"><i style="width:${pct}%"></i></div>
-      <div class="rc">${g.total} pend. ${g.atr?`· <b>${g.atr} atr.</b>`:""}</div>
+      <div class="rn" data-colab="${escAttr(String(c.key))}" title="${esc(c.nome)} — ver relatório completo"><span class="wb-dot" style="background:${corDot}"></span>${esc(c.nome)}</div>
+      <div class="rbar"><i style="width:${pctShow}%;background:${corBar}"></i></div>
+      <div class="rc">${c.qtd} atend. · nota ${fmt1(c.media)}${c.durTot?` · ${fmtDur(c.durTot)}`:""}</div>
     </div>`;
   }).join("");
-  const listaHTML = grupos.length
-    ? `<div class="wb-list-h">Obrigações com mais atraso no mês</div><div>${lista}</div>`
-    : `<div class="wb-empty">Sem pendências deste departamento com vencimento em ${esc(_monthLabel(mes))}.</div>`;
+  const listaHTML = colabs.length
+    ? `<div class="wb-list-h">Colaboradores · ${esc(dep)}</div><div>${linhasColab}</div>`
+    : `<div class="wb-empty">Nenhum colaborador vinculado a este departamento ainda. Configure em Admin → Departamento por atendente.</div>`;
 
   const diaSemana=_DIAS_PT[agora.getDay()]; const diaSemanaCap=diaSemana.charAt(0).toUpperCase()+diaSemana.slice(1);
   const relogio=`<div class="wb-clock"><div class="t">${agora.toTimeString().slice(0,5)}</div><div class="d">${esc(fmtVenc(hoje))} · ${esc(diaSemanaCap)}</div></div>`;
@@ -1029,7 +1048,7 @@ function bindGestor(v){
   const sel=document.getElementById("revDepSel"); if(sel) sel.onchange=()=>{ REVDEP=sel.value; render(); };
   v.querySelectorAll("[data-mnav]").forEach(b=>b.onclick=()=>{ REVMES=_addMonths(REVMES||_curMonthStr(),+b.dataset.mnav); render(); });
   const back=document.getElementById("revVoltarHoje"); if(back) back.onclick=()=>{ REVMES=_curMonthStr(); render(); };
-  v.querySelectorAll("[data-obrig]").forEach(b=>b.onclick=()=>{ const deps=_gclickDepsPermitidos(); const dep=(REVDEP&&deps.find(d=>d.dep===REVDEP))?REVDEP:(deps[0]&&deps[0].dep); openObrigModal(dep,REVMES||_curMonthStr(),b.dataset.obrig); });
+  v.querySelectorAll("[data-colab]").forEach(b=>b.onclick=()=>openColaborador(b.dataset.colab));
 }
 function viewGestor(v){
   loadKpiVals();
@@ -2368,6 +2387,28 @@ function colaboradorReport(key){
 }
 const trendIco = t => t==="up"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.2"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>':(t==="down"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2.2"><path d="M3 7l6 6 4-4 7 7"/><path d="M21 16v-4h-4"/></svg>':'<span class="sub">—</span>');
 const stDotPct = pct => `<span class="dot" style="background:${pct===null?'var(--muted)':(pct>=80?'var(--good)':(pct>=60?'var(--warn)':'var(--crit)'))}"></span>`;
+function _operacaoColabHTML(key){
+  const at=ATEND.find(a=>(a.atendente_id||a.atendente)===key);
+  const dep=at?(deptDoAtendente(at.atendente_id,at.setor)||at.setor):null;
+  let gclickBox=`<div class="sub">Departamento do colaborador ainda não identificado para cruzar com o G-Click.</div>`;
+  if(dep){
+    const tok=_depTok(dep);
+    const d=_gclickDeps().find(x=>_depTok(x.dep)===tok);
+    gclickBox = d
+      ? `<div class="cx" style="grid-template-columns:repeat(3,1fr)">
+           <div class="tile"><div><div class="lbl">Pendentes (depto.)</div><div class="val num">${d.pend}</div></div></div>
+           <div class="tile"><div><div class="lbl">Atrasadas (depto.)</div><div class="val num" style="color:var(--crit)">${d.atr}</div></div></div>
+           <div class="tile"><div><div class="lbl">Concluídas hoje (depto.)</div><div class="val num" style="color:var(--good)">${d.hoje}</div></div></div>
+         </div><div class="sub" style="margin-top:8px">O G-Click não informa o responsável por tarefa, então esse número é do departamento (${esc(dep)}) como um todo, não só desse colaborador.</div>`
+      : `<div class="sub">Sem tarefas do G-Click sincronizadas para o departamento ${esc(dep)}.</div>`;
+  }
+  return `<div class="panel"><h4>Operação</h4>
+    ${gclickBox}
+    <div class="intg" style="margin-top:12px">
+      ${_intgCard("Tangerino","Ponto e banco de horas","Marcações de ponto e saldo de banco de horas deste colaborador.")}
+      ${_intgCard("Workmonitor","Produtividade","Tempo produtivo e uso de sistemas deste colaborador, via API do Workmonitor.")}
+    </div></div>`;
+}
 function openColaborador(key){
   const R=colaboradorReport(key); if(!R)return;
   const list=R.mesList.slice().sort((a,b)=>b.ts-a.ts);
@@ -2384,6 +2425,7 @@ function openColaborador(key){
       <button class="close-x" data-colpdf="${escAttr(String(key))}" title="Exportar relatório em PDF" aria-label="Exportar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
       </div></div>
     <div class="modal-body">
+      ${_operacaoColabHTML(key)}
       <div class="panel"><h4>Evolução semanal</h4>${evolBox}
         <div class="card" style="margin-top:12px"><table><thead><tr><th>Semana</th><th class="hide-md">Período</th><th class="center">Qtd</th><th class="center">Média</th><th class="center">&lt; 7</th><th class="center">≥ 7</th><th class="center">Status</th><th class="center">Tend.</th></tr></thead><tbody>${
           R.semanas.map(s=>{ const ab=s.ag.q-s.ag.ac; return `<tr><td class="r-name">SEM ${s.n}</td><td class="sub hide-md num">${s.label}</td><td class="center num">${s.ag.n}</td><td class="center"><span class="score-num" style="color:${scoreColor(s.ag.media)}">${fmt1(s.ag.media)}</span></td><td class="center num" style="color:var(--crit)">${ab}</td><td class="center num" style="color:var(--good)">${s.ag.ac}</td><td class="center">${stDotPct(s.ag.pctAc)}</td><td class="center">${trendIco(s.trend)}</td></tr>`; }).join("")||`<tr><td colspan="8" class="empty">Sem semanas com dados.</td></tr>`
