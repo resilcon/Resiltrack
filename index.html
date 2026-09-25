@@ -370,6 +370,62 @@
   .intg-card .it .tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:6px}
   .intg-card .id{font-size:12px;color:var(--ink-2);margin-top:6px;line-height:1.5}
   .intg-card .src{font-size:10.5px;color:var(--muted);margin-top:9px;padding-top:8px;border-top:1px dashed var(--border)}
+
+  /* ---- Revisão diária: wallboard ---- */
+  .wb{background:#12151d;border-radius:18px;padding:20px 22px 24px;color:#eef0f6;margin-top:12px;box-shadow:0 10px 30px rgba(10,12,20,.25)}
+  .wb-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .wb-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .wb-title span{display:block;font-size:11.5px;font-weight:500;color:#9aa0b4;margin-top:2px}
+  .wb-clock{text-align:right;flex:none}
+  .wb-clock .t{font-family:"Sora",sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;line-height:1}
+  .wb-clock .d{font-size:11.5px;color:#9aa0b4;margin-top:3px}
+  .wb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .wb-monthnav{display:inline-flex;align-items:center;gap:2px;background:#1c2029;border:1px solid #2a2f3c;border-radius:10px;padding:3px}
+  .wb-monthnav button{border:none;background:none;color:#c7cbdb;width:28px;height:28px;border-radius:8px;cursor:pointer;display:grid;place-items:center}
+  .wb-monthnav button:hover{background:#2a2f3c;color:#fff}
+  .wb-monthnav .m{font-size:12.5px;font-weight:600;padding:0 10px;min-width:118px;text-align:center}
+  .wb-depsel{background:#1c2029;border:1px solid #2a2f3c;color:#eef0f6;font:inherit;font-size:12.5px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer}
+  .wb-depsel:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .wb-back{margin-left:auto;border:1px solid #2a2f3c;background:none;color:#9aa0b4;font:inherit;font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:8px;cursor:pointer}
+  .wb-back:hover{color:#fff;border-color:#3a4155}
+  .wb-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+  .wb-tile{background:#1c2029;border:1px solid #2a2f3c;border-radius:14px;padding:16px 16px 14px;position:relative;overflow:hidden}
+  .wb-tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .wb-tile.c-accent::before{background:var(--accent)}
+  .wb-tile.c-crit::before{background:var(--crit)}
+  .wb-tile.c-warn::before{background:var(--warn)}
+  .wb-tile.c-good::before{background:var(--good)}
+  .wb-tile .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#9aa0b4;font-weight:700}
+  .wb-tile .v{font-family:"Sora",sans-serif;font-size:34px;font-weight:700;line-height:1.15;margin-top:6px}
+  .wb-tile.c-crit .v{color:#ff6b7f}
+  .wb-tile.c-warn .v{color:#ffb648}
+  .wb-tile.c-good .v{color:#3ddc97}
+  .wb-tile.c-accent .v{color:#5ad1f0}
+  .wb-tile .s{font-size:11px;color:#9aa0b4;margin-top:2px}
+  .wb-mid{display:grid;grid-template-columns:auto 1fr;gap:22px;margin-top:18px;align-items:center}
+  .wb-gauge{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .wb-gauge .ring{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;position:relative}
+  .wb-gauge .ring .hole{width:88px;height:88px;border-radius:50%;background:#12151d;display:grid;place-items:center;flex-direction:column}
+  .wb-gauge .ring .hole b{font-family:"Sora",sans-serif;font-size:22px;font-weight:700}
+  .wb-gauge .ring .hole small{font-size:9.5px;color:#9aa0b4;text-transform:uppercase;letter-spacing:.04em;margin-top:1px}
+  .wb-gauge .lbl{font-size:11.5px;font-weight:600;color:#c7cbdb;text-align:center}
+  .wb-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:16px}
+  .wb-ring-item{display:flex;flex-direction:column;align-items:center;gap:7px}
+  .wb-ring-item .ring{width:78px;height:78px;border-radius:50%;display:grid;place-items:center}
+  .wb-ring-item .ring .hole{width:58px;height:58px;border-radius:50%;background:#12151d;display:grid;place-items:center}
+  .wb-ring-item .ring .hole b{font-family:"Sora",sans-serif;font-size:15px;font-weight:700}
+  .wb-ring-item .lbl{font-size:10.5px;font-weight:600;color:#9aa0b4;text-align:center;text-transform:uppercase;letter-spacing:.03em}
+  .wb-list-h{font-size:11.5px;font-weight:700;color:#c7cbdb;text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px}
+  .wb-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #232733}
+  .wb-row:first-child{border-top:none}
+  .wb-row .rn{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#eef0f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .wb-row .rn:hover{color:var(--accent)}
+  .wb-row .rbar{flex:none;width:120px;height:6px;border-radius:4px;background:#2a2f3c;overflow:hidden}
+  .wb-row .rbar i{display:block;height:100%;background:linear-gradient(90deg,#ffb648,#ff6b7f)}
+  .wb-row .rc{flex:none;font-size:11.5px;font-weight:700;color:#c7cbdb;min-width:70px;text-align:right}
+  .wb-row .rc b{color:#ff6b7f}
+  .wb-empty{padding:22px 0;text-align:center;color:#9aa0b4;font-size:12.5px}
+  @media(max-width:640px){ .wb-mid{grid-template-columns:1fr} .wb-gauge{flex-direction:row;justify-content:center} }
 </style>
 </head>
 <body>
@@ -439,6 +495,7 @@ let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
 try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos") MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
+let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
 let DFIL={preset:"30d",ini:"",fim:"",colab:"",setor:"",sort:"media_desc"};
 let TFIL={q:"",colab:"",setor:"",compl:"",desfecho:"",nota:"",sort:"data_desc",page:1};
@@ -795,13 +852,14 @@ function _revDeps(){ return isGestor()? (ACCESS.departamentos||[]) : DEPARTAMENT
 function _revDepAtual(){ const deps=_revDeps(); return REVDEP || (deps[0]||""); }
 // ---- Revisão Diária: demandas e prazos do G-Click (tabela atendimentos.gclick_tarefas) ----
 let GTAREFAS=null, GTLOADING=false, GTERR="";
+function _primeiroDiaMes(){ const d=new Date(); const o=new Date(d.getTime()-3*3600*1000); return o.toISOString().slice(0,7)+"-01"; }
 async function loadGTarefas(){
   try{
-    const A="atendimentos", PAGE=1000; let from=0, all=[]; const hoje=_todayStr();
+    const A="atendimentos", PAGE=1000; let from=0, all=[];
     const cols="tarefa_id,categoria,departamento,obrigacao,cliente,status,status_desc,data_meta,data_vencimento,data_conclusao,pendente,atrasada";
     while(true){
       const {data,error}=await sb.schema(A).from("gclick_tarefas").select(cols)
-        .or(`pendente.eq.true,data_conclusao.eq.${hoje}`).range(from,from+PAGE-1);
+        .or(`pendente.eq.true,data_conclusao.gte.${_primeiroDiaMes()}`).range(from,from+PAGE-1);
       if(error) throw error;
       all=all.concat(data||[]);
       if(!data||data.length<PAGE) break; from+=PAGE; if(from>200000) break;
@@ -812,7 +870,6 @@ async function loadGTarefas(){
   if(MODE==="gestor") render();
 }
 function fmtVenc(s){ if(!s) return "—"; const p=String(s).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; }
-function _miniStatCor(l,v,cor){ return `<div class="card" style="padding:14px;box-shadow:none"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600">${esc(l)}</div><div style="font-size:24px;font-weight:700;margin-top:4px;color:${cor}">${esc(String(v))}</div></div>`; }
 function _gclickDeps(){
   const m={}; (GTAREFAS||[]).forEach(t=>{ const d=t.departamento||"Sem departamento"; if(!m[d])m[d]={dep:d,total:0,pend:0,atr:0,hoje:0}; m[d].total++; if(t.pendente)m[d].pend++; if(t.atrasada)m[d].atr++; if(t.data_conclusao===_todayStr())m[d].hoje++; });
   return Object.values(m).sort((a,b)=>b.atr-a.atr||b.pend-a.pend);
@@ -824,6 +881,23 @@ function _gclickDepsPermitidos(){
   const f=todas.filter(d=>toks.has(_depTok(d.dep)));
   return f.length?f:todas;
 }
+const _MESES_PT=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const _DIAS_PT=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+function _curMonthStr(){ const d=new Date(); const o=new Date(d.getTime()-3*3600*1000); return o.toISOString().slice(0,7); }
+function _addMonths(ym,delta){ const [y,m]=ym.split("-").map(Number); const dt=new Date(y,m-1+delta,1); return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0"); }
+function _monthLabel(ym){ const [y,m]=ym.split("-").map(Number); const nome=_MESES_PT[m-1]; return `${nome.charAt(0).toUpperCase()}${nome.slice(1)} de ${y}`; }
+function _ring(pct,cor,size){
+  const p=Math.max(0,Math.min(100,pct||0));
+  return `<div class="ring" style="width:${size}px;height:${size}px;background:conic-gradient(${cor} ${p*3.6}deg, #262b37 0)"><div class="hole" style="width:${size-20}px;height:${size-20}px"><b>${Math.round(p)}%</b></div></div>`;
+}
+function openObrigModal(dep,mes,nome){
+  const hoje=_todayStr();
+  const itens=(GTAREFAS||[]).filter(t=>(t.departamento||"Sem departamento")===dep && (t.obrigacao||"(sem nome)")===nome && t.pendente && String(t.data_vencimento||"").slice(0,7)===mes)
+    .sort((a,b)=>String(a.data_vencimento||"9999").localeCompare(String(b.data_vencimento||"9999")));
+  const linhas=itens.map(t=>`<tr><td>${esc(t.cliente||"—")}</td><td style="${t.atrasada?'color:var(--crit);font-weight:600':''}">${esc(fmtVenc(t.data_vencimento))}</td><td class="sub">${esc(t.status_desc||t.status||"")}</td></tr>`).join("");
+  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">${esc(dep)} · ${esc(_monthLabel(mes))}</div><h3 style="margin:2px 0 0;font-size:18px">${esc(nome)}</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
+  <div style="padding:16px 24px 22px;max-height:60vh;overflow:auto"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${linhas||'<tr><td colspan="3" class="sub">Sem pendências.</td></tr>'}</tbody></table></div>`);
+}
 function revisaoHTML(){
   if(GTAREFAS===null){
     return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>carregando do G-Click...</span></div><div class="sub" style="padding:14px 0">Buscando as demandas e prazos por departamento...</div></div>`;
@@ -833,33 +907,82 @@ function revisaoHTML(){
     return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>sem dados</span></div><div class="sub" style="padding:14px 0">Nenhuma tarefa do G-Click encontrada${GTERR?" ("+esc(GTERR)+")":""}. Rode o coletor do G-Click para popular a tabela.</div></div>`;
   }
   const dep = (REVDEP && deps.find(d=>d.dep===REVDEP)) ? REVDEP : deps[0].dep;
-  const selector=`<div class="rev-dep"><span style="font-size:12px;color:var(--muted);font-weight:600">Departamento</span><select id="revDepSel" class="inp" style="width:auto;min-width:250px">`+
-    deps.map(d=>`<option value="${esc(d.dep)}" ${d.dep===dep?"selected":""}>${esc(d.dep)} · ${d.atr} atrasada(s)</option>`).join("")+`</select></div>`;
+  const mes = REVMES || (REVMES=_curMonthStr());
+  const ehMesAtual = mes===_curMonthStr();
   const hoje=_todayStr();
+  const agora=new Date();
+
+  const selDep=`<select id="revDepSel" class="wb-depsel">`+
+    deps.map(d=>`<option value="${esc(d.dep)}" ${d.dep===dep?"selected":""}>${esc(d.dep)} · ${d.atr} atrasada(s)</option>`).join("")+`</select>`;
+  const nav=`<div class="wb-monthnav">
+    <button data-mnav="-1" title="Mês anterior"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span class="m">${esc(_monthLabel(mes))}</span>
+    <button data-mnav="1" title="Próximo mês"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>`;
+  const voltarHoje = !ehMesAtual ? `<button class="wb-back" id="revVoltarHoje">voltar para o mês atual</button>` : "";
+
   const doDep=(GTAREFAS||[]).filter(t=>(t.departamento||"Sem departamento")===dep);
-  const pend=doDep.filter(t=>t.pendente).length;
-  const atr=doDep.filter(t=>t.atrasada).length;
-  const concl=doDep.filter(t=>t.data_conclusao===hoje).length;
-  const tiles=`<div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-top:12px">
-    ${_miniStat("Pendentes",pend)}
-    ${_miniStatCor("Atrasadas",atr,"var(--crit)")}
-    ${_miniStatCor("Concluídas hoje",concl,"var(--good)")}</div>`;
+  const pendTotal=doDep.filter(t=>t.pendente).length;
+  const atrTotal=doDep.filter(t=>t.atrasada).length;
+  const doMes=doDep.filter(t=>t.pendente && String(t.data_vencimento||"").slice(0,7)===mes);
+  const pendMes=doMes.length;
+  const atrMes=doMes.filter(t=>t.atrasada).length;
+  const venceHoje=ehMesAtual? doDep.filter(t=>t.pendente && t.data_vencimento===hoje).length : null;
+  const conclMes=doDep.filter(t=>t.data_conclusao && t.data_conclusao.slice(0,7)===mes).length;
+
+  const tiles=`<div class="wb-tiles">
+    <div class="wb-tile c-accent"><div class="l">Pendentes no mês</div><div class="v">${pendMes}</div><div class="s">vencimento em ${esc(_monthLabel(mes))}</div></div>
+    <div class="wb-tile c-crit"><div class="l">Atrasadas no mês</div><div class="v">${atrMes}</div><div class="s">${atrTotal} atrasada(s) ao todo no departamento</div></div>
+    ${ehMesAtual?`<div class="wb-tile c-warn"><div class="l">Vencem hoje</div><div class="v">${venceHoje}</div><div class="s">${esc(fmtVenc(hoje))}</div></div>`:""}
+    <div class="wb-tile c-good"><div class="l">Concluídas no mês</div><div class="v">${conclMes}</div><div class="s">${ehMesAtual?"até agora":"registradas neste mês"}</div></div>
+  </div>`;
+
+  const pctEmDia = pendMes? Math.round(((pendMes-atrMes)/pendMes)*100) : 100;
+  const pctConcl = (conclMes+pendMes)? Math.round((conclMes/(conclMes+pendMes))*100) : 0;
+  const pctAtrGeral = pendTotal? Math.round((atrTotal/pendTotal)*100) : 0;
+  const corGauge = pctEmDia>=80?"var(--good)":(pctEmDia>=50?"var(--warn)":"var(--crit)");
+
+  const mid=`<div class="wb-mid">
+    <div class="wb-gauge">
+      <div class="ring" style="width:118px;height:118px;background:conic-gradient(${corGauge} ${pctEmDia*3.6}deg, #262b37 0)"><div class="hole"><b>${pctEmDia}%</b><small>em dia</small></div></div>
+      <div class="lbl">Pendências do mês<br>dentro do prazo</div>
+    </div>
+    <div class="wb-rings">
+      <div class="wb-ring-item">${_ring(pctConcl,"var(--good)",78)}<div class="lbl">Taxa de<br>conclusão no mês</div></div>
+      <div class="wb-ring-item">${_ring(atrMes&&pendMes? Math.round(atrMes/pendMes*100):0,"var(--crit)",78)}<div class="lbl">Taxa de atraso<br>no mês</div></div>
+      <div class="wb-ring-item">${_ring(pctAtrGeral,"var(--warn)",78)}<div class="lbl">Taxa de atraso<br>geral (departamento)</div></div>
+    </div>
+  </div>`;
   const grp={};
-  doDep.filter(t=>t.pendente).forEach(t=>{ const k=t.obrigacao||"(sem nome)"; if(!grp[k])grp[k]={nome:k,total:0,atr:0,itens:[]}; grp[k].total++; if(t.atrasada)grp[k].atr++; grp[k].itens.push(t); });
-  const grupos=Object.values(grp).sort((a,b)=>b.atr-a.atr||b.total-a.total);
+  doMes.forEach(t=>{ const k=t.obrigacao||"(sem nome)"; if(!grp[k])grp[k]={nome:k,total:0,atr:0}; grp[k].total++; if(t.atrasada)grp[k].atr++; });
+  const grupos=Object.values(grp).sort((a,b)=>b.atr-a.atr||b.total-a.total).slice(0,8);
   const lista=grupos.map(g=>{
-    const itens=g.itens.slice().sort((a,b)=>String(a.data_vencimento||"9999").localeCompare(String(b.data_vencimento||"9999"))).slice(0,60);
-    const linhas=itens.map(t=>`<tr><td>${esc(t.cliente||"—")}</td><td style="${t.atrasada?'color:var(--crit);font-weight:600':''}">${esc(fmtVenc(t.data_vencimento))}</td><td class="sub">${esc(t.status_desc||t.status||"")}</td></tr>`).join("");
-    const extra=g.itens.length>60?`<tr><td colspan="3" class="sub">e mais ${g.itens.length-60}...</td></tr>`:"";
-    return `<div class="rev-task">
-      <div class="rev-top" data-gexp="1">
-        <div style="flex:1"><div class="rev-ttl">${esc(g.nome)}</div><div class="sub" style="font-size:11.5px">${g.total} pendente(s)${g.atr?` · <span style="color:var(--crit);font-weight:600">${g.atr} atrasada(s)</span>`:""}</div></div>
-        <svg class="rev-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-      </div>
-      <div class="rev-detail" style="padding-left:15px"><div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${linhas}${extra}</tbody></table></div></div>
+    const pct=g.total? Math.round(g.atr/g.total*100):0;
+    return `<div class="wb-row">
+      <div class="rn" data-obrig="${esc(g.nome)}" title="${esc(g.nome)} — ver clientes">${esc(g.nome)}</div>
+      <div class="rbar"><i style="width:${pct}%"></i></div>
+      <div class="rc">${g.total} pend. ${g.atr?`· <b>${g.atr} atr.</b>`:""}</div>
     </div>`;
   }).join("");
-  return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>demandas e prazos do G-Click · ${esc(dep)}</span></div>${selector}${tiles}<div class="rev-list" style="margin-top:12px">${lista||'<div class="sub" style="padding:10px 0">Sem pendências neste departamento.</div>'}</div></div>`;
+  const listaHTML = grupos.length
+    ? `<div class="wb-list-h">Obrigações com mais atraso no mês</div><div>${lista}</div>`
+    : `<div class="wb-empty">Sem pendências deste departamento com vencimento em ${esc(_monthLabel(mes))}.</div>`;
+
+  const diaSemana=_DIAS_PT[agora.getDay()]; const diaSemanaCap=diaSemana.charAt(0).toUpperCase()+diaSemana.slice(1);
+  const relogio=`<div class="wb-clock"><div class="t">${agora.toTimeString().slice(0,5)}</div><div class="d">${esc(fmtVenc(hoje))} · ${esc(diaSemanaCap)}</div></div>`;
+
+  return `<div class="gsec" id="g-revisao">
+    <div class="wb">
+      <div class="wb-head">
+        <div class="wb-title">Revisão diária<span>demandas e prazos do G-Click · ${esc(dep)}</span></div>
+        ${relogio}
+      </div>
+      <div class="wb-controls">${nav}${selDep}${voltarHoje}</div>
+      ${tiles}
+      ${mid}
+      ${listaHTML}
+    </div>
+  </div>`;
 }
 
 // blocos pessoas / clientes / processos
@@ -904,7 +1027,9 @@ function blocosHTML(){
 function bindGestor(v){
   v.querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>openKpiEdit(b.dataset.kpi));
   const sel=document.getElementById("revDepSel"); if(sel) sel.onchange=()=>{ REVDEP=sel.value; render(); };
-  v.querySelectorAll("[data-gexp]").forEach(b=>b.onclick=()=>{ const t=b.closest(".rev-task"); if(t) t.classList.toggle("open"); });
+  v.querySelectorAll("[data-mnav]").forEach(b=>b.onclick=()=>{ REVMES=_addMonths(REVMES||_curMonthStr(),+b.dataset.mnav); render(); });
+  const back=document.getElementById("revVoltarHoje"); if(back) back.onclick=()=>{ REVMES=_curMonthStr(); render(); };
+  v.querySelectorAll("[data-obrig]").forEach(b=>b.onclick=()=>{ const deps=_gclickDepsPermitidos(); const dep=(REVDEP&&deps.find(d=>d.dep===REVDEP))?REVDEP:(deps[0]&&deps[0].dep); openObrigModal(dep,REVMES||_curMonthStr(),b.dataset.obrig); });
 }
 function viewGestor(v){
   loadKpiVals();
