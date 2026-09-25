@@ -793,31 +793,74 @@ function _loadRev(){ try{return JSON.parse(localStorage.getItem("resiltrack_rev"
 function _saveRev(o){ try{localStorage.setItem("resiltrack_rev",JSON.stringify(o));}catch(e){} }
 function _revDeps(){ return isGestor()? (ACCESS.departamentos||[]) : DEPARTAMENTOS; }
 function _revDepAtual(){ const deps=_revDeps(); return REVDEP || (deps[0]||""); }
+// ---- Revisão Diária: demandas e prazos do G-Click (tabela atendimentos.gclick_tarefas) ----
+let GTAREFAS=null, GTLOADING=false, GTERR="";
+async function loadGTarefas(){
+  try{
+    const A="atendimentos", PAGE=1000; let from=0, all=[]; const hoje=_todayStr();
+    const cols="tarefa_id,categoria,departamento,obrigacao,cliente,status,status_desc,data_meta,data_vencimento,data_conclusao,pendente,atrasada";
+    while(true){
+      const {data,error}=await sb.schema(A).from("gclick_tarefas").select(cols)
+        .or(`pendente.eq.true,data_conclusao.eq.${hoje}`).range(from,from+PAGE-1);
+      if(error) throw error;
+      all=all.concat(data||[]);
+      if(!data||data.length<PAGE) break; from+=PAGE; if(from>200000) break;
+    }
+    GTAREFAS=all;
+  }catch(e){ console.warn("gclick:",e); GTAREFAS=[]; GTERR=e.message||String(e); }
+  GTLOADING=false;
+  if(MODE==="gestor") render();
+}
+function fmtVenc(s){ if(!s) return "—"; const p=String(s).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; }
+function _miniStatCor(l,v,cor){ return `<div class="card" style="padding:14px;box-shadow:none"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600">${esc(l)}</div><div style="font-size:24px;font-weight:700;margin-top:4px;color:${cor}">${esc(String(v))}</div></div>`; }
+function _gclickDeps(){
+  const m={}; (GTAREFAS||[]).forEach(t=>{ const d=t.departamento||"Sem departamento"; if(!m[d])m[d]={dep:d,total:0,pend:0,atr:0,hoje:0}; m[d].total++; if(t.pendente)m[d].pend++; if(t.atrasada)m[d].atr++; if(t.data_conclusao===_todayStr())m[d].hoje++; });
+  return Object.values(m).sort((a,b)=>b.atr-a.atr||b.pend-a.pend);
+}
+function _gclickDepsPermitidos(){
+  const todas=_gclickDeps();
+  if(isAdmin()) return todas;
+  const toks=new Set((ACCESS.departamentos||[]).map(_depTok));
+  const f=todas.filter(d=>toks.has(_depTok(d.dep)));
+  return f.length?f:todas;
+}
 function revisaoHTML(){
-  const deps=_revDeps(), dep=_revDepAtual();
-  let selector="";
-  if(isAdmin() || deps.length>1){
-    const opts=(isAdmin()?DEPARTAMENTOS:deps);
-    selector=`<div class="rev-dep"><span style="font-size:12px;color:var(--muted);font-weight:600">Departamento</span><select id="revDepSel" class="inp" style="width:auto;min-width:230px">`+
-      opts.map(d=>`<option value="${esc(d)}" ${d===dep?"selected":""}>${esc(d)}</option>`).join("")+`</select></div>`;
+  if(GTAREFAS===null){
+    return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>carregando do G-Click...</span></div><div class="sub" style="padding:14px 0">Buscando as demandas e prazos por departamento...</div></div>`;
   }
-  const tasks=[...REV_COMUM, ...(REV_DEP[_depTok(dep)]||[])];
-  const done=_loadRev(), today=_todayStr();
-  const doneCount=tasks.filter(t=>done[_revKey(today,dep,t.id)]).length;
-  const list=tasks.map(t=>{
-    const on=!!done[_revKey(today,dep,t.id)];
-    return `<div class="rev-task ${on?"done":""}">
-      <div class="rev-top">
-        <div class="rev-check ${on?"done":""}" data-rtoggle="${esc(t.id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>
-        <div class="rev-ttl" data-rexp="${esc(t.id)}">${esc(t.titulo)}</div>
-        <svg class="rev-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-rexp="${esc(t.id)}"><path d="M9 6l6 6-6 6"/></svg>
+  const deps=_gclickDepsPermitidos();
+  if(!deps.length){
+    return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>sem dados</span></div><div class="sub" style="padding:14px 0">Nenhuma tarefa do G-Click encontrada${GTERR?" ("+esc(GTERR)+")":""}. Rode o coletor do G-Click para popular a tabela.</div></div>`;
+  }
+  const dep = (REVDEP && deps.find(d=>d.dep===REVDEP)) ? REVDEP : deps[0].dep;
+  const selector=`<div class="rev-dep"><span style="font-size:12px;color:var(--muted);font-weight:600">Departamento</span><select id="revDepSel" class="inp" style="width:auto;min-width:250px">`+
+    deps.map(d=>`<option value="${esc(d.dep)}" ${d.dep===dep?"selected":""}>${esc(d.dep)} · ${d.atr} atrasada(s)</option>`).join("")+`</select></div>`;
+  const hoje=_todayStr();
+  const doDep=(GTAREFAS||[]).filter(t=>(t.departamento||"Sem departamento")===dep);
+  const pend=doDep.filter(t=>t.pendente).length;
+  const atr=doDep.filter(t=>t.atrasada).length;
+  const concl=doDep.filter(t=>t.data_conclusao===hoje).length;
+  const tiles=`<div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-top:12px">
+    ${_miniStat("Pendentes",pend)}
+    ${_miniStatCor("Atrasadas",atr,"var(--crit)")}
+    ${_miniStatCor("Concluídas hoje",concl,"var(--good)")}</div>`;
+  const grp={};
+  doDep.filter(t=>t.pendente).forEach(t=>{ const k=t.obrigacao||"(sem nome)"; if(!grp[k])grp[k]={nome:k,total:0,atr:0,itens:[]}; grp[k].total++; if(t.atrasada)grp[k].atr++; grp[k].itens.push(t); });
+  const grupos=Object.values(grp).sort((a,b)=>b.atr-a.atr||b.total-a.total);
+  const lista=grupos.map(g=>{
+    const itens=g.itens.slice().sort((a,b)=>String(a.data_vencimento||"9999").localeCompare(String(b.data_vencimento||"9999"))).slice(0,60);
+    const linhas=itens.map(t=>`<tr><td>${esc(t.cliente||"—")}</td><td style="${t.atrasada?'color:var(--crit);font-weight:600':''}">${esc(fmtVenc(t.data_vencimento))}</td><td class="sub">${esc(t.status_desc||t.status||"")}</td></tr>`).join("");
+    const extra=g.itens.length>60?`<tr><td colspan="3" class="sub">e mais ${g.itens.length-60}...</td></tr>`:"";
+    return `<div class="rev-task">
+      <div class="rev-top" data-gexp="1">
+        <div style="flex:1"><div class="rev-ttl">${esc(g.nome)}</div><div class="sub" style="font-size:11.5px">${g.total} pendente(s)${g.atr?` · <span style="color:var(--crit);font-weight:600">${g.atr} atrasada(s)</span>`:""}</div></div>
+        <svg class="rev-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
       </div>
-      <div class="rev-detail">${esc(t.detalhe)}</div>
+      <div class="rev-detail" style="padding-left:15px"><div class="card" style="box-shadow:none;border:none"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${linhas}${extra}</tbody></table></div></div>
     </div>`;
   }).join("");
-  return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>${doneCount}/${tasks.length} concluídas hoje${dep?" · "+esc(dep):""}</span></div>${selector}<div class="rev-list">${list}</div></div>`;
+  return `<div class="gsec" id="g-revisao"><div class="gsec-h"><h3>Revisão diária</h3><span>demandas e prazos do G-Click · ${esc(dep)}</span></div>${selector}${tiles}<div class="rev-list" style="margin-top:12px">${lista||'<div class="sub" style="padding:10px 0">Sem pendências neste departamento.</div>'}</div></div>`;
 }
-function toggleRev(id){ const dep=_revDepAtual(); const done=_loadRev(), k=_revKey(_todayStr(),dep,id); if(done[k]) delete done[k]; else done[k]=true; _saveRev(done); render(); }
 
 // blocos pessoas / clientes / processos
 const _ICO_PEOPLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a3 3 0 0 1 0 5.8M21 20a5 5 0 0 0-4-4.9"/></svg>';
@@ -861,11 +904,11 @@ function blocosHTML(){
 function bindGestor(v){
   v.querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>openKpiEdit(b.dataset.kpi));
   const sel=document.getElementById("revDepSel"); if(sel) sel.onchange=()=>{ REVDEP=sel.value; render(); };
-  v.querySelectorAll("[data-rexp]").forEach(b=>b.onclick=()=>{ const t=b.closest(".rev-task"); if(t) t.classList.toggle("open"); });
-  v.querySelectorAll("[data-rtoggle]").forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); toggleRev(b.dataset.rtoggle); });
+  v.querySelectorAll("[data-gexp]").forEach(b=>b.onclick=()=>{ const t=b.closest(".rev-task"); if(t) t.classList.toggle("open"); });
 }
 function viewGestor(v){
   loadKpiVals();
+  if(GTAREFAS===null && !GTLOADING){ GTLOADING=true; loadGTarefas(); }
   v.innerHTML =
     `<div class="page-head"><h2>Painel do Gestor</h2><p>indicadores, revisão diária e blocos de gestão${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</p></div>`
     + `<div id="g-wallboard">`+wallboardHTML()+`</div>`
