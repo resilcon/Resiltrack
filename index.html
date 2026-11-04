@@ -700,7 +700,7 @@ function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r
 function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
 function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
 function allowedTabKeys(){
-  if(isAdmin()) return ["dashboard","relatorio","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
+  if(isAdmin()) return ["dashboard","relatorio","detalhes","clientes","colaboradores","contestacoes","setor","financeiro","tv","admin"];
   const t=[];
   if(isGestor()) t.push("dashboard","relatorio","detalhes","colaboradores","contestacoes","setor");
   if(podeModulo("financeiro")) t.push("financeiro");
@@ -731,7 +731,8 @@ function render(){ renderSide(); const v=document.getElementById("view");
   else if(TAB==="setor") viewSetor(v);
   else if(TAB==="relatorio") viewRelatorio(v);
   else if(TAB==="admin") viewAdmin(v);
-  else if(TAB==="financeiro"||TAB==="comercial") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg><h2 style="font-size:18px;margin-bottom:6px">${TABS_ALL[TAB]}</h2><p>Módulo em construção. Em breve com as informações ${TAB==="financeiro"?"financeiras dos clientes":"comerciais e de onboarding"}.</p></div>`;
+  else if(TAB==="financeiro") viewFinanceiro(v);
+  else if(TAB==="comercial") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg><h2 style="font-size:18px;margin-bottom:6px">${TABS_ALL[TAB]}</h2><p>Módulo em construção. Em breve com as informações comerciais e de onboarding.</p></div>`;
   else if(TAB==="tv") v.innerHTML=`<div class="soon"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg><h2 style="font-size:18px;margin-bottom:6px">Preview TV</h2><p>Tela de mural para a sala do CS. Vamos configurar essa visualização em breve.</p></div>`;
   bindActions();
 }
@@ -1068,6 +1069,101 @@ function viewGestor(v){
     + revisaoHTML()
     + blocosHTML();
   bindGestor(v);
+}
+
+// ---------- FINANCEIRO · INADIMPLÊNCIA (somente leitura; dados enviados pelo painel de inadimplência) ----------
+let FIN=null, FINLOADING=false, FINERR="", FSUB="resumo", FINABA="", FINQ="";
+const FIN_ABAS={cobranca:"Cobrança",suspenso:"Suspensos",extrajudicial:"Extrajudicial",acordo:"Em acordo"};
+const brl = n => (n==null||isNaN(n))?"—":Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const fmtD = s => { if(!s) return "—"; const p=String(s).slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
+async function loadFinanceiro(){
+  try{
+    const [t,s,r,e,h]=await Promise.all([
+      fetchAllRows("inad_titulos","*"),
+      fetchAllRows("inad_snapshots","*","data"),
+      fetchAllRows("inad_regularizados","*","data_pagamento"),
+      fetchAllRows("inad_envios","*","enviado_em"),
+      fetchAllRows("inad_historico_abas","*","em")]);
+    FIN={titulos:t,snaps:s.sort((a,b)=>a.data<b.data?-1:1),reg:r,envios:e,abas:h}; FINERR="";
+  }catch(err){ console.warn("financeiro:",err); FIN={titulos:[],snaps:[],reg:[],envios:[],abas:[]}; FINERR=err.message||String(err); }
+  FINLOADING=false; if(TAB==="financeiro") render();
+}
+function _finClientes(){
+  const m=new Map();
+  FIN.titulos.forEach(t=>{ if(!m.has(t.cnpj_cpf)) m.set(t.cnpj_cpf,{cnpj:t.cnpj_cpf,nome:t.cliente,aba:t.aba||"cobranca",qtd:0,valor:0,maxAtraso:0,cobrados:0,ult:null,ativos:0,docs:[]});
+    const c=m.get(t.cnpj_cpf); c.qtd++; c.valor+=+t.valor||0; c.maxAtraso=Math.max(c.maxAtraso,t.dias_atraso||0); c.docs.push(t);
+    c.cobrados+=t.qtd_cobrancas||0; if(t.cobranca_ativa) c.ativos++; if(t.ultima_cobranca_em&&(!c.ult||t.ultima_cobranca_em>c.ult)) c.ult=t.ultima_cobranca_em; });
+  return [...m.values()].sort((a,b)=>b.valor-a.valor);
+}
+function _finLinha(snaps,campo,cor){
+  if(snaps.length<2) return `<div class="sub">Ainda há poucos dias de histórico para mostrar a tendência.</div>`;
+  const W=640,H=140,P=28, vs=snaps.map(s=>+s[campo]||0), mx=Math.max(...vs)||1, mn=Math.min(...vs,0);
+  const x=i=>P+i*(W-2*P)/(snaps.length-1), y=v=>H-P-(v-mn)/(mx-mn||1)*(H-2*P);
+  const pts=vs.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><polyline fill="none" stroke="${cor}" stroke-width="2.2" points="${pts}"/>
+    ${vs.map((v,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.6" fill="${cor}"><title>${fmtD(snaps[i].data)}: ${campo==="valor"?brl(v):v}</title></circle>`).join("")}
+    <text x="${P}" y="${H-6}" font-size="10" fill="var(--muted)">${fmtD(snaps[0].data)}</text><text x="${W-P}" y="${H-6}" font-size="10" text-anchor="end" fill="var(--muted)">${fmtD(snaps[snaps.length-1].data)}</text></svg>`;
+}
+function viewFinanceiro(v){
+  if(FIN===null){ if(!FINLOADING){ FINLOADING=true; loadFinanceiro(); }
+    v.innerHTML=`<div class="page-head"><h2>Financeiro</h2><p>carregando inadimplência...</p></div>`; return; }
+  const subs=[["resumo","Resumo"],["clientes","Clientes"],["reg","Regularizados"],["envios","Cobranças enviadas"],["abas","Mudanças de situação"]];
+  const T=FIN.titulos, totalV=T.reduce((s,t)=>s+(+t.valor||0),0), clientes=_finClientes();
+  const ult=T.reduce((m,t)=>t.snapshot_em>m?t.snapshot_em:m,"");
+  let corpo="";
+  if(FSUB==="resumo"){
+    const ag={"1-30":0,"31-60":0,"61-90":0,"90+":0}; T.forEach(t=>{ if(ag[t.faixa_atraso]!==undefined) ag[t.faixa_atraso]+=+t.valor||0; });
+    const agMax=Math.max(...Object.values(ag))||1;
+    const abaT={}; Object.keys(FIN_ABAS).forEach(k=>abaT[k]={n:0,v:0}); clientes.forEach(c=>{ const k=abaT[c.aba]?c.aba:"cobranca"; abaT[k].n++; abaT[k].v+=c.valor; });
+    const mesIni=new Date().toISOString().slice(0,7);
+    const regMes=FIN.reg.filter(r=>(r.data_pagamento||"").slice(0,7)===mesIni);
+    corpo=`<div class="kpis" style="margin-top:18px">
+      <div class="tile"><div><div class="lbl">Total em atraso</div><div class="val num" style="color:var(--crit)">${brl(totalV)}</div><div class="sub">${T.length} título(s)</div></div></div>
+      <div class="tile"><div><div class="lbl">Clientes inadimplentes</div><div class="val num">${clientes.length}</div></div></div>
+      <div class="tile"><div><div class="lbl">Regularizados no mês</div><div class="val num" style="color:var(--good)">${regMes.length}</div><div class="sub">${brl(regMes.reduce((s,r)=>s+(+r.valor_pago||0),0))} recebidos</div></div></div>
+      <div class="tile"><div><div class="lbl">Maior atraso</div><div class="val num">${Math.max(0,...T.map(t=>t.dias_atraso||0))} <small>dias</small></div></div></div></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="panel"><h4>Valor em atraso por faixa de dias</h4>${Object.entries(ag).map(([k,val])=>`<div style="display:flex;align-items:center;gap:10px;margin:8px 0"><span style="width:70px;font-size:12.5px">${k} dias</span><div style="flex:1;background:var(--surface);border-radius:6px;height:14px;overflow:hidden"><i style="display:block;height:100%;width:${val/agMax*100}%;background:${k==="90+"?"var(--crit)":(k==="61-90"?"var(--warn)":"var(--accent)")}"></i></div><b class="num" style="min-width:110px;text-align:right;font-size:12.5px">${brl(val)}</b></div>`).join("")}</div>
+      <div class="panel"><h4>Clientes por situação</h4>${Object.entries(FIN_ABAS).map(([k,l])=>`<div style="display:flex;justify-content:space-between;margin:9px 0;font-size:13px"><span>${l}</span><span class="num"><b>${abaT[k].n}</b> cliente(s) · ${brl(abaT[k].v)}</span></div>`).join("")}</div></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="panel"><h4>Valor total em atraso, por dia</h4>${_finLinha(FIN.snaps,"valor","var(--crit)")}</div>
+      <div class="panel"><h4>Clientes inadimplentes, por dia</h4>${_finLinha(FIN.snaps,"clientes","var(--accent)")}</div></div>`;
+  } else if(FSUB==="clientes"){
+    let rows=clientes.filter(c=>(!FINABA||c.aba===FINABA)&&(!FINQ||(c.nome||"").toLowerCase().includes(FINQ.toLowerCase())||c.cnpj.includes(FINQ)));
+    corpo=`<div style="display:flex;gap:10px;margin:18px 0 10px;flex-wrap:wrap"><input id="finQ" class="fsel" style="min-width:240px" placeholder="Buscar por nome ou CNPJ/CPF" value="${escAttr(FINQ)}">
+      <select id="finAba" class="fsel"><option value="">Todas as situações</option>${Object.entries(FIN_ABAS).map(([k,l])=>`<option value="${k}" ${FINABA===k?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div class="card"><table><thead><tr><th>Cliente</th><th>Situação</th><th class="center">Títulos</th><th class="right">Valor em atraso</th><th class="center">Maior atraso</th><th class="center">Cobranças enviadas</th><th>Última cobrança</th></tr></thead><tbody>${
+      rows.map(c=>`<tr data-fincli="${escAttr(c.cnpj)}" style="cursor:pointer"><td class="r-name">${esc(c.nome)}<div class="sub">${esc(c.cnpj)}</div></td><td>${FIN_ABAS[c.aba]||c.aba}</td><td class="center num">${c.qtd}</td><td class="right num">${brl(c.valor)}</td><td class="center num" style="color:${c.maxAtraso>90?"var(--crit)":"inherit"}">${c.maxAtraso} d</td><td class="center num">${c.cobrados}</td><td class="sub">${c.ult?fmtDateTime(c.ult):"—"}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum cliente encontrado.</td></tr>`}</tbody></table></div>`;
+  } else if(FSUB==="reg"){
+    const rs=[...FIN.reg].sort((a,b)=>(b.data_pagamento||"")<(a.data_pagamento||"")?-1:1);
+    corpo=`<div class="card" style="margin-top:18px"><table><thead><tr><th>Cliente</th><th>Documento</th><th>Vencimento</th><th>Pago em</th><th class="right">Valor pago</th><th class="center">Dias de atraso</th><th class="center">Cobranças antes de pagar</th></tr></thead><tbody>${
+      rs.map(r=>`<tr><td class="r-name">${esc(r.cliente)}</td><td class="num">${esc(r.numero_documento||"")}</td><td class="num">${fmtD(r.data_vencimento)}</td><td class="num">${fmtD(r.data_pagamento)}${r.data_pagamento_aproximada?' <span class="nc-tag" title="Data aproximada">aprox.</span>':""}</td><td class="right num">${brl(r.valor_pago)}</td><td class="center num">${r.dias_atraso_no_pagamento??"—"}</td><td class="center num">${r.qtd_cobrancas??0}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum documento regularizado ainda.</td></tr>`}</tbody></table></div>`;
+  } else if(FSUB==="envios"){
+    const es=[...FIN.envios].sort((a,b)=>(b.enviado_em||"")<(a.enviado_em||"")?-1:1).slice(0,500);
+    corpo=`<div class="sub" style="margin-top:18px">Últimas ${es.length} cobranças por WhatsApp.</div><div class="card" style="margin-top:8px"><table><thead><tr><th>Quando</th><th>Cliente</th><th>Contato</th><th class="right">Valor</th><th class="center">Títulos</th><th class="center">Atraso</th><th class="center">Status</th></tr></thead><tbody>${
+      es.map(e=>`<tr><td class="num">${fmtDateTime(e.enviado_em)}</td><td class="r-name">${esc(e.cliente_nome)}</td><td>${esc(e.contato_nome||"")}</td><td class="right num">${brl(e.valor_total)}</td><td class="center num">${e.qtd_titulos??""}</td><td class="center num">${e.dias_atraso_max??""} d</td><td class="center">${e.sucesso?'<span style="color:var(--good)">enviada</span>':`<span style="color:var(--crit)" title="${escAttr(e.erro||"")}">falhou</span>`}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Sem envios registrados.</td></tr>`}</tbody></table></div>`;
+  } else {
+    const hs=[...FIN.abas].sort((a,b)=>(b.em||"")<(a.em||"")?-1:1);
+    corpo=`<div class="card" style="margin-top:18px"><table><thead><tr><th>Quando</th><th>Cliente</th><th>De</th><th>Para</th><th>Motivo</th><th>Quem</th><th class="right">Em aberto</th></tr></thead><tbody>${
+      hs.map(h=>`<tr><td class="num">${fmtDateTime(h.em)}</td><td class="r-name">${esc(h.nome)}</td><td>${FIN_ABAS[h.de]||h.de||"—"}</td><td>${FIN_ABAS[h.para]||h.para}</td><td>${esc(h.motivo||"")}</td><td>${esc(h.usuario||"")}</td><td class="right num">${brl(h.valor_em_aberto)}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhuma mudança registrada.</td></tr>`}</tbody></table></div>`;
+  }
+  v.innerHTML=`<div class="page-head"><h2>Financeiro · Inadimplência</h2><p>Somente leitura. Dados do painel de inadimplência${ult?`, atualizados em ${fmtDateTime(ult)}`:""}. As ações de cobrança continuam no painel interno.</p></div>
+    ${FINERR?`<div class="notice" style="margin-top:12px">Não consegui carregar os dados: ${esc(FINERR)}</div>`:""}
+    <div class="subnav">${subs.map(([k,l])=>`<button data-fsub="${k}" class="${FSUB===k?"on":""}">${l}</button>`).join("")}</div>${corpo}`;
+  v.querySelectorAll("[data-fsub]").forEach(b=>b.onclick=()=>{ FSUB=b.dataset.fsub; viewFinanceiro(v); });
+  const q=v.querySelector("#finQ"); if(q) q.oninput=()=>{ FINQ=q.value; const pos=q.selectionStart; viewFinanceiro(v); const n=v.querySelector("#finQ"); n.focus(); n.setSelectionRange(pos,pos); };
+  const a=v.querySelector("#finAba"); if(a) a.onchange=()=>{ FINABA=a.value; viewFinanceiro(v); };
+  v.querySelectorAll("[data-fincli]").forEach(r=>r.onclick=()=>openFinCliente(r.dataset.fincli));
+}
+function openFinCliente(cnpj){
+  const c=_finClientes().find(x=>x.cnpj===cnpj); if(!c) return;
+  const cobs=FIN.envios.filter(e=>e.cnpj_cpf===cnpj).sort((a,b)=>(b.enviado_em||"")<(a.enviado_em||"")?-1:1).slice(0,30);
+  openModal(`<div class="modal-head"><div class="mh-l"><div class="m-sub">${FIN_ABAS[c.aba]||c.aba} · ${esc(c.cnpj)}</div><h3>${esc(c.nome)}</h3>
+    <div class="m-chips"><span class="m-chip">${c.qtd} título(s)</span><span class="m-chip">${brl(c.valor)} em atraso</span><span class="m-chip">maior atraso ${c.maxAtraso} dias</span></div></div>
+    <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body"><div class="panel"><h4>Documentos em aberto</h4><div class="card" style="margin-top:8px"><table><thead><tr><th>Documento</th><th>Vencimento</th><th class="right">Valor</th><th class="center">Atraso</th><th class="center">Cobrança</th><th class="center">Enviadas</th></tr></thead><tbody>${
+    c.docs.sort((a,b)=>(b.dias_atraso||0)-(a.dias_atraso||0)).map(d=>`<tr><td class="num">${esc(d.numero_documento||"")} <span class="sub">${esc(d.numero_parcela||"")}</span></td><td class="num">${fmtD(d.data_vencimento)}${d.renegociado?' <span class="nc-tag">renegociado</span>':""}</td><td class="right num">${brl(d.valor)}</td><td class="center num">${d.dias_atraso} d</td><td class="center">${d.cobranca_ativa?"ativa":"desligada"}</td><td class="center num">${d.qtd_cobrancas||0}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="panel"><h4>Últimas cobranças por WhatsApp</h4>${cobs.length?`<div class="mini-list">${cobs.map(e=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(e.contato_nome||"")}</div><div class="s">${fmtDateTime(e.enviado_em)} · ${brl(e.valor_total)}</div></div><span class="sub">${e.sucesso?"enviada":"falhou"}</span></div>`).join("")}</div>`:'<div class="sub">Nenhuma cobrança enviada a este cliente.</div>'}</div></div>`);
 }
 
 // ---------- DASHBOARD ----------
