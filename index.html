@@ -258,6 +258,26 @@
   .kcard.dragging{opacity:.5}
   .kcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .kcard-nome{font-weight:600;font-size:13.5px;line-height:1.25}
+  .kanban{gap:8px;padding:0 0 6px}
+  .kcol{flex:1 1 0;min-width:250px;background:transparent;border:none;border-radius:0;max-height:none}
+  .kcol-h{background:transparent;border:none;border-top:none!important;border-bottom:1px solid var(--border);padding:6px 6px 8px;position:relative}
+  .kcol-h::before{content:"";position:absolute;left:6px;right:6px;bottom:-1px;height:2px;background:var(--cc,var(--accent));opacity:.9}
+  .kcol-nome{font-size:15px}
+  .kcol-body{padding:8px 0 10px;gap:6px;overflow:visible}
+  .kcol-body.dragover{border-radius:8px}
+  .kcard{padding:8px 10px;border-radius:6px;box-shadow:0 1px 2px rgba(20,30,50,.06)}
+  .kcard-top{align-items:center}
+  .kcard-top .st-ic{width:22px;height:22px;border-radius:50%;flex:none}
+  .kcard-nome{font-size:13.5px;flex:1;min-width:0}
+  .kcard-top .cschip{font-size:9.5px;padding:1px 6px;flex:none}
+  .kcard-sub{font-size:11.5px;margin-top:0}
+  .kcard-l3{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:12px;min-width:0}
+  .kcard-l3 .kav{width:20px;height:20px;font-size:9px}
+  .kcard-l3 .kval{font-weight:600;font-size:12.5px;white-space:nowrap}
+  .kcard-l3 .kmini{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kcard-tags{margin-top:5px;gap:4px}
+  .crm-bar{margin:0 0 10px}.crm-tot{font-size:12.5px;color:var(--ink-2);font-weight:600;align-self:center;margin-right:6px}
+  .wrap.wide{max-width:none;padding:12px 14px 40px}
   .kcol-tot{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
   .kcard-val{font-family:"Sora",sans-serif;font-weight:700;font-size:15px;margin-top:8px}
   .kval-sub{font-family:inherit;font-weight:500;font-size:11px;color:var(--muted)}
@@ -723,7 +743,7 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view");
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm");
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
@@ -1687,7 +1707,7 @@ function crmVerAtend(){ return isAdmin()||isGestor(); }
 function crmVerFin(){ return podeModulo("financeiro"); }
 function podeCRM(){ return crmVerAtend()||crmVerFin(); }
 const CRM_COBR_COLS=[{id:"cobranca",nome:"Em cobrança",cor:"#cf4257"},{id:"acordo",nome:"Em acordo",cor:"#128a5b"},{id:"suspenso",nome:"Suspensos",cor:"#b7791f"},{id:"extrajudicial",nome:"Extrajudicial",cor:"#5b3fa0"}];
-let CPIPE="", CRMITENS=[];
+let CPIPE="", CRMITENS=[], CRMV="atend";
 let CRMQ={q:"",status:"",tag:"",cs:"",dono:"",fin:"",sort:"risco_desc"};
 function crmPipes(){ const p=[]; if(crmVerAtend()) p.push(["rel","Relacionamento"]); if(crmVerFin()) p.push(["cob","Cobrança"]); return p; }
 function crmItens(){
@@ -1706,26 +1726,31 @@ function _corNome(n){ let h=0; for(const ch of String(n||"")) h=(h*31+ch.charCod
 const _av=(n,t)=>n?`<span class="kav" style="background:${_corNome(n)}" title="${escAttr(t||n)}">${esc(_iniciais(n))}</span>`:`<span class="kav vazio" title="Sem responsável">?</span>`;
 const _stIc=st=>`<span class="st-ic ${st}" title="${stTxt[st]}">${stIcon[st]}</span>`;
 
+function crmModo(pipe){ if(pipe==="cob") return "fin"; const A=crmVerAtend(),F=crmVerFin(); if(A&&!F) return "atend"; if(F&&!A) return "fin"; return CRMV; }
+const _ICO_OK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>';
+const _ICO_AL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>';
+function _finIc(f){ if(!f) return `<span class="st-ic saudavel" title="Sem pendência financeira">${_ICO_OK}</span>`;
+  const cr=f.maxAtraso>30||f.aba==="extrajudicial"; return `<span class="st-ic ${cr?'critico':'alerta'}" title="${brl(f.valor)} em aberto, até ${f.maxAtraso} dias de atraso">${_ICO_AL}</span>`; }
 function cardCliente(it,pipe){
-  const sc=it.sc, f=it.fin, st=(it.id&&CRMCLI[it.id])||{};
+  const sc=it.sc, f=it.fin, st=(it.id&&CRMCLI[it.id])||{}; const modo=crmModo(pipe);
   const tags=(st.tags||[]).map(tid=>CRMCFG.tags.find(t=>t.id===tid)).filter(Boolean);
-  let h=`<div class="kcard" ${pipe==="rel"?'draggable="true"':''} data-ckey="${escAttr(it.key)}">
-    <div class="kcard-top"><div class="kcard-nome">${esc(it.nome)}</div>${sc?_stIc(sc.status):""}</div>
-    <div class="kcard-sub num">${esc(fmtCnpj(it.cnpj))}</div>`;
-  if(pipe==="cob" && f){
-    h+=`<div class="kcard-val">${brl(f.valor)}</div><div class="kcard-metrics"><span>${f.qtd} título(s)</span><span>até ${f.maxAtraso}d de atraso</span><span>${f.cobrados} cobrança(s) enviada(s)</span></div>`;
-    h+=`<div class="kcard-foot"><span class="kdias ${f.ativos?'':'alerta'}">${f.ativos?'cobrança automática ligada':'cobrança desligada'}</span>${f.ult?`<span class="kdias">última ${fmtD(f.ult)}</span>`:""}</div></div>`; return h;
+  let ic, linha;
+  if(modo==="fin"){
+    ic=_finIc(f);
+    linha=f?`<span class="kval">${brl(f.valor)}</span><span class="kmini">${f.qtd} tít. · ${f.maxAtraso}d${pipe==="cob"?(f.ativos?" · auto ligada":" · auto desligada"):""}</span>`:`<span class="kmini">Em dia</span>`;
+  } else {
+    ic=sc?_stIc(sc.status):"";
+    linha=sc&&sc.count?`<span class="kval">${sc.count} atend.</span><span class="kmini">média ${fmt1(sc.media)} · risco ${sc.risco.toFixed(1).replace(".",",")}</span>`:`<span class="kmini">sem atendimentos</span>`;
   }
-  if(sc){
-    const d=diasSemContato(sc.ultima); const cs=precisaCS(it.id,sc);
-    if(f) h+=`<div class="kcard-val" title="Valor em aberto no financeiro">${brl(f.valor)} <span class="kval-sub">em aberto</span></div>`;
-    h+=sc.count?`<div class="kcard-metrics"><span>${sc.count} atend.</span><span>média ${fmt1(sc.media)}</span><span title="Risco de 1 a 5">risco ${sc.risco.toFixed(1).replace(".",",")}</span></div>`:`<div class="kcard-metrics"><span>sem atendimentos registrados</span></div>`;
-    if(tags.length) h+=`<div class="kcard-tags">${tags.map(t=>`<span class="tagchip" style="background:${t.cor}22;color:${t.cor};border-color:${t.cor}66">${esc(t.nome)}</span>`).join("")}</div>`;
-    h+=`<div class="kcard-foot">${_av(it.dono,"Quem mais atende: "+it.dono)}<span class="kdias ${d!==null&&d>30?'alerta':''}">${d===null?'sem registro':('há '+d+'d sem contato')}</span>${cs?`<span class="cschip" title="${escAttr(csMotivo(it.id,sc))}">CS contatar</span>`:""}</div>`;
-  } else if(f){
-    h+=`<div class="kcard-val">${brl(f.valor)} <span class="kval-sub">em aberto</span></div>`;
-  }
-  return h+`</div>`;
+  let cs=""; if(modo==="atend"&&sc&&it.id&&precisaCS(it.id,sc)) cs=`<span class="cschip" title="${escAttr(csMotivo(it.id,sc))}">CS</span>`;
+  const d=sc?diasSemContato(sc.ultima):null;
+  const sub=modo==="atend"&&d!==null?`${esc(fmtCnpj(it.cnpj))} · ${d}d sem contato`:esc(fmtCnpj(it.cnpj));
+  return `<div class="kcard" ${pipe==="rel"?'draggable="true"':''} data-ckey="${escAttr(it.key)}">
+    <div class="kcard-top"><div class="kcard-nome">${esc(it.nome)}</div>${cs}${ic}</div>
+    <div class="kcard-sub num">${sub}</div>
+    <div class="kcard-l3">${_av(it.dono,"Quem mais atende: "+it.dono)}${linha}</div>
+    ${tags.length?`<div class="kcard-tags">${tags.map(t=>`<span class="tagchip" style="background:${t.cor}22;color:${t.cor};border-color:${t.cor}66">${esc(t.nome)}</span>`).join("")}</div>`:""}
+  </div>`;
 }
 function _crmFiltrar(itens,pipe){
   const fq=(CRMQ.q||"").trim().toLowerCase();
@@ -1743,6 +1768,12 @@ function _crmFiltrar(itens,pipe){
   }
   return r;
 }
+function _crmSorts(pipe){
+  const A=[["risco_desc","Maior risco"],["atend_desc","Mais atendimentos"],["media_asc","Menor média"],["recente","Mais recentes"],["nome","Nome (A-Z)"]];
+  const F=[["valor_desc","Maior valor em aberto"],["atraso_desc","Maior atraso"],["nome","Nome (A-Z)"]];
+  if(pipe==="cob") return F; const m=crmModo(pipe); return m==="fin"?F:(crmVerFin()?A.concat(F.slice(0,2)):A);
+}
+function _crmSortOk(pipe){ const l=_crmSorts(pipe); if(!l.some(x=>x[0]===CRMQ.sort)) CRMQ.sort=l[0][0]; return CRMQ.sort; }
 function _crmSort(r,pipe,srt){
   const nm=(a,b)=>a.nome.localeCompare(b.nome);
   const k={ nome:nm, valor_desc:(a,b)=>((b.fin?b.fin.valor:0)-(a.fin?a.fin.valor:0)), atraso_desc:(a,b)=>((b.fin?b.fin.maxAtraso:0)-(a.fin?a.fin.maxAtraso:0)),
@@ -1755,15 +1786,16 @@ function viewClientes(v){
   if(crmVerFin() && FIN===null && !FINLOADING){ FINLOADING=true; loadFinanceiro(); }
   const pipes=crmPipes(); if(!pipes.some(p=>p[0]===CPIPE)) CPIPE=pipes[0][0];
   const finCarregando=crmVerFin() && FIN===null;
-  v.innerHTML=`<div class="page-head"><h2>CRM</h2><p>${crmVerAtend()&&crmVerFin()?"atendimento e financeiro de cada cliente em um só lugar":(crmVerAtend()?"relacionamento e atendimento dos clientes":"situação financeira dos clientes")}${finCarregando?" · carregando financeiro...":""}</p></div>
-  <div class="filters crm-bar">
+  v.innerHTML=`<div class="filters crm-bar">
     ${pipes.length>1?`<select class="fsel crm-pipe" id="crmPipe">${pipes.map(p=>`<option value="${p[0]}" ${p[0]===CPIPE?'selected':''}>${p[1]}</option>`).join("")}</select>`:`<span class="crm-pipe-fixo">${pipes[0][1]}</span>`}
+    ${(CPIPE==="rel"&&crmVerAtend()&&crmVerFin())?`<div class="seg" title="O que mostrar nos cards"><button data-cmodo="atend" class="${CRMV==='atend'?'on':''}">Atendimento</button><button data-cmodo="fin" class="${CRMV==='fin'?'on':''}">Financeiro</button></div>`:""}
     <div class="seg"><button data-cview="quadro" class="${CVIEW==='quadro'?'on':''}" title="Quadro">Quadro</button><button data-cview="lista" class="${CVIEW==='lista'?'on':''}">Lista</button><button data-cview="ranking" class="${CVIEW==='ranking'?'on':''}">Ranking</button></div>
-    <div style="flex:1"></div>
-    ${CPIPE==="rel"?`<button class="txt-btn" id="btnTags">Gerenciar tags</button><button class="txt-btn" id="btnCols">Editar colunas</button>`:""}
+    <div style="flex:1"></div><span class="crm-tot" id="crmTot">${finCarregando?"carregando financeiro...":""}</span>
+    ${CPIPE==="rel"?`<button class="txt-btn" id="btnCols">Editar colunas</button><button class="txt-btn" id="btnTags">Gerenciar tags</button>`:""}
   </div>
   <div id="crmsub"></div>`;
   v.querySelectorAll("[data-cview]").forEach(b=>b.onclick=()=>{ CVIEW=b.dataset.cview; viewClientes(v); });
+  v.querySelectorAll("[data-cmodo]").forEach(b=>b.onclick=()=>{ CRMV=b.dataset.cmodo; CRMQ.sort=""; viewClientes(v); });
   const pp=v.querySelector("#crmPipe"); if(pp) pp.onchange=()=>{ CPIPE=pp.value; CRMQ.fin=""; viewClientes(v); };
   const bt=v.querySelector("#btnTags"); if(bt) bt.onclick=openGerenciarTags;
   const bc=v.querySelector("#btnCols"); if(bc) bc.onclick=openEditarColunas;
@@ -1798,14 +1830,16 @@ function crmQuadro(c,itens,v){
   const pipe=CPIPE; const cols=pipe==="rel"?CRMCFG.colunas:CRM_COBR_COLS;
   const r=_crmFiltrar(itens,pipe); const porCol={}; cols.forEach(col=>porCol[col.id]=[]);
   r.forEach(x=>{ const cid=pipe==="rel"?colunaDe(x.id,x.sc):(porCol[x.fin.aba]?x.fin.aba:"cobranca"); (porCol[cid]||(porCol[cid]=[])).push(x); });
-  cols.forEach(col=>_crmSort(porCol[col.id]||[],pipe,pipe==="cob"?"valor_desc":"risco_desc"));
+  const srt=_crmSortOk(pipe); cols.forEach(col=>_crmSort(porCol[col.id]||[],pipe,srt));
   const verF=crmVerFin(); let totalGeral=0;
-  c.innerHTML=`<div class="filters">${_crmFiltrosHTML(itens,pipe)}<span class="sub" style="align-self:center">${pipe==="rel"?"Arraste os cards entre as colunas":"Para mudar a situação ou ligar a cobrança, abra o cliente"}</span></div>
+  c.innerHTML=`<div class="filters">${_crmFiltrosHTML(itens,pipe)}<select class="fsel" id="qSortB">${_crmSorts(pipe).map(x=>`<option value="${x[0]}" ${srt===x[0]?'selected':''}>Ordenar: ${x[1]}</option>`).join("")}</select></div>
   <div class="kanban">${cols.map(col=>{ const items=porCol[col.id]||[]; const tot=items.reduce((s,x)=>s+(x.fin?x.fin.valor:0),0); totalGeral+=tot;
     const sub=(pipe==="cob"||verF)?`${brl(tot)} · ${items.length} cliente${items.length===1?"":"s"}`:`${items.length} cliente${items.length===1?"":"s"}`;
-    return `<div class="kcol"><div class="kcol-h" style="border-top:3px solid ${col.cor||'var(--accent)'}"><div><div class="kcol-nome">${esc(col.nome)}</div><div class="kcol-tot">${sub}</div></div></div>
+    return `<div class="kcol"><div class="kcol-h" style="--cc:${col.cor||'var(--accent)'}"><div><div class="kcol-nome">${esc(col.nome)}</div><div class="kcol-tot">${sub}</div></div></div>
       <div class="kcol-body" ${pipe==="rel"?`data-drop="${escAttr(col.id)}"`:""}>${items.map(x=>cardCliente(x,pipe)).join("")||'<div class="kempty">'+(pipe==="rel"?"Solte clientes aqui":"Nenhum cliente")+'</div>'}</div></div>`;
   }).join("")}</div>`;
+  const tt=document.getElementById("crmTot"); if(tt){ const vf=crmVerFin(); tt.textContent=(vf?brl(r.reduce((s,x)=>s+(x.fin?x.fin.valor:0),0))+" em aberto · ":"")+r.length+" clientes"; }
+  const sb2=c.querySelector("#qSortB"); if(sb2) sb2.onchange=()=>{ CRMQ.sort=sb2.value; crmQuadro(c,itens,v); };
   _crmLigar(c,()=>crmQuadro(c,itens,v));
   c.querySelectorAll(".kcard").forEach(card=>{
     card.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",card.dataset.ckey); e.dataTransfer.effectAllowed="move"; card.classList.add("dragging"); });
@@ -1823,10 +1857,8 @@ function crmQuadro(c,itens,v){
 }
 function crmLista(c,itens,v){
   const pipe=CPIPE; const verA=pipe==="rel", verF=crmVerFin();
-  let r=_crmFiltrar(itens,pipe); _crmSort(r,pipe,CRMQ.sort);
-  const sorts=pipe==="rel"?[["risco_desc","Maior risco"],["atend_desc","Mais atendimentos"],["media_asc","Menor média"],["recente","Mais recentes"],["nome","Nome (A-Z)"]].concat(verF?[["valor_desc","Maior valor em aberto"]]:[])
-    :[["valor_desc","Maior valor em aberto"],["atraso_desc","Maior atraso"],["nome","Nome (A-Z)"]];
-  if(!sorts.some(s=>s[0]===CRMQ.sort)){ CRMQ.sort=sorts[0][0]; _crmSort(r,pipe,CRMQ.sort); }
+  let r=_crmFiltrar(itens,pipe);
+  const sorts=_crmSorts(pipe); _crmSortOk(pipe); _crmSort(r,pipe,CRMQ.sort);
   const head=verA?`<th>Cliente</th><th>Responsável</th><th class="center">Atend.</th><th class="center">Média</th><th class="center">Risco</th><th class="center">Status</th><th class="center">Último</th>${verF?'<th class="right">Em aberto</th>':''}`:`<th>Cliente</th><th>Situação</th><th class="right">Em aberto</th><th class="center">Títulos</th><th class="center">Maior atraso</th><th class="center">Cobrança</th>`;
   const row=x=>{ const nm=`<td><button class="link-name" data-ckey="${escAttr(x.key)}">${esc(x.nome)}</button><div class="sub num">${esc(fmtCnpj(x.cnpj))}</div></td>`;
     if(verA){ const s=x.sc; return `<tr>${nm}<td>${x.dono?`<span class="kav-l">${_av(x.dono)} ${esc(x.dono)}</span>`:'<span class="sub">—</span>'}</td><td class="center num">${s.count}</td><td class="center"><span class="score-num" style="color:${scoreColor(s.media)}">${fmt1(s.media)}</span></td><td class="center"><span class="risco ${s.status}">${s.risco.toFixed(1).replace(".",",")}</span></td><td class="center">${_stIc(s.status)}</td><td class="center sub num">${fmtDataCurta(s.ultima)}</td>${verF?`<td class="right num">${x.fin?brl(x.fin.valor):'<span class="sub">—</span>'}</td>`:''}</tr>`; }
