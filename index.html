@@ -1167,7 +1167,7 @@ function viewFinanceiro(v){
     v.innerHTML=`<div class="page-head"><h2>Financeiro</h2><p>carregando inadimplência...</p></div>`; return; }
   iniciarPollFin();
   const pendAntigos=(FIN.cmds||[]).filter(x=>x.status==="pendente"&&Date.now()-new Date(x.criado_em).getTime()>30*60*1000).length;
-  const subs=[["resumo","Resumo"],["clientes","Clientes"],["reg","Regularizados"],["envios","Cobranças enviadas"],["abas","Mudanças de situação"]];
+  const subs=[["resumo","Resumo"],["carteira","Carteira Omie"],["clientes","Clientes"],["reg","Regularizados"],["envios","Cobranças enviadas"],["abas","Mudanças de situação"]];
   const T=FIN.titulos, totalV=T.reduce((s,t)=>s+(+t.valor||0),0), clientes=_finClientes();
   const ult=T.reduce((m,t)=>t.snapshot_em>m?t.snapshot_em:m,"");
   let corpo="";
@@ -1188,6 +1188,8 @@ function viewFinanceiro(v){
     <div class="grid2" style="margin-top:16px">
       <div class="panel"><h4>Valor total em atraso, por dia</h4>${_finLinha(FIN.snaps,"valor","var(--crit)")}</div>
       <div class="panel"><h4>Clientes inadimplentes, por dia</h4>${_finLinha(FIN.snaps,"clientes","var(--accent)")}</div></div>`;
+  } else if(FSUB==="carteira"){
+    corpo=carteiraHTML();
   } else if(FSUB==="clientes"){
     let rows=clientes.filter(c=>(!FINABA||c.aba===FINABA)&&(!FINQ||(c.nome||"").toLowerCase().includes(FINQ.toLowerCase())||c.cnpj.includes(FINQ)));
     corpo=`<div style="display:flex;gap:10px;margin:18px 0 10px;flex-wrap:wrap"><input id="finQ" class="fsel" style="min-width:240px" placeholder="Buscar por nome ou CNPJ/CPF" value="${escAttr(FINQ)}">
@@ -1207,11 +1209,14 @@ function viewFinanceiro(v){
     corpo=`<div class="card" style="margin-top:18px"><table><thead><tr><th>Quando</th><th>Cliente</th><th>De</th><th>Para</th><th>Motivo</th><th>Quem</th><th class="right">Em aberto</th></tr></thead><tbody>${
       hs.map(h=>`<tr><td class="num">${fmtDateTime(h.em)}</td><td class="r-name">${esc(h.nome)}</td><td>${FIN_ABAS[h.de]||h.de||"—"}</td><td>${FIN_ABAS[h.para]||h.para}</td><td>${esc(h.motivo||"")}</td><td>${esc(h.usuario||"")}</td><td class="right num">${brl(h.valor_em_aberto)}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhuma mudança registrada.</td></tr>`}</tbody></table></div>`;
   }
-  v.innerHTML=`<div class="page-head"><h2>Financeiro · Inadimplência</h2><p>Somente leitura. Dados do painel de inadimplência${ult?`, atualizados em ${fmtDateTime(ult)}`:""}. As decisões de cobrança viram pedidos que o servidor aplica em alguns minutos. <button class="btn-line" id="finRefresh" style="padding:3px 10px;font-size:12px;margin-left:6px">Atualizar</button> <span class="sub">tela atualizada em <span id="finAtu">${FINATU?fmtDateTime(FINATU):"agora"}</span></span></p></div>
+  v.innerHTML=`<div class="page-head"><h2>Financeiro</h2><p>Somente leitura. Dados do painel de inadimplência${ult?`, atualizados em ${fmtDateTime(ult)}`:""}. As decisões de cobrança viram pedidos que o servidor aplica em alguns minutos. <button class="btn-line" id="finRefresh" style="padding:3px 10px;font-size:12px;margin-left:6px">Atualizar</button> <span class="sub">tela atualizada em <span id="finAtu">${FINATU?fmtDateTime(FINATU):"agora"}</span></span></p></div>
     ${pendAntigos?`<div class="notice" style="margin-top:12px;background:var(--warn-soft);color:var(--warn)">${pendAntigos} pedido(s) aguardando há mais de 30 minutos. O servidor pode estar parado: avise quem cuida do painel de inadimplência.</div>`:""}
     ${FINERR?`<div class="notice" style="margin-top:12px">Não consegui carregar os dados: ${esc(FINERR)}</div>`:""}
     <div class="subnav">${subs.map(([k,l])=>`<button data-fsub="${k}" class="${FSUB===k?"on":""}">${l}</button>`).join("")}</div>${corpo}`;
   v.querySelectorAll("[data-fsub]").forEach(b=>b.onclick=()=>{ FSUB=b.dataset.fsub; viewFinanceiro(v); });
+  const cq=v.querySelector("#carQ"); if(cq) cq.oninput=()=>{ CARQ=cq.value; const pos=cq.selectionStart; viewFinanceiro(v); const n=v.querySelector("#carQ"); n.focus(); n.setSelectionRange(pos,pos); };
+  const cso=v.querySelector("#carSort"); if(cso) cso.onchange=()=>{ CARSORT=cso.value; viewFinanceiro(v); };
+  v.querySelectorAll("tr[data-ckey]").forEach(r=>r.onclick=()=>{ MODE="crm"; try{localStorage.setItem("resiltrack_mode","crm");}catch(e){} render(); CRMITENS=crmItens(); crmAbrir(r.dataset.ckey); });
   const rf=v.querySelector("#finRefresh"); if(rf) rf.onclick=async()=>{ rf.disabled=true; rf.textContent="Atualizando..."; await atualizarFinanceiro(true); };
   const q=v.querySelector("#finQ"); if(q) q.oninput=()=>{ FINQ=q.value; const pos=q.selectionStart; viewFinanceiro(v); const n=v.querySelector("#finQ"); n.focus(); n.setSelectionRange(pos,pos); };
   const a=v.querySelector("#finAba"); if(a) a.onchange=()=>{ FINABA=a.value; viewFinanceiro(v); };
@@ -1727,6 +1732,7 @@ const _av=(n,t)=>n?`<span class="kav" style="background:${_corNome(n)}" title="$
 const _stIc=st=>`<span class="st-ic ${st}" title="${stTxt[st]}">${stIcon[st]}</span>`;
 
 function crmModo(pipe){ if(pipe==="cob") return "fin"; const A=crmVerAtend(),F=crmVerFin(); if(A&&!F) return "atend"; if(F&&!A) return "fin"; return CRMV; }
+function _crmOmie(itens){ if(!OMIE||!OMIE.ok) return; itens.forEach(x=>{ x.om=omieMetricas(x); }); const med=omieMediana(itens); itens.forEach(x=>{ x.diag=omieDiag(x.om,med); }); }
 const _ICO_OK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>';
 const _ICO_AL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>';
 function _finIc(f){ if(!f) return `<span class="st-ic saudavel" title="Sem pendência financeira">${_ICO_OK}</span>`;
@@ -1735,7 +1741,10 @@ function cardCliente(it,pipe){
   const sc=it.sc, f=it.fin, st=(it.id&&CRMCLI[it.id])||{}; const modo=crmModo(pipe);
   const tags=(st.tags||[]).map(tid=>CRMCFG.tags.find(t=>t.id===tid)).filter(Boolean);
   let ic, linha;
-  if(modo==="fin"){
+  if(modo==="omie"){
+    const m=it.om; ic=m&&it.diag?`<span class="st-ic ${it.diag.startsWith("Cobrando")?"critico":(it.diag==="Dentro da média"||it.diag==="Margem folgada"?"saudavel":"alerta")}" title="${escAttr(it.diag)}">${it.diag.startsWith("Cobrando")?_ICO_AL:_ICO_OK}</span>`:"";
+    linha=m?`<span class="kval">${brl(m.contrato)}/mês</span><span class="kmini">${m.rph?brl(m.rph)+"/h · ":""}${m.horasMes!=null?m.horasMes.toLocaleString("pt-BR",{maximumFractionDigits:1})+" h/mês":"sem horas"}</span>`:`<span class="kmini">${OMIE===null?"carregando Omie...":(OMIE&&OMIE.ok?"sem cadastro no Omie":"Omie não sincronizado")}</span>`;
+  } else if(modo==="fin"){
     ic=_finIc(f);
     linha=f?`<span class="kval">${brl(f.valor)}</span><span class="kmini">${f.qtd} tít. · ${f.maxAtraso}d${pipe==="cob"?(f.ativos?" · auto ligada":" · auto desligada"):""}</span>`:`<span class="kmini">Em dia</span>`;
   } else {
@@ -1771,12 +1780,14 @@ function _crmFiltrar(itens,pipe){
 function _crmSorts(pipe){
   const A=[["risco_desc","Maior risco"],["atend_desc","Mais atendimentos"],["media_asc","Menor média"],["recente","Mais recentes"],["nome","Nome (A-Z)"]];
   const F=[["valor_desc","Maior valor em aberto"],["atraso_desc","Maior atraso"],["nome","Nome (A-Z)"]];
-  if(pipe==="cob") return F; const m=crmModo(pipe); return m==="fin"?F:(crmVerFin()?A.concat(F.slice(0,2)):A);
+  const O=[["rph_asc","Menor R$ por hora"],["contrato_desc","Maior contrato"],["horas_desc","Mais horas de atendimento"],["nome","Nome (A-Z)"]];
+  if(pipe==="cob") return F; const m=crmModo(pipe); if(m==="omie") return O; return m==="fin"?F:(crmVerFin()?A.concat(F.slice(0,2)):A);
 }
 function _crmSortOk(pipe){ const l=_crmSorts(pipe); if(!l.some(x=>x[0]===CRMQ.sort)) CRMQ.sort=l[0][0]; return CRMQ.sort; }
 function _crmSort(r,pipe,srt){
   const nm=(a,b)=>a.nome.localeCompare(b.nome);
-  const k={ nome:nm, valor_desc:(a,b)=>((b.fin?b.fin.valor:0)-(a.fin?a.fin.valor:0)), atraso_desc:(a,b)=>((b.fin?b.fin.maxAtraso:0)-(a.fin?a.fin.maxAtraso:0)),
+  const om=x=>x.om||{};
+  const k={ nome:nm, rph_asc:(a,b)=>(om(a).rph??1e12)-(om(b).rph??1e12), contrato_desc:(a,b)=>((om(b).contrato||0)-(om(a).contrato||0)), horas_desc:(a,b)=>((om(b).horasMes??-1)-(om(a).horasMes??-1)), valor_desc:(a,b)=>((b.fin?b.fin.valor:0)-(a.fin?a.fin.valor:0)), atraso_desc:(a,b)=>((b.fin?b.fin.maxAtraso:0)-(a.fin?a.fin.maxAtraso:0)),
     risco_desc:(a,b)=>((b.sc?b.sc.risco:0)-(a.sc?a.sc.risco:0)), atend_desc:(a,b)=>((b.sc?b.sc.count:0)-(a.sc?a.sc.count:0)),
     media_asc:(a,b)=>((a.sc&&a.sc.media!=null?a.sc.media:99)-(b.sc&&b.sc.media!=null?b.sc.media:99)), recente:(a,b)=>((b.sc?b.sc.ultima||0:0)-(a.sc?a.sc.ultima||0:0)) };
   return r.sort(k[srt]||(pipe==="cob"?k.valor_desc:k.risco_desc));
@@ -1788,7 +1799,7 @@ function viewClientes(v){
   const finCarregando=crmVerFin() && FIN===null;
   v.innerHTML=`<div class="filters crm-bar">
     ${pipes.length>1?`<select class="fsel crm-pipe" id="crmPipe">${pipes.map(p=>`<option value="${p[0]}" ${p[0]===CPIPE?'selected':''}>${p[1]}</option>`).join("")}</select>`:`<span class="crm-pipe-fixo">${pipes[0][1]}</span>`}
-    ${(CPIPE==="rel"&&crmVerAtend()&&crmVerFin())?`<div class="seg" title="O que mostrar nos cards"><button data-cmodo="atend" class="${CRMV==='atend'?'on':''}">Atendimento</button><button data-cmodo="fin" class="${CRMV==='fin'?'on':''}">Financeiro</button></div>`:""}
+    ${(CPIPE==="rel"&&crmVerAtend()&&crmVerFin())?`<div class="seg" title="O que mostrar nos cards"><button data-cmodo="atend" class="${CRMV==='atend'?'on':''}">Atendimento</button><button data-cmodo="fin" class="${CRMV==='fin'?'on':''}">Inadimplência</button><button data-cmodo="omie" class="${CRMV==='omie'?'on':''}">Contrato</button></div>`:""}
     <div class="seg"><button data-cview="quadro" class="${CVIEW==='quadro'?'on':''}" title="Quadro">Quadro</button><button data-cview="lista" class="${CVIEW==='lista'?'on':''}">Lista</button><button data-cview="ranking" class="${CVIEW==='ranking'?'on':''}">Ranking</button></div>
     <div style="flex:1"></div><span class="crm-tot" id="crmTot">${finCarregando?"carregando financeiro...":""}</span>
     ${CPIPE==="rel"?`<button class="txt-btn" id="btnCols">Editar colunas</button><button class="txt-btn" id="btnTags">Gerenciar tags</button>`:""}
@@ -1799,7 +1810,7 @@ function viewClientes(v){
   const pp=v.querySelector("#crmPipe"); if(pp) pp.onchange=()=>{ CPIPE=pp.value; CRMQ.fin=""; viewClientes(v); };
   const bt=v.querySelector("#btnTags"); if(bt) bt.onclick=openGerenciarTags;
   const bc=v.querySelector("#btnCols"); if(bc) bc.onclick=openEditarColunas;
-  const c=v.querySelector("#crmsub"); const itens=crmItens(); CRMITENS=itens;
+  garantirOmie(); const c=v.querySelector("#crmsub"); const itens=crmItens(); _crmOmie(itens); CRMITENS=itens;
   if(CVIEW==="lista") crmLista(c,itens,v); else if(CVIEW==="ranking") crmRanking(c,itens); else crmQuadro(c,itens,v);
   bindActions();
 }
@@ -2446,6 +2457,64 @@ function baixarAvaliacaoPDF(i,btn){
     .catch(()=>{ cont.remove(); if(btn){ btn.disabled=false; btn.style.opacity="1"; } alert("Não consegui gerar o PDF agora. Tente de novo."); });
 }
 
+// ---------- OMIE: carteira completa (contratos, faturamento, esforço de atendimento) ----------
+let OMIE=null, OMIELOADING=false, OMIEIDX=null;
+async function loadOmie(){
+  try{
+    const [c,k,r]=await Promise.all([fetchAllRows("omie_clientes","*"),fetchAllRows("omie_contratos","*"),fetchAllRows("omie_receber","*")]);
+    OMIE={ok:true,clientes:c,contratos:k,receber:r};
+  }catch(e){ console.warn("omie:",e); OMIE={ok:false,erro:e.message||String(e),clientes:[],contratos:[],receber:[]}; }
+  OMIEIDX=null; OMIELOADING=false; if(MODE==="financeiro"||MODE==="crm") render();
+}
+function garantirOmie(){ if(crmVerFin() && OMIE===null && !OMIELOADING){ OMIELOADING=true; loadOmie(); } }
+const _okStatus=s=>/pag|receb|liquid/i.test(s||"");
+function _mesesDados(){ const t=ATEND.map(a=>a.ts).filter(Boolean); if(!t.length) return 1; return Math.max(1,Math.min(12,(Math.max(...t)-Math.min(...t))/(30.4*864e5))); }
+function omieIndice(){
+  if(OMIEIDX) return OMIEIDX; const hoje=new Date().toISOString().slice(0,10), lim=new Date(Date.now()-365*864e5).toISOString().slice(0,10);
+  const porCod={}; OMIE.clientes.forEach(c=>porCod[c.codigo]={c,contrato:0,ncontr:0,fat12:0,rec12:0,atraso:0});
+  OMIE.contratos.forEach(k=>{ const o=porCod[k.cliente_codigo]; if(!o) return; const vigente=(!k.vig_final||k.vig_final>=hoje)&&!/cancel|encerr|suspens/i.test(k.situacao||""); if(vigente){ o.contrato+=+k.valor_mensal||0; o.ncontr++; } });
+  OMIE.receber.forEach(r=>{ const o=porCod[r.cliente_codigo]; if(!o||!r.data_vencimento||r.data_vencimento<lim) return; const v=+r.valor||0;
+    if(r.data_vencimento<=hoje){ o.fat12+=v; if(_okStatus(r.status)) o.rec12+=v; else o.atraso+=v; } });
+  const porDoc={}; Object.values(porCod).forEach(o=>{ const d=dig(o.c.cnpj_cpf); if(d) porDoc[d]=o; });
+  return OMIEIDX={porDoc};
+}
+function omieMetricas(it){
+  if(!OMIE||!OMIE.ok) return null; const d=dig(it.cnpj); if(!d) return null; const o=omieIndice().porDoc[d]; if(!o) return null;
+  const m={contrato:o.contrato,ncontr:o.ncontr,fat12:o.fat12,rec12:o.rec12,atraso:o.atraso,horasMes:null,atendMes:null,rph:null,erros:null,diag:""};
+  if(it.ag){ const mm=_mesesDados(); m.horasMes=it.ag.durMin/60/mm; m.atendMes=it.ag.count/mm; m.erros=Object.values(it.ag.erros||{}).reduce((a,b)=>a+b,0);
+    if(m.horasMes>0.05 && m.contrato>0) m.rph=m.contrato/m.horasMes; }
+  return m;
+}
+function omieMediana(itens){ const v=itens.map(x=>x.om&&x.om.rph).filter(x=>x>0).sort((a,b)=>a-b); return v.length?v[Math.floor(v.length/2)]:null; }
+function omieDiag(m,med){ if(!m||!m.contrato) return m&&!m.ncontr?"Sem contrato vigente":""; if(m.rph==null||!med) return "Sem atendimento para comparar";
+  if(m.rph<med*0.5) return "Cobrando pouco pelo esforço"; if(m.rph>med*2) return "Margem folgada"; return "Dentro da média"; }
+const _diagCor=d=>d.startsWith("Cobrando")?"var(--crit)":(d==="Margem folgada"?"var(--good)":"var(--muted)");
+let CARQ="", CARSORT="rph_asc";
+function carteiraHTML(){
+  garantirOmie();
+  if(OMIE===null) return `<div class="sub" style="margin-top:18px">Carregando dados do Omie...</div>`;
+  if(!OMIE.ok) return `<div class="notice" style="margin-top:18px">Não encontrei os dados do Omie. Rode o SQL 04 no Supabase e o script omie_sync.py no servidor. Detalhe: ${esc(OMIE.erro)}</div>`;
+  if(!OMIE.clientes.length) return `<div class="notice" style="margin-top:18px">As tabelas do Omie existem, mas ainda estão vazias. Rode o omie_sync.py no servidor.</div>`;
+  const itens=crmItens(); const porDoc=new Map(itens.map(x=>[dig(x.cnpj),x]).filter(x=>x[0]));
+  const linhas=OMIE.clientes.filter(c=>!c.inativo).map(c=>{ const d=dig(c.cnpj_cpf); const it=porDoc.get(d)||{cnpj:c.cnpj_cpf,ag:null,nome:c.nome_fantasia||c.razao_social};
+    const o=d?omieIndice().porDoc[d]:null; return {nome:c.nome_fantasia||c.razao_social||"Sem nome",cnpj:c.cnpj_cpf,key:it.key||"",it:{...it,cnpj:c.cnpj_cpf}}; });
+  linhas.forEach(l=>{ l.om=omieMetricas(l.it); });
+  const med=omieMediana(linhas); linhas.forEach(l=>{ l.diag=omieDiag(l.om,med); });
+  const fq=CARQ.trim().toLowerCase(); let r=linhas.filter(l=>l.om&&(l.om.contrato||l.om.fat12)&&(!fq||l.nome.toLowerCase().includes(fq)||dig(l.cnpj).includes(dig(fq)||"@")));
+  const ks={rph_asc:(a,b)=>(a.om.rph??1e12)-(b.om.rph??1e12),rph_desc:(a,b)=>(b.om.rph??-1)-(a.om.rph??-1),contrato:(a,b)=>b.om.contrato-a.om.contrato,fat:(a,b)=>b.om.fat12-a.om.fat12,horas:(a,b)=>(b.om.horasMes??-1)-(a.om.horasMes??-1),atraso:(a,b)=>b.om.atraso-a.om.atraso,nome:(a,b)=>a.nome.localeCompare(b.nome)};
+  r.sort(ks[CARSORT]||ks.rph_asc);
+  const tot=r.reduce((s,l)=>s+l.om.contrato,0), fat=r.reduce((s,l)=>s+l.om.fat12,0), atr=r.reduce((s,l)=>s+l.om.atraso,0);
+  const n=(x,c=1)=>x==null?"—":x.toLocaleString("pt-BR",{minimumFractionDigits:c,maximumFractionDigits:c});
+  return `<div class="kpis" style="margin-top:18px"><div class="tile"><div><div class="lbl">Contratos vigentes por mês</div><div class="val num">${brl(tot)}</div><div class="sub">${r.length} cliente(s)</div></div></div>
+    <div class="tile"><div><div class="lbl">Faturado em 12 meses</div><div class="val num">${brl(fat)}</div></div></div>
+    <div class="tile"><div><div class="lbl">Em atraso (12 meses)</div><div class="val num" style="color:var(--crit)">${brl(atr)}</div></div></div>
+    <div class="tile"><div><div class="lbl">Mediana R$ por hora de atendimento</div><div class="val num">${med?brl(med):"—"}</div></div></div></div>
+  <div style="display:flex;gap:10px;margin:16px 0 10px;flex-wrap:wrap"><input id="carQ" class="fsel" style="min-width:240px" placeholder="Buscar por nome ou CNPJ" value="${escAttr(CARQ)}">
+    <select id="carSort" class="fsel">${[["rph_asc","Ordenar: menor R$ por hora"],["rph_desc","Ordenar: maior R$ por hora"],["contrato","Ordenar: maior contrato"],["fat","Ordenar: maior faturamento"],["horas","Ordenar: mais horas de atendimento"],["atraso","Ordenar: maior atraso"],["nome","Ordenar: nome (A-Z)"]].map(([k,l])=>`<option value="${k}" ${CARSORT===k?"selected":""}>${l}</option>`).join("")}</select></div>
+  <div class="card grid-setor"><table style="min-width:980px"><thead><tr><th>Cliente</th><th class="right">Contrato/mês</th><th class="right">Faturado 12m</th><th class="right">Em atraso</th><th class="center">Atend./mês</th><th class="center">Horas/mês</th><th class="right">R$ por hora</th><th class="center">Apont. de erro</th><th>Leitura</th></tr></thead><tbody>${
+    r.slice(0,400).map(l=>`<tr ${l.key?`data-ckey="${escAttr(l.key)}" style="cursor:pointer"`:""}><td class="r-name">${esc(l.nome)}<div class="sub num">${esc(fmtCnpj(l.cnpj))}</div></td><td class="right num">${brl(l.om.contrato)}</td><td class="right num">${brl(l.om.fat12)}</td><td class="right num" style="${l.om.atraso?'color:var(--crit)':''}">${brl(l.om.atraso)}</td><td class="center num">${n(l.om.atendMes)}</td><td class="center num">${n(l.om.horasMes)}</td><td class="right num" style="font-weight:600">${l.om.rph?brl(l.om.rph):"—"}</td><td class="center num">${l.om.erros==null?"—":l.om.erros}</td><td style="color:${_diagCor(l.diag)};font-weight:600;font-size:12px">${esc(l.diag)}</td></tr>`).join("")||'<tr><td colspan="9" class="empty">Nenhum cliente.</td></tr>'}</tbody></table></div>
+  <div class="sub" style="margin-top:8px">R$ por hora = contrato mensal vigente dividido pelas horas de atendimento por mês (tempo dos tickets). "Cobrando pouco" = abaixo de metade da mediana da carteira; "Margem folgada" = acima do dobro. Comparação de apoio, não veredito: considere o escopo de cada contrato.</div>`;
+}
 function finPanelEmpresa(emp){
   if(!crmVerFin()) return "";
   if(FIN===null) return `<div class="panel"><h4>Financeiro</h4><div class="sub">Carregando situação financeira...</div></div>`;
@@ -2460,6 +2529,13 @@ function finPanelEmpresa(emp){
     <div class="field"><div class="k">Situação</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${esc(FIN_ABAS[f.aba]||f.aba)}</div></div></div>
     <div class="sub" style="margin:8px 0">Cobrança automática ${f.ativos?"ligada":"desligada"} · ${f.cobrados} cobrança(s) enviada(s)${f.ult?" · última em "+fmtD(f.ult):""}${reg?` · ${reg} título(s) já regularizado(s)`:""}</div>
     <button class="btn-line" data-openfin="${escAttr(f.cnpj)}">Abrir no Financeiro</button></div>`;
+}
+function omiePanelEmpresa(empId,emp){
+  if(!crmVerFin()||!OMIE||!OMIE.ok) return "";
+  const it={cnpj:emp.cnpj,ag:empresaAgg(empId)}; const m=omieMetricas(it); if(!m) return `<div class="panel"><h4>Contrato e faturamento (Omie)</h4><div class="sub">Cliente não encontrado no Omie pelo CNPJ.</div></div>`;
+  const all=(CRMITENS.length?CRMITENS:crmItens()).filter(x=>x.sc); all.forEach(x=>{x.om=omieMetricas(x);}); const diag=omieDiag(m,omieMediana(all));
+  const kv=(l,v)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${v}</div></div>`;
+  return `<div class="panel"><h4>Contrato e faturamento (Omie)</h4><div class="grid2">${kv("Contrato mensal",brl(m.contrato))}${kv("Faturado em 12 meses",brl(m.fat12))}${kv("Recebido em 12 meses",brl(m.rec12))}${kv("Em atraso",brl(m.atraso))}${kv("Horas de atendimento/mês",m.horasMes==null?"—":m.horasMes.toLocaleString("pt-BR",{maximumFractionDigits:1}))}${kv("R$ por hora",m.rph?brl(m.rph):"—")}</div>${diag?`<div class="sub" style="margin-top:8px;color:${_diagCor(diag)};font-weight:600">${esc(diag)}</div>`:""}</div>`;
 }
 function openEmpresa(empId){
   const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
@@ -2495,7 +2571,7 @@ function openEmpresa(empId){
           <textarea id="crmObs" class="crm-obs" rows="2" placeholder="Ex.: cliente pediu retorno sobre a folha, ligar até sexta.">${esc(stC.cs_obs||"")}</textarea></div>
         <div class="crm-save-row"><span class="sub" id="crmSaved"></span><button class="btn-primary" id="crmSalvar">Salvar no CRM</button></div>
       </div>
-      ${finPanelEmpresa(emp)}
+      ${finPanelEmpresa(emp)}${omiePanelEmpresa(empId,emp)}
       <div class="panel"><h4>Visão geral</h4><div class="grid2">
         ${kpi("Atendimentos",ag.count)}
         ${kpi("Tempo total",fmtDur(ag.durMin))}
