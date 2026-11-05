@@ -491,10 +491,10 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Financeiro"],["comercial","Comercial"]];
+const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
-try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos") MODE=_m; }catch(e){}
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro") MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
@@ -700,10 +700,9 @@ function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r
 function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
 function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
 function allowedTabKeys(){
-  if(isAdmin()) return ["dashboard","relatorio","detalhes","clientes","colaboradores","contestacoes","setor","financeiro","tv","admin"];
+  if(isAdmin()) return ["dashboard","relatorio","detalhes","clientes","colaboradores","contestacoes","setor","tv","admin"];
   const t=[];
   if(isGestor()) t.push("dashboard","relatorio","detalhes","colaboradores","contestacoes","setor");
-  if(podeModulo("financeiro")) t.push("financeiro");
   if(podeModulo("comercial")) t.push("comercial");
   return t;
 }
@@ -719,6 +718,8 @@ function renderTabs(){
 function render(){ renderSide(); const v=document.getElementById("view");
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
+  if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
+  if(MODE==="financeiro" && !podeModulo("financeiro")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="gestor" && !podePainelGestor()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   tabsEl.classList.remove("hidden"); renderTabs();
   const keys=allowedTabKeys();
@@ -740,6 +741,7 @@ function render(){ renderSide(); const v=document.getElementById("view");
 // ---------- MENU LATERAL / MODO ----------
 const _LOGO_SVG='<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="2" opacity=".25"/><circle cx="20" cy="20" r="11.5" stroke="var(--accent)" stroke-width="2" opacity=".45"/><path d="M20 20 L34 11" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="20" r="3.4" fill="var(--accent)"/><circle cx="29.5" cy="13" r="2.4" fill="var(--good)"/></svg>';
 const _ICO_ATEND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+const _ICO_FIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.5-.8-1.5-1.2-2.8-1.2-1.7 0-2.8.8-2.8 2s1 1.7 2.8 2 2.8.8 2.8 2-1.1 2-2.8 2c-1.3 0-2.4-.5-2.9-1.4M12 6.5V8m0 8v1.5"/></svg>';
 const _ICO_GESTOR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="14" width="3" height="3"/></svg>';
 function renderSide(){
   const s=document.getElementById("siderail"); if(!s) return;
@@ -753,6 +755,7 @@ function renderSide(){
       [["wallboard","Wallboard"],["revisao","Revisão diária"],["pessoas","Pessoas"],["clientes","Clientes"],["processos","Processos"]]
       .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div>`;
   }
+  if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   s.innerHTML=h;
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -1078,15 +1081,16 @@ const brl = n => (n==null||isNaN(n))?"—":Number(n).toLocaleString("pt-BR",{sty
 const fmtD = s => { if(!s) return "—"; const p=String(s).slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
 async function loadFinanceiro(){
   try{
-    const [t,s,r,e,h]=await Promise.all([
+    const [t,s,r,e,h,cm]=await Promise.all([
       fetchAllRows("inad_titulos","*"),
       fetchAllRows("inad_snapshots","*","data"),
       fetchAllRows("inad_regularizados","*","data_pagamento"),
       fetchAllRows("inad_envios","*","enviado_em"),
-      fetchAllRows("inad_historico_abas","*","em")]);
-    FIN={titulos:t,snaps:s.sort((a,b)=>a.data<b.data?-1:1),reg:r,envios:e,abas:h}; FINERR="";
-  }catch(err){ console.warn("financeiro:",err); FIN={titulos:[],snaps:[],reg:[],envios:[],abas:[]}; FINERR=err.message||String(err); }
-  FINLOADING=false; if(TAB==="financeiro") render();
+      fetchAllRows("inad_historico_abas","*","em"),
+      fetchAllRows("inad_comandos","*","criado_em")]);
+    FIN={titulos:t,snaps:s.sort((a,b)=>a.data<b.data?-1:1),reg:r,envios:e,abas:h,cmds:cm}; FINERR="";
+  }catch(err){ console.warn("financeiro:",err); FIN={titulos:[],snaps:[],reg:[],envios:[],abas:[],cmds:[]}; FINERR=err.message||String(err); }
+  FINLOADING=false; if(MODE==="financeiro") render();
 }
 function _finClientes(){
   const m=new Map();
@@ -1155,15 +1159,55 @@ function viewFinanceiro(v){
   const a=v.querySelector("#finAba"); if(a) a.onchange=()=>{ FINABA=a.value; viewFinanceiro(v); };
   v.querySelectorAll("[data-fincli]").forEach(r=>r.onclick=()=>openFinCliente(r.dataset.fincli));
 }
+const podeEditarFin = () => isAdmin() || (podeModulo("financeiro") && ((ACCESS&&ACCESS.permissoes)||[]).includes("financeiro_editar"));
+const FIN_CMD_TXT={doc_ativo:p=>p.ativo?"ligar a cobrança do documento":"desligar a cobrança do documento",cliente_docs_ativo:p=>p.ativo?"ligar a cobrança de todos os documentos":"desligar a cobrança de todos os documentos",mover_aba:p=>"mover para "+(FIN_ABAS[p.aba]||p.aba)};
+let FINACAO=null;
+async function enviarComandoFin(tipo,cnpj,payload){
+  const row={usuario:ME,tipo,cnpj_cpf:cnpj,payload,status:"pendente"};
+  const {data,error}=await sb.schema("atendimentos").from("inad_comandos").insert(row).select();
+  if(error) throw error;
+  (FIN.cmds=FIN.cmds||[]).push((data&&data[0])||row);
+}
 function openFinCliente(cnpj){
   const c=_finClientes().find(x=>x.cnpj===cnpj); if(!c) return;
+  const edit=podeEditarFin(), cmds=(FIN.cmds||[]).filter(x=>x.cnpj_cpf===cnpj);
+  const pend=cmds.filter(x=>x.status==="pendente");
+  const pendDoc=cod=>pend.filter(x=>x.tipo==="doc_ativo"&&String(x.payload.codigo)===String(cod)).pop();
   const cobs=FIN.envios.filter(e=>e.cnpj_cpf===cnpj).sort((a,b)=>(b.enviado_em||"")<(a.enviado_em||"")?-1:1).slice(0,30);
+  const ac=FINACAO&&FINACAO.cnpj===cnpj?FINACAO:null;
+  const exigeMotivo=a=>a&&((a.tipo==="mover_aba"&&a.payload.aba!=="cobranca")||(a.tipo!=="mover_aba"&&!a.payload.ativo));
+  const form=ac?`<div class="panel" style="border-color:var(--accent)"><h4>Confirmar: ${FIN_CMD_TXT[ac.tipo](ac.payload)}${ac.rotulo?` (${esc(ac.rotulo)})`:""}</h4>
+    ${exigeMotivo(ac)?`<textarea id="finMotivo" class="fsel" style="width:100%;max-width:none;min-height:64px" placeholder="Motivo (obrigatório)"></textarea>`:`<div class="sub">Sem motivo necessário.</div>`}
+    <div id="finMsg" class="sub" style="color:var(--crit);margin-top:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn-primary" id="finOk">Enviar pedido</button><button class="btn-line" id="finCancel">Cancelar</button></div>
+    <div class="sub" style="margin-top:8px">O pedido vai para uma fila e o servidor aplica em alguns minutos. A cobrança só muda de fato depois disso.</div></div>`:"";
+  const acoes=edit?`<div class="panel"><h4>Decisões de cobrança</h4><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button class="btn-line" data-facao="cliente_docs_ativo" data-ativo="1">Ligar todos os documentos</button>
+    <button class="btn-line" data-facao="cliente_docs_ativo" data-ativo="0">Desligar todos</button>
+    <span class="sub" style="margin-left:8px">Situação:</span>
+    <select id="finMover" class="fsel">${Object.entries(FIN_ABAS).map(([k,l])=>`<option value="${k}" ${c.aba===k?"selected":""}>${l}</option>`).join("")}</select>
+    <button class="btn-line" id="finMoverBtn">Mover</button></div></div>`:"";
   openModal(`<div class="modal-head"><div class="mh-l"><div class="m-sub">${FIN_ABAS[c.aba]||c.aba} · ${esc(c.cnpj)}</div><h3>${esc(c.nome)}</h3>
-    <div class="m-chips"><span class="m-chip">${c.qtd} título(s)</span><span class="m-chip">${brl(c.valor)} em atraso</span><span class="m-chip">maior atraso ${c.maxAtraso} dias</span></div></div>
+    <div class="m-chips"><span class="m-chip">${c.qtd} título(s)</span><span class="m-chip">${brl(c.valor)} em atraso</span><span class="m-chip">maior atraso ${c.maxAtraso} dias</span>${pend.length?`<span class="m-chip">${pend.length} pedido(s) aguardando o servidor</span>`:""}</div></div>
     <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="modal-body"><div class="panel"><h4>Documentos em aberto</h4><div class="card" style="margin-top:8px"><table><thead><tr><th>Documento</th><th>Vencimento</th><th class="right">Valor</th><th class="center">Atraso</th><th class="center">Cobrança</th><th class="center">Enviadas</th></tr></thead><tbody>${
-    c.docs.sort((a,b)=>(b.dias_atraso||0)-(a.dias_atraso||0)).map(d=>`<tr><td class="num">${esc(d.numero_documento||"")} <span class="sub">${esc(d.numero_parcela||"")}</span></td><td class="num">${fmtD(d.data_vencimento)}${d.renegociado?' <span class="nc-tag">renegociado</span>':""}</td><td class="right num">${brl(d.valor)}</td><td class="center num">${d.dias_atraso} d</td><td class="center">${d.cobranca_ativa?"ativa":"desligada"}</td><td class="center num">${d.qtd_cobrancas||0}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="modal-body">${form}${acoes}<div class="panel"><h4>Documentos em aberto</h4><div class="card" style="margin-top:8px"><table><thead><tr><th>Documento</th><th>Vencimento</th><th class="right">Valor</th><th class="center">Atraso</th><th class="center">Cobrança</th><th class="center">Enviadas</th></tr></thead><tbody>${
+    c.docs.sort((a,b)=>(b.dias_atraso||0)-(a.dias_atraso||0)).map(d=>{ const pd=pendDoc(d.codigo);
+      return `<tr><td class="num">${esc(d.numero_documento||"")} <span class="sub">${esc(d.numero_parcela||"")}</span></td><td class="num">${fmtD(d.data_vencimento)}${d.renegociado?' <span class="nc-tag">renegociado</span>':""}</td><td class="right num">${brl(d.valor)}</td><td class="center num">${d.dias_atraso} d</td><td class="center">${d.cobranca_ativa?"ativa":"desligada"}${pd?` <span class="nc-tag" title="Aguardando o servidor aplicar">${pd.payload.ativo?"ligar":"desligar"} pendente</span>`:""}${edit?`<div style="margin-top:6px"><button class="btn-line" style="padding:4px 10px;font-size:12px" data-facao="doc_ativo" data-cod="${escAttr(d.codigo)}" data-rot="${escAttr((d.numero_documento||"")+" "+(d.numero_parcela||""))}" data-ativo="${d.cobranca_ativa?0:1}">${d.cobranca_ativa?"Desligar":"Ligar"}</button></div>`:""}</td><td class="center num">${d.qtd_cobrancas||0}</td></tr>`; }).join("")}</tbody></table></div></div>
+    <div class="panel"><h4>Pedidos recentes</h4>${cmds.length?`<div class="mini-list">${cmds.slice(-8).reverse().map(x=>`<div class="mini-row"><div class="mr-l"><div class="t">${FIN_CMD_TXT[x.tipo](x.payload||{})}</div><div class="s">${fmtDateTime(x.criado_em)} · ${esc(x.usuario)}${x.resultado?" · "+esc(x.resultado):""}</div></div><span class="sub" style="color:${x.status==="aplicado"?"var(--good)":(x.status==="recusado"?"var(--crit)":"var(--warn)")}">${x.status==="pendente"?"aguardando":x.status}</span></div>`).join("")}</div>`:'<div class="sub">Nenhum pedido feito por aqui para este cliente.</div>'}</div>
     <div class="panel"><h4>Últimas cobranças por WhatsApp</h4>${cobs.length?`<div class="mini-list">${cobs.map(e=>`<div class="mini-row"><div class="mr-l"><div class="t">${esc(e.contato_nome||"")}</div><div class="s">${fmtDateTime(e.enviado_em)} · ${brl(e.valor_total)}</div></div><span class="sub">${e.sucesso?"enviada":"falhou"}</span></div>`).join("")}</div>`:'<div class="sub">Nenhuma cobrança enviada a este cliente.</div>'}</div></div>`);
+  if(!edit) return;
+  modal.querySelectorAll("[data-facao]").forEach(b=>b.onclick=()=>{ const t=b.dataset.facao;
+    FINACAO={cnpj,tipo:t,payload:t==="doc_ativo"?{codigo:b.dataset.cod,ativo:b.dataset.ativo==="1"}:{ativo:b.dataset.ativo==="1"},rotulo:b.dataset.rot||""}; openFinCliente(cnpj); });
+  const mb=modal.querySelector("#finMoverBtn"); if(mb) mb.onclick=()=>{ const aba=modal.querySelector("#finMover").value; if(aba===c.aba) return;
+    FINACAO={cnpj,tipo:"mover_aba",payload:{aba}}; openFinCliente(cnpj); };
+  const cn=modal.querySelector("#finCancel"); if(cn) cn.onclick=()=>{ FINACAO=null; openFinCliente(cnpj); };
+  const ok=modal.querySelector("#finOk"); if(ok) ok.onclick=async()=>{
+    const m=(modal.querySelector("#finMotivo")?.value||"").trim();
+    if(exigeMotivo(ac)&&!m){ modal.querySelector("#finMsg").textContent="Informe o motivo."; return; }
+    ok.disabled=true; ok.textContent="Enviando...";
+    try{ await enviarComandoFin(ac.tipo,cnpj,{...ac.payload,motivo:m}); FINACAO=null; openFinCliente(cnpj); }
+    catch(e){ ok.disabled=false; ok.textContent="Enviar pedido"; modal.querySelector("#finMsg").textContent="Não consegui enviar: "+(e.message||e); }
+  };
 }
 
 // ---------- DASHBOARD ----------
