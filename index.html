@@ -1992,7 +1992,9 @@ function _wmDe(nome){
   const t=tk(nome);
   if(ex&&ex.dias>0) return ex;
   if(t.length<2) return ex||null;
-  const cands=Object.values(WM.por).filter(a=>{ const u=tk(a.nome); return u.length>=2&&u[0]===t[0]&&u[u.length-1]===t[t.length-1]; });
+  // casa se o primeiro nome é igual e os demais nomes aparecem, na mesma ordem, dentro do nome completo do Dashboard
+  const _sub=(u)=>{ if(u[0]!==t[0]) return false; let i=1; for(let j=1;j<u.length&&i<t.length;j++){ if(u[j]===t[i]) i++; } return i===t.length; };
+  const cands=Object.values(WM.por).filter(a=>_sub(tk(a.nome)));
   const comDados=cands.filter(a=>a.dias>0);
   if(comDados.length===1) return comDados[0];
   return ex||(cands.length===1?cands[0]:null);
