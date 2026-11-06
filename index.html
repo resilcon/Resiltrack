@@ -126,6 +126,23 @@
   .modal-head .m-chips{display:flex;gap:8px;flex-wrap:wrap}.modal-head .m-chip{font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px;font-weight:500}
   .m-score{text-align:center;flex:none}.m-score .big{font-family:"Sora",sans-serif;font-size:34px;font-weight:700;line-height:1}.m-score .of{font-size:12px;opacity:.8}.m-score .tag{font-size:11px;font-weight:600;margin-top:6px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:999px;display:inline-block}
   .modal-body{padding:22px 24px;display:flex;flex-direction:column;gap:18px}
+  /* produtividade: pop-up centralizado */
+  .overlay.prodov{align-items:center;overflow-y:auto}
+  .modal.prodm{max-width:980px;max-height:90vh;overflow-y:auto}
+  .prodhead{background:#066789;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .prodhead h3{font-size:19px;font-weight:700;margin:2px 0 4px}.prodhead .m-sub{font-size:12px;opacity:.88}
+  .prodhead .close-x{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;width:32px;height:32px;cursor:pointer}
+  .prodbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .psec{display:flex;flex-direction:column;gap:10px}.psec h4{font-family:"Sora",sans-serif;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#066789;margin:0}
+  .ptile{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface)}.ptile .pl{font-size:11px;color:var(--ink-2)}.ptile .pv{font-size:18px;font-weight:700}.ptile .ps{font-size:11px;color:var(--ink-2);margin-top:2px}
+  .pgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.pgrid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .pbar{display:grid;grid-template-columns:140px 1fr auto;gap:10px;align-items:center;font-size:13px;margin-bottom:6px}.pbt{height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}.pbt div{height:100%;background:#066789}
+  .pstack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2)}.plegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:6px}.plegend b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+  .pbig{font-family:"Sora",sans-serif;font-size:30px;font-weight:700;color:#066789}.pbig small{font-size:12px;font-weight:500;color:var(--ink-2)}
+  .papps>div{display:grid;grid-template-columns:24px 1fr auto 56px auto;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px}.papps .pan{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.papps em{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px}.papps em.ok{background:#dff5e8;color:#16714a}.papps em.neu{background:var(--surface-2);color:var(--ink-2)}
+  .pcls{display:flex;gap:16px;flex-wrap:wrap}.pcls>div{display:flex;gap:8px;align-items:center}
+  .ptbl{width:100%;border-collapse:collapse;font-size:13px}.ptbl th{text-align:left;font-size:11px;color:#066789;padding:6px 8px;position:sticky;top:0;background:var(--surface)}.ptbl td{padding:6px 8px;border-top:1px solid var(--border);white-space:nowrap}
+  @media (max-width:700px){.pgrid4{grid-template-columns:repeat(2,1fr)}.pgrid3{grid-template-columns:1fr 1fr}.pbar{grid-template-columns:100px 1fr}.pbar .pbv{grid-column:1/-1}}
   .panel{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
   .panel h4{font-family:"Sora",sans-serif;font-size:13px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:8px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
@@ -1975,7 +1992,7 @@ async function loadWM(){
     const ini=new Date(new Date(fim+"T12:00:00").getTime()-(dias-1)*864e5).toISOString().slice(0,10);
     const rows=await _pubAll("vw_resumo_diario","colaborador_id,nome,supervisor,data,horas_trabalhadas,workmonitor_total,total_gclick,metricas",[["gte","data",ini],["lte","data",fim]]);
     const por={};
-    rows.forEach(r=>{ const k=_semAcento(r.nome); const a=por[k]||(por[k]={nome:r.nome,gestor:r.supervisor,g:0,t:0,w:0,dias:0,pp:[]});
+    rows.forEach(r=>{ const k=_semAcento(r.nome); const a=por[k]||(por[k]={id:r.colaborador_id,nome:r.nome,gestor:r.supervisor,g:0,t:0,w:0,dias:0,pp:[]});
       const g=_intMin(r.total_gclick)||0,t=_intMin(r.horas_trabalhadas)||0,w=_intMin(r.workmonitor_total)||0; a.g+=g;a.t+=t;a.w+=w; if(g>0||t>0||w>0) a.dias++;
       const pg=r.metricas&&r.metricas.produtividade_geral_pct; if(pg!=null&&!isNaN(+pg)) a.pp.push(+pg); if(r.supervisor) a.gestor=r.supervisor; });
     Object.values(por).forEach(a=>{ const d=a.dias||1; a.gm=a.g/d; a.tm=a.t/d; a.wm=a.w/d; a.prod=a.pp.length?a.pp.reduce((x,y)=>x+y,0)/a.pp.length:null; });
@@ -1999,6 +2016,131 @@ function _wmDe(nome){
   if(comDados.length===1) return comDados[0];
   return ex||(cands.length===1?cands[0]:null);
 }
+// ---------- MODAL DE PRODUTIVIDADE (dia / semana / mês) ----------
+let PRODST={id:null,nome:"",modo:"dia",ref:"",seq:0};
+const _iso=d=>d.toISOString().slice(0,10);
+const _addD=(s,n)=>_iso(new Date(new Date(s+"T12:00:00Z").getTime()+n*864e5));
+const _fd=s=>s?s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4):"—";
+const _fd2=s=>s?s.slice(8,10)+"/"+s.slice(5,7):"—";
+const _n=v=>(v==null||v===""||isNaN(+v))?null:+v;
+const _hm0=m=>m==null?"—":(Math.round(m)<=0?"0h 00m":_hm(m));
+const _hmS=m=>m==null?"—":((m<0?"-":"")+(_hm0(Math.abs(m))));
+const _pc=(a,b)=>(a==null||!b)?null:a/b*100;
+const _fp=n=>n==null?"—":(Math.round(n*10)/10).toString().replace(".",",")+"%";
+const _fn=n=>n==null?"—":Math.round(n).toLocaleString("pt-BR");
+const _MES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function _periodo(modo,ref){
+  if(modo==="dia") return {ini:ref,fim:ref};
+  if(modo==="semana"){ const dow=(new Date(ref+"T12:00:00Z").getUTCDay()+6)%7; const ini=_addD(ref,-dow); return {ini,fim:_addD(ini,6)}; }
+  return {ini:ref.slice(0,8)+"01",fim:_iso(new Date(Date.UTC(+ref.slice(0,4),+ref.slice(5,7),0,12)))};
+}
+function _moveRef(modo,ref,dir){
+  if(modo==="dia") return _addD(ref,dir);
+  if(modo==="semana") return _addD(ref,7*dir);
+  return _iso(new Date(Date.UTC(+ref.slice(0,4),+ref.slice(5,7)-1+dir,1,12)));
+}
+function _tituloPer(modo,p){ return modo==="dia"?_fd(p.ini):modo==="semana"?"Semana de "+_fd(p.ini)+" a "+_fd(p.fim):_MES[+p.ini.slice(5,7)-1]+" de "+p.ini.slice(0,4); }
+async function _prodDados(id,ini,fim){
+  const f=[["eq","colaborador_id",id],["gte","data",ini],["lte","data",fim]];
+  const [res,neo,apps]=await Promise.all([
+    _pubAll("vw_resumo_diario","data,horas_trabalhadas,workmonitor_total,total_gclick,classificacao,metricas",f),
+    _pubAll("neocode_diario","data,produtivo,neutro,distracao,ausencias,atividades,aproveitaveis,total,metricas",f),
+    _pubAll("apps_uso_diario","data,posicao,aplicativo,tempo_min,pct_tempo,produtividade",f)]);
+  res.sort((a,b)=>a.data<b.data?-1:1);
+  return {res,neo,apps};
+}
+function _prodAgg(d){
+  const dias=d.res.map(r=>{ const m=r.metricas||{}; return {data:String(r.data).slice(0,10),p:_intMin(r.horas_trabalhadas)||0,w:_intMin(r.workmonitor_total)||0,g:_intMin(r.total_gclick)||0,cl:r.classificacao||"SEM LANCAMENTO",pg:_n(m.produtividade_geral_pct),teclas:_n(m.teclas),cliques:_n(m.cliques),m}; });
+  const trab=dias.filter(x=>x.p>0||x.w>0||x.g>0);
+  const sum=k=>trab.reduce((s,x)=>s+x[k],0); const nT=trab.length||0;
+  const neo={prod:0,neu:0,imp:0,aus:0,atv:0,apr:0}; d.neo.forEach(r=>{ neo.prod+=_intMin(r.produtivo)||0; neo.neu+=_intMin(r.neutro)||0; neo.imp+=_intMin(r.distracao)||0; neo.aus+=_intMin(r.ausencias)||0; neo.atv+=_n(r.atividades)||0; neo.apr+=_n(r.aproveitaveis)||0; });
+  const ap={}; d.apps.forEach(a=>{ const k=a.aplicativo||"—"; const o=ap[k]||(ap[k]={nome:k,min:0,prod:a.produtividade}); o.min+=_n(a.tempo_min)||0; });
+  const totApp=Object.values(ap).reduce((s,a)=>s+a.min,0);
+  const apps=Object.values(ap).sort((a,b)=>b.min-a.min).slice(0,5).map(a=>({...a,pct:totApp?a.min/totApp*100:null}));
+  const pgs=trab.map(x=>x.pg).filter(x=>x!=null);
+  const cls={}; dias.forEach(x=>{ cls[x.cl]=(cls[x.cl]||0)+1; });
+  const tk=trab.map(x=>x.teclas).filter(x=>x!=null), cq=trab.map(x=>x.cliques).filter(x=>x!=null);
+  return {dias,trab,nT,p:sum("p"),w:sum("w"),g:sum("g"),neo,apps,prodMed:pgs.length?pgs.reduce((a,b)=>a+b,0)/pgs.length:null,cls,
+    teclas:tk.reduce((a,b)=>a+b,0),cliques:cq.reduce((a,b)=>a+b,0),nTk:tk.length,nCq:cq.length};
+}
+function _clsBadge(c){ const k=String(c||"").toUpperCase(); const st=k.includes("ABAIXO")?"background:#fdf0d5;color:#8a5a00":k.includes("ACIMA")?"background:#e0f0fb;color:#0b5a86":k==="OK"?"background:#dff5e8;color:#16714a":"background:#fbe3e6;color:#a3243a"; return `<span style="${st};font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap">${esc(c||"SEM LANCAMENTO")}</span>`; }
+const _pTile=(l,v,s)=>`<div class="ptile"><div class="pl">${l}</div><div class="pv">${v}</div>${s?`<div class="ps">${s}</div>`:""}</div>`;
+const _pSec=(t,b)=>`<section class="psec"><h4>${t}</h4>${b}</section>`;
+function _pBarra(rot,v,max,pctTxt){ return `<div class="pbar"><span class="pbl">${rot}</span><div class="pbt"><div style="width:${max?Math.min(100,(v||0)/max*100):0}%"></div></div><span class="pbv">${_hm0(v)}${pctTxt?` · ${pctTxt}`:""}</span></div>`; }
+function _pStack(prod,neu,imp){ const s=prod+neu+imp; if(s<=0) return '<div class="sub">Sem dados do Work Monitor no período.</div>';
+  return `<div class="pstack"><i style="width:${prod/s*100}%;background:#12a36c"></i><i style="width:${neu/s*100}%;background:#94a3b8"></i><i style="width:${imp/s*100}%;background:#cf4257"></i></div>
+  <div class="plegend"><span><b style="background:#12a36c"></b>Produtivo ${_hm0(prod)} (${_fp(prod/s*100)})</span><span><b style="background:#94a3b8"></b>Neutro ${_hm0(neu)} (${_fp(neu/s*100)})</span><span><b style="background:#cf4257"></b>Improdutivo ${_hm0(imp)} (${_fp(imp/s*100)})</span></div>`; }
+function _pGrafico(dias){
+  if(!dias.length) return '<div class="sub">Sem registros no período.</div>';
+  const W=Math.max(560,dias.length*34), H=190, pad=26, mx=Math.max(60,...dias.flatMap(x=>[x.p,x.w,x.g]))*1.08, bw=Math.max(5,Math.min(9,(W-pad)/dias.length/3.4));
+  const step=(W-pad)/dias.length; let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,560)}px;height:${H}px" role="img" aria-label="Horas por dia">`;
+  for(let h=0;h<=Math.ceil(mx/60);h+=2){ const y=H-pad-(h*60/mx)*(H-pad-8); s+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="currentColor" opacity=".12"/><text x="${pad-4}" y="${y+3}" font-size="9" text-anchor="end" fill="currentColor" opacity=".6">${h}h</text>`; }
+  dias.forEach((x,i)=>{ const cx=pad+step*i+step/2; [[x.p,"#066789",-1],[x.w,"#94a3b8",0],[x.g,"#d97706",1]].forEach(([v,c,o])=>{ const h=(v/mx)*(H-pad-8); s+=`<rect x="${cx+o*(bw+1)-bw/2}" y="${H-pad-h}" width="${bw}" height="${h}" fill="${c}" rx="1.5"><title>${_fd(x.data)}: ${_hm0(v)}</title></rect>`; });
+    if(dias.length<=16||i%2===0) s+=`<text x="${cx}" y="${H-9}" font-size="9" text-anchor="middle" fill="currentColor" opacity=".7">${_fd2(x.data)}</text>`; });
+  return s+`</svg><div class="plegend"><span><b style="background:#066789"></b>Ponto (Tangerino)</span><span><b style="background:#94a3b8"></b>Work Monitor</span><span><b style="background:#d97706"></b>G-Click</span></div>`; }
+function _pTabela(dias){
+  return `<div style="overflow:auto;max-height:300px"><table class="ptbl"><thead><tr><th>Data</th><th>Ponto</th><th>Work Monitor</th><th>G-Click</th><th>Produtividade</th><th>Classificação</th></tr></thead><tbody>${[...dias].reverse().map(x=>`<tr><td>${_fd(x.data)}</td><td>${_hm0(x.p)}</td><td>${_hm0(x.w)}</td><td>${_hm0(x.g)}</td><td>${_fp(x.pg)}</td><td>${_clsBadge(x.cl)}</td></tr>`).join("")}</tbody></table></div>`; }
+function _pComparativo(a){
+  const mx=Math.max(a.p,a.w,a.g,1);
+  return `${_pBarra("Ponto (Tangerino)",a.p,mx,a.p?"100%":"")}${_pBarra("Work Monitor",a.w,mx,_fp(_pc(a.w,a.p)))}${_pBarra("G-Click",a.g,mx,_fp(_pc(a.g,a.p)))}
+  <div class="pgrid3" style="margin-top:10px">${[["Work Monitor vs Ponto",a.w,a.p],["G-Click vs Ponto",a.g,a.p],["G-Click vs Work Monitor",a.g,a.w]].map(([l,x,y])=>_pTile(l,_hmS(x-y),_fp(_pc(x,y)))).join("")}</div>`; }
+function _pDia(a,ant,r){
+  const x=a.dias[0]; if(!x) return '<div class="sub" style="padding:18px 0">Sem registros neste dia.</div>';
+  const m=x.m, n=a.neo, tot=n.prod+n.neu+n.imp;
+  const vr=(v,u)=>{ if(v==null||u==null||!u) return '<span class="sub">sem comparação</span>'; const d=(v-u)/u*100; return `<span style="color:${d>0?'#16714a':d<0?'#a3243a':'inherit'}">${d>0?"▲":d<0?"▼":"="} ${_fp(Math.abs(d))} vs dia anterior</span>`; };
+  const u=ant&&ant.dias[0]; 
+  return _pSec("Classificação do dia",`<div>${_clsBadge(x.cl)}</div>`)
+  +_pSec("Tempo WorkMonitor",`<div class="pgrid4">${_pTile("Produtivo",_hm0(n.prod),_fp(_pc(n.prod,tot)))}${_pTile("Neutro",_hm0(n.neu),_fp(_pc(n.neu,tot)))}${_pTile("Improdutivo",_hm0(n.imp),_fp(_pc(n.imp,tot)))}${_pTile("Ausências",_hm0(n.aus),"")}</div>`)
+  +_pSec("Comparativo Ponto x WorkMonitor x G-Click",_pComparativo(a))
+  +_pSec("Contadores",`<div class="pgrid4">${_pTile("Atividades",_fn(n.atv||null))}${_pTile("Aproveitáveis",_fn(n.apr||null))}${_pTile("Trocas de aplicativo",_fn(_n(m.trocas_aplicativo)))}${_pTile("Registros de atividade",_fn(_n(m.registros_atividade)))}${_pTile("Maior atividade contínua",esc(m.maior_atividade_continua||"—"))}${_pTile("Horário inicial",esc(m.horario_inicial_destaque||"—"))}${_pTile("Horário final",esc(m.horario_final_destaque||"—"))}${_pTile("Apps utilizados",_fn(_n(m.apps_utilizados)))}</div>`)
+  +_pSec("Produtividade geral",`<div class="pbig">${_fp(x.pg)}</div>${_pStack(n.prod,n.neu,n.imp)}`)
+  +_pSec("Top 5 aplicativos",a.apps.length?`<div class="papps">${a.apps.map((p,i)=>`<div><b>${i+1}</b><span class="pan">${esc(p.nome)}</span><span>${_hm0(p.min)}</span><span class="sub">${_fp(p.pct)}</span><em class="${String(p.prod||'').toLowerCase().startsWith('prod')?'ok':'neu'}">${esc(p.prod||"neutro")}</em></div>`).join("")}</div>`:'<div class="sub">Sem aplicativos registrados.</div>')
+  +_pSec("Destaques do dia",`<div class="pgrid3">${_pTile("App mais usado",esc(m.app_mais_usado||"—"))}${_pTile("Apps utilizados",_fn(_n(m.apps_utilizados)))}${_pTile("Maior atividade contínua",esc(m.maior_atividade_continua||"—"))}</div>`)
+  +_pSec("Teclas e cliques — comparação com o dia anterior",`<div class="pgrid2"><div class="ptile"><div class="pl">Teclas</div><div class="pv">${_fn(x.teclas)}</div><div class="ps">${vr(x.teclas,u&&u.teclas)}</div></div><div class="ptile"><div class="pl">Cliques</div><div class="pv">${_fn(x.cliques)}</div><div class="ps">${vr(x.cliques,u&&u.cliques)}</div></div></div>`);
+}
+function _pPeriodo(a,ant,modo,r){
+  if(!a.dias.length) return '<div class="sub" style="padding:18px 0">Sem registros neste período.</div>';
+  const nT=a.nT||1, dlt=(v,u)=>{ if(u==null||!u) return '<span class="sub">sem período anterior</span>'; const d=(v-u)/u*100; return `<span style="color:${d>0?'#16714a':d<0?'#a3243a':'inherit'}">${d>0?"▲":d<0?"▼":"="} ${_fp(Math.abs(d))} vs ${modo==="semana"?"semana":"mês"} anterior</span>`; };
+  const A=ant&&ant.nT?ant:null, n=a.neo;
+  const melhor=[...a.trab].filter(x=>x.pg!=null).sort((x,y)=>y.pg-x.pg)[0], pior=[...a.trab].filter(x=>x.pg!=null).sort((x,y)=>x.pg-y.pg)[0];
+  const cl=Object.entries(a.cls).sort((x,y)=>y[1]-x[1]);
+  return _pSec("Resumo do período",`<div class="pgrid4">${_pTile("Dias trabalhados",a.nT,`de ${a.dias.length} dia(s) com registro`)}${_pTile("Ponto (Tangerino)",_hm0(a.p),`média ${_hm0(a.p/nT)} por dia<br>${dlt(a.p/nT,A&&A.p/A.nT)}`)}${_pTile("Work Monitor",_hm0(a.w),`média ${_hm0(a.w/nT)} por dia<br>${dlt(a.w/nT,A&&A.w/A.nT)}`)}${_pTile("G-Click",_hm0(a.g),`média ${_hm0(a.g/nT)} por dia<br>${dlt(a.g/nT,A&&A.g/A.nT)}`)}</div>`)
+  +_pSec("Comparativo Ponto x WorkMonitor x G-Click",_pComparativo(a))
+  +_pSec("Produtividade no Work Monitor",`<div class="pbig">${_fp(a.prodMed)} <small>média diária</small></div>${_pStack(n.prod,n.neu,n.imp)}`)
+  +_pSec("Classificação dos dias",`<div class="pcls">${cl.map(([k,v])=>`<div>${_clsBadge(k)}<b>${v}</b><span class="sub">${_fp(v/a.dias.length*100)}</span></div>`).join("")}</div>`)
+  +_pSec("Destaques",`<div class="pgrid3">${_pTile("Melhor dia",melhor?_fd(melhor.data):"—",melhor?"produtividade "+_fp(melhor.pg):"")}${_pTile("Dia mais baixo",pior?_fd(pior.data):"—",pior?"produtividade "+_fp(pior.pg):"")}${_pTile("Teclas e cliques",_fn(a.teclas+a.cliques),`média ${_fn(a.nTk?(a.teclas+a.cliques)/Math.max(a.nTk,a.nCq):null)} por dia`)}</div>`)
+  +_pSec("Top 5 aplicativos do período",a.apps.length?`<div class="papps">${a.apps.map((p,i)=>`<div><b>${i+1}</b><span class="pan">${esc(p.nome)}</span><span>${_hm0(p.min)}</span><span class="sub">${_fp(p.pct)}</span><em class="${String(p.prod||'').toLowerCase().startsWith('prod')?'ok':'neu'}">${esc(p.prod||"neutro")}</em></div>`).join("")}</div>`:'<div class="sub">Sem aplicativos registrados.</div>')
+  +_pSec("Horas por dia",_pGrafico(a.dias))
+  +_pSec("Dia a dia",_pTabela(a.dias));
+}
+async function abrirProdutividade(nome,id,ref){
+  const w=_wmDe(nome); const cid=id||(w&&w.id);
+  if(!cid){ (typeof toast==='function'?toast:alert)("Esse colaborador não foi encontrado no Dashboard Gestores."); return; }
+  PRODST={id:cid,nome:(w&&w.nome)||nome,nomeRT:nome,modo:PRODST.modo||"dia",ref:ref||WMPER.dia||_iso(new Date()),seq:0};
+  overlay.classList.add("prodov"); modal.classList.add("prodm");
+  desenharProd();
+}
+function fecharProd(){ overlay.classList.remove("prodov"); modal.classList.remove("prodm"); closeModal(); }
+async function desenharProd(){
+  const S=PRODST, seq=++S.seq, per=_periodo(S.modo,S.ref), prev=_periodo(S.modo,_moveRef(S.modo,S.ref,-1));
+  const head=`<div class="prodhead"><div><div class="m-sub">Produtividade</div><h3>${esc(S.nomeRT||S.nome)}</h3><div class="m-sub">${esc(_tituloPer(S.modo,per))}</div></div><button class="close-x" id="pdX" aria-label="Fechar">✕</button></div>
+  <div class="prodbar"><div class="seg" id="pdModo">${[["dia","Dia"],["semana","Semana"],["mes","Mês"]].map(([k,l])=>`<button data-m="${k}" class="${S.modo===k?'on':''}">${l}</button>`).join("")}</div>
+  <button class="icon-act" id="pdPrev" title="Anterior">‹</button><input type="date" id="pdData" class="fsel" value="${S.ref}"><button class="icon-act" id="pdNext" title="Próximo">›</button></div>`;
+  openModal(head+`<div class="modal-body" id="pdBody"><div class="sub">Carregando...</div></div>`);
+  const bind=()=>{ const x=modal.querySelector("#pdX"); if(x) x.onclick=fecharProd;
+    modal.querySelectorAll("#pdModo [data-m]").forEach(b=>b.onclick=()=>{ S.modo=b.dataset.m; desenharProd(); });
+    const pv=modal.querySelector("#pdPrev"), nx=modal.querySelector("#pdNext"), dt=modal.querySelector("#pdData");
+    if(pv) pv.onclick=()=>{ S.ref=_moveRef(S.modo,S.ref,-1); desenharProd(); }; if(nx) nx.onclick=()=>{ S.ref=_moveRef(S.modo,S.ref,1); desenharProd(); };
+    if(dt) dt.onchange=()=>{ if(dt.value){ S.ref=dt.value; desenharProd(); } }; };
+  bind();
+  try{
+    const [d,dp]=await Promise.all([_prodDados(S.id,per.ini,per.fim),_prodDados(S.id,prev.ini,prev.fim)]);
+    if(seq!==S.seq) return;
+    const a=_prodAgg(d), ant=_prodAgg(dp);
+    const body=modal.querySelector("#pdBody"); if(body) body.innerHTML=S.modo==="dia"?_pDia(a,ant,per):_pPeriodo(a,ant,S.modo,per);
+  }catch(e){ const body=modal.querySelector("#pdBody"); if(body) body.innerHTML='<div class="sub" style="color:var(--crit)">Não consegui carregar a produtividade: '+esc(e.message||String(e))+'</div>'; }
+}
+
 function viewColaboradores(v){
   const map=new Map();
   ATEND.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
@@ -2057,7 +2199,7 @@ function viewColaboradores(v){
     rows.length?rows.map(r=>`<tr><td><div class="perf-colab"><span class="kav" style="background:${_corNome(r.nome)};width:30px;height:30px;font-size:11px">${esc(_iniciais(r.nome))}</span><div><button class="link-name" data-col="${escAttr(String(r.key))}">${esc(r.nome)}</button>${r.ativo===false?'<div class="sub">inativo</div>':''}</div></div></td>
       <td class="sub hide-md">${esc(r.setor||'—')}</td>
       <td class="sub gestorc">${esc((r.w&&r.w.gestor)||"—")}</td>
-      <td class="center num">${hmc(r.w&&r.w.gm)}</td><td class="center num">${hmc(r.w&&r.w.tm)}</td><td class="center num" style="font-weight:600">${hmc(r.w&&r.w.wm)}</td>
+      <td class="center num">${hmc(r.w&&r.w.gm)}</td><td class="center num">${hmc(r.w&&r.w.tm)}</td><td class="center num" style="font-weight:600;cursor:pointer" data-prod="${escAttr(r.nome)}" title="Ver produtividade (dia, semana e mês)">${hmc(r.w&&r.w.wm)}</td>
       <td class="center"><span class="score-num" style="color:${scoreColor(r.score)}">${r.score===null?"—":r.score.toFixed(2).replace(".",",")}</span></td>
       <td class="center">${r.rkEmp?`<span class="rk dark">#${r.rkEmp}</span>`:'<span class="sub">—</span>'}</td>
       <td class="center"><span class="rk">${r.qtd}</span></td>
@@ -2066,7 +2208,7 @@ function viewColaboradores(v){
       <td class="center hide-md">${r.ab?`<span class="pillnum crit">${r.ab}<small>(${r.ab+r.ac?Math.round(r.ab/(r.ab+r.ac)*1000)/10:0}%)</small></span>`:'<span class="pillnum">0<small>(0,0%)</small></span>'}</td>
       <td class="center">${r.pct===null?'<span class="sub">—</span>':`<span class="pillnum good">${r.ac}<small>(${(Math.round(r.pct*10)/10).toString().replace(".",",")}%)</small></span>`}</td>
       <td class="center"><span class="dot" title="${perfTxt[r.status]}" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${r.status==='good'?'var(--good)':(r.status==='warn'?'var(--warn)':(r.status==='crit'?'var(--crit)':'var(--muted)'))}"></span></td>
-      <td class="center"><span title="${r.wm.painel?'Com registro no Work Monitor no período':'Sem registro no Work Monitor no período'}" style="color:${r.wm.painel?'var(--good)':'var(--crit)'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="14" height="10" rx="1.5"/><path d="M7 18h6M10 14v4"/>${r.wm.painel?'<path d="M16 15l2 2 4-4"/>':'<path d="M17 14l5 5M22 14l-5 5"/>'}</svg></span></td>
+      <td class="center"><span data-prod="${escAttr(r.nome)}" role="button" style="cursor:pointer;color:${r.wm.painel?'var(--good)':'var(--crit)'}" title="${r.wm.painel?'Ver produtividade (dia, semana e mês)':'Sem registro no período. Clique para ver a produtividade'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="14" height="10" rx="1.5"/><path d="M7 18h6M10 14v4"/>${r.wm.painel?'<path d="M16 15l2 2 4-4"/>':'<path d="M17 14l5 5M22 14l-5 5"/>'}</svg></span></td>
       <td class="right"><button class="icon-act" data-col="${escAttr(String(r.key))}" title="Evolução e detalhe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></button><button class="icon-act" data-col="${escAttr(String(r.key))}" title="Relatório"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M9 13h6M9 17h6M8 21h8a2 2 0 0 0 2-2V8l-5-5H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z"/></svg></button></td></tr>`).join("")
     :`<tr><td colspan="15" class="empty">Nenhum colaborador no filtro.</td></tr>`
   }</tbody></table></div>`;
@@ -2076,6 +2218,7 @@ function viewColaboradores(v){
   const wd=v.querySelector("#wmDia"); if(wd) wd.onchange=()=>{ if(wd.value){ WMPER.dia=wd.value; WM=null; viewColaboradores(v); } };
   const clp=v.querySelector("#clPainel"); if(clp) clp.onchange=()=>{ CLFIL.painel=clp.value; viewColaboradores(v); };
   const clv=v.querySelector("#clVinc"); if(clv) clv.onchange=()=>{ CLFIL.vinculo=clv.value; viewColaboradores(v); };
+  v.querySelectorAll("[data-prod]").forEach(b=>b.onclick=()=>abrirProdutividade(b.dataset.prod));
   const clo=v.querySelector("#clSort"); if(clo) clo.onchange=()=>{ CLFIL.sort=clo.value; viewColaboradores(v); };
   v.querySelectorAll("th.sortable").forEach(t=>t.onclick=()=>{ CLFIL.sort=t.dataset.sort; viewColaboradores(v); });
   bindActions();
@@ -2447,7 +2590,7 @@ function bindActions(){
 
 // ---------- MODAIS ----------
 const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
-function closeModal(){ overlay.classList.remove("open"); modal.innerHTML=""; }
+function closeModal(){ overlay.classList.remove("open","prodov"); modal.classList.remove("prodm"); modal.innerHTML=""; }
 overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 function openModal(html){ modal.innerHTML=html; overlay.classList.add("open"); modal.scrollTop=0;
