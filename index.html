@@ -1983,6 +1983,20 @@ async function loadWM(){
   }catch(e){ console.warn("wm:",e); WM={por:{},ini:"",fim:"",n:0}; WMERR=e.message||String(e); }
   WMLOADING=false; if(MODE==="atendimentos"&&TAB==="colaboradores") render();
 }
+// vincula o colaborador do Resiltrack ao do Dashboard Gestores: nome exato, senão primeiro + último nome (ex.: "Tracy Campos" = "TRACY LIMA CAMPOS")
+function _wmDe(nome){
+  if(!WM||!WM.por) return null;
+  const k=_semAcento(nome); const ex=WM.por[k];
+  const _ign=new Set(["de","da","do","das","dos","e"]);
+  const tk=s=>_semAcento(s).split(" ").filter(t=>t&&!_ign.has(t));
+  const t=tk(nome);
+  if(ex&&ex.dias>0) return ex;
+  if(t.length<2) return ex||null;
+  const cands=Object.values(WM.por).filter(a=>{ const u=tk(a.nome); return u.length>=2&&u[0]===t[0]&&u[u.length-1]===t[t.length-1]; });
+  const comDados=cands.filter(a=>a.dias>0);
+  if(comDados.length===1) return comDados[0];
+  return ex||(cands.length===1?cands[0]:null);
+}
 function viewColaboradores(v){
   const map=new Map();
   ATEND.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
@@ -1990,7 +2004,7 @@ function viewColaboradores(v){
     const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length?ac/cn.length*100:null;
     const sc=m===null?null:Math.max(0,m-(pct!==null&&pct<85?(85-pct)/100*3:0)); // score = média, descontando até 3 pontos quando menos de 85% das notas são >= 7 (fórmula provisória)
     const canais={}; g.list.forEach(a=>{ const c=a.canal||"whatsapp"; canais[c]=(canais[c]||0)+1; });
-    const w=(WM&&WM.por[_semAcento(g.nome)])||null;
+    const w=_wmDe(g.nome);
     return {...g,qtd:g.list.length,media:m,ab,ac,pct,score:sc,canais,w,wm:{painel:!!(w&&w.wm>0)},status:perfStatus(pct)}; });
   const _rk=(arr,key)=>{ arr.filter(r=>r.score!==null).sort((a,b)=>b.score-a.score).forEach((r,i)=>r[key]=i+1); };
   _rk(rows,"rkEmp");
