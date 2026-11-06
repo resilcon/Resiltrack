@@ -284,7 +284,7 @@
   .kcard-tags{margin-top:5px;gap:4px}
   .crm-bar{margin:0 0 10px}.crm-tot{font-size:12.5px;color:var(--ink-2);font-weight:600;align-self:center;margin-right:6px}
   .wrap.wide{max-width:none;padding:12px 14px 40px}
-  .perf-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(135deg,#3b0f6b,#4b1a82);color:#fff;border-radius:12px 12px 0 0}
+  .perf-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#066789;color:#fff;border-radius:12px 12px 0 0}
   .perf-head .pi{width:36px;height:36px;border-radius:10px;background:#f08a3c;display:grid;place-items:center;color:#fff}
   .perf-head b{display:block;font-family:"Sora",sans-serif;font-size:15px}.perf-head span{font-size:12px;opacity:.8}
   .perf-card{overflow:hidden}
@@ -299,6 +299,7 @@
   .perf-tbl .pillnum{padding:4px 8px}
   .perf-tbl .canalbar{width:48px}
   .perf-tbl .icon-act{padding:4px}
+  .perf-tbl .gestorc{max-width:110px}
   .perf-colab{display:flex;align-items:center;gap:10px}
   .rk{display:inline-block;min-width:34px;padding:3px 10px;border-radius:999px;border:1px solid var(--border-strong,var(--border));font-size:12px;font-weight:700;background:var(--surface)}
   .rk.dark{background:#1f2a3d;color:#fff;border-color:#1f2a3d}
@@ -1955,11 +1956,33 @@ function openEditarColunas(){
 function fmtCnpj(c){ if(!c) return "sem CNPJ"; const d=String(c).replace(/\D/g,""); if(d.length!==14) return c; return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5"); }
 
 // ---------- COLABORADORES ----------
-// Dados de EXEMPLO do WorkMonitor (determinísticos por nome) até a integração existir
-function _wmExemplo(nome){ let h=0; for(const ch of String(nome||"")) h=(h*131+ch.charCodeAt(0))%100003; return {pct:30+(h%6000)/100, painel:(h%7)!==0}; }
 function _canalBar(canais,total){ const ent=Object.entries(canais||{}); if(!total||!ent.length) return '<span class="sub">—</span>';
   const cor={whatsapp:"#5b6ef0"}; const alt=["#12a36c","#d99a1f","#cf4257"]; let k=0;
   return `<div class="canalbar" title="${escAttr(ent.map(([c,n])=>c+": "+n).join(" · "))}">${ent.sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<span style="width:${Math.max(4,n/total*100)}%;background:${cor[c]||alt[(k++)%alt.length]}"></span>`).join("")}</div>`; }
+// ---------- WORK MONITOR / G-CLICK / TANGERINO (tabelas do Dashboard Gestores, schema public) ----------
+let WM=null, WMLOADING=false, WMERR="", WMPER={modo:"dia",dia:""};
+const _semAcento=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+function _intMin(v){ if(v==null) return null; const m=String(v).match(/^(?:(\d+)\s+days?\s+)?(-?\d+):(\d{2})(?::(\d{2}))?/); if(!m) return null; return (+m[1]||0)*1440+(+m[2])*60+(+m[3])+((+m[4]||0)/60); }
+const _hm=m=>{ if(m==null||m<=0) return null; const r=Math.round(m); return Math.floor(r/60)+"h "+String(r%60).padStart(2,"0")+"m"; };
+async function _pubAll(table,cols,filtros){
+  let out=[],from=0; for(;;){ let q=sb.from(table).select(cols); (filtros||[]).forEach(f=>{ q=q[f[0]](f[1],f[2]); }); const {data,error}=await q.range(from,from+999); if(error) throw error; out=out.concat(data||[]); if(!data||data.length<1000) break; from+=1000; }
+  return out; }
+async function loadWM(){
+  WMLOADING=true;
+  try{
+    if(!WMPER.dia){ const {data,error}=await sb.from("vw_resumo_diario").select("data").order("data",{ascending:false}).limit(1); if(error) throw error; WMPER.dia=(data&&data[0]&&data[0].data)||new Date().toISOString().slice(0,10); }
+    const fim=WMPER.dia; const dias=WMPER.modo==="dia"?1:(WMPER.modo==="7"?7:30);
+    const ini=new Date(new Date(fim+"T12:00:00").getTime()-(dias-1)*864e5).toISOString().slice(0,10);
+    const rows=await _pubAll("vw_resumo_diario","colaborador_id,nome,supervisor,data,horas_trabalhadas,workmonitor_total,total_gclick,metricas",[["gte","data",ini],["lte","data",fim]]);
+    const por={};
+    rows.forEach(r=>{ const k=_semAcento(r.nome); const a=por[k]||(por[k]={nome:r.nome,gestor:r.supervisor,g:0,t:0,w:0,dias:0,pp:[]});
+      const g=_intMin(r.total_gclick)||0,t=_intMin(r.horas_trabalhadas)||0,w=_intMin(r.workmonitor_total)||0; a.g+=g;a.t+=t;a.w+=w; if(g>0||t>0||w>0) a.dias++;
+      const pg=r.metricas&&r.metricas.produtividade_geral_pct; if(pg!=null&&!isNaN(+pg)) a.pp.push(+pg); if(r.supervisor) a.gestor=r.supervisor; });
+    Object.values(por).forEach(a=>{ const d=a.dias||1; a.gm=a.g/d; a.tm=a.t/d; a.wm=a.w/d; a.prod=a.pp.length?a.pp.reduce((x,y)=>x+y,0)/a.pp.length:null; });
+    WM={por,ini,fim,n:rows.length}; WMERR="";
+  }catch(e){ console.warn("wm:",e); WM={por:{},ini:"",fim:"",n:0}; WMERR=e.message||String(e); }
+  WMLOADING=false; if(MODE==="atendimentos"&&TAB==="colaboradores") render();
+}
 function viewColaboradores(v){
   const map=new Map();
   ATEND.forEach(a=>{ if(semAtendente(a))return; const k=a.atendente_id||a.atendente; if(!map.has(k))map.set(k,{id:a.atendente_id,key:k,nome:a.atendente,setor:a.setor,ativo:a.atendenteAtivo,list:[]}); map.get(k).list.push(a); });
@@ -1967,10 +1990,10 @@ function viewColaboradores(v){
     const ab=cn.filter(a=>a.nota<7).length, ac=cn.length-ab, pct=cn.length?ac/cn.length*100:null;
     const sc=m===null?null:Math.max(0,m-(pct!==null&&pct<85?(85-pct)/100*3:0)); // score = média, descontando até 3 pontos quando menos de 85% das notas são >= 7 (fórmula provisória)
     const canais={}; g.list.forEach(a=>{ const c=a.canal||"whatsapp"; canais[c]=(canais[c]||0)+1; });
-    const wm=_wmExemplo(g.nome);
-    return {...g,qtd:g.list.length,media:m,ab,ac,pct,score:sc,canais,wm,status:perfStatus(pct)}; });
+    const w=(WM&&WM.por[_semAcento(g.nome)])||null;
+    return {...g,qtd:g.list.length,media:m,ab,ac,pct,score:sc,canais,w,wm:{painel:!!(w&&w.wm>0)},status:perfStatus(pct)}; });
   const _rk=(arr,key)=>{ arr.filter(r=>r.score!==null).sort((a,b)=>b.score-a.score).forEach((r,i)=>r[key]=i+1); };
-  _rk(rows,"rkEmp"); const _porSetor={}; rows.forEach(r=>(_porSetor[r.setor||"—"]=_porSetor[r.setor||"—"]||[]).push(r)); Object.values(_porSetor).forEach(l=>_rk(l,"rkEq"));
+  _rk(rows,"rkEmp");
   const vinculos=[...new Set(rows.map(r=>(String(r.setor||"").split(" - ")[1]||"").trim()).filter(Boolean))].sort();
   if(CLFIL.vinculo) rows=rows.filter(r=>(String(r.setor||"").split(" - ")[1]||"").trim()===CLFIL.vinculo);
   if(CLFIL.painel==="com") rows=rows.filter(r=>r.wm.painel); else if(CLFIL.painel==="sem") rows=rows.filter(r=>!r.wm.painel);
@@ -1984,9 +2007,13 @@ function viewColaboradores(v){
     : srt==="media_asc"?((a.media??99)-(b.media??99))
     : srt==="pct_desc"?((b.pct??-1)-(a.pct??-1))
     : srt==="score_desc"?((b.score??-1)-(a.score??-1))
-    : srt==="wm_desc"?(b.wm.pct-a.wm.pct)
+    : srt==="wm_desc"?(((b.w&&b.w.wm)||0)-((a.w&&a.w.wm)||0))
+    : srt==="gc_desc"?(((b.w&&b.w.gm)||0)-((a.w&&a.w.gm)||0))
+    : srt==="tg_desc"?(((b.w&&b.w.tm)||0)-((a.w&&a.w.tm)||0))
     : ((b.media??-1)-(a.media??-1)) );
+  if(WM===null&&!WMLOADING) loadWM();
   const th=(k,l,cls)=>`<th class="sortable ${cls||''}" data-sort="${k}">${l}${CLFIL.sort===k?'<span class="arw">▼</span>':''}</th>`;
+  const hmc=x=>_hm(x)||'<span class="sub">—</span>';
   v.innerHTML=`<div class="page-head"><h2>Performance por Colaborador</h2><p>score, ranking, notas e produtividade por colaborador · clique no nome ou em relatório para o detalhe completo</p></div>
   <div class="filters">
     <div class="search" style="min-width:220px;max-width:320px;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="clQ" type="search" placeholder="Buscar colaborador..." value="${escAttr(CLFIL.q)}"></div>
@@ -1995,7 +2022,9 @@ function viewColaboradores(v){
     ${vinculos.length?`<select class="fsel" id="clVinc"><option value="">Vínculo: todos</option>${vinculos.map(x=>`<option value="${escAttr(x)}" ${CLFIL.vinculo===x?'selected':''}>${esc(x)}</option>`).join("")}</select>`:""}
     <select class="fsel" id="clSort">
       <option value="score_desc" ${srt==='score_desc'?'selected':''}>Ordenar: maior score</option>
-      <option value="wm_desc" ${srt==='wm_desc'?'selected':''}>Ordenar: maior WorkMonitor</option>
+      <option value="gc_desc" ${srt==='gc_desc'?'selected':''}>Ordenar: mais horas G-Click</option>
+      <option value="tg_desc" ${srt==='tg_desc'?'selected':''}>Ordenar: mais horas Tangerino</option>
+      <option value="wm_desc" ${srt==='wm_desc'?'selected':''}>Ordenar: mais horas Work Monitor</option>
       <option value="media_desc" ${srt==='media_desc'?'selected':''}>Ordenar: maior média</option>
       <option value="media_asc" ${srt==='media_asc'?'selected':''}>Ordenar: menor média</option>
       <option value="qtd_desc" ${srt==='qtd_desc'?'selected':''}>Ordenar: mais atendimentos</option>
@@ -2004,14 +2033,16 @@ function viewColaboradores(v){
     </select>
   </div>
   <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--crit)"></span> Crítico &lt; 70%</span><span><span class="dot" style="background:var(--warn)"></span> Atenção 70–85%</span><span><span class="dot" style="background:var(--good)"></span> Na meta ≥ 85%</span></div>
-  <div class="notice" style="margin-bottom:12px;background:var(--warn-soft);color:var(--warn)">Colunas WorkMonitor e Painel com dados de exemplo: o WorkMonitor ainda não está conectado ao Resiltrack. Score e rankings já usam as notas reais dos atendimentos.</div>
+  <div class="filters" style="margin-bottom:10px"><div class="seg" id="wmModo"><button data-wm="dia" class="${WMPER.modo==='dia'?'on':''}">Dia</button><button data-wm="7" class="${WMPER.modo==='7'?'on':''}">7 dias</button><button data-wm="30" class="${WMPER.modo==='30'?'on':''}">30 dias</button></div>
+    <input type="date" id="wmDia" class="fsel" value="${escAttr(WMPER.dia)}" title="Último dia do período">
+    <span class="sub">${WMLOADING||!WM?'Carregando G-Click, Tangerino e Work Monitor...':(WMERR?'<span style="color:var(--crit)">Não consegui ler os dados de produtividade: '+esc(WMERR)+'</span>':`Horas ${WMPER.modo==='dia'?'do dia '+fmtD(WM.fim):'por dia trabalhado, de '+fmtD(WM.ini)+' a '+fmtD(WM.fim)} · fonte: Dashboard Gestores`)}</span></div>
   <div class="card perf-card"><div class="perf-head"><div class="pi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 5"/></svg></div><div><b>Performance por Colaborador</b><span>Score, ranking, notas e produtividade por colaborador</span></div></div>
-  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th>${th("wm_desc","WorkMonitor","center")}${th("score_desc","Score","center")}<th class="center">#Equipe</th><th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center">Canal</th><th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
+  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th><th>Gestor</th>${th("gc_desc","G-Click","center")}${th("tg_desc","Tangerino","center")}${th("wm_desc","Work Monitor","center")}${th("score_desc","Score","center")}<th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center">Canal</th><th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
     rows.length?rows.map(r=>`<tr><td><div class="perf-colab"><span class="kav" style="background:${_corNome(r.nome)};width:30px;height:30px;font-size:11px">${esc(_iniciais(r.nome))}</span><div><button class="link-name" data-col="${escAttr(String(r.key))}">${esc(r.nome)}</button>${r.ativo===false?'<div class="sub">inativo</div>':''}</div></div></td>
       <td class="sub hide-md">${esc(r.setor||'—')}</td>
-      <td class="center"><span class="num" style="font-weight:600;color:${r.wm.pct>=85?'var(--good)':(r.wm.pct>=70?'var(--warn)':'var(--crit)')}" title="Exemplo: dado ainda não vem do WorkMonitor">${r.wm.pct.toFixed(1).replace(".",",")}%</span></td>
+      <td class="sub gestorc">${esc((r.w&&r.w.gestor)||"—")}</td>
+      <td class="center num">${hmc(r.w&&r.w.gm)}</td><td class="center num">${hmc(r.w&&r.w.tm)}</td><td class="center num" style="font-weight:600">${hmc(r.w&&r.w.wm)}</td>
       <td class="center"><span class="score-num" style="color:${scoreColor(r.score)}">${r.score===null?"—":r.score.toFixed(2).replace(".",",")}</span></td>
-      <td class="center">${r.rkEq?`<span class="rk">#${r.rkEq}</span>`:'<span class="sub">—</span>'}</td>
       <td class="center">${r.rkEmp?`<span class="rk dark">#${r.rkEmp}</span>`:'<span class="sub">—</span>'}</td>
       <td class="center"><span class="rk">${r.qtd}</span></td>
       <td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${r.media===null?"—":r.media.toFixed(2).replace(".",",")}</span></td>
@@ -2019,12 +2050,14 @@ function viewColaboradores(v){
       <td class="center hide-md">${r.ab?`<span class="pillnum crit">${r.ab}<small>(${r.ab+r.ac?Math.round(r.ab/(r.ab+r.ac)*1000)/10:0}%)</small></span>`:'<span class="pillnum">0<small>(0,0%)</small></span>'}</td>
       <td class="center">${r.pct===null?'<span class="sub">—</span>':`<span class="pillnum good">${r.ac}<small>(${(Math.round(r.pct*10)/10).toString().replace(".",",")}%)</small></span>`}</td>
       <td class="center"><span class="dot" title="${perfTxt[r.status]}" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${r.status==='good'?'var(--good)':(r.status==='warn'?'var(--warn)':(r.status==='crit'?'var(--crit)':'var(--muted)'))}"></span></td>
-      <td class="center"><span title="${r.wm.painel?'Monitorado pelo WorkMonitor (exemplo)':'Sem WorkMonitor (exemplo)'}" style="color:${r.wm.painel?'var(--good)':'var(--crit)'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="14" height="10" rx="1.5"/><path d="M7 18h6M10 14v4"/>${r.wm.painel?'<path d="M16 15l2 2 4-4"/>':'<path d="M17 14l5 5M22 14l-5 5"/>'}</svg></span></td>
+      <td class="center"><span title="${r.wm.painel?'Com registro no Work Monitor no período':'Sem registro no Work Monitor no período'}" style="color:${r.wm.painel?'var(--good)':'var(--crit)'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="14" height="10" rx="1.5"/><path d="M7 18h6M10 14v4"/>${r.wm.painel?'<path d="M16 15l2 2 4-4"/>':'<path d="M17 14l5 5M22 14l-5 5"/>'}</svg></span></td>
       <td class="right"><button class="icon-act" data-col="${escAttr(String(r.key))}" title="Evolução e detalhe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></button><button class="icon-act" data-col="${escAttr(String(r.key))}" title="Relatório"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M9 13h6M9 17h6M8 21h8a2 2 0 0 0 2-2V8l-5-5H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z"/></svg></button></td></tr>`).join("")
-    :`<tr><td colspan="14" class="empty">Nenhum colaborador no filtro.</td></tr>`
+    :`<tr><td colspan="15" class="empty">Nenhum colaborador no filtro.</td></tr>`
   }</tbody></table></div>`;
   const clq=v.querySelector("#clQ"); if(clq) clq.oninput=()=>{ CLFIL.q=clq.value; const val=clq.value; viewColaboradores(v); const nb=v.querySelector("#clQ"); if(nb){ nb.focus(); nb.setSelectionRange(val.length,val.length); } };
   const cls=v.querySelector("#clSetor"); if(cls) cls.onchange=()=>{ CLFIL.setor=cls.value; viewColaboradores(v); };
+  v.querySelectorAll("#wmModo [data-wm]").forEach(b=>b.onclick=()=>{ WMPER.modo=b.dataset.wm; WM=null; viewColaboradores(v); });
+  const wd=v.querySelector("#wmDia"); if(wd) wd.onchange=()=>{ if(wd.value){ WMPER.dia=wd.value; WM=null; viewColaboradores(v); } };
   const clp=v.querySelector("#clPainel"); if(clp) clp.onchange=()=>{ CLFIL.painel=clp.value; viewColaboradores(v); };
   const clv=v.querySelector("#clVinc"); if(clv) clv.onchange=()=>{ CLFIL.vinculo=clv.value; viewColaboradores(v); };
   const clo=v.querySelector("#clSort"); if(clo) clo.onchange=()=>{ CLFIL.sort=clo.value; viewColaboradores(v); };
