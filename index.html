@@ -530,6 +530,7 @@
       <div class="logo-img" role="img" aria-label="Resiltrack"></div>
       <div class="brand"><p>Qualidade de atendimento · Resilcon</p></div>
       <div class="spacer"></div>
+      <span id="periodoChip"></span>
       <span class="user-chip" id="userChip"></span>
       <button class="txt-btn" id="outBtn">Sair</button>
     </div>
@@ -678,7 +679,7 @@ function mapRow(r){
     s:{v:num(r.nota_satisfacao),j:r.nota_satisfacao_justificativa||"—"},
     erros:asArr(r.erros), sinais:asArr(r.sinais_de_risco),
     oport:r.oportunidade_comercial||null, melhorias:asArr(r.oportunidades_de_melhoria),
-    satisfacao:r.satisfacao_cliente||null, transcript:r.transcript||"",
+    satisfacao:r.satisfacao_cliente||null, transcript:TRANSCRIPTS[r.id]||r.transcript||"",
     desfecho:r.desfecho||null, aderencia:{v:num(r.aderencia_jeito_resilcon),j:r.aderencia_justificativa||"—"},
     errosPt:asArr(r.erros_portugues), riscoTroca:r.risco_troca_contabilidade||null, churnMotivo:r.churn_motivo||null,
     docErrado:r.documento_errado===true, docErradoDetalhe:r.documento_errado_detalhe||null,
@@ -688,7 +689,7 @@ function mapRow(r){
   };
   a.cliente = clienteNome(a);
   a.empresa_id = empresaIdDe(a);
-  a.churn = (a.riscoTroca==="possivel"||a.riscoTroca==="provavel") || churnScan(a);
+  a.churn = (a.riscoTroca==="possivel"||a.riscoTroca==="provavel") || churnScan(a) || CHURN_IDS.has(r.id);
   // contestação aprovada ajusta a nota do atendimento
   const _ct = CONTESTS[a.id];
   if(_ct && _ct.status==="aprovada"){
@@ -701,19 +702,82 @@ function mapRow(r){
 // ---------- carregar dados ----------
 // Supabase devolve no máximo 1000 linhas por consulta. Buscamos em páginas de 1000
 // com .range() até trazer tudo, senão o painel travava em 1000.
-async function fetchAllRows(table, columns, orderCol){
-  const A="atendimentos", PAGE=1000; let from=0, all=[];
-  while(true){
-    let q=sb.schema(A).from(table).select(columns).range(from,from+PAGE-1);
+async function fetchAllRows(table, columns, orderCol, filtro){
+  const A="atendimentos", PAGE=1000;
+  const pagina=(from,comContagem)=>{
+    let q=sb.schema(A).from(table).select(columns,comContagem?{count:"exact"}:undefined).range(from,from+PAGE-1);
+    if(filtro) q=filtro(q);
     if(orderCol) q=q.order(orderCol,{ascending:false,nullsFirst:false});
-    const {data,error}=await q;
-    if(error) throw error;
-    all=all.concat(data||[]);
-    if(!data || data.length<PAGE) break;
-    from+=PAGE;
-    if(from>500000) break; // trava de segurança
+    return q;
+  };
+  // 1a pagina traz o total; as demais saem em paralelo (lotes de 6), mantendo a ordem
+  const prim=await pagina(0,true);
+  if(prim.error) throw prim.error;
+  let all=(prim.data||[]).slice();
+  const total=(typeof prim.count==="number")?prim.count:all.length;
+  if(all.length>=PAGE && total>PAGE){
+    const offs=[]; for(let f=PAGE; f<total && f<=500000; f+=PAGE) offs.push(f);
+    for(let i=0;i<offs.length;i+=6){
+      const lote=await Promise.all(offs.slice(i,i+6).map(f=>pagina(f,false)));
+      for(const r of lote){ if(r.error) throw r.error; all=all.concat(r.data||[]); }
+    }
+    if(all.length && all[0] && all[0].id!==undefined){ const vistos=new Set(); all=all.filter(r=>{ if(vistos.has(r.id)) return false; vistos.add(r.id); return true; }); }
   }
   return all;
+}
+// colunas que a tela usa (sem o texto da conversa, carregado so ao abrir o atendimento)
+const ANALISES_COLS="id,ticket_id,contact_id,atendente_id,atendente_nome,setor,canal,sessao_inicio,sessao_fim,criado_em,assunto_principal,resumo,tipo_atendimento,complexidade,complexidade_justificativa,nota_resolucao,nota_resolucao_justificativa,nota_rapidez,nota_rapidez_justificativa,nota_satisfacao,nota_satisfacao_justificativa,nota_final,satisfacao_cliente,erros,sinais_de_risco,oportunidade_comercial,oportunidades_de_melhoria,desfecho,aderencia_jeito_resilcon,aderencia_justificativa,erros_portugues,risco_troca_contabilidade,churn_motivo,documento_errado,documento_errado_detalhe,computar_nota";
+const TRANSCRIPTS={};
+const CHURN_IDS=new Set();
+async function carregarChurnTexto(filtro){
+  try{
+    const filtro_kw=CHURN_KW.map(k=>`transcript.ilike.*${k}*`).join(",");
+    let from=0;
+    for(;;){
+      let q=sb.schema("atendimentos").from("analises").select("id").or(filtro_kw).range(from,from+999); if(filtro) q=filtro(q);
+      const {data,error}=await q;
+      if(error) throw error;
+      (data||[]).forEach(r=>CHURN_IDS.add(r.id));
+      if(!data||data.length<1000) break; from+=1000;
+    }
+  }catch(e){ console.warn("varredura de troca no texto:",e); }
+}
+async function ensureTranscript(a){
+  if(a.transcript) return a.transcript;
+  if(TRANSCRIPTS[a.id]!==undefined){ a.transcript=TRANSCRIPTS[a.id]; return a.transcript; }
+  try{
+    const {data,error}=await sb.schema("atendimentos").from("analises").select("transcript").eq("id",a.id).limit(1);
+    if(error) throw error;
+    const t=(data&&data[0]&&data[0].transcript)||"";
+    TRANSCRIPTS[a.id]=t; a.transcript=t; return t;
+  }catch(e){ console.warn("conversa:",e); return null; }
+}
+// ---- período carregado: por padrão só os últimos meses (mais rápido); botão carrega o histórico completo ----
+const PERIODO_DIAS=90;
+let HISTORICO_COMPLETO=false;
+function filtroPeriodo(){
+  if(HISTORICO_COMPLETO) return null;
+  const d=new Date(Date.now()-PERIODO_DIAS*864e5).toISOString();
+  return q=>q.gte("sessao_fim",d);
+}
+function atualizarChipPeriodo(){
+  const el=document.getElementById("periodoChip"); if(!el) return;
+  if(HISTORICO_COMPLETO){ el.innerHTML='<span class="user-chip">Histórico completo</span>'; return; }
+  el.innerHTML=`<span class="user-chip">Últimos ${PERIODO_DIAS} dias</span> <button class="txt-btn" id="histBtn">Carregar histórico completo</button>`;
+  const b=document.getElementById("histBtn");
+  if(b) b.onclick=async()=>{ b.disabled=true; b.textContent="Carregando..."; HISTORICO_COMPLETO=true;
+    try{ await carregarAnalises(); render(); }catch(e){ HISTORICO_COMPLETO=false; b.disabled=false; b.textContent="Carregar histórico completo"; alert("Não consegui carregar o histórico agora. Tente de novo."); } };
+}
+async function carregarAnalises(){
+  const f=filtroPeriodo();
+  CHURN_IDS.clear();
+  [RAW] = await Promise.all([fetchAllRows("analises",ANALISES_COLS,"sessao_fim",f), carregarChurnTexto(f)]);
+  ATEND = RAW.map(mapRow).filter(a=>!semAtendente(a)); // fora do horário / sem retorno do cliente: ninguém atendeu, não avalia nem mostra
+  if(ACCESS && ACCESS.nivel!=="admin"){
+    if(ACCESS.nivel==="gestor"){ const deps=new Set(ACCESS.departamentos||[]); ATEND=ATEND.filter(a=>deps.has(deptDoAtendente(a.atendente_id,a.setor))); }
+    else ATEND=[]; // colaborador não vê atendimentos por aqui
+  }
+  atualizarChipPeriodo();
 }
 async function loadData(){
   try{
@@ -742,15 +806,9 @@ async function loadData(){
     CRMCLI={}; (cc||[]).forEach(x=>CRMCLI[x.empresa_id]={coluna:x.coluna,tags:Array.isArray(x.tags)?x.tags:[],cs_manual:(x.cs_manual===null?undefined:x.cs_manual),cs_obs:x.cs_obs});
   }catch(err){ console.warn("lookups:",err); if(!CRMCFG.colunas.length){ CRMCFG={colunas:COLUNAS_PADRAO.slice(),tags:TAGS_PADRAO.slice()}; } }
 
-  try{
-    RAW = await fetchAllRows("analises","*","sessao_fim");
-  }catch(error){
+  try{ await carregarAnalises(); }
+  catch(error){
     document.getElementById("view").innerHTML=`<div class="empty" style="margin-top:40px">Erro ao carregar: ${esc(error.message||error)}</div>`; return;
-  }
-  ATEND = RAW.map(mapRow).filter(a=>!semAtendente(a)); // fora do horário / sem retorno do cliente: ninguém atendeu, não avalia nem mostra
-  if(ACCESS && ACCESS.nivel!=="admin"){
-    if(ACCESS.nivel==="gestor"){ const deps=new Set(ACCESS.departamentos||[]); ATEND=ATEND.filter(a=>deps.has(deptDoAtendente(a.atendente_id,a.setor))); }
-    else ATEND=[]; // colaborador não vê atendimentos por aqui
   }
   render();
 }
@@ -2649,16 +2707,18 @@ function openAvaliacao(i){
       ${a.errosPt.length?`<div class="panel"><h4>Apontamentos de português</h4><div style="display:flex;gap:6px;flex-wrap:wrap">${a.errosPt.map(e=>`<span class="chip">${esc(e)}</span>`).join("")}</div></div>`:""}
       ${(a.riscoTroca==="possivel"||a.riscoTroca==="provavel")?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Risco de troca de contabilidade · ${a.riscoTroca}</h4><div class="prose">${esc(a.churnMotivo||"Sinais identificados na conversa.")}</div></div>`:""}
       ${a.docErrado?`<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">⚠ Documento enviado errado ao cliente</h4><div class="prose">${esc(a.docErradoDetalhe||"O atendente enviou um documento incorreto durante o atendimento.")}</div></div>`:""}
-      <div class="panel"><h4>Conversa completa</h4><div class="conversa">${transcriptHTML(a.transcript,a.atendente,a.cliente)}</div></div>
+      <div class="panel"><h4>Conversa completa</h4><div class="conversa" data-conversa>${a.transcript?transcriptHTML(a.transcript,a.atendente,a.cliente):'<div class="sub">Carregando conversa...</div>'}</div></div>
     </div>`);
   const pb=modal.querySelector("[data-pdf]"); if(pb) pb.onclick=()=>baixarAvaliacaoPDF(i,pb);
+  if(!a.transcript){ ensureTranscript(a).then(t=>{ const slot=modal.querySelector("[data-conversa]"); if(!slot) return; slot.innerHTML=(t===null)?'<div class="sub">Não consegui carregar a conversa agora. Feche e abra de novo.</div>':transcriptHTML(a.transcript,a.atendente,a.cliente); }); }
 }
 
 // ---------- PDF da avaliação ----------
-function baixarAvaliacaoPDF(i,btn){
+async function baixarAvaliacaoPDF(i,btn){
   const a=ATEND[i];
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
   if(btn){ btn.disabled=true; btn.style.opacity=".5"; }
+  await ensureTranscript(a);
   const H="#1a1b28", M="#83879c", B="#e7e9f2", AC="#006789", GD="#128a5b", WN="#b7791f", CR="#cf4257";
   const notaCor = n => n===null?M:(n>=8?GD:(n>=6?WN:CR));
   const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
