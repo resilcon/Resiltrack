@@ -726,7 +726,7 @@ async function fetchAllRows(table, columns, orderCol, filtro){
   return all;
 }
 // colunas que a tela usa (sem o texto da conversa, carregado so ao abrir o atendimento)
-const ANALISES_COLS="id,ticket_id,contact_id,atendente_id,atendente_nome,setor,canal,sessao_inicio,sessao_fim,criado_em,assunto_principal,resumo,tipo_atendimento,complexidade,complexidade_justificativa,nota_resolucao,nota_resolucao_justificativa,nota_rapidez,nota_rapidez_justificativa,nota_satisfacao,nota_satisfacao_justificativa,nota_final,satisfacao_cliente,erros,sinais_de_risco,oportunidade_comercial,oportunidades_de_melhoria,desfecho,aderencia_jeito_resilcon,aderencia_justificativa,erros_portugues,risco_troca_contabilidade,churn_motivo,documento_errado,documento_errado_detalhe,computar_nota";
+const ANALISES_COLS="id,ticket_id,contact_id,atendente_id,atendente_nome,setor,canal,sessao_inicio,sessao_fim,criado_em,assunto_principal,resumo,tipo_atendimento,complexidade,nota_resolucao,nota_rapidez,nota_satisfacao,nota_final,satisfacao_cliente,erros,sinais_de_risco,oportunidade_comercial,oportunidades_de_melhoria,desfecho,aderencia_jeito_resilcon,erros_portugues,risco_troca_contabilidade,churn_motivo,documento_errado,documento_errado_detalhe,computar_nota";
 const TRANSCRIPTS={};
 const CHURN_IDS=new Set();
 async function carregarChurnTexto(filtro){
@@ -742,18 +742,23 @@ async function carregarChurnTexto(filtro){
     }
   }catch(e){ console.warn("varredura de troca no texto:",e); }
 }
+const DET_COLS="transcript,complexidade_justificativa,nota_resolucao_justificativa,nota_rapidez_justificativa,nota_satisfacao_justificativa,aderencia_justificativa";
 async function ensureTranscript(a){
-  if(a.transcript) return a.transcript;
-  if(TRANSCRIPTS[a.id]!==undefined){ a.transcript=TRANSCRIPTS[a.id]; return a.transcript; }
+  if(a._det) return a.transcript;
   try{
-    const {data,error}=await sb.schema("atendimentos").from("analises").select("transcript").eq("id",a.id).limit(1);
+    const {data,error}=await sb.schema("atendimentos").from("analises").select(DET_COLS).eq("id",a.id).limit(1);
     if(error) throw error;
-    const t=(data&&data[0]&&data[0].transcript)||"";
-    TRANSCRIPTS[a.id]=t; a.transcript=t; return t;
-  }catch(e){ console.warn("conversa:",e); return null; }
+    const d=(data&&data[0])||{};
+    const t=d.transcript||"";
+    TRANSCRIPTS[a.id]=t; a.transcript=t;
+    a.cx_just=d.complexidade_justificativa||"—";
+    a.r.j=d.nota_resolucao_justificativa||"—"; a.ra.j=d.nota_rapidez_justificativa||"—"; a.s.j=d.nota_satisfacao_justificativa||"—";
+    a.aderencia.j=d.aderencia_justificativa||"—";
+    a._det=true; return t;
+  }catch(e){ console.warn("detalhes:",e); return null; }
 }
 // ---- período carregado: por padrão só os últimos meses (mais rápido); botão carrega o histórico completo ----
-const PERIODO_DIAS=90;
+const PERIODO_DIAS=30;
 let HISTORICO_COMPLETO=false;
 function filtroPeriodo(){
   if(HISTORICO_COMPLETO) return null;
@@ -2675,8 +2680,9 @@ function transcriptHTML(t,nomeAt,nomeCl){ if(!t) return '<div class="sub">Sem tr
   return msgs.map(mo=>{ const when=mo.when?`<span class="when">${esc(mo.when)}</span>`:"";
     return `<div class="msg ${mo.who}"><span class="who">${esc(mo.nome)}${when}</span>${esc(mo.texto)}</div>`; }).join("");
 }
-function openAvaliacao(i){
-  const a=ATEND[i]; const tag=a.nota===null?"Sem nota":(a.nota>=8?"Bom":(a.nota>=6?"Regular":"Crítico"));
+async function openAvaliacao(i){
+  const a=ATEND[i];
+  if(!a._det){ openModal('<div class="modal-body"><div class="sub" style="padding:36px 20px;text-align:center">Carregando atendimento...</div></div>'); const ok=await ensureTranscript(a); if(ok===null){ openModal('<div class="modal-body"><div class="sub" style="padding:36px 20px;text-align:center">Não consegui carregar agora. Feche e abra de novo.</div></div>'); return; } } const tag=a.nota===null?"Sem nota":(a.nota>=8?"Bom":(a.nota>=6?"Regular":"Crítico"));
   const axis=(name,o,icon)=>`<div class="axis"><div class="ax-ic">${icon}</div><div class="ax-main"><div class="ax-top"><span class="ax-name">${name}</span><span class="ax-note" style="color:${scoreColor(o.v)}">${fmt1(o.v)}<span style="color:var(--muted);font-weight:400;font-size:12px">/10</span></span></div><div class="ax-just">${esc(o.j)}</div></div></div>`;
   const emp=a.empresa_id?EMPRESAS[a.empresa_id]:null;
   openModal(`
