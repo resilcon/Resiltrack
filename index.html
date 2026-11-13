@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.0 (contratos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.2 (editor visual de contratos)</footer>
   </div>
 </div>
 
@@ -2936,7 +2936,7 @@ function bindActions(){
 
 // ---------- MODAIS ----------
 const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
-function closeModal(){ overlay.classList.remove("open","prodov"); modal.classList.remove("prodm"); modal.innerHTML=""; }
+function closeModal(){ overlay.classList.remove("open","prodov"); modal.classList.remove("prodm","ct-modal"); modal.innerHTML=""; }
 overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 function openModal(html){ modal.innerHTML=html; overlay.classList.add("open"); modal.scrollTop=0;
@@ -5618,25 +5618,6 @@ const CT_PALAVRAS=[
  ["Resilcon",[["CONTABILIDADE_NOME","Razão social da Resilcon"],["CONTABILIDADE_CNPJ","CNPJ"],["CONTABILIDADE_CPF","CPF (se pessoa física)"],["CONTABILIDADE_RESPONSAVEL_NOME","Responsável"],["CONTABILIDADE_RESPONSAVEL_CPF","CPF do responsável"],["CONTABILIDADE_RESPONSAVEL_E-MAIL","E-mail do responsável"],
   ["CONTABILIDADE_LOGRADOURO","Rua"],["CONTABILIDADE_NUMERO","Número"],["CONTABILIDADE_COMPLEMENTO","Complemento"],["CONTABILIDADE_BAIRRO","Bairro"],["CONTABILIDADE_CIDADE","Cidade"],["CONTABILIDADE_UF","UF"],["CONTABILIDADE_CEP","CEP"]]]];
 const CT_CONFIG_PADRAO={CONTABILIDADE_NOME:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",CONTABILIDADE_CNPJ:"64.018.658/0001-03",CONTABILIDADE_RESPONSAVEL_NOME:"Elmer de Oliveira Andrade","CONTABILIDADE_RESPONSAVEL_E-MAIL":"comercial@resilcon.com.br",CONTABILIDADE_CEP:"04621-270",CONTABILIDADE_CIDADE:"São Paulo",CONTABILIDADE_UF:"SP"};
-// biblioteca de blocos (mesmos tipos do editor da 4C)
-const CT_BLOCOS={
- "capa-contrato":{nome:"Capa",estilo:{backgroundColor:"#0b1a20",textColor:"#ffffff"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",title:"Contrato de Prestação de Serviços",subtitle:"Condições comerciais e operacionais",clientName:"[CLIENTE_NOME]",date:"[MES_ATUAL] de [ANO_ATUAL]",vigencia:"[DATA_VIGENCIA_DE] até [DATA_VIGENCIA_ATE]"}},
- "cabecalho-contrato":{nome:"Cabeçalho",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",tagline:"Contabilidade consultiva"}},
- "partes":{nome:"Partes (contratante e contratada)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{textoContratante:"[CONTRATANTE]",textoContratada:"[CONTABILIDADE_NOME], inscrita no CNPJ sob nº [CONTABILIDADE_CNPJ], com sede na [CONTABILIDADE_LOGRADOURO], nº [CONTABILIDADE_NUMERO], [CONTABILIDADE_BAIRRO], [CONTABILIDADE_CIDADE]/[CONTABILIDADE_UF], CEP [CONTABILIDADE_CEP], neste ato representada por [CONTABILIDADE_RESPONSAVEL_NOME]."}},
- "info-garantias":{nome:"Informações e garantias",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Informações e Garantias",items:[{title:"Das partes",description:"Texto"}]}},
- "resumo-contratual":{nome:"Resumo do contrato (indicadores)",estilo:{backgroundColor:"#006789",textColor:"#ffffff"},conteudo:{title:"Resumo Contratual",kpis:[{label:"Plano",value:"[NOME_PLANO]"},{label:"Mensalidade",value:"[VALOR_PROPOSTA]"},{label:"Vigência",value:"12 meses"},{label:"Início",value:"[DATA_VIGENCIA_DE]"}]}},
- "servicos-inclusos":{nome:"Serviços inclusos (vêm do plano escolhido)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Serviços Inclusos",items:["Preenchido automaticamente com os serviços do plano"]}},
- "extras-selecionados-contrato":{nome:"Serviços extras contratados (vêm da proposta)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Serviços Adicionais Contratados",items:[]}},
- "pagamento-contrato":{nome:"Pagamento",estilo:{backgroundColor:"#0b1a20",textColor:"#ffffff"},conteudo:{title:"Pagamento",methods:"Boleto bancário ou PIX",dueDate:"Todo dia 10",terms:"Primeira cobrança proporcional ao início da operação."}},
- "secao-conteudo":{nome:"Seção de texto com tópicos",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título da seção",text:"Texto da seção",bullets:["Tópico 1","Tópico 2"]}},
- "secao-foto":{nome:"Seção com foto",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título",text:"Texto",imageUrl:""}},
- "split-image-text":{nome:"Imagem e texto lado a lado",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título",text:"Texto",bullets:["Tópico"],imageUrl:"",imageSide:"left"}},
- "hero-image":{nome:"Imagem grande",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"",subtitle:"",backgroundImageUrl:""}},
- "clausulas":{nome:"Cláusulas",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Cláusulas Contratuais",clauses:[{number:"1",title:"Do objeto",text:"Texto da cláusula"}]}},
- "assinaturas":{nome:"Assinaturas",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{local:"[CONTABILIDADE_CIDADE], [DIA_ATUAL] de [MES_ATUAL] de [ANO_ATUAL].",contratante:"[CLIENTE_EMPRESA_NOME]",contratada:"[CONTABILIDADE_NOME]",testemunhas:"sim"}},
- "rodape-contrato":{nome:"Rodapé",estilo:{backgroundColor:"#111827",textColor:"#f5f5f5"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",phone:"(11) 5661-1555",email:"comercial@resilcon.com.br",website:"https://www.resilcon.com.br"}}
-};
-const CT_CAMPOS_ROT={companyName:"Empresa",title:"Título",subtitle:"Subtítulo",clientName:"Cliente",date:"Data",vigencia:"Vigência",tagline:"Frase",textoContratante:"Texto do contratante",textoContratada:"Texto da contratada",items:"Itens",kpis:"Indicadores",methods:"Formas de pagamento",dueDate:"Vencimento",terms:"Condições",text:"Texto",bullets:"Tópicos (um por linha)",imageUrl:"Endereço da imagem",imageSide:"Lado da imagem (left ou right)",backgroundImageUrl:"Endereço da imagem",clauses:"Cláusulas",phone:"Telefone",email:"E-mail",website:"Site",local:"Local e data",contratante:"Assina pelo contratante",contratada:"Assina pela contratada",testemunhas:"Testemunhas (sim ou não)",label:"Rótulo",value:"Valor",description:"Descrição",number:"Número"};
 let CT={indice:null,cache:{},config:null};
 
 async function ctTok(){ return (await sb.auth.getSession()).data.session?.access_token||""; }
@@ -5675,48 +5656,6 @@ function ctVariaveis(f,cfg){ const v={...cfg}; const hoje=new Date();
  return v; }
 function ctTroca(t,v,marcar){ return String(t==null?"":t).replace(/\[([A-ZÇÃÕÁÉÍÓÚÂÊÔ0-9_\-]{3,})\]/g,(m,k)=>{ if(v&&v[k]!=null&&v[k]!=="") return v[k]; return marcar?`⟦${k}⟧`:m; }); }
 
-// ---------- renderização do contrato ----------
-function ctEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-function ctTxt(s,v,marcar){ return ctEsc(ctTroca(s,v,marcar)).replace(/⟦([^⟧]+)⟧/g,'<mark title="Falta preencher">[$1]</mark>').replace(/\n/g,"<br>"); }
-function ctRenderBloco(b,v,ctx,marcar){ if(b.visible===false) return ""; const c=b.content||{}, st=b.style||{}; const T=s=>ctTxt(s,v,marcar);
- const css=`background:${st.backgroundColor||"#fff"};color:${st.textColor||"#111827"};padding:${Math.max(14,Number(st.padding)||24)}px 34px;${st.fontScale?`font-size:${15*Number(st.fontScale)}px;`:""}`;
- const tit=t=>t?`<h2 style="text-align:${c.titleAlign||"left"}">${T(t)}</h2>`:"";
- switch(b.type){
-  case "capa-contrato": return `<section class="ct-capa" style="${css};text-align:${c.textAlign||"center"}"><div class="ct-k">${T(c.companyName)}</div><h1>${T(c.title)}</h1><p>${T(c.subtitle)}</p><div class="ct-capa-cli">Cliente: <b>${T(c.clientName)}</b><br><small>${T(c.date)}${c.vigencia?"<br>Vigência: "+T(c.vigencia):""}</small></div></section>`;
-  case "cabecalho-contrato": return `<section style="${css}"><h2 style="margin:0">${T(c.companyName)}</h2><p style="margin:2px 0 0;opacity:.75">${T(c.tagline)}</p></section>`;
-  case "partes": return `<section style="${css}"><div class="ct-parte"><b>CONTRATANTE</b><p style="text-align:${c.textAlignContratante||"justify"}">${T(c.textoContratante)}</p></div><div class="ct-parte"><b>CONTRATADA</b><p style="text-align:${c.textAlignContratada||"justify"}">${T(c.textoContratada)}</p></div></section>`;
-  case "info-garantias": return `<section style="${css}">${tit(c.title)}${(c.items||[]).map(i=>`<div class="ct-item"><b>${T(i.title)}</b><p style="text-align:${i.descriptionAlign||"justify"}">${T(i.description)}</p></div>`).join("")}</section>`;
-  case "resumo-contratual": return `<section style="${css}">${tit(c.title)}<div class="ct-kpis">${(c.kpis||[]).map(k=>`<div><span>${T(k.label)}</span><b>${T(k.value)}</b></div>`).join("")}</div></section>`;
-  case "servicos-inclusos": { const it=(ctx.inclusos&&ctx.inclusos.length)?ctx.inclusos:(c.items||[]); return `<section style="${css}">${tit(c.title)}<ul class="ct-lista">${it.map(x=>`<li>${T(typeof x==="string"?x:(x.name||x.nome||x.title||""))}</li>`).join("")}</ul></section>`; }
-  case "extras-selecionados-contrato": { const ex=ctx.extras||[]; if(!ex.length) return ""; return `<section style="${css}">${tit(c.title)}<table class="ct-tab">${ex.map(e=>`<tr><td>${ctEsc(e.nome)}</td><td>${e.cobranca==="mensal"?"mensal":e.cobranca==="hora"?e.qtd+" hora(s)":e.cobranca==="volume"?e.qtd+" unidade(s)":"cobrança única"}</td><td class="r">${precoMoeda((precoNum(e.valor)||0)*(Number(e.qtd)||1))}</td></tr>`).join("")}</table></section>`; }
-  case "extras-nao-selecionados-contrato": return "";
-  case "pagamento-contrato": return `<section style="${css}">${tit(c.title)}<div class="ct-kpis"><div><span>Formas de pagamento</span><b>${T(c.methods)}</b></div><div><span>Vencimento</span><b>${T(c.dueDate)}</b></div></div>${c.terms?`<p>${T(c.terms)}</p>`:""}</section>`;
-  case "secao-conteudo": return `<section style="${css}">${tit(c.title)}${c.text?`<p style="text-align:${c.textAlign||"justify"}">${T(c.text)}</p>`:""}${(c.bullets||[]).length?`<ul class="ct-lista">${c.bullets.map(x=>`<li>${T(x)}</li>`).join("")}</ul>`:""}</section>`;
-  case "secao-foto": return `<section style="${css}">${tit(c.title)}${c.text?`<p style="text-align:${c.textAlign||"justify"}">${T(c.text)}</p>`:""}${c.imageUrl?`<img class="ct-img" src="${ctEsc(c.imageUrl)}" alt="">`:""}</section>`;
-  case "hero-image": return (c.backgroundImageUrl||st.backgroundImageUrl)?`<section class="ct-hero" style="background-image:url('${ctEsc(c.backgroundImageUrl||st.backgroundImageUrl)}')">${c.title?`<h2>${T(c.title)}</h2>`:""}${c.subtitle?`<p>${T(c.subtitle)}</p>`:""}</section>`:"";
-  case "split-image-text": return `<section style="${css}"><div class="ct-split ${c.imageSide==="right"?"dir":""}">${c.imageUrl?`<img class="ct-img" src="${ctEsc(c.imageUrl)}" alt="">`:""}<div>${tit(c.title)}${c.text?`<p>${T(c.text)}</p>`:""}${(c.bullets||[]).length?`<ul class="ct-lista">${c.bullets.map(x=>`<li>${T(x)}</li>`).join("")}</ul>`:""}</div></div></section>`;
-  case "clausulas": return `<section style="${css}">${tit(c.title)}${(c.clauses||[]).map(k=>`<div class="ct-clausula">${k.title?`<h3>${k.number?ctEsc(k.number)+". ":""}${T(k.title)}</h3>`:""}<div style="text-align:${k.textAlign||"justify"}">${ctTxt(k.text,v,marcar).replace(/(<br>){2,}/g,"</p><p>")}</div></div>`).join("")}</section>`;
-  case "assinaturas": return `<section style="${css}" class="ct-ass"><p>${T(c.local)}</p><div class="ct-ass-g"><div><span></span>${T(c.contratante)}<small>CONTRATANTE</small></div><div><span></span>${T(c.contratada)}<small>CONTRATADA</small></div>${String(c.testemunhas).toLowerCase().startsWith("s")?`<div><span></span>Testemunha 1<small>Nome e CPF</small></div><div><span></span>Testemunha 2<small>Nome e CPF</small></div>`:""}</div></section>`;
-  case "rodape-contrato": return `<section style="${css};text-align:center;font-size:12px">${T(c.companyName)} · ${T(c.phone)} · ${T(c.email)} · ${T(c.website)}</section>`;
-  default: { const txt=Object.values(c).filter(x=>typeof x==="string").map(T).join("<br>"); return txt?`<section style="${css}">${txt}</section>`:""; }
- } }
-function ctDocumento(modelo,v,ctx,marcar){ const tema=modelo.tema||{}; const prim=tema.primary||"#0b1a20";
- const corpo=modelo.tipo==="texto"?`<section style="padding:34px">${ctTroca(modelo.html||"",v,marcar).replace(/⟦([^⟧]+)⟧/g,'<mark>[$1]</mark>')}</section>`:(modelo.blocos||[]).map(b=>ctRenderBloco(b,v,ctx,marcar)).join("");
- return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${ctEsc(ctTroca(modelo.nome,v))}</title><style>
-*{box-sizing:border-box}body{margin:0;background:#eef2f4;font-family:Inter,Arial,Helvetica,sans-serif;color:#111827;line-height:1.55}.doc{max-width:860px;margin:0 auto;background:#fff}
-section{border-bottom:1px solid rgba(0,0,0,.05)}h1{font-family:Georgia,serif;font-size:32px;margin:14px 0 6px}h2{font-family:Georgia,serif;font-size:21px;margin:0 0 12px;color:inherit}h3{font-size:15px;margin:16px 0 6px}
-.ct-capa{padding:70px 40px!important}.ct-k{letter-spacing:.2em;font-size:11px;font-weight:700;opacity:.85}.ct-capa-cli{margin-top:40px;font-size:14px}
-.ct-parte{background:rgba(0,0,0,.03);border-radius:10px;padding:14px 18px;margin:0 0 12px}.ct-parte b{font-size:12px;letter-spacing:.08em}.ct-parte p{margin:6px 0 0}
-.ct-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.ct-kpis div{background:rgba(255,255,255,.08);border:1px solid rgba(127,127,127,.25);border-radius:10px;padding:12px}.ct-kpis span{display:block;font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.06em}.ct-kpis b{font-size:16px}
-.ct-lista{margin:0;padding-left:20px;columns:2;column-gap:28px}.ct-lista li{margin:0 0 6px;break-inside:avoid}.ct-tab{width:100%;border-collapse:collapse}.ct-tab td{padding:8px 0;border-bottom:1px solid rgba(0,0,0,.08)}.ct-tab .r{text-align:right;white-space:nowrap}
-.ct-item{margin-bottom:10px}.ct-item p{margin:4px 0 0}.ct-img{max-width:100%;border-radius:10px;display:block;margin:10px 0}.ct-hero{min-height:220px;background-size:cover;background-position:center;color:#fff;padding:40px!important}
-.ct-split{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:center}.ct-split.dir img{order:2}.ct-clausula p{margin:0 0 8px}
-.ct-ass-g{display:grid;grid-template-columns:1fr 1fr;gap:40px 30px;margin-top:40px}.ct-ass-g div{text-align:center;font-size:13px}.ct-ass-g span{display:block;border-top:1px solid #111;margin-bottom:6px;height:1px}.ct-ass-g small{display:block;opacity:.7}
-mark{background:#fff2a8;color:#7a5b00;padding:0 2px;border-radius:3px}
-.bar{position:sticky;top:0;background:${ctEsc(prim)};color:#fff;padding:10px;text-align:center;font-size:14px;z-index:5}.bar button{margin-left:10px;padding:8px 16px;border:0;border-radius:999px;font-weight:700;cursor:pointer}
-@media print{.bar{display:none}body{background:#fff}mark{background:none;color:inherit}section{break-inside:avoid-page}.ct-clausula{break-inside:auto}}
-@media(max-width:640px){.ct-lista{columns:1}.ct-split{grid-template-columns:1fr}section{padding-left:18px!important;padding-right:18px!important}}
-</style></head><body>${ctx.barra?`<div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div>`:""}<div class="doc">${corpo}</div></body></html>`; }
 
 // ---------- tela: modelos de contrato ----------
 async function crmVModelos(v){
@@ -5740,8 +5679,6 @@ async function crmVModelos(v){
    ctEditor("contrato_"+Date.now().toString(36),m,()=>crmVModelos(v)); }catch(e){ crmToast(crmErro(e)); } });
 }
 function ctAbrirJanela(html){ const w=window.open("","_blank"); if(!w){ crmToast("O navegador bloqueou a janela. Libere pop-ups para o Resiltrack."); return null; } w.document.open(); w.document.write(html); w.document.close(); return w; }
-function ctNovoModelo(depois){ const tipos=["capa-contrato","partes","resumo-contratual","servicos-inclusos","extras-selecionados-contrato","pagamento-contrato","clausulas","assinaturas","rodape-contrato"];
- ctEditor("contrato_"+Date.now().toString(36),{nome:"Novo modelo de contrato",tipo:"blocos",origem:"resiltrack",tema:{primary:"#006789"},blocos:tipos.map(t=>({id:"b"+Math.random().toString(36).slice(2,8),type:t,visible:true,style:{...CT_BLOCOS[t].estilo},content:JSON.parse(JSON.stringify(CT_BLOCOS[t].conteudo))}))},depois); }
 
 async function ctEditarConfig(){ const cfg=await ctConfig(); const ks=CT_PALAVRAS[2][1];
  const m=crmModal("Modelos de contrato","Dados da Resilcon nos contratos","",`<p class="sub" style="margin:0 0 12px">Esses dados preenchem as palavras-chave [CONTABILIDADE_...] de todos os contratos.</p>
@@ -5750,62 +5687,13 @@ async function ctEditarConfig(){ const cfg=await ctConfig(); const ks=CT_PALAVRA
  m.querySelector("#cfgOk").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; const val={}; m.querySelectorAll("[data-cfg]").forEach(i=>val[i.dataset.cfg]=i.value.trim());
   try{ await ctSalvar("contrato_config_resilcon",{nome:"Dados da Resilcon",tipo:"config",valores:val}); CT.config=null; closeModal(); crmToast("Dados da Resilcon salvos"); }catch(e){ b.disabled=false; crmToast(e.message); } }; }
 
-// ---------- editor de modelo ----------
-function ctEditor(chave,modelo,depois){
- const M=JSON.parse(JSON.stringify(modelo)); M.blocos=M.blocos||[]; let sel=M.tipo==="texto"?null:0; let ultimoCampo=null;
- const m=crmModal("Modelos de contrato","Editar modelo","",`<div class="ct-ed">
-  <div class="ct-ed-l"><label class="crm-f"><span>Nome do modelo</span><input class="inp" id="edNome" value="${escAttr(M.nome||"")}"></label>
-   <label class="crm-chk"><input type="checkbox" id="edAtivo" ${M.ativo===false?"":"checked"}><span>Ativo (aparece na hora de gerar)</span></label>
-   ${M.tipo==="texto"?`<p class="sub">Modelo em texto corrido. Edite direto no documento ao lado.</p>`:`<div id="edBlocos"></div><div class="crm-pe" style="margin-top:8px"><select class="inp" id="edAdd"><option value="">Adicionar bloco…</option>${Object.entries(CT_BLOCOS).map(([k,b])=>`<option value="${k}">${esc(b.nome)}</option>`).join("")}</select></div>`}
-   <details class="ct-vars"><summary>Palavras-chave (clique para inserir)</summary>${CT_PALAVRAS.map(([g,l])=>`<b>${esc(g)}</b><div>${l.map(([k,r])=>`<button type="button" class="ct-var" data-var="${k}" title="${escAttr(r)}">[${k}]</button>`).join("")}</div>`).join("")}</details></div>
-  <div class="ct-ed-c">${M.tipo==="texto"?`<div class="ct-tb"><button type="button" data-cmd="bold"><b>N</b></button><button type="button" data-cmd="italic"><i>I</i></button><button type="button" data-cmd="underline"><u>S</u></button><button type="button" data-cmd="insertUnorderedList">• Lista</button><button type="button" data-cmd="insertOrderedList">1. Lista</button><button type="button" data-cmd="justifyFull">Justificar</button></div><div class="ct-rich" id="edRich" contenteditable="true">${M.html||""}</div>`
-   :`<div id="edCampos"></div>`}</div>
-  <div class="ct-ed-r"><p class="sub" style="margin:0 0 6px">Prévia (as palavras-chave aparecem destacadas)</p><iframe id="edPrev" title="Prévia do contrato"></iframe></div></div>
-  <div class="crm-pe" style="margin-top:12px">${M.origem!=="4c"?`<button class="txt-btn crm-perigo" id="edDel">Excluir</button>`:""}<span style="flex:1"></span><button class="view-btn ghost" id="edVer">Abrir em tela cheia</button><button class="view-btn ce-pri" id="edSalvar">Salvar modelo</button></div>`);
- modal.classList.add("ct-modal");
- const prev=async()=>{ const cfg=await ctConfig(); if(M.tipo==="texto") M.html=m.querySelector("#edRich").innerHTML; m.querySelector("#edPrev").srcdoc=ctDocumento(M,ctVariaveis({cli:{},cesta:[],extras:[]},cfg),{},true); };
- let t=null; const prevLento=()=>{ clearTimeout(t); t=setTimeout(prev,400); };
- const pintaBlocos=()=>{ const el=m.querySelector("#edBlocos"); if(!el) return;
-  el.innerHTML=M.blocos.map((b,i)=>`<div class="ct-bl ${i===sel?"on":""} ${b.visible===false?"off":""}" data-sel="${i}"><span>${esc((CT_BLOCOS[b.type]||{}).nome||b.type)}${(b.content&&b.content.title)?`<small>${esc(String(b.content.title).slice(0,40))}</small>`:""}</span>
-   <span class="ct-bl-a"><button type="button" data-up="${i}" title="Subir">↑</button><button type="button" data-down="${i}" title="Descer">↓</button><button type="button" data-vis="${i}" title="Mostrar ou esconder">${b.visible===false?"◌":"●"}</button><button type="button" data-rm="${i}" title="Remover">×</button></span></div>`).join("");
-  el.querySelectorAll("[data-sel]").forEach(d=>d.onclick=e=>{ if(e.target.closest("button")) return; sel=+d.dataset.sel; pintaBlocos(); pintaCampos(); });
-  el.querySelectorAll("[data-up]").forEach(x=>x.onclick=()=>{ const i=+x.dataset.up; if(i>0){ [M.blocos[i-1],M.blocos[i]]=[M.blocos[i],M.blocos[i-1]]; sel=i-1; pintaBlocos(); pintaCampos(); prevLento(); } });
-  el.querySelectorAll("[data-down]").forEach(x=>x.onclick=()=>{ const i=+x.dataset.down; if(i<M.blocos.length-1){ [M.blocos[i+1],M.blocos[i]]=[M.blocos[i],M.blocos[i+1]]; sel=i+1; pintaBlocos(); pintaCampos(); prevLento(); } });
-  el.querySelectorAll("[data-vis]").forEach(x=>x.onclick=()=>{ const b=M.blocos[+x.dataset.vis]; b.visible=b.visible===false; pintaBlocos(); prevLento(); });
-  el.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{ if(x.dataset.ok!=="1"){ x.dataset.ok="1"; x.textContent="?"; return; } M.blocos.splice(+x.dataset.rm,1); sel=Math.min(sel,M.blocos.length-1); pintaBlocos(); pintaCampos(); prevLento(); }); };
- const campoHTML=(path,k,val)=>{ const rot=CT_CAMPOS_ROT[k]||k; if(/^(id|imageRef|textAlign.*|titleAlign|methodsAlign|dueDateAlign|descriptionAlign|ctaText|ctaLink)$/.test(k)) return "";
-  if(Array.isArray(val)&&val.every(x=>typeof x==="string")) return `<label class="crm-f"><span>${esc(rot)}</span><textarea class="inp" rows="${Math.min(10,Math.max(3,val.length+1))}" data-path="${path}" data-arr="1">${esc(val.join("\n"))}</textarea></label>`;
-  if(Array.isArray(val)) return `<div class="crm-f"><span>${esc(rot)}</span>${val.map((o,j)=>`<div class="ct-grupo">${Object.entries(o||{}).map(([kk,vv])=>typeof vv==="string"?campoHTML(`${path}.${j}.${kk}`,kk,vv):"").join("")}<button type="button" class="txt-btn crm-perigo" data-rmit="${path}.${j}">Remover</button></div>`).join("")}<button type="button" class="txt-btn" data-addit="${path}">Adicionar</button></div>`;
-  if(val&&typeof val==="object") return "";
-  const longo=String(val||"").length>70||/text|description|terms/i.test(k);
-  return `<label class="crm-f"><span>${esc(rot)}</span>${longo?`<textarea class="inp" rows="${Math.min(18,Math.max(3,Math.ceil(String(val||"").length/70)))}" data-path="${path}">${esc(val||"")}</textarea>`:`<input class="inp" data-path="${path}" value="${escAttr(val||"")}">`}</label>`; };
- const pega=(o,p)=>p.split(".").reduce((a,k)=>a==null?a:a[k],o);
- const poe=(o,p,v)=>{ const ks=p.split("."); const last=ks.pop(); const a=ks.reduce((x,k)=>x[k],o); a[last]=v; };
- const pintaCampos=()=>{ const el=m.querySelector("#edCampos"); if(!el) return; const b=M.blocos[sel]; if(!b){ el.innerHTML=`<p class="sub">Adicione um bloco para começar.</p>`; return; }
-  b.style=b.style||{}; b.content=b.content||{};
-  el.innerHTML=`<h4 style="margin:0 0 10px">${esc((CT_BLOCOS[b.type]||{}).nome||b.type)}</h4>
-   ${b.type==="servicos-inclusos"?`<div class="ce-note">Na hora de gerar, a lista vem do plano escolhido na proposta. Os itens abaixo só aparecem se não houver plano.</div>`:""}
-   ${b.type==="extras-selecionados-contrato"?`<div class="ce-note">Este bloco é preenchido com os extras da proposta. Se não houver extras, ele não aparece.</div>`:""}
-   <div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Cor de fundo</span><input type="color" class="inp" data-cor="backgroundColor" value="${escAttr(/^#[0-9a-f]{6}$/i.test(b.style.backgroundColor||"")?b.style.backgroundColor:"#ffffff")}"></label>
-   <label class="crm-f"><span>Cor do texto</span><input type="color" class="inp" data-cor="textColor" value="${escAttr(/^#[0-9a-f]{6}$/i.test(b.style.textColor||"")?b.style.textColor:"#111827")}"></label></div>
-   ${Object.entries(b.content).map(([k,vv])=>campoHTML("content."+k,k,vv)).join("")}`;
-  el.querySelectorAll("[data-cor]").forEach(i=>i.oninput=()=>{ b.style[i.dataset.cor]=i.value; prevLento(); });
-  el.querySelectorAll("[data-path]").forEach(i=>{ i.onfocus=()=>{ ultimoCampo=i; }; i.oninput=()=>{ poe(b,i.dataset.path,i.dataset.arr?i.value.split("\n").map(x=>x.trim()).filter(Boolean):i.value); prevLento(); if(/title$/.test(i.dataset.path)) pintaBlocos(); }; });
-  el.querySelectorAll("[data-addit]").forEach(x=>x.onclick=()=>{ const arr=pega(b,x.dataset.addit); const mod=arr[0]?Object.fromEntries(Object.keys(arr[0]).map(k=>[k,""])):{title:"",text:""}; arr.push(mod); pintaCampos(); prevLento(); });
-  el.querySelectorAll("[data-rmit]").forEach(x=>x.onclick=()=>{ const p=x.dataset.rmit.split("."); const j=+p.pop(); pega(b,p.join(".")).splice(j,1); pintaCampos(); prevLento(); }); };
- pintaBlocos(); pintaCampos(); prev();
- const add=m.querySelector("#edAdd"); if(add) add.onchange=()=>{ const t2=add.value; if(!t2) return; const d=CT_BLOCOS[t2]; M.blocos.splice(sel+1,0,{id:"b"+Math.random().toString(36).slice(2,8),type:t2,visible:true,style:{...d.estilo},content:JSON.parse(JSON.stringify(d.conteudo))}); sel=sel+1; add.value=""; pintaBlocos(); pintaCampos(); prevLento(); };
- const rich=m.querySelector("#edRich"); if(rich){ rich.oninput=prevLento; rich.onfocus=()=>{ ultimoCampo=rich; }; m.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>{ e.preventDefault(); document.execCommand(b.dataset.cmd); prevLento(); }); }
- m.querySelectorAll("[data-var]").forEach(b=>b.onmousedown=e=>{ e.preventDefault(); const tok="["+b.dataset.var+"]";
-  if(ultimoCampo===rich&&rich){ rich.focus(); document.execCommand("insertText",false,tok); prevLento(); return; }
-  if(ultimoCampo&&ultimoCampo.isConnected){ const i=ultimoCampo, s=i.selectionStart??i.value.length, f=i.selectionEnd??s; i.value=i.value.slice(0,s)+tok+i.value.slice(f); i.focus(); i.setSelectionRange(s+tok.length,s+tok.length); i.dispatchEvent(new Event("input")); return; }
-  navigator.clipboard&&navigator.clipboard.writeText(tok); crmToast(tok+" copiado. Clique num campo e cole."); });
- m.querySelector("#edVer").onclick=async()=>{ await prev(); const cfg=await ctConfig(); ctAbrirJanela(ctDocumento(M,ctVariaveis({cli:{},cesta:[],extras:[]},cfg),{barra:true},true)); };
- m.querySelector("#edSalvar").onclick=async ev=>{ const b=ev.currentTarget; M.nome=crmVal(m,"#edNome")||"Modelo sem nome"; M.ativo=m.querySelector("#edAtivo").checked; if(rich) M.html=rich.innerHTML;
-  b.disabled=true; b.textContent="Salvando…"; try{ await ctSalvar(chave,M); closeModal(); crmToast("Modelo salvo"); depois&&depois(); }catch(e){ b.disabled=false; b.textContent="Salvar modelo"; crmToast(e.message); } };
- const del=m.querySelector("#edDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
-  try{ await ctExcluir(chave); closeModal(); crmToast("Modelo excluído"); depois&&depois(); }catch(e){ crmToast(e.message); } };
-}
+
+// foto vira JPEG de até 1800 px (mais leve e nítido para a leitura); PDF vai como está
+function ctArquivoBase64(file){ return new Promise((ok,erro)=>{ const fr=new FileReader(); fr.onerror=erro;
+ if(file.type==="application/pdf"){ fr.onload=()=>ok({tipo:"application/pdf",base64:String(fr.result).split(",")[1]}); fr.readAsDataURL(file); return; }
+ fr.onload=()=>{ const img=new Image(); img.onerror=erro; img.onload=()=>{ const max=1800, k=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement("canvas"); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height); ok({tipo:"image/jpeg",base64:c.toDataURL("image/jpeg",0.85).split(",")[1]}); }; img.src=fr.result; }; fr.readAsDataURL(file); }); }
+async function ctErroFn(e){ try{ if(e&&e.context&&typeof e.context.json==="function"){ const j=await e.context.json(); if(j&&j.erro) return j.erro; } }catch(_){} return (e&&e.message)||"Não consegui ler os dados."; }
 
 // ---------- gerar contrato a partir do negócio / proposta ----------
 // opts: {modelo, negocio:{id,...}, proposta:{cesta,extras}}
@@ -5820,13 +5708,46 @@ async function ctGerar(opts){
    <label class="crm-f"><span>Modelo de contrato</span><select class="inp" id="gMod">${lista.map(x=>`<option value="${x.chave}" ${x.chave===st.modelo?"selected":""}>${esc(x.nome)}</option>`).join("")}</select></label>
    <div id="gProp" class="ce-note"></div>
    <div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Início da vigência</span><input type="date" class="inp" id="gIni" value="${st.inicio}"></label><label class="crm-f"><span>Fim da vigência</span><input type="date" class="inp" id="gFim" value="${st.fim}"></label></div>
+   <div class="ct-auto"><h4 class="crm-h4" style="margin:0">Preencher automaticamente</h4>
+    <p class="sub" style="margin:0">Mande a foto ou o PDF do documento (RG, CNH, cartão CNPJ, contrato social, comprovante de endereço) ou cole os dados como vieram no WhatsApp ou e-mail. Os campos do contrato se preenchem sozinhos.</p>
+    <label class="ct-drop" id="gDrop"><input type="file" id="gArq" accept="image/*,application/pdf" multiple hidden><b>Enviar foto ou PDF</b><span class="sub">Clique, arraste aqui ou tire a foto pelo celular. Pode enviar mais de um.</span></label>
+    <div id="gArqs" class="ct-arqs"></div>
+    <textarea class="inp" id="gTxt" rows="3" placeholder="Ou cole aqui os dados do cliente. Ex.: Razão social, CNPJ, nome e CPF do sócio, endereço..."></textarea>
+    <div class="crm-pe" style="gap:8px"><span class="sub" id="gAutoMsg" style="flex:1"></span><button type="button" class="view-btn ce-pri" id="gLer">Ler e preencher</button></div>
+    <p class="sub" style="margin:0">Dica: só de digitar o CNPJ ou o CEP nos campos abaixo, o endereço e a razão social vêm da Receita.</p></div>
    <h4 class="crm-h4">Dados do cliente</h4><div class="crm-form" id="gCli" style="grid-template-columns:1fr 1fr"></div></div>
   <div class="ct-ed-r ct-ger-r"><p class="sub" style="margin:0 0 6px">Prévia. O que estiver em amarelo ainda falta preencher.</p><iframe id="gPrev" title="Prévia do contrato"></iframe></div></div>
   <div class="crm-pe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ce-pri" id="gSalvar">Salvar no CRM</button></div>`);
  modal.classList.add("ct-modal");
  const camposCli=CT_PALAVRAS[0][1].filter(([k])=>k!=="CONTRATANTE");
  const pintaCli=()=>{ m.querySelector("#gCli").innerHTML=camposCli.map(([k,r])=>`<label class="crm-f"><span>${esc(r)}</span><input class="inp" data-cli="${k}" value="${escAttr(st.cli[k]||"")}"></label>`).join("");
-  m.querySelectorAll("[data-cli]").forEach(i=>i.oninput=()=>{ st.cli[i.dataset.cli]=i.value; prevLento(); }); };
+  m.querySelectorAll("[data-cli]").forEach(i=>{ const k=i.dataset.cli; if(st.auto&&st.auto[k]){ i.classList.add("ct-ok"); i.title={documento:"Lido do documento",receita:"Veio da Receita Federal",cep:"Veio da consulta de CEP",texto:"Lido do texto colado"}[st.auto[k]]||""; }
+   i.oninput=()=>{ st.cli[k]=i.value; i.classList.remove("ct-ok"); prevLento(); };
+   if(k==="CLIENTE_EMPRESA_DOCUMENTO") i.onblur=()=>{ const d=i.value.replace(/\D/g,""); if(d.length===14&&d!==st.ultCnpj){ st.ultCnpj=d; ctConsulta({acao:"cnpj",cnpj:d},"receita","Consultando o CNPJ na Receita…"); } };
+   if(k==="CLIENTE_CEP") i.onblur=()=>{ const d=i.value.replace(/\D/g,""); if(d.length===8&&d!==st.ultCep){ st.ultCep=d; ctConsulta({acao:"cep",cep:d},"cep","Buscando o endereço pelo CEP…",true); } }; }); };
+ st.auto={}; st.arqs=[];
+ const msg=t=>{ m.querySelector("#gAutoMsg").textContent=t||""; };
+ const aplicar=(campos,fonte,fonteFixa,soVazios)=>{ let n=0; Object.entries(campos||{}).forEach(([k,v])=>{ if(k.startsWith("_")||!v) return; if(soVazios&&st.cli[k]&&k!=="CLIENTE_CEP") return; if(st.cli[k]!==v){ st.cli[k]=v; n++; } st.auto[k]=(fonte&&fonte[k])||fonteFixa; }); pintaCli(); prevLento(); return n; };
+ const ctConsulta=async(body,fonte,txt,soVazios)=>{ msg(txt); try{ const {data,error}=await sb.functions.invoke("extrair-documento",{body}); if(error) throw error; if(data&&data.erro) throw new Error(data.erro);
+   const n=aplicar(data.campos,null,fonte,soVazios); msg(n?`${n} campo(s) preenchido(s) automaticamente.`:"Nada novo para preencher."); }catch(e){ msg(""); crmToast(await ctErroFn(e)); } };
+ const pintaArqs=()=>{ m.querySelector("#gArqs").innerHTML=st.arqs.map((a,i)=>`<span class="ct-arq">${esc(a.nome)}<button type="button" data-rmarq="${i}" aria-label="Remover">×</button></span>`).join("");
+  m.querySelectorAll("[data-rmarq]").forEach(b=>b.onclick=e=>{ e.preventDefault(); st.arqs.splice(+b.dataset.rmarq,1); pintaArqs(); }); };
+ const addArqs=async files=>{ for(const f of [...files].slice(0,6)){ if(!/^image\/|application\/pdf/.test(f.type)){ crmToast("Envie foto (JPG, PNG) ou PDF."); continue; }
+   if(f.size>15*1024*1024){ crmToast(f.name+" passa de 15 MB."); continue; } try{ st.arqs.push({nome:f.name,...await ctArquivoBase64(f)}); }catch(_){ crmToast("Não consegui abrir "+f.name); } }
+  pintaArqs(); if(st.arqs.length) m.querySelector("#gLer").focus(); };
+ const inpArq=m.querySelector("#gArq"), drop=m.querySelector("#gDrop");
+ inpArq.onchange=()=>{ addArqs(inpArq.files); inpArq.value=""; };
+ drop.ondragover=e=>{ e.preventDefault(); drop.classList.add("on"); }; drop.ondragleave=()=>drop.classList.remove("on");
+ drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove("on"); addArqs(e.dataTransfer.files); };
+ m.querySelector("#gLer").onclick=async ev=>{ const b=ev.currentTarget; const texto=m.querySelector("#gTxt").value.trim();
+  if(!st.arqs.length&&!texto){ crmToast("Envie uma foto ou PDF, ou cole os dados no campo de texto."); return; }
+  b.disabled=true; b.textContent="Lendo…"; msg("Lendo os dados. Leva alguns segundos.");
+  try{ const {data,error}=await sb.functions.invoke("extrair-documento",{body:{arquivos:st.arqs.map(a=>({tipo:a.tipo,base64:a.base64})),texto}}); if(error) throw error; if(data&&data.erro) throw new Error(data.erro);
+   const fonte={...(data.fonte||{})}; if(!st.arqs.length) Object.keys(fonte).forEach(k=>{ if(fonte[k]==="documento") fonte[k]="texto"; });
+   const n=aplicar(data.campos,fonte,"documento",false);
+   msg(`${n} campo(s) preenchido(s)${(data.documentos||[]).length?" a partir de: "+data.documentos.join(", "):""}. Confira os campos em verde.`);
+   (data.avisos||[]).filter(Boolean).forEach(a=>crmToast(a));
+  }catch(e){ msg(""); crmToast(await ctErroFn(e)); } b.disabled=false; b.textContent="Ler e preencher"; };
  const ctx=()=>{ const p=st.proposta||{}; return {cesta:p.cesta||[],extras:p.extras||[],inclusos:[...new Set((p.cesta||[]).flatMap(x=>x.inclusos||[]))]}; };
  const pintaProp=()=>{ const p=st.proposta; m.querySelector("#gProp").innerHTML=p&&p.cesta&&p.cesta.length?`<b>Proposta usada:</b> ${p.cesta.map(c=>esc(c.plano)+" "+precoMoeda(c.valor)+"/mês").join(" + ")}${(p.extras||[]).length?` · ${p.extras.length} extra(s)`:""}. Os serviços do plano entram sozinhos no contrato.`
   :`Este negócio ainda não tem proposta salva. Monte no Simulador de planos e clique em "Salvar no negócio" para o contrato puxar o plano e os valores.`; };
@@ -5856,6 +5777,10 @@ async function ctGerar(opts){
 }
 
 (function(){ if(document.getElementById("ct-css")) return; const s=document.createElement("style"); s.id="ct-css"; s.textContent=`
+.ct-auto{border:1px solid rgba(0,103,137,.3);background:rgba(0,103,137,.05);border-radius:12px;padding:12px;display:grid;gap:8px}
+.ct-drop{display:grid;gap:2px;text-align:center;border:2px dashed rgba(0,103,137,.4);border-radius:10px;padding:14px;cursor:pointer;background:#fff}.ct-drop.on{background:rgba(0,103,137,.08)}.ct-drop b{color:#006789}
+.ct-arqs{display:flex;flex-wrap:wrap;gap:6px}.ct-arq{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:#fff;border:1px solid var(--line,#d5dde2);border-radius:999px;padding:3px 4px 3px 10px}.ct-arq button{border:0;background:none;cursor:pointer;font-size:14px;line-height:1}
+.inp.ct-ok{border-color:#2f9e74!important;background:#eefaf4!important}
 .ct-modal{max-width:min(1380px,96vw)!important;width:96vw}
 .ct-ed{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(280px,1.1fr) minmax(320px,1.3fr);gap:16px;align-items:start}.ct-ger{grid-template-columns:minmax(300px,1fr) minmax(360px,1.3fr)}
 .ct-ed-l{display:grid;gap:10px}.ct-ed-c{max-height:72vh;overflow:auto;padding-right:4px}.ct-ed-r iframe{width:100%;height:72vh;border:1px solid var(--line,#d5dde2);border-radius:12px;background:#fff}
@@ -5866,6 +5791,517 @@ async function ctGerar(opts){
 .ct-tb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.ct-tb button{border:1px solid var(--line,#d5dde2);background:#fff;border-radius:6px;padding:4px 8px;cursor:pointer}
 .ct-rich{min-height:60vh;border:1px solid var(--line,#d5dde2);border-radius:10px;padding:16px;background:#fff;color:#111;font-size:14px;line-height:1.55;outline:none}
 @media(max-width:1100px){.ct-ed,.ct-ger{grid-template-columns:1fr}.ct-ed-r iframe{height:60vh}}
+`; document.head.appendChild(s); })();
+
+// ================= CRM · CONTRATOS: editor visual de modelos (mesmo jeito do editor da 4C, sem limite de blocos nem de itens) =================
+const CT_BLOCOS={
+ "capa-contrato":{nome:"Capa",grupo:"contrato",ico:"capa",conteudo:{companyName:"[CONTABILIDADE_NOME]",title:"Contrato de Prestação de Serviços",subtitle:"Condições comerciais e operacionais do projeto.",clientName:"[CLIENTE_NOME]",date:"[MES_ATUAL] de [ANO_ATUAL]",vigencia:"[DATA_VIGENCIA_DE] até [DATA_VIGENCIA_ATE]",textAlign:"center"},estilo:{padding:48,heightPreset:"medium"}},
+ "cabecalho-contrato":{nome:"Cabeçalho",grupo:"contrato",ico:"cab",conteudo:{companyName:"[CONTABILIDADE_NOME]",tagline:"Assessoria contábil, fiscal e empresarial"}},
+ "partes":{nome:"Partes",grupo:"contrato",ico:"partes",variante:"stacked",conteudo:{labelContratante:"CONTRATANTE",textoContratante:"[CONTRATANTE]",textAlignContratante:"justify",labelContratada:"CONTRATADA",textoContratada:"[CONTABILIDADE_NOME], inscrita no CNPJ sob nº [CONTABILIDADE_CNPJ], com sede na [CONTABILIDADE_LOGRADOURO], nº [CONTABILIDADE_NUMERO], [CONTABILIDADE_BAIRRO], [CONTABILIDADE_CIDADE]/[CONTABILIDADE_UF], CEP [CONTABILIDADE_CEP], neste ato representada por [CONTABILIDADE_RESPONSAVEL_NOME].",textAlignContratada:"justify"}},
+ "resumo-contratual":{nome:"Resumo Contratual",grupo:"contrato",ico:"kpi",conteudo:{title:"Resumo Contratual",kpis:[{label:"Plano",value:"[NOME_PLANO]"},{label:"Mensalidade",value:"[VALOR_PROPOSTA]"},{label:"Vigência",value:"12 meses"},{label:"Início",value:"[DATA_VIGENCIA_DE]"}]}},
+ "clausulas":{nome:"Cláusulas",grupo:"contrato",ico:"clau",conteudo:{title:"Cláusulas Contratuais",clauses:[{number:"1",title:"Objeto",text:"O presente contrato tem por objeto a prestação de serviços contábeis e fiscais à Contratante.",textAlign:"justify"}]}},
+ "info-garantias":{nome:"Informações/Garantias",grupo:"contrato",ico:"info",conteudo:{title:"Informações e Garantias",items:[{title:"Confidencialidade",description:"As informações compartilhadas serão tratadas com sigilo profissional.",textAlign:"left"}]}},
+ "pagamento-contrato":{nome:"Pagamento",grupo:"contrato",ico:"pag",variante:"cardsRow",conteudo:{title:"Pagamento",methods:"Boleto bancário ou PIX",dueDate:"Todo dia 10",terms:"Primeira cobrança proporcional ao início da operação.",campos:[]}},
+ "assinaturas":{nome:"Assinaturas",grupo:"contrato",ico:"ass",conteudo:{local:"[CONTABILIDADE_CIDADE], [DIA_ATUAL] de [MES_ATUAL] de [ANO_ATUAL].",assinantes:[{nome:"[CLIENTE_EMPRESA_NOME]",papel:"CONTRATANTE"},{nome:"[CONTABILIDADE_NOME]",papel:"CONTRATADA"}],testemunhas:"2"}},
+ "rodape-contrato":{nome:"Rodapé",grupo:"contrato",ico:"rod",conteudo:{companyName:"[CONTABILIDADE_NOME]",phone:"(11) 5661-1555",email:"comercial@resilcon.com.br",website:"https://www.resilcon.com.br"},estilo:{padding:12}},
+ "secao-foto":{nome:"Seção com Foto",grupo:"visual",ico:"foto",variante:"abaixo",conteudo:{title:"Título da seção",text:"Texto da seção.",imageUrl:"",legenda:""}},
+ "secao-conteudo":{nome:"Conteúdo Curto",grupo:"visual",ico:"txt",conteudo:{title:"Título",text:"Texto curto.",textAlign:"left",bullets:["Tópico 1","Tópico 2"]}},
+ "hero-image":{nome:"Hero com Imagem",grupo:"visual",ico:"hero",conteudo:{title:"Título sobre a imagem",subtitle:"",backgroundImageUrl:""},estilo:{heightPreset:"medium",overlayColor:"#000000",overlayOpacity:40}},
+ "split-image-text":{nome:"Imagem + Texto",grupo:"visual",ico:"split",variante:"left",conteudo:{title:"Título",text:"Texto ao lado da imagem.",bullets:["Tópico"],imageUrl:""}},
+ "video":{nome:"Vídeo",grupo:"visual",ico:"video",conteudo:{title:"Assista",url:"",legenda:"Clique para abrir o vídeo."}},
+ "texto-livre":{nome:"Texto livre (formatado)",grupo:"visual",ico:"livre",conteudo:{html:"<p>Escreva aqui. Use negrito, listas e palavras-chave como [CLIENTE_NOME].</p>"}},
+ "tabela":{nome:"Tabela",grupo:"visual",ico:"tab",conteudo:{title:"Tabela",colunas:["Item","Detalhe","Valor"],linhas:[["","",""]]}},
+ "servicos-inclusos":{nome:"Serviços Inclusos",grupo:"proposta",ico:"serv",conteudo:{title:"Serviços Inclusos",items:["Na hora de gerar, a lista vem do plano escolhido na proposta"]}},
+ "extras-selecionados-contrato":{nome:"Extras Selecionados",grupo:"proposta",ico:"exsel",conteudo:{title:"Serviços Adicionais Contratados",items:[{name:"Exemplo de extra",price:"R$ 0,00",parcelas:""}]}},
+ "extras-nao-selecionados-contrato":{nome:"Extras Não Selecionados",grupo:"proposta",ico:"exnao",conteudo:{title:"Outros serviços disponíveis",items:[{name:"BPO Financeiro",price:"Sob consulta"}]}}
+};
+const CT_GRUPOS=[["contrato","Blocos do contrato","#475569"],["visual","Recursos visuais","#0e7490"],["proposta","Recursos da proposta","#7c3aed"]];
+const CT_VARIANTES={
+ "capa-contrato":[["default","Centralizada"],["esquerda","Alinhada à esquerda"],["imagem","Com imagem de fundo"]],
+ "cabecalho-contrato":[["default","Logo à direita"],["centro","Centralizado"]],
+ "partes":[["stacked","Empilhado"],["side","Lado a lado"]],
+ "resumo-contratual":[["default","Cards"],["lista","Lista"]],
+ "clausulas":[["default","Padrão"],["lateral","Número em destaque"]],
+ "info-garantias":[["default","Lista"],["cards","Cards"]],
+ "pagamento-contrato":[["cardsRow","Cards"],["lista","Lista"]],
+ "assinaturas":[["default","Duas colunas"],["empilhado","Uma coluna"]],
+ "rodape-contrato":[["default","Em linha"],["duas","Duas linhas"]],
+ "secao-foto":[["abaixo","Foto abaixo"],["acima","Foto acima"],["direita","Foto à direita"],["esquerda","Foto à esquerda"]],
+ "secao-conteudo":[["default","Simples"],["destaque","Destaque"]],
+ "split-image-text":[["left","Imagem à esquerda"],["right","Imagem à direita"]],
+ "servicos-inclusos":[["default","Duas colunas"],["uma","Uma coluna"],["cards","Cards"]],
+ "extras-selecionados-contrato":[["default","Tabela"],["cards","Cards"]],
+ "extras-nao-selecionados-contrato":[["default","Lista"],["cards","Cards"]],
+ "tabela":[["default","Simples"],["zebrado","Zebrada"]]
+};
+const CT_CAMPOS_ROT={companyName:"Empresa",title:"Título",subtitle:"Subtítulo",clientName:"Cliente",date:"Data",vigencia:"Vigência",tagline:"Frase",labelContratante:"Rótulo do contratante",textoContratante:"Contratante",labelContratada:"Rótulo da contratada",textoContratada:"Contratada",
+ items:"Itens",kpis:"Indicadores",methods:"Formas de pagamento",dueDate:"Vencimento",terms:"Condições",campos:"Mais informações",text:"Texto",bullets:"Tópicos",imageUrl:"Imagem",backgroundImageUrl:"Imagem de fundo",clauses:"Cláusulas",phone:"Telefone",email:"E-mail",website:"Site",
+ local:"Local e data",assinantes:"Quem assina",testemunhas:"Testemunhas",nome:"Nome",papel:"Papel",label:"Rótulo",value:"Valor",description:"Descrição",number:"Número",name:"Nome",price:"Preço",parcelas:"Parcelas",legenda:"Legenda",url:"Link do vídeo",colunas:"Colunas",linhas:"Linhas",
+ contratante:"Contratante (resumo)",contratada:"Contratada (resumo)",empresa:"Empresa",cnpj:"CNPJ",html:"Texto"};
+const CT_ITEM_NOVO={clauses:{number:"",title:"Nova cláusula",text:"",textAlign:"justify"},kpis:{label:"Indicador",value:"Valor"},campos:{label:"Informação",value:"Valor"},assinantes:{nome:"",papel:""},
+ "info-garantias.items":{title:"Novo item",description:"",textAlign:"left"},"extras-selecionados-contrato.items":{name:"",price:"",parcelas:""},"extras-nao-selecionados-contrato.items":{name:"",price:""}};
+const CT_PRESETS={auto:{nome:"Auto (manter cores)"},
+ resilcon:{nome:"Resilcon",primary:"#006789",secondary:"#00A3B4",bgPrimary:"#FFFFFF",bgSecondary:"#EEF3F5",txtPrimary:"#10212A",txtSecondary:"#4A5D66"},
+ oceano:{nome:"Oceano",primary:"#0C4A6E",secondary:"#0891B2",bgPrimary:"#FFFFFF",bgSecondary:"#F0F7FA",txtPrimary:"#0F172A",txtSecondary:"#475569"},
+ floresta:{nome:"Floresta",primary:"#14532D",secondary:"#65A30D",bgPrimary:"#FFFFFF",bgSecondary:"#F3F7F2",txtPrimary:"#14201A",txtSecondary:"#4B5B50"},
+ corporativo:{nome:"Corporativo",primary:"#0F172A",secondary:"#D97706",bgPrimary:"#FFFFFF",bgSecondary:"#F8FAFC",txtPrimary:"#1E293B",txtSecondary:"#475569"},
+ elegante:{nome:"Elegante",primary:"#3B2A20",secondary:"#B08D57",bgPrimary:"#FFFDF9",bgSecondary:"#F4EFE7",txtPrimary:"#2B211B",txtSecondary:"#6B5B4E"},
+ dark:{nome:"Dark Premium",primary:"#D4AF37",secondary:"#D4AF37",bgPrimary:"#151A23",bgSecondary:"#0B0F16",txtPrimary:"#F3F4F6",txtSecondary:"#AEB4BE"}};
+const CT_FONTES={"dm-serif-inter":{nome:"Premium Moderno",tit:"'DM Serif Display',Georgia,serif",txt:"Inter,Arial,sans-serif",g:"DM+Serif+Display&family=Inter:wght@400;600;700"},
+ classico:{nome:"Clássico Elegante",tit:"'Playfair Display',Georgia,serif",txt:"Lora,Georgia,serif",g:"Playfair+Display:wght@600;700&family=Lora:wght@400;600"},
+ contemporaneo:{nome:"Contemporâneo",tit:"Urbanist,Arial,sans-serif",txt:"'DM Sans',Arial,sans-serif",g:"Urbanist:wght@600;700&family=DM+Sans:wght@400;600;700"}};
+const CT_ESCALAS={compact:["Compacto",.92],default:["Padrão",1],comfortable:["Confortável",1.06],large:["Grande",1.14]};
+const CT_LAYOUTS={empilhado:{nome:"Empilhado",tema:{blockMerge:false},v:{partes:"stacked","servicos-inclusos":"uma","pagamento-contrato":"lista","info-garantias":"default"}},
+ "duas-colunas":{nome:"Duas colunas",tema:{blockMerge:false},v:{partes:"side","servicos-inclusos":"default","pagamento-contrato":"cardsRow","assinaturas":"default"}},
+ grade:{nome:"Grade de cards",tema:{blockMerge:false},v:{"servicos-inclusos":"cards","info-garantias":"cards","extras-selecionados-contrato":"cards","extras-nao-selecionados-contrato":"cards","pagamento-contrato":"cardsRow"}},
+ minimalista:{nome:"Minimalista jurídico",tema:{blockMerge:true,fontPairId:"classico"},v:{partes:"stacked","servicos-inclusos":"uma","info-garantias":"default",clausulas:"default","pagamento-contrato":"lista"}},
+ premium:{nome:"Premium (cabeçalho e rodapé)",tema:{blockMerge:false,fontPairId:"dm-serif-inter"},v:{clausulas:"lateral","info-garantias":"cards","rodape-contrato":"duas"}}};
+const CT_MIDIAS_PADRAO=[{id:"hero-media-1",name:"Escritório",url:"https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80"},
+ {id:"hero-media-2",name:"Reunião",url:"https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=1600&q=80"},
+ {id:"hero-media-3",name:"Cidade",url:"https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80"}];
+const CT_TEMA_PADRAO={presetId:"resilcon",...CT_PRESETS.resilcon,fontPairId:"dm-serif-inter",scale:"default",blockMerge:false,layoutId:"empilhado"}; delete CT_TEMA_PADRAO.nome;
+
+// ---------- utilidades ----------
+function ctEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function ctTxt(s,v,marcar){ return ctEsc(ctTroca(s,v,marcar)).replace(/⟦([^⟧]+)⟧/g,'<mark title="Falta preencher">[$1]</mark>').replace(/\n/g,"<br>"); }
+function ctHtmlLivre(h,v,marcar){ return String(ctTroca(String(h||"").replace(/<\/?(script|iframe|object|embed|style)[^>]*>/gi,"").replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,""),v,marcar)).replace(/⟦([^⟧]+)⟧/g,'<mark title="Falta preencher">[$1]</mark>'); }
+function ctTema(M){ return {...CT_TEMA_PADRAO,...((M&&M.tema)||{})}; }
+function ctLogo(M){ return {url:"",size:"medium",position:"right",showInAllBlocks:false,showAsWatermark:false,...((M&&M.logo)||{})}; }
+function ctHexOk(h){ return /^#[0-9a-f]{6}$/i.test(String(h||"")); }
+function ctLum(h){ if(!ctHexOk(h)) return 1; const n=parseInt(h.slice(1),16); const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255; return .2126*r+.7152*g+.0722*b; }
+function ctFontes(id){ return CT_FONTES[id]||CT_FONTES["dm-serif-inter"]; }
+function ctCarregaFonte(id){ const f=ctFontes(id); const idl="ct-font-"+(CT_FONTES[id]?id:"dm-serif-inter"); if(document.getElementById(idl)) return; const l=document.createElement("link"); l.id=idl; l.rel="stylesheet"; l.href=`https://fonts.googleapis.com/css2?family=${f.g}&display=swap`; document.head.appendChild(l); }
+function ctId(){ return "b"+Math.random().toString(36).slice(2,10); }
+function ctNovoBloco(tipo){ const d=CT_BLOCOS[tipo]; return {id:ctId(),type:tipo,visible:true,followsPreset:true,variant:d.variante||"default",style:{padding:24,fontScale:1,...(d.estilo||{})},content:JSON.parse(JSON.stringify(d.conteudo))}; }
+function ctYoutube(u){ const m=String(u||"").match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/); return m?m[1]:""; }
+// cores do bloco: segue o tema ou usa as cores próprias
+function ctCores(b,tema){ const st=b.style||{}; const destaque=b.type==="resumo-contratual"; const segue=b.followsPreset===true||!st.backgroundColor;
+ const bg=segue?(destaque?tema.primary:tema.bgPrimary):st.backgroundColor; const escuro=ctLum(bg)<.45;
+ const txt=(segue||!st.textColor)?(escuro?(ctLum(tema.txtPrimary)>.6?tema.txtPrimary:"#FFFFFF"):(ctLum(tema.txtPrimary)<.5?tema.txtPrimary:"#111827")):st.textColor;
+ const card=st.accentColor&&!segue?st.accentColor:(escuro?"rgba(255,255,255,.09)":`color-mix(in srgb, ${tema.secondary} 9%, ${bg})`);
+ const tit=st.titleColor&&!segue?st.titleColor:(escuro?"inherit":tema.primary);
+ return {bg,txt,card,tit,escuro}; }
+
+// ---------- renderização ----------
+function ctRenderBloco(b,v,ctx,marcar){ ctx=ctx||{}; if(b.visible===false&&!ctx.canvas) return ""; const tema=ctx.tema||ctTema(null), logo=ctx.logo||ctLogo(null);
+ const c=b.content||{}, st=b.style||{}, va=b.variant||"default"; const T=s=>ctTxt(s,v,marcar); const cor=ctCores(b,tema);
+ const pad=st.padding==null||st.padding===""?24:Math.max(0,+st.padding); const fs=(+st.fontScale||1)*((CT_ESCALAS[tema.scale]||[0,1])[1]);
+ let css=`background:${cor.bg};color:${cor.txt};padding:${pad}px ${Math.max(pad,18)+12}px;font-size:${(15*fs).toFixed(2)}px;--card:${cor.card};--tit:${cor.tit};--ac:${tema.secondary};--pri:${tema.primary};${st.pageBreakBefore?"break-before:page;":""}`;
+ const tit=(t,al)=>t?`<h2 style="text-align:${al||c.titleAlign||"left"}">${T(t)}</h2>`:"";
+ const lg=(cls)=>logo.url?`<img class="ct-logo ct-logo-${logo.size} ${cls||""}" src="${ctEsc(logo.url)}" alt="">`:"";
+ const marca=logo.url&&logo.showInAllBlocks&&!/capa|cabecalho/.test(b.type)?`<img class="ct-logo-mini" src="${ctEsc(logo.url)}" alt="">`:"";
+ const paras=t=>ctTxt(t,v,marcar).split(/(?:<br>){2,}/).map(p=>`<p>${p}</p>`).join("");
+ const lista=(arr)=>`<ul class="ct-lista">${arr.map(x=>`<li>${T(typeof x==="string"?x:(x.name||x.nome||x.title||""))}</li>`).join("")}</ul>`;
+ const img=(u,cls)=>u?`<img class="ct-img ${cls||""}" src="${ctEsc(u)}" alt="">`:(ctx.canvas?`<div class="ct-img ct-img-vazia ${cls||""}">Escolha uma imagem no painel</div>`:"");
+ let h="";
+ switch(b.type){
+  case "capa-contrato": { const al=va==="esquerda"?"left":(c.textAlign||"center"); const bgImg=va==="imagem"&&(st.backgroundImageUrl||c.backgroundImageUrl);
+   const alt={small:240,medium:360,large:520}[st.heightPreset]||360;
+   if(bgImg){ const op=(Number(st.overlayOpacity)||40)/100; css+=`background-image:linear-gradient(rgba(0,0,0,${op}),rgba(0,0,0,${op})),url('${ctEsc(bgImg)}');background-size:cover;background-position:${st.focalPoint||"center"};color:#fff;`; }
+   css+=`min-height:${alt}px;display:flex;flex-direction:column;justify-content:center;text-align:${al};border-bottom:8px solid ${tema.primary};`;
+   h=`${logo.url?`<div class="ct-logo-l" style="text-align:${logo.position==="left"?"left":logo.position==="center"?"center":"right"}">${lg()}</div>`:""}<div class="ct-k">${T(c.companyName)}</div><h1>${T(c.title)}</h1>${c.subtitle?`<p class="ct-sub">${T(c.subtitle)}</p>`:""}
+    <div class="ct-capa-cli">${c.clientName?`Cliente: <b>${T(c.clientName)}</b>`:""}${c.date?`<br><small>${T(c.date)}</small>`:""}${c.vigencia?`<br><small>Vigência: ${T(c.vigencia)}</small>`:""}</div>`; break; }
+  case "cabecalho-contrato": h=`<div class="ct-cab ${va==="centro"?"centro":""} ${logo.position==="left"?"esq":""}"><div><h2 class="ct-cab-t">${T(c.companyName)}</h2>${c.tagline?`<p>${T(c.tagline)}</p>`:""}</div>${lg()}</div>`; break;
+  case "partes": h=`<div class="ct-grid ${va==="side"?"ct-g2":"ct-g1"}"><div class="ct-card ct-parte"><b>${T(c.labelContratante||"CONTRATANTE")}</b><p style="text-align:${c.textAlignContratante||"justify"}">${T(c.textoContratante)}</p></div>
+   <div class="ct-card ct-parte"><b>${T(c.labelContratada||"CONTRATADA")}</b><p style="text-align:${c.textAlignContratada||"justify"}">${T(c.textoContratada)}</p></div></div>`; break;
+  case "resumo-contratual": h=tit(c.title)+(va==="lista"?`<dl class="ct-dl">${(c.kpis||[]).map(k=>`<div><dt>${T(k.label)}</dt><dd>${T(k.value)}</dd></div>`).join("")}</dl>`
+   :`<div class="ct-grid ct-kpis">${(c.kpis||[]).map(k=>`<div class="ct-card"><span>${T(k.label)}</span><b>${T(k.value)}</b></div>`).join("")}</div>`); break;
+  case "servicos-inclusos": { const it=(ctx.inclusos&&ctx.inclusos.length)?ctx.inclusos:(c.items||[]); if(!it.length&&!ctx.canvas) return "";
+   h=tit(c.title)+(va==="cards"?`<div class="ct-grid">${it.map(x=>`<div class="ct-card ct-check">${T(typeof x==="string"?x:(x.name||x.title||""))}</div>`).join("")}</div>`:`<div class="${va==="uma"?"ct-uma":""}">${lista(it)}</div>`); break; }
+  case "extras-selecionados-contrato": { let ex=(ctx.extras||[]).map(e=>({name:e.nome,qt:e.cobranca==="mensal"?"mensal":e.cobranca==="hora"?e.qtd+" hora(s)":e.cobranca==="volume"?e.qtd+" unidade(s)":"cobrança única",price:precoMoeda((precoNum(e.valor)||0)*(Number(e.qtd)||1)),real:1}));
+   if(!ex.length){ if(!ctx.canvas) return ""; ex=(c.items||[]).map(i=>({name:i.name,qt:i.parcelas||"",price:i.price})); }
+   const nm=e=>e.real?ctEsc(e.name):T(e.name), pr=e=>e.real?ctEsc(e.price):T(e.price);
+   h=tit(c.title)+(ctx.canvas&&!(ctx.extras||[]).length?`<div class="ct-aviso">Exemplo. Na hora de gerar, entram os extras da proposta. Sem extras, o bloco some.</div>`:"")+(va==="cards"?`<div class="ct-grid">${ex.map(e=>`<div class="ct-card"><b>${nm(e)}</b><span class="ct-mini">${ctEsc(e.qt||"")}</span><div class="ct-preco">${pr(e)}</div></div>`).join("")}</div>`
+    :`<table class="ct-tab">${ex.map(e=>`<tr><td>${nm(e)}</td><td>${ctEsc(e.qt||"")}</td><td class="r">${pr(e)}</td></tr>`).join("")}</table>`); break; }
+  case "extras-nao-selecionados-contrato": { const ex=(ctx.extrasNao&&ctx.extrasNao.length)?ctx.extrasNao.map(e=>({name:e.nome,price:precoMoeda(precoNum(e.valor))})):(c.items||[]); if(!ex.length&&!ctx.canvas) return "";
+   h=tit(c.title)+(va==="cards"?`<div class="ct-grid">${ex.map(e=>`<div class="ct-card"><b>${T(e.name)}</b><div class="ct-preco">${T(e.price)}</div></div>`).join("")}</div>`
+    :`<table class="ct-tab">${ex.map(e=>`<tr><td>${T(e.name)}</td><td class="r">${T(e.price)}</td></tr>`).join("")}</table>`); break; }
+  case "clausulas": h=tit(c.title)+(c.clauses||[]).map((k,j)=>{ const n=k.number||String(j+1); return va==="lateral"
+    ?`<div class="ct-clausula lat"><span class="ct-num">${ctEsc(n)}</span><div>${k.title?`<h3>${T(k.title)}</h3>`:""}<div style="text-align:${k.textAlign||"justify"}">${paras(k.text)}</div></div></div>`
+    :`<div class="ct-clausula">${k.title?`<h3>${ctEsc(n)}. ${T(k.title)}</h3>`:""}<div style="text-align:${k.textAlign||"justify"}">${paras(k.text)}</div></div>`; }).join(""); break;
+  case "info-garantias": h=tit(c.title)+`<div class="${va==="cards"?"ct-grid":""}">${(c.items||[]).map(i=>`<div class="${va==="cards"?"ct-card":"ct-item"}"><b>${T(i.title)}</b><p style="text-align:${i.textAlign||i.descriptionAlign||"left"}">${T(i.description)}</p></div>`).join("")}</div>`; break;
+  case "pagamento-contrato": { const ks=[["Formas de pagamento",c.methods],["Vencimento",c.dueDate],...(c.campos||[]).map(x=>[x.label,x.value])].filter(x=>x[1]);
+   h=tit(c.title)+(va==="lista"?`<dl class="ct-dl">${ks.map(([a,b2])=>`<div><dt>${T(a)}</dt><dd>${T(b2)}</dd></div>`).join("")}</dl>`:`<div class="ct-grid ct-kpis">${ks.map(([a,b2])=>`<div class="ct-card"><span>${T(a)}</span><b>${T(b2)}</b></div>`).join("")}</div>`)+(c.terms?`<p class="ct-obs">${T(c.terms)}</p>`:""); break; }
+  case "assinaturas": { const as=(c.assinantes&&c.assinantes.length)?c.assinantes:[{nome:c.contratante||"[CLIENTE_EMPRESA_NOME]",papel:"CONTRATANTE"},{nome:c.contratada||"[CONTABILIDADE_NOME]",papel:"CONTRATADA"}];
+   let nt=String(c.testemunhas==null?"0":c.testemunhas).trim().toLowerCase(); nt=/^s/.test(nt)?2:(parseInt(nt)||0);
+   const ts=Array.from({length:nt},(_,j)=>({nome:`Testemunha ${j+1}`,papel:"Nome e CPF"}));
+   h=`${c.local?`<p>${T(c.local)}</p>`:""}<div class="ct-ass-g ${va==="empilhado"?"um":""}">${[...as,...ts].map(a=>`<div><span></span>${T(a.nome)}<small>${T(a.papel)}</small></div>`).join("")}</div>`; break; }
+  case "rodape-contrato": { const it=[c.companyName,c.phone,c.email,c.website].filter(Boolean).map(T); css+="text-align:center;";
+   h=va==="duas"?`<div class="ct-rod"><b>${it[0]||""}</b><br>${it.slice(1).join(" · ")}</div>`:`<div class="ct-rod">${it.join(" · ")}</div>`; break; }
+  case "secao-conteudo": h=`<div class="${va==="destaque"?"ct-destaque":""}">${tit(c.title)}${c.text?`<div style="text-align:${c.textAlign||"left"}">${paras(c.text)}</div>`:""}${(c.bullets||[]).length?lista(c.bullets):""}</div>`; break;
+  case "secao-foto": { const im=img(c.imageUrl), tx=`<div>${tit(c.title)}${c.text?`<div style="text-align:${c.textAlign||"left"}">${paras(c.text)}</div>`:""}</div>`, lgd=c.legenda?`<p class="ct-legenda">${T(c.legenda)}</p>`:"";
+   h=va==="acima"?im+lgd+tx:va==="direita"?`<div class="ct-split">${tx}<div>${im}${lgd}</div></div>`:va==="esquerda"?`<div class="ct-split"><div>${im}${lgd}</div>${tx}</div>`:tx+im+lgd; break; }
+  case "hero-image": { const u=c.backgroundImageUrl||st.backgroundImageUrl; const alt={small:200,medium:300,large:440}[st.heightPreset]||300; const op=(st.overlayOpacity==null?40:Number(st.overlayOpacity))/100;
+   if(!u&&!ctx.canvas) return ""; css+=`min-height:${alt}px;display:flex;flex-direction:column;justify-content:${st.verticalAlign==="top"?"flex-start":st.verticalAlign==="bottom"?"flex-end":"center"};text-align:${st.contentAlign||"center"};color:#fff;`;
+   css+=u?`background:linear-gradient(${ctHex2rgba(st.overlayColor||"#000000",op)},${ctHex2rgba(st.overlayColor||"#000000",op)}),url('${ctEsc(u)}') ${st.focalPoint||"center"}/cover;`:"background:#64748b;";
+   h=`${c.title?`<h2 class="ct-hero-t">${T(c.title)}</h2>`:""}${c.subtitle?`<p>${T(c.subtitle)}</p>`:""}${!u?`<p class="ct-mini">Escolha uma imagem no painel</p>`:""}`; break; }
+  case "split-image-text": { const lado=va==="right"||(va==="default"&&c.imageSide==="right")?"dir":""; h=`<div class="ct-split ${lado}">${img(c.imageUrl)}<div>${tit(c.title)}${c.text?paras(c.text):""}${(c.bullets||[]).length?lista(c.bullets):""}</div></div>`; break; }
+  case "video": { const id=ctYoutube(c.url); h=tit(c.title)+(c.url?`<a class="ct-video" href="${ctEsc(c.url)}" target="_blank" rel="noopener">${id?`<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="">`:""}<span class="ct-play">▶</span></a><p class="ct-legenda">${T(c.legenda)} <span class="ct-url">${ctEsc(c.url)}</span></p>`:(ctx.canvas?`<div class="ct-img ct-img-vazia">Cole o link do vídeo (YouTube, Vimeo, Drive) no painel</div>`:"")); if(!c.url&&!ctx.canvas) return ""; break; }
+  case "texto-livre": h=`<div class="ct-livre">${ctHtmlLivre(c.html,v,marcar)}</div>`; break;
+  case "tabela": { const cols=c.colunas||[]; h=tit(c.title)+`<table class="ct-tab ct-tabela ${va==="zebrado"?"zeb":""}"><thead><tr>${cols.map(x=>`<th>${T(x)}</th>`).join("")}</tr></thead><tbody>${(c.linhas||[]).map(l=>`<tr>${cols.map((_,j)=>`<td>${T((l||[])[j]||"")}</td>`).join("")}</tr>`).join("")}</tbody></table>`; break; }
+  default: { const txt=Object.values(c).filter(x=>typeof x==="string").map(T).join("<br>"); if(!txt) return ""; h=txt; }
+ }
+ return `<section class="ct-b ct-${b.type} v-${va}${cor.escuro?" escuro":""}" style="${css}">${marca}${h}</section>`; }
+function ctHex2rgba(h,a){ if(!ctHexOk(h)) return `rgba(0,0,0,${a})`; const n=parseInt(h.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+function ctCss(tema,logo){ const f=ctFontes(tema.fontPairId); const sep=!tema.blockMerge;
+ return `*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ct-fundo{background:${tema.bgSecondary};padding:${sep?"22px 14px":"0"};font-family:${f.txt};color:${tema.txtPrimary};line-height:1.6;min-height:100%}
+.doc{max-width:860px;margin:0 auto;position:relative;${sep?"":`background:${tema.bgPrimary};box-shadow:0 2px 18px rgba(0,0,0,.08)`}}
+${logo.url&&logo.showAsWatermark?`.doc:before{content:"";position:absolute;inset:0;background:url('${ctEsc(logo.url)}') center 40%/45% no-repeat;opacity:.05;pointer-events:none;z-index:2}`:""}
+section.ct-b{position:relative;${sep?"border-radius:14px;margin:0 0 14px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);overflow:hidden":"border-bottom:1px solid rgba(127,127,127,.12)"}}
+section.ct-b p{margin:0 0 .7em}section.ct-b p:last-child{margin-bottom:0}
+h1{font-family:${f.tit};font-size:2.15em;line-height:1.15;margin:.3em 0 .25em;font-weight:700}
+h2{font-family:${f.tit};font-size:1.38em;line-height:1.25;margin:0 0 .75em;color:var(--tit);font-weight:700}h3{font-size:1em;margin:1.1em 0 .4em;color:var(--tit)}
+.ct-k{letter-spacing:.22em;font-size:.7em;font-weight:700;text-transform:uppercase;opacity:.9}.ct-sub{opacity:.75;font-size:1.05em}.ct-capa-cli{margin-top:2.4em;font-size:.92em}.ct-capa-cli small{opacity:.7}
+.ct-logo{display:inline-block;max-width:220px;object-fit:contain}.ct-logo-small{max-height:34px}.ct-logo-medium{max-height:52px}.ct-logo-large{max-height:80px}.ct-logo-l{margin-bottom:1.2em}
+.ct-logo-mini{position:absolute;top:10px;right:14px;max-height:22px;opacity:.85}
+.ct-cab{display:flex;justify-content:space-between;align-items:center;gap:18px;border-bottom:1px solid rgba(127,127,127,.35);padding-bottom:.8em}.ct-cab.esq{flex-direction:row-reverse}.ct-cab.centro{flex-direction:column;text-align:center}
+.ct-cab-t{margin:0!important;color:inherit!important;font-size:1.25em!important}.ct-cab p{margin:.15em 0 0;opacity:.75;font-size:.9em}
+.ct-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.ct-g1{grid-template-columns:1fr}.ct-g2{grid-template-columns:1fr 1fr}
+.ct-card{background:var(--card);border-radius:10px;padding:14px 16px;break-inside:avoid}
+.ct-parte b{font-size:.75em;letter-spacing:.1em}.ct-parte p{margin:.5em 0 0}
+.ct-kpis .ct-card span{display:block;font-size:.7em;opacity:.75;text-transform:uppercase;letter-spacing:.07em}.ct-kpis .ct-card b{font-size:1.08em}
+.ct-dl{margin:0;display:grid;gap:0}.ct-dl div{display:flex;justify-content:space-between;gap:16px;padding:.55em 0;border-bottom:1px solid rgba(127,127,127,.2)}.ct-dl dt{opacity:.75}.ct-dl dd{margin:0;font-weight:700;text-align:right}
+.ct-lista{margin:0;padding:0;list-style:none;columns:2;column-gap:30px}.ct-uma .ct-lista{columns:1}.ct-lista li{position:relative;padding-left:22px;margin:0 0 .5em;break-inside:avoid}
+.ct-lista li:before,.ct-check:before{content:"";position:absolute;left:2px;top:.42em;width:9px;height:5px;border-left:2px solid var(--ac);border-bottom:2px solid var(--ac);transform:rotate(-45deg)}.ct-check{position:relative;padding-left:32px}.ct-check:before{left:14px;top:1.2em}
+.ct-tab{width:100%;border-collapse:collapse}.ct-tab td,.ct-tab th{padding:.6em .4em;border-bottom:1px solid rgba(127,127,127,.22);text-align:left;vertical-align:top}.ct-tab th{font-size:.78em;text-transform:uppercase;letter-spacing:.05em;opacity:.8}.ct-tab .r{text-align:right;white-space:nowrap;font-weight:600}
+.ct-tabela.zeb tbody tr:nth-child(odd){background:var(--card)}
+.ct-preco{font-weight:700;margin-top:.4em;color:var(--tit)}.ct-mini{display:block;font-size:.78em;opacity:.7}
+.ct-clausula{margin-bottom:1em}.ct-clausula.lat{display:grid;grid-template-columns:34px 1fr;gap:12px}.ct-clausula.lat h3{margin-top:.2em}
+.ct-num{width:30px;height:30px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.85em;margin-top:.1em}
+.ct-item{margin-bottom:.9em}.ct-item p,.ct-card p{margin:.3em 0 0}.ct-obs{margin-top:1em!important;opacity:.85}
+.ct-ass-g{display:grid;grid-template-columns:1fr 1fr;gap:46px 34px;margin-top:2.4em}.ct-ass-g.um{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
+.ct-ass-g div{text-align:center;font-size:.88em}.ct-ass-g span{display:block;border-top:1px solid currentColor;margin-bottom:6px;opacity:.8}.ct-ass-g small{display:block;opacity:.7}
+.ct-rod{font-size:.8em;opacity:.9}
+.ct-destaque{border-left:4px solid var(--ac);padding-left:18px}
+.ct-img{display:block;width:100%;max-height:420px;object-fit:cover;border-radius:12px;margin:.6em 0}.ct-img-vazia{height:150px;display:grid;place-items:center;background:rgba(127,127,127,.12);color:inherit;opacity:.7;font-size:.85em;border:2px dashed rgba(127,127,127,.35)}
+.ct-legenda{font-size:.82em;opacity:.7;margin-top:.3em}.ct-url{word-break:break-all}
+.ct-split{display:grid;grid-template-columns:1fr 1.3fr;gap:22px;align-items:center}.ct-split.dir>.ct-img{order:2}
+.ct-hero-t{color:#fff!important;font-size:1.8em}
+.ct-video{display:block;position:relative;border-radius:12px;overflow:hidden;background:#111;min-height:120px;text-decoration:none}.ct-video img{display:block;width:100%;max-height:380px;object-fit:cover;opacity:.85}
+.ct-play{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;font-size:24px}
+.ct-livre{line-height:1.6}.ct-livre h1,.ct-livre h2,.ct-livre h3{color:var(--tit)}.ct-livre table{border-collapse:collapse;width:100%}.ct-livre td,.ct-livre th{border:1px solid rgba(127,127,127,.3);padding:6px}
+.ct-aviso{font-size:.78em;background:#fff6d6;color:#6b5200;border-radius:8px;padding:6px 10px;margin:-.3em 0 .8em}
+mark{background:#fff2a8;color:#7a5b00;padding:0 2px;border-radius:3px}
+@media print{.ct-fundo{background:#fff;padding:0}.doc{box-shadow:none;max-width:none}section.ct-b{box-shadow:none;break-inside:avoid-page;border-radius:0;margin:0}.ct-clausulas,.ct-livre,section.ct-texto-livre{break-inside:auto}.ct-clausula{break-inside:avoid}mark{background:none;color:inherit}.ct-aviso{display:none}}
+@media(max-width:640px){.ct-lista{columns:1}.ct-split,.ct-g2,.ct-ass-g{grid-template-columns:1fr}section.ct-b{padding-left:18px!important;padding-right:18px!important}}`; }
+function ctBlocosDe(modelo){ if(modelo.tipo==="texto") return [{id:"txt",type:"texto-livre",visible:true,followsPreset:true,variant:"default",style:{padding:34},content:{html:modelo.html||""}}]; return modelo.blocos||[]; }
+function ctDocumento(modelo,v,ctx,marcar){ ctx=ctx||{}; const tema=ctTema(modelo), logo=ctLogo(modelo); const f=ctFontes(tema.fontPairId);
+ const corpo=ctBlocosDe(modelo).map(b=>ctRenderBloco(b,v,{...ctx,tema,logo},marcar)).join("");
+ return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${ctEsc(ctTroca(modelo.nome,v))}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f.g}&display=swap"><style>html,body{margin:0;background:${tema.bgSecondary}}${ctCss(tema,logo)}
+.bar{position:sticky;top:0;background:${tema.primary};color:#fff;padding:10px;text-align:center;font:14px Arial,sans-serif;z-index:5}.bar button{margin-left:10px;padding:8px 16px;border:0;border-radius:999px;font-weight:700;cursor:pointer}@media print{.bar{display:none}html,body{background:#fff}}
+@page{margin:14mm 12mm}</style></head><body>${ctx.barra?`<div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div>`:""}<div class="ct-fundo"><div class="doc">${corpo}</div></div></body></html>`; }
+
+// ---------- modelo novo ----------
+function ctNovoModelo(depois){ const tipos=["capa-contrato","cabecalho-contrato","partes","resumo-contratual","servicos-inclusos","extras-selecionados-contrato","clausulas","info-garantias","pagamento-contrato","assinaturas","rodape-contrato"];
+ ctEditor("contrato_"+Date.now().toString(36),{nome:"Novo modelo de contrato",tipo:"blocos",origem:"resiltrack",ativo:true,tema:{...CT_TEMA_PADRAO},logo:ctLogo(null),blocos:tipos.map(ctNovoBloco)},depois,true); }
+
+// ---------- ícones ----------
+const CT_SVG=p=>`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const CT_ICO={capa:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 9h8M9 13h6"/>',cab:'<rect x="3" y="4" width="18" height="6" rx="1"/><path d="M3 14h18M3 18h12"/>',partes:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20c0-3 2-5 5-5s5 2 5 5M11 20c0-3 2-5 5-5s5 2 5 5"/>',
+ kpi:'<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/>',clau:'<path d="M7 3h7l5 5v13H7z"/><path d="M10 12h6M10 16h6"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+ pag:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/>',ass:'<path d="M4 18c3-6 5-9 7-9 3 0-2 9 1 9 2 0 3-3 5-3M4 21h16"/>',rod:'<rect x="3" y="14" width="18" height="6" rx="1"/><path d="M3 4h18M3 8h12"/>',foto:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
+ txt:'<path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>',hero:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 12h10M9 15h6"/>',split:'<rect x="3" y="5" width="8" height="14" rx="1"/><path d="M14 8h7M14 12h7M14 16h5"/>',video:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/>',
+ livre:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/>',tab:'<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',serv:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',exsel:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',exnao:'<circle cx="12" cy="12" r="9"/>',
+ up:'<path d="M12 19V5M6 11l6-6 6 6"/>',down:'<path d="M12 5v14M6 13l6 6 6-6"/>',olho:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',olhoNao:'<path d="M3 3l18 18M10.6 6.1A10 10 0 0112 6c6 0 10 6 10 6a17 17 0 01-3.2 3.8M6.2 7.6C3.6 9.4 2 12 2 12s4 7 10 7a9.6 9.6 0 004.3-1"/>',
+ lixo:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',dup:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',arrasta:'<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
+ desf:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>',ref:'<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/>',tema:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16" cy="10" r="1.3"/><path d="M12 21a2 2 0 010-4h1a2 2 0 002-2"/>',
+ ver:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',salvar:'<path d="M5 3h11l4 4v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M8 3v5h7M8 21v-7h8v7"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',fechar:'<path d="M6 6l12 12M18 6L6 18"/>',chave:'<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',mais:'<path d="M12 5v14M5 12h14"/>',
+ seta:'<path d="M9 6l6 6-6 6"/>',al:'<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>',ac:'<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>',ar:'<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>',aj:'<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'};
+const ctI=k=>CT_SVG(CT_ICO[k]||"");
+
+// ---------- editor ----------
+function ctEditor(chave,modelo,depois,novo){
+ const M=JSON.parse(JSON.stringify(modelo));
+ if(M.tipo==="texto"){ M.blocos=ctBlocosDe(M); M.tipo="blocos"; delete M.html; }
+ M.blocos=M.blocos||[]; M.tema=ctTema(M); M.logo=ctLogo(M); M.midias=M.midias||[];
+ M.blocos.forEach(b=>{ b.id=b.id||ctId(); b.style=b.style||{}; b.content=b.content||{}; if(b.visible==null) b.visible=true; const c=b.content;
+  if(b.type==="assinaturas"&&!Array.isArray(c.assinantes)){ c.assinantes=[{nome:c.contratante||"[CLIENTE_EMPRESA_NOME]",papel:"CONTRATANTE"},{nome:c.contratada||"[CONTABILIDADE_NOME]",papel:"CONTRATADA"}]; delete c.contratante; delete c.contratada; if(c.testemunhas==null) c.testemunhas="0"; }
+  if(b.type==="pagamento-contrato"&&!Array.isArray(c.campos)) c.campos=[];
+  if(b.type==="split-image-text"&&c.imageSide&&(!b.variant||b.variant==="default")){ b.variant=c.imageSide==="right"?"right":"left"; delete c.imageSide; } });
+ const S={ab:{},sel:M.blocos.length?0:-1,hist:[],pos:-1,salvo:null,ultimo:null,drag:null,timer:null,fechar:0};
+ const snap=()=>JSON.stringify(M);
+ const tela=document.createElement("div"); tela.className="cte"; tela.setAttribute("role","dialog"); tela.setAttribute("aria-label","Editor de modelo de contrato");
+ tela.innerHTML=`<div class="cte-top">
+  <div class="cte-top-l"><span class="cte-tag">${ctI("clau")} Contrato</span><input class="cte-nome" id="edNome" value="${escAttr(M.nome||"")}" aria-label="Nome do modelo" placeholder="Nome do modelo"></div>
+  <div class="cte-top-c"><button class="cte-ib" data-t="desf" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">${ctI("desf")}</button><button class="cte-ib" data-t="ref" title="Refazer (Ctrl+Y)" aria-label="Refazer">${ctI("ref")}</button>
+   <button class="cte-b" data-t="tema">${ctI("tema")} Tema</button><button class="cte-b" data-t="vars">${ctI("chave")} Palavras-chave</button><button class="cte-b" data-t="ver">${ctI("ver")} Ver contrato</button>
+   <button class="cte-b cte-pri" data-t="salvar">${ctI("salvar")} Salvar</button><button class="cte-ib" data-t="menu" title="Mais opções" aria-label="Mais opções">${ctI("menu")}</button></div>
+  <div class="cte-top-r"><span class="cte-st" id="edSt"></span><button class="cte-ib" data-t="fechar" title="Fechar" aria-label="Fechar">${ctI("fechar")}</button></div></div>
+ <div class="cte-main"><aside class="cte-lib"><div class="cte-h">Biblioteca de blocos</div><div id="edLib"></div><p class="cte-dica">Clique para adicionar abaixo do bloco selecionado, ou arraste para o lugar certo no contrato. Sem limite de blocos.</p></aside>
+  <main class="cte-cv" id="edCv"><div id="edHost"></div></main>
+  <aside class="cte-pr"><div class="cte-h">Propriedades</div><div id="edPr"></div></aside></div>
+ <div class="cte-pop" id="edPop" hidden></div>`;
+ document.body.appendChild(tela); document.body.classList.add("cte-aberto");
+ const $=s=>tela.querySelector(s); const host=$("#edHost"); const raiz=host.attachShadow({mode:"open"});
+ let cfgV=null; ctConfig().then(cfg=>{ cfgV=ctVariaveis({cli:{},cesta:[],extras:[]},cfg); pintaCanvas(); });
+ const vAmostra=()=>cfgV||ctVariaveis({cli:{},cesta:[],extras:[]},CT_CONFIG_PADRAO);
+ const nomeB=b=>(CT_BLOCOS[b.type]||{}).nome||b.type;
+ // ---- histórico ----
+ const status=()=>{ const suj=snap()!==S.salvo; $("#edSt").textContent=suj?"Alterações não salvas":"Tudo salvo"; $("#edSt").classList.toggle("suj",suj);
+  $('[data-t="desf"]').disabled=S.pos<=0; $('[data-t="ref"]').disabled=S.pos>=S.hist.length-1; };
+ const registra=()=>{ const s=snap(); if(S.hist[S.pos]===s) return status(); S.hist=S.hist.slice(0,S.pos+1); S.hist.push(s); if(S.hist.length>120) S.hist.shift(); S.pos=S.hist.length-1; status(); };
+ const mudou=(tudo)=>{ clearTimeout(S.timer); S.timer=setTimeout(registra,380); if(tudo) pintaCanvas(); else pintaBloco(S.sel); };
+ const aplicaSnap=s=>{ const o=JSON.parse(s); const idSel=M.blocos[S.sel]&&M.blocos[S.sel].id; Object.keys(M).forEach(k=>delete M[k]); Object.assign(M,o);
+  S.sel=Math.max(-1,M.blocos.findIndex(b=>b.id===idSel)); if(S.sel<0&&M.blocos.length) S.sel=0; $("#edNome").value=M.nome||""; pintaTudo(); status(); };
+ const desfaz=()=>{ clearTimeout(S.timer); registra(); if(S.pos>0){ S.pos--; aplicaSnap(S.hist[S.pos]); } };
+ const refaz=()=>{ if(S.pos<S.hist.length-1){ S.pos++; aplicaSnap(S.hist[S.pos]); } };
+ // ---- biblioteca ----
+ const pintaLib=()=>{ const cont={}; M.blocos.forEach(b=>cont[b.type]=(cont[b.type]||0)+1);
+  $("#edLib").innerHTML=CT_GRUPOS.map(([g,n,cor])=>`<details class="cte-grp" ${S["g_"+g]===false?"":"open"} data-g="${g}"><summary style="color:${cor}">${ctI("seta")}<span>${esc(n)}</span></summary>
+   ${Object.entries(CT_BLOCOS).filter(([,d])=>d.grupo===g).map(([k,d])=>`<button class="cte-li" draggable="true" data-add="${k}" title="Adicionar ${escAttr(d.nome)}">${ctI(d.ico)}<span>${esc(d.nome)}</span>${cont[k]?`<em>${cont[k]}</em>`:""}</button>`).join("")}</details>`).join("");
+  $("#edLib").querySelectorAll("details").forEach(d=>d.ontoggle=()=>{ S["g_"+d.dataset.g]=d.open; });
+  $("#edLib").querySelectorAll("[data-add]").forEach(bt=>{ bt.onclick=()=>adiciona(bt.dataset.add,S.sel<0?M.blocos.length:S.sel+1);
+   bt.ondragstart=e=>{ S.drag={novo:bt.dataset.add}; e.dataTransfer.effectAllowed="copy"; e.dataTransfer.setData("text/plain","novo"); }; bt.ondragend=()=>{ S.drag=null; limpaDrop(); }; }); };
+ const adiciona=(tipo,pos)=>{ const b=ctNovoBloco(tipo); if(M.tema.layoutId&&CT_LAYOUTS[M.tema.layoutId]&&CT_LAYOUTS[M.tema.layoutId].v[tipo]) b.variant=CT_LAYOUTS[M.tema.layoutId].v[tipo];
+  M.blocos.splice(pos,0,b); S.sel=pos; pintaTudo(); registra(); rolaAte(pos); };
+ const rolaAte=i=>setTimeout(()=>{ const w=raiz.querySelector(`.cv-w[data-i="${i}"]`); if(w) w.scrollIntoView({behavior:"smooth",block:"center"}); },30);
+ // ---- canvas ----
+ const tb=(i,b)=>`<div class="cv-tb" role="toolbar" aria-label="Ações do bloco"><button data-acao="arrasta" class="cv-arr" title="Arrastar para mover">${ctI("arrasta")}</button><button data-acao="up" title="Subir">${ctI("up")}</button><button data-acao="down" title="Descer">${ctI("down")}</button>
+  <button data-acao="dup" title="Duplicar bloco">${ctI("dup")}</button><button data-acao="vis" title="${b.visible===false?"Mostrar":"Ocultar"} no contrato">${ctI(b.visible===false?"olhoNao":"olho")}</button><button data-acao="del" title="Remover bloco">${ctI("lixo")}</button></div>`;
+ const wrap=(b,i)=>{ const ctx={canvas:true,tema:M.tema,logo:M.logo}; let html=ctRenderBloco({...b,visible:true},vAmostra(),ctx,true);
+  if(!html) html=`<section class="ct-b cv-vazio">${esc(nomeB(b))}: preencha no painel ao lado</section>`;
+  return `<div class="cv-w ${i===S.sel?"sel":""} ${b.visible===false?"oculto":""}" data-i="${i}"><span class="cv-nome">${esc(nomeB(b))}${b.visible===false?" (oculto)":""}</span>${tb(i,b)}${html}</div>`; };
+ const CV_CSS=`:host{display:block}.cv-w{position:relative;border-radius:16px;outline:2px solid transparent;outline-offset:3px;cursor:pointer;transition:outline-color .12s}
+.cv-w:hover{outline-color:rgba(0,103,137,.35)}.cv-w.sel{outline-color:#006789}.cv-w.oculto>section{opacity:.35}
+.cv-tb{position:absolute;top:-17px;left:50%;transform:translateX(-50%);display:none;gap:2px;background:#fff;border:1px solid #d6dde2;border-radius:10px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:5}
+.cv-w:hover .cv-tb,.cv-w.sel .cv-tb{display:flex}.cv-tb button{border:0;background:none;color:#334155;width:28px;height:26px;border-radius:7px;display:grid;place-items:center;cursor:pointer}.cv-tb button:hover{background:#eef3f5;color:#006789}.cv-arr{cursor:grab!important}
+.cv-nome{position:absolute;top:-10px;left:14px;font:600 10px/1 Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#006789;color:#fff;padding:4px 7px;border-radius:6px;display:none;z-index:5}.cv-w.sel .cv-nome{display:block}
+.cv-w.drop-antes:before,.cv-w.drop-depois:after{content:"";position:absolute;left:0;right:0;height:4px;background:#006789;border-radius:4px;z-index:6}.cv-w.drop-antes:before{top:-9px}.cv-w.drop-depois:after{bottom:-9px}
+.cv-vazio{padding:28px!important;text-align:center;color:#64748b;background:#f8fafc;border:2px dashed #cbd5e1;font:14px Arial,sans-serif}
+.cv-fim{border:2px dashed #cbd5e1;border-radius:14px;padding:22px;text-align:center;color:#64748b;font:14px Arial,sans-serif;margin-top:6px}.cv-fim.on{border-color:#006789;background:rgba(0,103,137,.06)}
+.cv-livre-ed{outline:none;min-height:60px;cursor:text}.cv-livre-ed:focus{box-shadow:inset 0 0 0 2px rgba(0,103,137,.25);border-radius:6px}`;
+ const pintaCanvas=()=>{ ctCarregaFonte(M.tema.fontPairId); const top=$("#edCv").scrollTop;
+  raiz.innerHTML=`<style>${ctCss(M.tema,M.logo)}${CV_CSS}</style><div class="ct-fundo"><div class="doc">${M.blocos.map(wrap).join("")}<div class="cv-fim" data-fim="1">${M.blocos.length?"Arraste blocos da biblioteca para cá":"Contrato vazio. Clique ou arraste blocos da biblioteca para começar."}</div></div></div>`;
+  ligaLivre(); $("#edCv").scrollTop=top; };
+ const pintaBloco=i=>{ const w=raiz.querySelector(`.cv-w[data-i="${i}"]`); if(!w||!M.blocos[i]) return pintaCanvas(); const t=document.createElement("div"); t.innerHTML=wrap(M.blocos[i],i); w.replaceWith(t.firstElementChild); ligaLivre(); };
+ // texto livre: edição direto no contrato
+ const ligaLivre=()=>{ raiz.querySelectorAll(".cv-w.sel .ct-livre").forEach(el=>{ const i=+el.closest(".cv-w").dataset.i, b=M.blocos[i]; if(!b||b.type!=="texto-livre") return;
+  el.innerHTML=b.content.html||""; el.contentEditable="true"; el.classList.add("cv-livre-ed"); el.spellcheck=true;
+  el.oninput=()=>{ b.content.html=el.innerHTML; clearTimeout(S.timer); S.timer=setTimeout(registra,500); }; el.onfocus=()=>{ S.ultimo=el; }; }); };
+ const seleciona=i=>{ if(S.sel===i) return; const ant=S.sel; S.sel=i; S.ab={}; if(ant>=0&&M.blocos[ant]) pintaBloco(ant); pintaBloco(i); pintaProps(); };
+ raiz.addEventListener("click",e=>{ const w=e.target.closest(".cv-w"); if(!w) return; const i=+w.dataset.i; const ac=e.target.closest("[data-acao]");
+  if(ac){ e.stopPropagation(); const a=ac.dataset.acao; const b=M.blocos[i]; if(a==="arrasta") return;
+   if(a==="up"&&i>0){ [M.blocos[i-1],M.blocos[i]]=[M.blocos[i],M.blocos[i-1]]; S.sel=i-1; }
+   else if(a==="down"&&i<M.blocos.length-1){ [M.blocos[i+1],M.blocos[i]]=[M.blocos[i],M.blocos[i+1]]; S.sel=i+1; }
+   else if(a==="dup"){ const c=JSON.parse(JSON.stringify(b)); c.id=ctId(); M.blocos.splice(i+1,0,c); S.sel=i+1; }
+   else if(a==="vis"){ b.visible=b.visible===false; S.sel=i; }
+   else if(a==="del"){ M.blocos.splice(i,1); S.sel=Math.min(i,M.blocos.length-1); crmToast(`${nomeB(b)} removido. Ctrl+Z desfaz.`); }
+   pintaTudo(); registra(); return; }
+  if(e.target.closest(".cv-livre-ed")) return; seleciona(i); });
+ // arrastar e soltar
+ raiz.addEventListener("mousedown",e=>{ const h=e.target.closest(".cv-arr"); if(h){ h.closest(".cv-w").draggable=true; } });
+ raiz.addEventListener("dragstart",e=>{ const w=e.target.closest&&e.target.closest(".cv-w"); if(!w) return; S.drag={mover:+w.dataset.i}; e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain","mover"); });
+ const limpaDrop=()=>raiz.querySelectorAll(".drop-antes,.drop-depois,.cv-fim.on").forEach(x=>x.classList.remove("drop-antes","drop-depois","on"));
+ const alvo=e=>{ const fim=e.target.closest&&e.target.closest(".cv-fim"); if(fim) return {pos:M.blocos.length,el:fim,cls:"on"}; const w=e.target.closest&&e.target.closest(".cv-w"); if(!w) return null;
+  const r=w.getBoundingClientRect(), antes=e.clientY<r.top+r.height/2, i=+w.dataset.i; return {pos:antes?i:i+1,el:w,cls:antes?"drop-antes":"drop-depois"}; };
+ raiz.addEventListener("dragover",e=>{ if(!S.drag) return; const a=alvo(e); if(!a) return; e.preventDefault(); limpaDrop(); a.el.classList.add(a.cls); });
+ raiz.addEventListener("drop",e=>{ if(!S.drag) return; const a=alvo(e); limpaDrop(); if(!a) return; e.preventDefault(); const d=S.drag; S.drag=null;
+  if(d.novo) return adiciona(d.novo,a.pos);
+  if(d.mover!=null){ let p=a.pos; const [b]=M.blocos.splice(d.mover,1); if(p>d.mover) p--; M.blocos.splice(p,0,b); S.sel=p; pintaTudo(); registra(); } });
+ raiz.addEventListener("dragend",e=>{ S.drag=null; limpaDrop(); raiz.querySelectorAll('.cv-w[draggable="true"]').forEach(w=>w.draggable=false); });
+ $("#edCv").addEventListener("dragover",e=>{ if(S.drag) e.preventDefault(); });
+ // ---- propriedades ----
+ const pega=(o,p)=>p.split(".").reduce((a,k)=>a==null?a:a[k],o);
+ const poe=(o,p,v)=>{ const ks=p.split("."); const last=ks.pop(); const a=ks.reduce((x,k)=>x[k],o); a[last]=v; };
+ const ALINHA={textoContratante:"textAlignContratante",textoContratada:"textAlignContratada",text:"textAlign",description:"textAlign"};
+ const alinhaHTML=(path,obj,k)=>{ const ak=ALINHA[k]; if(!ak||!(ak in obj)) return ""; const cur=obj[ak]||"left"; const base=path.replace(/[^.]+$/,ak);
+  return `<span class="cte-al">${[["left","al","Alinhar à esquerda"],["center","ac","Centralizar"],["right","ar","Alinhar à direita"],["justify","aj","Justificar"]].map(([vv,ic,t])=>`<button type="button" class="${cur===vv?"on":""}" data-al="${base}" data-v="${vv}" title="${t}" aria-label="${t}">${ctI(ic)}</button>`).join("")}</span>`; };
+ const imgCampo=(path,val)=>`<div class="cte-img">${val?`<img src="${escAttr(val)}" alt="">`:`<div class="cte-img-v">Sem imagem</div>`}
+  <input class="inp" data-p="${path}" value="${escAttr(String(val||"").startsWith("data:")?"(imagem enviada)":val||"")}" placeholder="Cole o endereço da imagem">
+  <div class="cte-img-a"><label class="cte-mb">Enviar imagem<input type="file" accept="image/*" hidden data-up="${path}"></label>${val?`<button type="button" class="cte-mb" data-limpa="${path}">Remover</button>`:""}</div>
+  <div class="cte-midias">${[...CT_MIDIAS_PADRAO,...M.midias.filter(m=>!CT_MIDIAS_PADRAO.some(x=>x.url===m.url))].map(m=>`<button type="button" data-midia="${path}" data-url="${escAttr(m.url)}" title="${escAttr(m.name||"")}"><img src="${escAttr(m.url)}" alt="${escAttr(m.name||"")}" loading="lazy"></button>`).join("")}</div></div>`;
+ const rot=k=>CT_CAMPOS_ROT[k]||k;
+ const campo=(path,k,val,obj,tipo)=>{ if(/^(id|imageRef|titleAlign|methodsAlign|dueDateAlign|descriptionAlign|ctaText|ctaLink|imageSide)$/.test(k)||/^textAlign/.test(k)) return "";
+  if(k==="html"&&tipo==="texto-livre") return `<div class="ce-note">Escreva direto no contrato, no bloco selecionado. Use a barra abaixo para formatar e o botão Palavras-chave para inserir dados.</div>
+   <div class="cte-fmt">${[["bold","<b>N</b>","Negrito"],["italic","<i>I</i>","Itálico"],["underline","<u>S</u>","Sublinhado"],["insertUnorderedList","• Lista","Lista"],["insertOrderedList","1. Lista","Lista numerada"],["formatBlock:h2","Título","Título"],["formatBlock:h3","Subtítulo","Subtítulo"],["formatBlock:p","Parágrafo","Parágrafo"],["justifyLeft","Esq.","Esquerda"],["justifyCenter","Centro","Centralizar"],["justifyFull","Justif.","Justificar"],["removeFormat","Limpar","Limpar formatação"]].map(([c2,t,ti])=>`<button type="button" data-fmt="${c2}" title="${ti}">${t}</button>`).join("")}</div>`;
+  if(/imageUrl$|backgroundImageUrl$/.test(k)) return `<div class="crm-f"><span>${esc(rot(k))}</span>${imgCampo(path,val)}</div>`;
+  if(k==="testemunhas") return `<label class="crm-f"><span>Testemunhas</span><select class="inp" data-p="${path}">${["0","1","2","3","4"].map(n=>`<option ${String(/^s/i.test(val)?"2":/^n/i.test(val)?"0":val)===n?"selected":""} value="${n}">${n==="0"?"Sem testemunhas":n+" testemunha(s)"}</option>`).join("")}</select></label>`;
+  if(k==="linhas"&&Array.isArray(val)) return tabelaHTML(path,obj);
+  if(k==="colunas") return "";
+  if(Array.isArray(val)&&val.every(x=>typeof x==="string")) return `<div class="crm-f"><span>${esc(rot(k))} <em class="cte-n">${val.length}</em></span><div class="cte-strs">${val.map((x,j)=>`<div class="cte-str"><textarea class="inp" rows="1" data-p="${path}.${j}">${esc(x)}</textarea>${itemBts(path,j,val.length)}</div>`).join("")}</div><button type="button" class="cte-add" data-addstr="${path}">${ctI("mais")} Adicionar item</button></div>`;
+  if(Array.isArray(val)) return `<div class="crm-f"><span>${esc(rot(k))} <em class="cte-n">${val.length}</em>${k==="clauses"&&val.length>1?`<button type="button" class="cte-mb" data-renum="${path}">Renumerar</button>`:""}</span>${val.map((o,j)=>`<details class="cte-it" data-ab="${path}.${j}" ${(S.ab[path+"."+j]!==undefined?S.ab[path+"."+j]:(S.aberto===path+"."+j||val.length<=3))?"open":""}><summary><b>${esc(String((o&&(o.number?o.number+". ":""))||"")+String((o&&(o.title||o.label||o.name||o.nome))||rot(k)+" "+(j+1)).slice(0,60))}</b>${itemBts(path,j,val.length)}</summary>
+   <div class="cte-it-c">${Object.entries(o||{}).map(([kk,vv])=>campo(`${path}.${j}.${kk}`,kk,vv,o,tipo)).join("")}</div></details>`).join("")}<button type="button" class="cte-add" data-addit="${path}" data-k="${k}">${ctI("mais")} Adicionar ${esc(k==="clauses"?"cláusula":k==="kpis"?"indicador":k==="assinantes"?"assinante":"item")}</button></div>`;
+  if(val&&typeof val==="object"&&tipo==="partes") return "";
+  if(val&&typeof val==="object") return `<fieldset class="cte-fs"><legend>${esc(rot(k))}</legend>${Object.entries(val).map(([kk,vv])=>campo(`${path}.${kk}`,kk,vv,val,tipo)).join("")}</fieldset>`;
+  if(typeof val==="number"||typeof val==="boolean") return "";
+  const longo=String(val||"").length>60||/^(text|description|terms|texto\w*)$/.test(k);
+  return `<label class="crm-f"><span>${esc(rot(k))}${alinhaHTML(path,obj,k)}</span>${longo?`<textarea class="inp" rows="${Math.min(14,Math.max(3,Math.ceil(String(val||"").length/42)))}" data-p="${path}">${esc(val||"")}</textarea>`:`<input class="inp" data-p="${path}" value="${escAttr(val||"")}">`}</label>`; };
+ const itemBts=(path,j,n)=>`<span class="cte-itb"><button type="button" data-mv="${path}" data-j="${j}" data-d="-1" title="Subir" ${j===0?"disabled":""}>${ctI("up")}</button><button type="button" data-mv="${path}" data-j="${j}" data-d="1" title="Descer" ${j===n-1?"disabled":""}>${ctI("down")}</button><button type="button" data-dupit="${path}" data-j="${j}" title="Duplicar">${ctI("dup")}</button><button type="button" data-rmit="${path}" data-j="${j}" title="Remover">${ctI("lixo")}</button></span>`;
+ const tabelaHTML=(path,obj)=>{ const base=path.replace(/\.linhas$/,""); const cols=obj.colunas||[];
+  return `<div class="crm-f"><span>Tabela <em class="cte-n">${cols.length} col. · ${(obj.linhas||[]).length} linhas</em></span><div class="cte-tabw"><table class="cte-tab"><thead><tr>${cols.map((c2,j)=>`<th><input class="inp" data-p="${base}.colunas.${j}" value="${escAttr(c2)}" aria-label="Coluna ${j+1}"><button type="button" data-rmcol="${base}" data-j="${j}" title="Remover coluna">${ctI("lixo")}</button></th>`).join("")}<th></th></tr></thead>
+   <tbody>${(obj.linhas||[]).map((l,r)=>`<tr>${cols.map((_,j)=>`<td><input class="inp" data-p="${base}.linhas.${r}.${j}" value="${escAttr((l||[])[j]||"")}"></td>`).join("")}<td><button type="button" data-rmit="${base}.linhas" data-j="${r}" title="Remover linha">${ctI("lixo")}</button></td></tr>`).join("")}</tbody></table></div>
+   <div class="cte-row"><button type="button" class="cte-add" data-addlin="${base}">${ctI("mais")} Linha</button><button type="button" class="cte-add" data-addcol="${base}">${ctI("mais")} Coluna</button></div></div>`; };
+ const sec=(id,tit,corpo,aberta)=>`<details class="cte-sec" ${S["s_"+id]===undefined?(aberta?"open":""):(S["s_"+id]?"open":"")} data-s="${id}"><summary>${esc(tit)}${ctI("seta")}</summary><div class="cte-sec-c">${corpo}</div></details>`;
+ const corCampo=(k,rot2,val,padrao)=>`<div class="cte-cor"><span>${esc(rot2)}</span><div><input type="color" data-cor="${k}" value="${ctHexOk(val)?val:padrao}" aria-label="${escAttr(rot2)}"><input class="inp" data-corh="${k}" value="${escAttr(val||"")}" placeholder="seguindo o tema"><button type="button" data-corx="${k}" title="Voltar a seguir o tema" aria-label="Voltar a seguir o tema">↺</button></div></div>`;
+ const pintaProps=()=>{ const el=$("#edPr"); const b=M.blocos[S.sel];
+  if(!b){ el.innerHTML=`<div class="cte-vazio"><p><b>${M.blocos.length} bloco(s)</b> no contrato.</p><p class="sub">Selecione um bloco no contrato para editar. Não há limite de blocos nem de itens: repita blocos e adicione quantas cláusulas, indicadores, serviços e assinantes quiser.</p>
+   <label class="crm-chk"><input type="checkbox" id="edAtivo" ${M.ativo===false?"":"checked"}><span>Modelo ativo (aparece na hora de gerar contrato)</span></label></div>`; $("#edAtivo").onchange=e=>{ M.ativo=e.target.checked; registra(); }; return; }
+  const st=b.style, cor=ctCores(b,M.tema); const vs=CT_VARIANTES[b.type];
+  el.innerHTML=`<div class="cte-pt">${ctI((CT_BLOCOS[b.type]||{}).ico)} ${esc(nomeB(b))}</div>
+   <label class="cte-sw"><span>Visível</span><input type="checkbox" data-sw="visible" ${b.visible===false?"":"checked"}><i></i></label>
+   <label class="cte-sw"><span>Iniciar em página nova no PDF</span><input type="checkbox" data-sw="pageBreakBefore" ${st.pageBreakBefore?"checked":""}><i></i></label>
+   <div class="cte-sw"><span>Restaurar padrão do bloco</span><button type="button" class="cte-mb" id="edRest">Restaurar</button></div>
+   ${b.type==="servicos-inclusos"?`<div class="ce-note">Na hora de gerar, a lista vem do plano escolhido na proposta. Os itens abaixo só aparecem se não houver plano.</div>`:""}
+   ${b.type==="extras-selecionados-contrato"?`<div class="ce-note">Na hora de gerar, entram os extras escolhidos na proposta. Os itens abaixo são só exemplo para ver o visual.</div>`:""}
+   ${vs?sec("var","Variação",`<div class="cte-chips">${vs.map(([k,n])=>`<button type="button" class="${(b.variant||"default")===k||(!vs.some(x=>x[0]===b.variant)&&k===vs[0][0]&&!b.variant)?"on":""}" data-var="${k}">${esc(n)}</button>`).join("")}</div>`,false):""}
+   ${sec("est","Estilo",`<label class="cte-sw"><span>Seguir as cores do tema</span><input type="checkbox" data-segue="1" ${b.followsPreset===true||!st.backgroundColor?"checked":""}><i></i></label>
+    ${corCampo("backgroundColor","Cor de fundo",b.followsPreset===true?"":st.backgroundColor,cor.bg.startsWith("#")?cor.bg:"#ffffff")}${corCampo("textColor","Cor do texto",b.followsPreset===true?"":st.textColor,ctHexOk(cor.txt)?cor.txt:"#111827")}
+    ${corCampo("accentColor","Cor dos cards",b.followsPreset===true?"":st.accentColor,"#f1f5f9")}${corCampo("titleColor","Cor dos títulos",b.followsPreset===true?"":st.titleColor,ctHexOk(cor.tit)?cor.tit:M.tema.primary)}
+    <label class="cte-rg"><span>Espaçamento <b>${st.padding==null?24:st.padding}px</b></span><input type="range" min="0" max="96" step="2" data-rg="padding" value="${st.padding==null?24:st.padding}"></label>
+    <label class="cte-rg"><span>Escala da fonte <b>${Math.round((+st.fontScale||1)*100)}%</b></span><input type="range" min="70" max="160" step="5" data-rg="fontScale" value="${Math.round((+st.fontScale||1)*100)}"></label>
+    ${/capa|hero/.test(b.type)?`<label class="crm-f"><span>Altura</span><select class="inp" data-stsel="heightPreset">${[["small","Baixa"],["medium","Média"],["large","Alta"]].map(([k,n])=>`<option value="${k}" ${(st.heightPreset||"medium")===k?"selected":""}>${n}</option>`).join("")}</select></label>`:""}
+    ${b.type==="capa-contrato"?`<div class="crm-f"><span>Imagem de fundo (variação Com imagem)</span>${imgCampo("style.backgroundImageUrl",st.backgroundImageUrl)}</div>`:""}
+    ${/capa|hero/.test(b.type)?`<label class="cte-rg"><span>Escurecer a imagem <b>${st.overlayOpacity==null?40:st.overlayOpacity}%</b></span><input type="range" min="0" max="90" step="5" data-rg="overlayOpacity" value="${st.overlayOpacity==null?40:st.overlayOpacity}"></label>`:""}
+    ${b.type==="hero-image"?`<label class="crm-f"><span>Alinhamento do texto</span><select class="inp" data-stsel="contentAlign">${[["left","Esquerda"],["center","Centro"],["right","Direita"]].map(([k,n])=>`<option value="${k}" ${(st.contentAlign||"center")===k?"selected":""}>${n}</option>`).join("")}</select></label>`:""}`,false)}
+   ${sec("con","Conteúdo",`${Object.entries(b.content).map(([k,vv])=>campo("content."+k,k,vv,b.content,b.type)).join("")}`,true)}`;
+  ligaProps(b); };
+ const ligaProps=b=>{ const el=$("#edPr");
+  el.querySelectorAll("details.cte-sec").forEach(d=>d.ontoggle=()=>{ S["s_"+d.dataset.s]=d.open; });
+  el.querySelectorAll("details.cte-it").forEach(d=>d.ontoggle=()=>{ S.ab[d.dataset.ab]=d.open; });
+  el.querySelectorAll("[data-sw]").forEach(i=>i.onchange=()=>{ if(i.dataset.sw==="visible") b.visible=i.checked; else b.style[i.dataset.sw]=i.checked; mudou(); });
+  el.querySelector("#edRest").onclick=ev=>{ const bt=ev.currentTarget; if(bt.dataset.ok!=="1"){ bt.dataset.ok="1"; bt.textContent="Confirmar"; return; } const n=ctNovoBloco(b.type); n.id=b.id; M.blocos[S.sel]=n; pintaBloco(S.sel); pintaProps(); registra(); };
+  el.querySelectorAll("[data-var]").forEach(x=>x.onclick=()=>{ b.variant=x.dataset.var; el.querySelectorAll("[data-var]").forEach(y=>y.classList.toggle("on",y===x)); mudou(); });
+  const seg=el.querySelector("[data-segue]"); if(seg) seg.onchange=()=>{ if(seg.checked){ b.followsPreset=true; ["backgroundColor","textColor","accentColor","titleColor"].forEach(k=>delete b.style[k]); } else { const c=ctCores(b,M.tema); b.followsPreset=false; b.style.backgroundColor=c.bg.startsWith("#")?c.bg:"#FFFFFF"; b.style.textColor=ctHexOk(c.txt)?c.txt:"#111827"; } pintaProps(); mudou(); };
+  const setCor=(k,v)=>{ b.followsPreset=false; if(!b.style.backgroundColor){ const c=ctCores({...b,followsPreset:true},M.tema); b.style.backgroundColor=c.bg.startsWith("#")?c.bg:"#FFFFFF"; if(!b.style.textColor&&k!=="textColor") b.style.textColor=ctHexOk(c.txt)?c.txt:"#111827"; } b.style[k]=v;
+   const seg2=el.querySelector("[data-segue]"); if(seg2) seg2.checked=false; const h=el.querySelector(`[data-corh="${k}"]`); if(h&&h!==document.activeElement) h.value=v; mudou(); };
+  el.querySelectorAll("[data-cor]").forEach(i=>i.oninput=()=>setCor(i.dataset.cor,i.value.toUpperCase()));
+  el.querySelectorAll("[data-corh]").forEach(i=>i.oninput=()=>{ const v=i.value.trim(); if(ctHexOk(v)){ el.querySelector(`[data-cor="${i.dataset.corh}"]`).value=v; setCor(i.dataset.corh,v.toUpperCase()); } });
+  el.querySelectorAll("[data-corx]").forEach(x=>x.onclick=()=>{ delete b.style[x.dataset.corx]; if(x.dataset.corx==="backgroundColor"){ b.followsPreset=true; } pintaProps(); mudou(); });
+  el.querySelectorAll("[data-rg]").forEach(i=>i.oninput=()=>{ const k=i.dataset.rg; b.style[k]=k==="fontScale"?(+i.value)/100:+i.value; i.previousElementSibling.querySelector("b").textContent=i.value+(k==="padding"?"px":"%"); mudou(); });
+  el.querySelectorAll("[data-stsel]").forEach(i=>i.onchange=()=>{ b.style[i.dataset.stsel]=i.value; mudou(); });
+  el.querySelectorAll("[data-p]").forEach(i=>{ i.onfocus=()=>{ S.ultimo=i; }; const ev=i.tagName==="SELECT"?"onchange":"oninput";
+   i[ev]=()=>{ if(i.value==="(imagem enviada)") return; poe(b,i.dataset.p,i.value); mudou(); if(/\.(title|label|name|nome|number)$/.test(i.dataset.p)){ const s=i.closest("details.cte-it"); if(s){ const o=pega(b,i.dataset.p.replace(/\.[^.]+$/,"")); s.querySelector("summary b").textContent=((o.number?o.number+". ":"")+(o.title||o.label||o.name||o.nome||"")).slice(0,60); } } };
+   if(i.tagName==="TEXTAREA"&&i.rows===1){ const aj=()=>{ i.style.height="auto"; i.style.height=i.scrollHeight+"px"; }; i.addEventListener("input",aj); setTimeout(aj); } });
+  el.querySelectorAll("[data-al]").forEach(x=>x.onclick=()=>{ poe(b,x.dataset.al,x.dataset.v); x.parentElement.querySelectorAll("button").forEach(y=>y.classList.toggle("on",y===x)); mudou(); });
+  const arr=p=>pega(b,p);
+  el.querySelectorAll("[data-addstr]").forEach(x=>x.onclick=()=>{ arr(x.dataset.addstr).push(""); pintaProps(); mudou(); setTimeout(()=>{ const t=[...el.querySelectorAll(`[data-p^="${x.dataset.addstr}."]`)].pop(); t&&t.focus(); }); });
+  el.querySelectorAll("[data-addit]").forEach(x=>x.onclick=()=>{ const a=arr(x.dataset.addit), k=x.dataset.k; let novo=CT_ITEM_NOVO[b.type+"."+k]||CT_ITEM_NOVO[k];
+   novo=novo?JSON.parse(JSON.stringify(novo)):(a[0]?Object.fromEntries(Object.entries(a[0]).map(([kk,vv])=>[kk,typeof vv==="string"?(/^textAlign/.test(kk)?vv:""):vv])):{title:"",text:""});
+   if(k==="clauses") novo.number=String(a.length+1); a.push(novo); S.aberto=x.dataset.addit+"."+(a.length-1); S.ab[S.aberto]=true; pintaProps(); mudou(); S.aberto=null;
+   setTimeout(()=>{ const its=el.querySelectorAll("details.cte-it"); const u=[...its].filter(d=>d.querySelector(`[data-p^="${x.dataset.addit}.${a.length-1}."]`)).pop(); if(u){ u.open=true; u.scrollIntoView({block:"nearest"}); const f=u.querySelector("input,textarea"); f&&f.focus(); } }); });
+  el.querySelectorAll("[data-rmit]").forEach(x=>x.onclick=e=>{ e.preventDefault(); arr(x.dataset.rmit).splice(+x.dataset.j,1); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-dupit]").forEach(x=>x.onclick=e=>{ e.preventDefault(); const a=arr(x.dataset.dupit), j=+x.dataset.j; a.splice(j+1,0,JSON.parse(JSON.stringify(a[j]))); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-mv]").forEach(x=>x.onclick=e=>{ e.preventDefault(); const a=arr(x.dataset.mv), j=+x.dataset.j, d=+x.dataset.d; if(j+d<0||j+d>=a.length) return; [a[j],a[j+d]]=[a[j+d],a[j]]; pintaProps(); mudou(); });
+  el.querySelectorAll("[data-renum]").forEach(x=>x.onclick=()=>{ arr(x.dataset.renum).forEach((c,j)=>c.number=String(j+1)); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-addlin]").forEach(x=>x.onclick=()=>{ const o=arr(x.dataset.addlin); o.linhas=o.linhas||[]; o.linhas.push((o.colunas||[]).map(()=>"")); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-addcol]").forEach(x=>x.onclick=()=>{ const o=arr(x.dataset.addcol); o.colunas=o.colunas||[]; o.colunas.push("Coluna "+(o.colunas.length+1)); (o.linhas||[]).forEach(l=>l.push("")); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-rmcol]").forEach(x=>x.onclick=()=>{ const o=arr(x.dataset.rmcol), j=+x.dataset.j; o.colunas.splice(j,1); (o.linhas||[]).forEach(l=>l.splice(j,1)); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-up]").forEach(i=>i.onchange=async()=>{ const f=i.files[0]; if(!f) return; try{ const u=await ctImagemDataUrl(f,1600); poe(b,i.dataset.up,u); M.midias.push({id:ctId(),name:f.name,url:u}); pintaProps(); mudou(); }catch(_){ crmToast("Não consegui abrir a imagem."); } });
+  el.querySelectorAll("[data-limpa]").forEach(x=>x.onclick=()=>{ poe(b,x.dataset.limpa,""); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-midia]").forEach(x=>x.onclick=()=>{ poe(b,x.dataset.midia,x.dataset.url); pintaProps(); mudou(); });
+  el.querySelectorAll("[data-fmt]").forEach(x=>x.onmousedown=e=>{ e.preventDefault(); const ed=raiz.querySelector(".cv-livre-ed"); if(!ed) return; if(raiz.activeElement!==ed) ed.focus(); const [c2,arg]=x.dataset.fmt.split(":"); document.execCommand(c2,false,arg?`<${arg}>`:null); b.content.html=ed.innerHTML; clearTimeout(S.timer); S.timer=setTimeout(registra,500); }); };
+ // ---- tema ----
+ const pop=$("#edPop"); const fechaPop=()=>{ pop.hidden=true; pop.innerHTML=""; S.popAberto=null; };
+ const abrePop=(qual,ancora,html)=>{ if(S.popAberto===qual){ fechaPop(); return false; } S.popAberto=qual; pop.innerHTML=html; pop.hidden=false; const r=ancora.getBoundingClientRect(); pop.classList.toggle("lado",qual==="vars"); pop.style.top=(r.bottom+8)+"px"; pop.style.left=(qual==="vars"?tela.getBoundingClientRect().left+8:Math.max(12,Math.min(window.innerWidth-pop.offsetWidth-12,r.left-40)))+"px"; return true; };
+ const temaHTML=()=>{ const t=M.tema, lg=M.logo; const sel=(k,ops,v)=>`<select class="inp" data-tm="${k}">${ops.map(([a,b2])=>`<option value="${a}" ${v===a?"selected":""}>${esc(b2)}</option>`).join("")}</select>`;
+  const cor=(k,n)=>`<label class="cte-cor2"><input type="color" data-tc="${k}" value="${ctHexOk(t[k])?t[k]:"#000000"}"><span>${esc(n)}</span></label>`;
+  return `<div class="cte-tg"><label class="crm-f"><span>Modelo de layout</span>${sel("layoutId",Object.entries(CT_LAYOUTS).map(([k,o])=>[k,o.nome]),t.layoutId)}</label><label class="crm-f"><span>Preset de cores</span>${sel("presetId",Object.entries(CT_PRESETS).map(([k,o])=>[k,o.nome]),t.presetId)}</label></div>
+   <div class="cte-tg"><div class="crm-f"><span>Cores principais</span><div class="cte-cores">${cor("primary","Destaque")}${cor("secondary","Apoio")}</div></div><div class="crm-f"><span>Texto e fundo</span><div class="cte-cores">${cor("txtPrimary","Texto")}${cor("txtSecondary","Texto 2")}${cor("bgPrimary","Blocos")}${cor("bgSecondary","Página")}</div></div></div>
+   <div class="cte-tg"><label class="crm-f"><span>Fontes</span>${sel("fontPairId",Object.entries(CT_FONTES).map(([k,o])=>[k,o.nome]),t.fontPairId)}</label><label class="crm-f"><span>Escala</span>${sel("scale",Object.entries(CT_ESCALAS).map(([k,o])=>[k,o[0]]),t.scale)}</label></div>
+   <label class="crm-f"><span>Layout de blocos</span>${sel("blockMerge",[["0","Blocos com espaçamento"],["1","Blocos sem espaçamento (folha única)"]],t.blockMerge?"1":"0")}</label>
+   <button type="button" class="cte-mb" id="tmTodos">Aplicar as cores do tema em todos os blocos</button>
+   <div class="cte-sep"></div><div class="crm-f"><span>Logo</span><div class="cte-logo">${lg.url?`<img src="${escAttr(lg.url)}" alt="Logo">`:`<em>Sem logo</em>`}<label class="cte-mb">Enviar logo<input type="file" accept="image/*" hidden id="tmLogo"></label>${lg.url?`<button type="button" class="cte-mb" id="tmLogoX">Remover</button>`:""}</div></div>
+   ${lg.url?`<div class="cte-tg"><label class="crm-f"><span>Tamanho</span>${sel("lg.size",[["small","Pequeno"],["medium","Médio"],["large","Grande"]],lg.size)}</label><label class="crm-f"><span>Posição</span>${sel("lg.position",[["left","Esquerda"],["center","Centro"],["right","Direita"]],lg.position)}</label></div>
+    <label class="crm-chk"><input type="checkbox" data-lgc="showInAllBlocks" ${lg.showInAllBlocks?"checked":""}><span>Mostrar a logo pequena em todos os blocos</span></label><label class="crm-chk"><input type="checkbox" data-lgc="showAsWatermark" ${lg.showAsWatermark?"checked":""}><span>Usar como marca d'água</span></label>`:""}`; };
+ const ligaTema=()=>{ pop.querySelectorAll("[data-tm]").forEach(s=>s.onchange=()=>{ const k=s.dataset.tm, v=s.value;
+   if(k==="presetId"){ M.tema.presetId=v; const p=CT_PRESETS[v]; if(p&&p.primary){ ["primary","secondary","bgPrimary","bgSecondary","txtPrimary","txtSecondary"].forEach(c=>M.tema[c]=p[c]); } }
+   else if(k==="layoutId"){ const L=CT_LAYOUTS[v]; M.tema.layoutId=v; Object.assign(M.tema,L.tema||{}); M.blocos.forEach(b=>{ if(L.v[b.type]) b.variant=L.v[b.type]; }); }
+   else if(k==="blockMerge") M.tema.blockMerge=v==="1"; else if(k.startsWith("lg.")) M.logo[k.slice(3)]=v; else M.tema[k]=v;
+   pop.innerHTML=temaHTML(); ligaTema(); pintaCanvas(); pintaProps(); registra(); });
+  pop.querySelectorAll("[data-tc]").forEach(i=>i.oninput=()=>{ M.tema[i.dataset.tc]=i.value.toUpperCase(); M.tema.presetId="auto"; const ps=pop.querySelector('[data-tm="presetId"]'); if(ps) ps.value="auto"; clearTimeout(S.tt); S.tt=setTimeout(()=>{ pintaCanvas(); registra(); },120); });
+  pop.querySelector("#tmTodos").onclick=ev=>{ M.blocos.forEach(b=>{ b.followsPreset=true; ["backgroundColor","textColor","accentColor","titleColor"].forEach(k=>delete b.style[k]); }); pintaCanvas(); pintaProps(); registra(); ev.currentTarget.textContent="Pronto, todos os blocos seguem o tema"; };
+  const lf=pop.querySelector("#tmLogo"); if(lf) lf.onchange=async()=>{ const f=lf.files[0]; if(!f) return; try{ M.logo.url=await ctImagemDataUrl(f,600,true); pop.innerHTML=temaHTML(); ligaTema(); pintaCanvas(); registra(); }catch(_){ crmToast("Não consegui abrir a imagem."); } };
+  const lx=pop.querySelector("#tmLogoX"); if(lx) lx.onclick=()=>{ M.logo.url=""; pop.innerHTML=temaHTML(); ligaTema(); pintaCanvas(); registra(); };
+  pop.querySelectorAll("[data-lgc]").forEach(i=>i.onchange=()=>{ M.logo[i.dataset.lgc]=i.checked; pintaCanvas(); registra(); }); };
+ const varsHTML=()=>`<div class="cte-poph"><b>Palavras-chave</b><button type="button" class="cte-ib" data-popx="1" aria-label="Fechar">${ctI("fechar")}</button></div><p class="sub" style="margin:0 0 8px">Clique num campo do painel (ou no texto livre) e depois na palavra-chave. Na hora de gerar, ela vira o dado real do cliente, do plano ou da Resilcon.</p>${CT_PALAVRAS.map(([g,l])=>`<b class="cte-vg">${esc(g)}</b><div>${l.map(([k,r])=>`<button type="button" class="ct-var" data-var="${k}" title="${escAttr(r)}">[${k}]</button>`).join("")}</div>`).join("")}`;
+ const ligaVars=()=>{ pop.querySelector("[data-popx]").onclick=fechaPop; ligaVars2(); };
+ const ligaVars2=()=>pop.querySelectorAll("[data-var]").forEach(bt=>bt.onmousedown=e=>{ e.preventDefault(); const tok="["+bt.dataset.var+"]"; const u=S.ultimo;
+  if(u&&u.isConnected&&u.classList&&u.classList.contains("cv-livre-ed")){ u.focus(); document.execCommand("insertText",false,tok); return; }
+  if(u&&u.isConnected&&"value" in u){ const s=u.selectionStart??u.value.length, f=u.selectionEnd??s; u.value=u.value.slice(0,s)+tok+u.value.slice(f); u.focus(); u.setSelectionRange(s+tok.length,s+tok.length); u.dispatchEvent(new Event("input")); return; }
+  navigator.clipboard&&navigator.clipboard.writeText(tok); crmToast(tok+" copiado. Clique num campo e cole."); });
+ const menuHTML=()=>`<div class="cte-menu"><button type="button" data-m="dupmod">Salvar como novo modelo</button><button type="button" data-m="exp">Baixar modelo (arquivo .json)</button><label>Importar modelo (.json)<input type="file" accept=".json,application/json" hidden id="mImp"></label>${M.origem!=="4c"&&!novo?`<button type="button" data-m="del" class="crm-perigo">Excluir modelo</button>`:""}</div>`;
+ const ligaMenu=()=>{ pop.querySelectorAll("[data-m]").forEach(bt=>bt.onclick=async()=>{ const m=bt.dataset.m;
+   if(m==="exp"){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(M,null,1)],{type:"application/json"})); a.download=(M.nome||"modelo").replace(/[^\wÀ-ú -]+/g,"")+".json"; a.click(); fechaPop(); }
+   if(m==="dupmod"){ chave="contrato_"+Date.now().toString(36); M.nome=(M.nome||"Modelo")+" (cópia)"; M.origem="resiltrack"; delete M.id; $("#edNome").value=M.nome; novo=true; fechaPop(); await salvar(); }
+   if(m==="del"){ if(bt.dataset.ok!=="1"){ bt.dataset.ok="1"; bt.textContent="Clique de novo para excluir de vez"; return; } try{ await ctExcluir(chave); crmToast("Modelo excluído"); fecha(true); depois&&depois(); }catch(e){ crmToast(e.message); } } });
+  const imp=pop.querySelector("#mImp"); if(imp) imp.onchange=async()=>{ try{ const o=JSON.parse(await imp.files[0].text()); const src=o.contrato&&o.contrato.blocks?{tema:o.theme,logo:o.logo,blocos:o.contrato.blocks}:o;
+   if(!Array.isArray(src.blocos)) throw 0; M.blocos=src.blocos; if(src.tema) M.tema=ctTema(src); if(src.logo) M.logo=ctLogo(src); S.sel=M.blocos.length?0:-1; fechaPop(); pintaTudo(); registra(); crmToast("Modelo importado. Confira e salve."); }catch(_){ crmToast("Arquivo inválido."); } }; };
+ // ---- topo ----
+ const salvar=async()=>{ const bt=$('[data-t="salvar"]'); M.nome=$("#edNome").value.trim()||"Modelo sem nome"; const tam=JSON.stringify(M).length;
+  if(tam>2_800_000){ crmToast("O modelo ficou pesado demais por causa das imagens enviadas. Use imagens menores ou endereços de imagem."); return false; }
+  bt.disabled=true; try{ await ctSalvar(chave,M); S.salvo=snap(); status(); crmToast("Modelo salvo"); novo=false; depois&&depois(); return true; }catch(e){ crmToast(e.message); return false; } finally{ bt.disabled=false; } };
+ const fecha=forca=>{ if(!forca&&snap()!==S.salvo){ const bt=$('[data-t="fechar"]'); if(S.fechar!==1){ S.fechar=1; $("#edSt").textContent="Clique no X de novo para sair sem salvar"; $("#edSt").classList.add("suj"); setTimeout(()=>{ S.fechar=0; status(); },3500); return; } }
+  document.removeEventListener("keydown",teclas,true); document.body.classList.remove("cte-aberto"); tela.remove(); };
+ tela.querySelector(".cte-top").addEventListener("click",async e=>{ const bt=e.target.closest("[data-t]"); if(!bt) return; const t=bt.dataset.t;
+  if(t==="desf") desfaz(); if(t==="ref") refaz(); if(t==="fechar") fecha(false); if(t==="salvar") salvar();
+  if(t==="tema"){ if(abrePop("tema",bt,temaHTML())) ligaTema(); } if(t==="vars"){ if(abrePop("vars",bt,varsHTML())) ligaVars(); } if(t==="menu"){ if(abrePop("menu",bt,menuHTML())) ligaMenu(); }
+  if(t==="ver") ctAbrirJanela(ctDocumento(M,vAmostra(),{barra:true},true)); });
+ tela.addEventListener("mousedown",e=>{ if(!pop.hidden&&!pop.contains(e.target)&&!e.target.closest('[data-t="tema"],[data-t="vars"],[data-t="menu"]')){ if(S.popAberto==="vars"&&(e.target.closest("#edPr")||e.composedPath().some(n=>n.classList&&n.classList.contains&&n.classList.contains("cv-livre-ed")))) return; fechaPop(); } });
+ $("#edNome").oninput=()=>{ M.nome=$("#edNome").value; clearTimeout(S.timer); S.timer=setTimeout(registra,500); };
+ const teclas=e=>{ if(!tela.isConnected) return; const emCampo=/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"")||(host.shadowRoot.activeElement&&host.shadowRoot.activeElement.isContentEditable);
+  if(e.key==="Escape"){ e.stopImmediatePropagation(); if(!pop.hidden) fechaPop(); return; }
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); salvar(); return; }
+  if(emCampo) return; if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){ e.preventDefault(); e.shiftKey?refaz():desfaz(); } else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){ e.preventDefault(); refaz(); } };
+ document.addEventListener("keydown",teclas,true);
+ const pintaTudo=()=>{ pintaLib(); pintaCanvas(); pintaProps(); };
+ pintaTudo(); S.hist=[snap()]; S.pos=0; S.salvo=novo?"":snap(); status();
+ return {M,tela,raiz};
+}
+function ctImagemDataUrl(file,max,png){ return new Promise((ok,erro)=>{ const fr=new FileReader(); fr.onerror=erro; fr.onload=()=>{ const img=new Image(); img.onerror=erro; img.onload=()=>{ const k=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement("canvas"); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+ c.getContext("2d").drawImage(img,0,0,c.width,c.height); ok(png&&/png|svg|webp/.test(file.type)?c.toDataURL("image/png"):c.toDataURL("image/jpeg",.82)); }; img.src=fr.result; }; fr.readAsDataURL(file); }); }
+
+(function(){ if(document.getElementById("cte-css")) return; const s=document.createElement("style"); s.id="cte-css"; s.textContent=`
+body.cte-aberto{overflow:hidden}
+.cte{position:fixed;inset:10px;z-index:80;background:#fff;border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;font-size:13px;color:#1a1b28}
+.cte:before{content:"";position:fixed;inset:0;background:rgba(15,16,23,.55);z-index:-1}
+.cte-top{display:flex;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid #e7e9f2;background:#fff}
+.cte-top-l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}.cte-top-c{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}.cte-top-r{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end}
+.cte-tag{display:inline-flex;align-items:center;gap:5px;border:1px solid #e1e5ec;border-radius:8px;padding:5px 9px;font-weight:600;white-space:nowrap}
+.cte-nome{border:1px solid transparent;border-radius:8px;padding:6px 8px;font:600 14px inherit;min-width:120px;width:100%;max-width:340px;background:transparent}.cte-nome:hover,.cte-nome:focus{border-color:#d6d9e8;outline:none;background:#fafbff}
+.cte-b,.cte-ib{display:inline-flex;align-items:center;gap:6px;border:1px solid #e1e5ec;background:#fff;border-radius:9px;padding:7px 11px;cursor:pointer;font:500 13px inherit;color:#1a1b28}.cte-ib{padding:7px}.cte-b:hover,.cte-ib:hover{border-color:#006789;color:#006789}.cte-ib:disabled{opacity:.35;pointer-events:none}
+.cte-pri{background:#006789;color:#fff;border-color:#006789}.cte-pri:hover{background:#00506a;color:#fff}
+.cte-st{font-size:12px;color:#128a5b}.cte-st.suj{color:#b7791f}
+.cte-main{flex:1;display:grid;grid-template-columns:232px 1fr 340px;min-height:0}
+.cte-lib,.cte-pr{overflow:auto;background:#fff}.cte-lib{border-right:1px solid #e7e9f2;padding:0 8px 12px}.cte-pr{border-left:1px solid #e7e9f2;padding:0 14px 30px}
+.cte-h{position:sticky;top:0;background:#fff;z-index:2;text-align:center;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#64748b;padding:12px 0 10px;border-bottom:1px solid #eef0f5;margin-bottom:6px}
+.cte-grp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 6px}.cte-grp>summary::-webkit-details-marker{display:none}.cte-grp>summary svg{transition:transform .15s}.cte-grp[open]>summary svg{transform:rotate(90deg)}
+.cte-li{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:8px;cursor:grab;font:13px inherit;color:#334155;text-align:left}.cte-li:hover{background:#eef6f8;color:#006789}.cte-li span{flex:1}.cte-li em{font-style:normal;font-size:11px;background:#e0eef2;color:#006789;border-radius:999px;padding:1px 7px}
+.cte-dica{font-size:11.5px;color:#83879c;margin:12px 6px}
+.cte-cv{overflow:auto;background:#e9edf1;padding:26px 22px 60px}.cte-cv #edHost{max-width:900px;margin:0 auto}
+.cte-pt{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569;margin:6px 0 10px}
+.cte-sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;cursor:pointer}.cte-sw input{position:absolute;opacity:0;pointer-events:none}.cte-sw i{width:36px;height:20px;border-radius:999px;background:#cbd5e1;position:relative;flex:none;transition:background .15s}
+.cte-sw i:after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}.cte-sw input:checked+i{background:#0b1a20}.cte-sw input:checked+i:after{left:18px}.cte-sw input:focus-visible+i{outline:2px solid #006789;outline-offset:2px}
+.cte-sec{border:1px solid #e7e9f2;border-radius:10px;margin:10px 0}.cte-sec>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569}.cte-sec>summary::-webkit-details-marker{display:none}
+.cte-sec[open]>summary{border-bottom:1px solid #eef0f5}.cte-sec[open]>summary>svg{transform:rotate(90deg)}.cte-sec-c{padding:12px;display:grid;gap:10px}
+.cte-chips{display:flex;flex-wrap:wrap;gap:6px}.cte-chips button{border:1px solid #d6d9e8;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font:12px inherit}.cte-chips button.on{border-color:#0ea5e9;color:#0369a1;background:#f0f9ff;font-weight:600}
+.cte-cor>span,.cte-rg>span{display:flex;justify-content:space-between;font-size:12px;color:#4a4d63;margin-bottom:4px}.cte-cor>div{display:flex;gap:6px;align-items:center}.cte-cor input[type=color]{width:34px;height:32px;border:1px solid #d6d9e8;border-radius:8px;padding:2px;background:#fff;flex:none}
+.cte-cor .inp{flex:1;min-width:0;font:12px monospace}.cte-cor button{border:0;background:none;cursor:pointer;color:#64748b;font-size:15px;padding:4px}.cte-rg input{width:100%;accent-color:#0b1a20}
+.cte-pr .crm-f{display:grid;gap:5px}.cte-pr .crm-f>span{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;color:#4a4d63;font-weight:500}.cte-pr .inp{width:100%}.cte-pr textarea.inp{resize:vertical;line-height:1.45}
+.cte-n{font-style:normal;font-size:11px;color:#83879c;margin-left:4px}
+.cte-al{display:inline-flex;gap:1px;border:1px solid #e1e5ec;border-radius:7px;padding:1px}.cte-al button{border:0;background:none;padding:2px 3px;border-radius:5px;cursor:pointer;color:#94a3b8;display:grid}.cte-al button.on{background:#e0eef2;color:#006789}
+.cte-strs{display:grid;gap:5px}.cte-str{display:flex;gap:4px;align-items:flex-start}.cte-str textarea{flex:1;min-height:34px;overflow:hidden}
+.cte-itb{display:inline-flex;gap:0;flex:none}.cte-itb button{border:0;background:none;padding:4px;border-radius:6px;cursor:pointer;color:#64748b;display:grid}.cte-itb button:hover{background:#eef3f5;color:#006789}.cte-itb button:disabled{opacity:.25}.cte-itb button[data-rmit]:hover{color:#cf4257}
+.cte-it{border:1px solid #e7e9f2;border-radius:9px;margin-bottom:6px;background:#fafbff}.cte-it summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 6px 6px 10px;cursor:pointer;font-size:12px}.cte-it summary::-webkit-details-marker{display:none}
+.cte-it summary b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cte-it-c{padding:4px 10px 10px;display:grid;gap:8px}
+.cte-add{display:inline-flex;align-items:center;gap:5px;border:1px dashed #9fb8c2;background:#fff;color:#006789;border-radius:8px;padding:6px 10px;cursor:pointer;font:600 12px inherit;justify-self:start}.cte-add:hover{background:#eef6f8}
+.cte-mb{display:inline-flex;align-items:center;border:1px solid #d6d9e8;background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font:12px inherit;color:#1a1b28}.cte-mb:hover{border-color:#006789;color:#006789}
+.cte-fs{border:1px solid #e7e9f2;border-radius:9px;padding:8px 10px;display:grid;gap:8px}.cte-fs legend{font-size:12px;color:#4a4d63;padding:0 4px}
+.cte-img{display:grid;gap:6px}.cte-img>img{width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid #e7e9f2}.cte-img-v{height:56px;border:1px dashed #cbd5e1;border-radius:8px;display:grid;place-items:center;color:#94a3b8;font-size:12px}
+.cte-img-a{display:flex;gap:6px}.cte-midias{display:flex;gap:5px;flex-wrap:wrap}.cte-midias button{border:1px solid #e1e5ec;border-radius:7px;padding:0;width:52px;height:38px;overflow:hidden;cursor:pointer;background:#f1f5f9}.cte-midias img{width:100%;height:100%;object-fit:cover}
+.cte-tabw{overflow:auto;max-width:100%}.cte-tab{border-collapse:collapse;min-width:100%}.cte-tab th,.cte-tab td{padding:2px}.cte-tab .inp{min-width:84px;padding:5px 6px;font-size:12px}.cte-tab th{white-space:nowrap}.cte-tab th button,.cte-tab td button{border:0;background:none;cursor:pointer;color:#94a3b8;padding:2px}.cte-tab th>*{vertical-align:middle}.cte-tab th .inp{width:calc(100% - 22px);font-weight:600}
+.cte-row{display:flex;gap:6px}
+.cte-fmt{display:flex;flex-wrap:wrap;gap:4px}.cte-fmt button{border:1px solid #d6d9e8;background:#fff;border-radius:6px;padding:4px 7px;cursor:pointer;font-size:12px}.cte-fmt button:hover{border-color:#006789}
+.cte-vazio{padding:10px 2px}.cte-vazio p{margin:0 0 10px}
+.cte-pop{position:fixed;z-index:90;background:#fff;border:1px solid #e1e5ec;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.18);padding:14px;width:min(560px,94vw);max-height:76vh;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.cte-pop[hidden]{display:none}.cte-pop.lado{width:300px;max-height:calc(100vh - 110px)}.cte-poph{display:flex;justify-content:space-between;align-items:center}.cte-poph .cte-ib{padding:4px;border:0}
+.cte-tg{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cte-pop .crm-f{display:grid;gap:5px}.cte-pop .crm-f>span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b}
+.cte-cores{display:flex;flex-wrap:wrap;gap:8px}.cte-cor2{display:flex;align-items:center;gap:6px;font-size:12px;border:1px solid #e7e9f2;border-radius:8px;padding:4px 8px 4px 4px;cursor:pointer}.cte-cor2 input{width:26px;height:24px;border:0;padding:0;background:none}
+.cte-sep{height:1px;background:#eef0f5}.cte-logo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cte-logo img{max-height:40px;max-width:150px;border:1px solid #e7e9f2;border-radius:6px;padding:3px}.cte-logo em{color:#94a3b8;font-size:12px}
+.cte-vg{display:block;font-size:12px;margin:8px 0 4px}
+.cte-menu{display:grid;gap:2px}.cte-menu button,.cte-menu label{border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font:13px inherit;color:#1a1b28}.cte-menu button:hover,.cte-menu label:hover{background:#f1f5f9}
+@media(max-width:1100px){.cte-main{grid-template-columns:190px 1fr 300px}.cte-top-c .cte-b{padding:7px 8px}}
+@media(max-width:820px){.cte{inset:0;border-radius:0}.cte-main{display:block;overflow:auto}.cte-lib,.cte-pr{overflow:visible;border:0}.cte-cv{overflow:visible;min-height:60vh;padding:20px 8px}.cte-top{flex-wrap:wrap}.cte-top-r{flex:none}}
 `; document.head.appendChild(s); })();
 
 (async function init(){
