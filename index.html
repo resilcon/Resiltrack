@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.7 (teste e saída de réguas)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.8 (formulários do site)</footer>
   </div>
 </div>
 
@@ -4016,7 +4016,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -5128,6 +5128,127 @@ function crmPrioridadesHTML(lista){ if(!lista.length) return "";
   ${lista.slice(0,6).map((x,i)=>`<div class="ce-row crm-click" data-neg="${x.o.id}"><div style="min-width:0;display:flex;gap:12px;align-items:center"><span class="crm-rank">${i+1}</span><div style="min-width:0"><b>${esc(x.o.titulo)}</b>
    <div class="sub">${esc([x.o.empresa_nome,x.o.contato_nome].filter(Boolean).join(" · "))}</div><div class="crm-motivos">${x.mot.slice(0,4).map(t=>`<span>${esc(t)}</span>`).join("")}</div></div></div>
    <span class="crm-etq" style="--c:${CRM_ETAPA_COR[x.o.etapa]}">${esc(crmEtapaNome(x.o.funil_id,x.o.etapa))}</span></div>`).join("")}</div>`; }
+
+// ================= CRM · FORMULÁRIOS DO SITE: biblioteca de códigos, prévia e formulários de campanha =================
+const CRMFORM_SCRIPT="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/formulario-site?widget=1";
+const CRMFORM_API="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/formulario-site";
+CRM_ICO.form='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
+(function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_importar"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i,0,["crm_formularios","Formulários do site","form"]); })();
+
+const CRMFORM_PRONTOS=[
+ {tipo:"diagnostico",chave:"site_diagnostico",nome:"Diagnóstico gratuito",desc:"5 etapas: ramo, regime, faturamento, maior desafio e contato.",crm:"Negócio em Conversão e tarefa de agendar o diagnóstico."},
+ {tipo:"consultoria",chave:"site_consultoria",nome:"Consultoria tributária gratuita",desc:"5 etapas: ramo, regime, faturamento, em que quer ajuda e contato.",crm:"Negócio em Conversão e tarefa de agendar a consultoria."},
+ {tipo:"reforma",chave:"site_reforma",nome:"Simulador da Reforma Tributária",desc:"5 etapas. No final mostra os pontos de atenção para o caso da pessoa.",crm:"Negócio em Conversão e tarefa de agendar a simulação completa."},
+ {tipo:"contato",chave:"site_contato",nome:"Fale com a Resilcon",desc:"2 etapas: assunto e dados com mensagem.",crm:"Negócio em Atração (jornada comercial) e tarefa de responder em 2 horas. \"Já sou cliente\" gera só tarefa."}
+];
+// campos do formulário de campanha: [chave, rótulo, tipo, ajuda]
+const CRMFORM_CAMPOS=[
+ ["campanha","Nome da campanha","texto","Curto e sem espaços, ex.: black-friday-2026. Aparece no título do negócio no CRM."],
+ ["titulo","Título","texto","Frase principal do formulário."],
+ ["texto","Texto de apoio","area","Uma ou duas frases abaixo do título."],
+ ["kicker","Texto pequeno acima do título","texto","Ex.: Oferta de novembro."],
+ ["provas","Três vantagens (separe com |)","texto","Ex.: Proposta em 24h|Sem fidelidade|Atendimento em SP"],
+ ["botao","Texto do botão","texto","Ex.: Quero minha proposta"],
+ ["material","Nome do material (opcional)","texto","Preencha para entregar e-book, guia ou planilha. O lead recebe o botão de acesso no final."],
+ ["link","Link do material","texto","Endereço do PDF ou da página do material."],
+ ["obrigado","Mensagem de agradecimento","area","Deixe vazio para usar a mensagem padrão."],
+ ["redirecionar","Página de obrigado (opcional)","texto","Endereço para onde a pessoa vai depois do envio. Útil para medir conversão nos anúncios."],
+ ["zap","Mensagem pronta do WhatsApp","texto","Texto que já aparece escrito quando a pessoa clica no WhatsApp."]
+];
+
+function crmFormAttr(v){ return String(v==null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function crmFormCodigoPronto(tipo){ return `<div class="resilcon-form" data-form="${tipo}"></div>\n<script src="${CRMFORM_SCRIPT}" defer><\/script>`; }
+function crmFormCodigoLead(c){
+ const at=[["data-form","lead"]];
+ if(c.estilo==="compacto") at.push(["data-estilo","compacto"]);
+ CRMFORM_CAMPOS.forEach(([k])=>{ const v=String(c[k]||"").trim(); if(v) at.push(["data-"+k,v]); });
+ if(c.perguntar) at.push(["data-perguntar","segmento"]);
+ if(c.mensagem) at.push(["data-mensagem","sim"]);
+ return `<div class="resilcon-form"\n${at.map(([k,v])=>`     ${k}="${crmFormAttr(v)}"`).join("\n")}></div>\n<script src="${CRMFORM_SCRIPT}" defer><\/script>`;
+}
+// Na prévia dentro do Resiltrack nada é gravado: o envio é interceptado e responde "ok"
+(function(){ if(window.__crmFormFetch) return; window.__crmFormFetch=true; const orig=window.fetch.bind(window);
+ window.fetch=function(u,o){ try{ if(String(u).indexOf(CRMFORM_API)===0&&o&&String(o.method||"").toUpperCase()==="POST"){ let nome="";
+   try{ nome=String(JSON.parse(o.body).nome||"").split(" ")[0]; }catch(_){} return Promise.resolve(new Response(JSON.stringify({ok:true,nome:nome||"teste"}),{status:200,headers:{"Content-Type":"application/json"}})); } }catch(_){}
+  return orig(u,o); }; })();
+function crmFormMontarPrevia(alvo,html){ alvo.innerHTML=html.replace(/<script[\s\S]*?<\/script>/g,"");
+ window.__resilconForm=false; const s=document.createElement("script"); s.src=CRMFORM_SCRIPT; s.onerror=()=>{ alvo.innerHTML=`<p class="sub">Não foi possível carregar a prévia. Confira a internet e tente de novo.</p>`; }; document.body.appendChild(s); setTimeout(()=>s.remove(),3000); }
+async function crmFormCopiar(txt,ta){ try{ await navigator.clipboard.writeText(txt); crmToast("Código copiado. Agora é só colar na página."); }catch(_){ if(ta){ ta.focus(); ta.select(); } crmToast("Selecionei o código: use Ctrl+C para copiar."); } }
+
+async function crmVFormularios(v){
+ v.innerHTML=crmHead("Formulários do site","Copie o código e cole na página onde o formulário deve aparecer. Os leads caem direto aqui no CRM.",crmPri('id="frmNovo">Novo formulário de campanha</button>'))+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#frmNovo").onclick=()=>crmFormEditor(null,()=>crmVFormularios(v));
+ let D; try{ D=await crmRpc("crm_formularios"); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="crm_formularios") return;
+ const pf=D.por_form||{}, pc=D.por_campanha||{};
+ const num=o=>o?`<span class="sub"><b class="num">${o.mes||0}</b> leads nos últimos 30 dias · ${o.total||0} no total</span>`:`<span class="sub">Nenhum lead ainda</span>`;
+ const salvos=D.salvos||[];
+ v.querySelector("#crmBox").innerHTML=`
+  <div class="ce-note">${CE_ICO&&CE_ICO.bolt?CE_ICO.bolt:""}<span><b>Como usar:</b> no WordPress, edite a página, adicione o bloco <b>HTML personalizado</b> (no editor de blocos, clique em + e busque "HTML") e cole o código. Funciona também em qualquer outro site ou construtor de páginas que aceite HTML. No editor ele pode aparecer em branco: o formulário só aparece na página publicada.</span></div>
+  <h3 class="crm-h4" style="margin:18px 0 10px">Formulários prontos</h3>
+  <div class="ce-g2">${CRMFORM_PRONTOS.map(f=>`<div class="card ce-pad"><div class="ce-ch" style="align-items:flex-start"><div><h3>${esc(f.nome)}</h3>${num(pf[f.chave])}</div></div>
+   <p class="ce-desc">${esc(f.desc)}</p><div class="ce-note">${esc(f.crm)}</div>
+   <div class="row-actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:10px"><button class="view-btn ce-pri" data-frm-cop="${f.tipo}">Copiar código</button><button class="view-btn ghost" data-frm-ver="${f.tipo}">Ver prévia e código</button></div></div>`).join("")}</div>
+  <h3 class="crm-h4" style="margin:24px 0 10px">Formulários de campanha</h3>
+  ${salvos.length?`<div class="ce-g2">${salvos.map(s=>{ const c=s.config||{}; return `<div class="card ce-pad"><div class="ce-ch" style="align-items:flex-start"><div><h3>${esc(s.nome)}</h3>${num(pc[c.campanha])}</div><span class="pill neutral">${c.material?"Material":"Contato"}</span></div>
+   <p class="ce-desc">${esc(c.titulo||c.material||"Formulário de campanha")}${c.campanha?` · campanha <b>${esc(c.campanha)}</b>`:""}</p>
+   <div class="row-actions" style="justify-content:flex-start;flex-wrap:wrap"><button class="view-btn ce-pri" data-frm-cops="${s.id}">Copiar código</button><button class="view-btn ghost" data-frm-ed="${s.id}">Editar e ver prévia</button></div></div>`; }).join("")}</div>`
+  :`<div class="card"><div class="empty">Nenhum formulário de campanha salvo ainda. Clique em <b>Novo formulário de campanha</b> para montar o primeiro: você escolhe os textos, vê a prévia e copia o código.</div></div>`}`;
+ v.querySelectorAll("[data-frm-cop]").forEach(b=>b.onclick=()=>crmFormCopiar(crmFormCodigoPronto(b.dataset.frmCop)));
+ v.querySelectorAll("[data-frm-ver]").forEach(b=>b.onclick=()=>crmFormVer(CRMFORM_PRONTOS.find(f=>f.tipo===b.dataset.frmVer)));
+ v.querySelectorAll("[data-frm-cops]").forEach(b=>b.onclick=()=>{ const s=salvos.find(x=>x.id===b.dataset.frmCops); crmFormCopiar(crmFormCodigoLead(s.config||{})); });
+ v.querySelectorAll("[data-frm-ed]").forEach(b=>b.onclick=()=>crmFormEditor(salvos.find(x=>x.id===b.dataset.frmEd),()=>crmVFormularios(v)));
+}
+
+function crmFormVer(f){
+ const cod=crmFormCodigoPronto(f.tipo);
+ const m=crmModal("Formulários do site",f.nome,"",`<p class="sub" style="margin:0 0 10px">Prévia de teste: aqui dentro do CRM nada é gravado.</p>
+  <div id="frmPrev" style="background:#f3f6f8;border-radius:14px;padding:18px"></div>
+  <h4 class="crm-h4" style="margin:16px 0 6px">Código para colar na página</h4>
+  <textarea class="inp" id="frmCod" readonly rows="3" style="font-family:monospace;font-size:12px;width:100%">${esc(cod)}</textarea>
+  <div class="crm-pe" style="margin-top:10px"><span style="flex:1"></span><button class="view-btn ce-pri" id="frmCop">Copiar código</button></div>`);
+ crmFormMontarPrevia(m.querySelector("#frmPrev"),cod);
+ m.querySelector("#frmCop").onclick=()=>crmFormCopiar(cod,m.querySelector("#frmCod"));
+}
+
+function crmFormEditor(s,depois){
+ const c=Object.assign({estilo:"",perguntar:false,mensagem:false},(s&&s.config)||{});
+ const campo=([k,r,t,a])=>`<label class="crm-f"><span>${r}</span>${t==="area"?`<textarea class="inp" data-fc="${k}" rows="2">${esc(c[k]||"")}</textarea>`:`<input class="inp" data-fc="${k}" value="${escAttr(c[k]||"")}">`}<small class="sub">${a}</small></label>`;
+ const m=crmModal("Formulário de campanha",s?s.nome:"Novo formulário de campanha","",`
+  <div class="crm-frm-ed" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px;align-items:start">
+   <div class="crm-form" style="display:grid;gap:10px">
+    <label class="crm-f"><span>Nome interno</span><input class="inp" id="frmNome" value="${escAttr(s?s.nome:"")}" placeholder="Ex.: Landing Black Friday 2026"><small class="sub">Só aparece aqui no CRM.</small></label>
+    ${CRMFORM_CAMPOS.map(campo).join("")}
+    <label class="crm-chk"><input type="checkbox" id="frmPerg" ${c.perguntar?"checked":""}><span>Perguntar o ramo da empresa antes dos dados</span></label>
+    <label class="crm-chk"><input type="checkbox" id="frmMsg" ${c.mensagem?"checked":""}><span>Mostrar campo de mensagem</span></label>
+    <label class="crm-chk"><input type="checkbox" id="frmComp" ${c.estilo==="compacto"?"checked":""}><span>Versão compacta (uma coluna, sem o painel azul)</span></label>
+   </div>
+   <div style="position:sticky;top:0">
+    <p class="sub" style="margin:0 0 8px">Prévia de teste (nada é gravado)</p>
+    <div id="frmPrev" style="background:#f3f6f8;border-radius:14px;padding:16px;max-height:62vh;overflow:auto"></div>
+    <h4 class="crm-h4" style="margin:14px 0 6px">Código para colar na página</h4>
+    <textarea class="inp" id="frmCod" readonly rows="7" style="font-family:monospace;font-size:12px;width:100%"></textarea>
+   </div>
+  </div>
+  <div class="crm-pe" style="margin-top:14px">${s?`<button class="txt-btn crm-perigo" id="frmDel">Excluir</button>`:""}<span style="flex:1"></span><button class="view-btn ghost" id="frmCop">Copiar código</button><button class="view-btn ce-pri" id="frmSalvar">Salvar</button></div>`);
+ if(window.innerWidth<900) m.querySelector(".crm-frm-ed").style.gridTemplateColumns="1fr";
+ const ler=()=>{ const o={}; m.querySelectorAll("[data-fc]").forEach(i=>{ const v=i.value.trim(); if(v) o[i.dataset.fc]=v; });
+  if(o.campanha) o.campanha=o.campanha.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  o.perguntar=m.querySelector("#frmPerg").checked; o.mensagem=m.querySelector("#frmMsg").checked; o.estilo=m.querySelector("#frmComp").checked?"compacto":""; return o; };
+ let t=null; const atualizar=()=>{ const cod=crmFormCodigoLead(ler()); m.querySelector("#frmCod").value=cod; clearTimeout(t); t=setTimeout(()=>crmFormMontarPrevia(m.querySelector("#frmPrev"),cod),350); };
+ m.querySelectorAll("[data-fc],#frmPerg,#frmMsg,#frmComp").forEach(i=>i.addEventListener(i.type==="checkbox"?"change":"input",atualizar));
+ atualizar();
+ m.querySelector("#frmCop").onclick=()=>crmFormCopiar(m.querySelector("#frmCod").value,m.querySelector("#frmCod"));
+ m.querySelector("#frmSalvar").onclick=async ev=>{ const b=ev.currentTarget; const cfg=ler(); const nome=crmVal(m,"#frmNome");
+  if(!nome){ crmToast("Dê um nome interno para o formulário."); return; }
+  if(!cfg.campanha){ crmToast("Preencha o nome da campanha. É ele que identifica os leads no CRM."); return; }
+  if(cfg.material&&!cfg.link){ crmToast("Informe o link do material."); return; }
+  b.disabled=true; b.textContent="Salvando…";
+  try{ await crmRpc("crm_salvar_formulario",{p:{id:s?s.id:null,nome,config:cfg}}); closeModal(); crmToast("Formulário salvo"); depois&&depois(); }
+  catch(e){ b.disabled=false; b.textContent="Salvar"; crmToast(crmErro(e)); } };
+ const del=m.querySelector("#frmDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ await crmRpc("crm_excluir_formulario",{p_id:s.id}); closeModal(); crmToast("Formulário excluído. O código já colado em páginas continua funcionando."); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
+}
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
