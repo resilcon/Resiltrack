@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.8 (formulários do site)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.9.1 (tabela de planos)</footer>
   </div>
 </div>
 
@@ -4016,7 +4016,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -4256,7 +4256,7 @@ async function crmFichaNegocio(id,preset){
    </div>
    <div class="crm-pe">${o.id&&isAdmin()?`<button class="txt-btn crm-perigo" id="nDel">Excluir negócio</button>`:""}<span style="flex:1"></span>${o.id&&cont?`<button class="txt-btn" id="nVerCont">Abrir contato</button>`:""}${crmPri('id="nSalvar">Salvar</button>')}</div>
   </div>
-  <div class="crm-colline">${o.id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="nIA">${CRM_ICO.ia}Copiloto IA</button>${crmAcoesContatoHTML(cont)}</div><div id="iaBox"></div>`+(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
+  <div class="crm-colline">${o.id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="nIA">${CRM_ICO.ia}Copiloto IA</button><button class="txt-btn" id="nProp">Montar proposta</button>${crmAcoesContatoHTML(cont)}</div><div id="iaBox"></div>`+(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
  const pintaItens=()=>{ m.querySelector("#nItens").innerHTML=itens.map(linhaItem).join("")||`<tr><td colspan="6" class="sub">Nenhum serviço adicionado.</td></tr>`;
   const t=totais(); m.querySelector("#nTot").innerHTML=itens.length?`<span>Mensal <b class="num">${brl(t.m)}</b></span><span>Único <b class="num">${brl(t.u)}</b></span><span>Primeiro ano <b class="num">${brl(t.m*12+t.u)}</b></span>`:"";
   m.querySelector("#nValMan").hidden=!!itens.length;
@@ -4267,7 +4267,7 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
- if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
+ if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
   crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
  const dl=m.querySelector("#nDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
@@ -5249,6 +5249,352 @@ function crmFormEditor(s,depois){
  const del=m.querySelector("#frmDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
   try{ await crmRpc("crm_excluir_formulario",{p_id:s.id}); closeModal(); crmToast("Formulário excluído. O código já colado em páginas continua funcionando."); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
 }
+
+// ================= CRM · MOTOR DE PRECIFICAÇÃO (mesma lógica da ferramenta comercial da Resilcon) =================
+const PRECO_CHAVES_PLANO=["Básico","Intermediário","Avançado"];
+function precoNum(s){ s=String(s==null?"":s).trim().replace(/[^\d.,-]/g,""); if(!s) return 0;
+ if(s.includes(",")) return Number(s.replace(/\./g,"").replace(",","."))||0;
+ if(/^\d{1,3}(\.\d{3})+$/.test(s)) return Number(s.replace(/\./g,""))||0;
+ return Number(s)||0; }
+// "15.000,01 a 30000" | "2.500.000,01 ou mais" | "1 a 3" | "até 10" | "SIM"
+function precoFaixa(nome){ const t=String(nome||"").toLowerCase().trim(); let m;
+ if(m=t.match(/^(.+?)\s+a\s+(.+)$/)) return {lo:precoNum(m[1]),hi:precoNum(m[2])};
+ if(m=t.match(/^(.+?)\s+ou\s+mais$/)) return {lo:precoNum(m[1]),hi:Infinity};
+ if(m=t.match(/^(acima de|mais de)\s+(.+)$/)) return {lo:precoNum(m[2]),hi:Infinity};
+ if(m=t.match(/^at[eé]\s+(.+)$/)) return {lo:0,hi:precoNum(m[1])};
+ if(/^[\d.,]+$/.test(t)) { const v=precoNum(t); return {lo:v,hi:v}; }
+ return null; }
+function precoAchaFaixa(faixas,x){ x=Number(x)||0; const fx=faixas.map(f=>({f,r:precoFaixa(f.nome)})).filter(o=>o.r);
+ let hit=fx.find(o=>x>=o.r.lo&&x<=o.r.hi); if(hit) return {faixa:hit.f,fora:false};
+ // buracos entre faixas (ex.: 15.000,00 e 15.000,01): usa a maior faixa que começa antes do valor
+ const antes=fx.filter(o=>o.r.lo<=x).sort((a,b)=>b.r.lo-a.r.lo);
+ if(antes.length) return {faixa:antes[0].f,fora:x>Math.max(...fx.map(o=>o.r.hi))};
+ return fx.length?{faixa:fx[0].f,fora:true}:{faixa:null,fora:true}; }
+
+// Converte os campos brutos da ferramenta (pares [nome, valor, valorCheckbox]) no modelo usado pelo CRM
+function precoNormalizar(bruto){
+ const pares=(bruto&&bruto.pares)||[]; const P={planos:[],atividades:[],criterios:[],extras:[],nichos:(bruto&&bruto.nichos)||[],percentual:false};
+ const pl={}, ord=[], at={}, atOrd=[], cr={}, crOrd=[], ex={}, exOrd=[];
+ const plano=id=>{ if(!pl[id]){ pl[id]={id,nome:"",valor:0,percentual:false,desativado:false,cor:"",sug:{},sel:"1"}; ord.push(id);} return pl[id]; };
+ const ativ=k=>{ if(!at[k]){ at[k]={chave:k,nome:k,ativa:true,planos:{},trib:{},_t:null,_f:null}; atOrd.push(k);} return at[k]; };
+ const crit=id=>{ if(!cr[id]){ cr[id]={id,nome:"",tipo:"",acao:"",descricao:"",planos:{},faixas:[]}; crOrd.push(id);} return cr[id]; };
+ for(const [nome,valor,vcb] of pares){ const n=String(nome).replace(/^[^\[]*\[steps\]\[[^\]]*\]/,""); const v=valor; let m;
+  if(m=n.match(/^\[plan\]\[([^\]]+)\]\[(name|value|disabled|value_is_percent|color)\]$/)){ const p=plano(m[1]);
+   if(m[2]==="name") p.nome=v; else if(m[2]==="value") p.valor=precoNum(v); else if(m[2]==="disabled") p.desativado=v==="1"; else if(m[2]==="value_is_percent") p.percentual=v==="1"; else if(!p.cor) p.cor=v; continue; }
+  if(m=n.match(/^\[plan\]\[([^\]]+)\]\[(suggestion\d+)\]\[([^\]]+)\]\[(name|value)\]$/)){ const s=(plano(m[1]).sug[m[2].replace("suggestion","")]=plano(m[1]).sug[m[2].replace("suggestion","")]||[]);
+   if(m[4]==="name") s.push({nome:v,valor:0}); else if(s.length) s[s.length-1].valor=precoNum(v); continue; }
+  if(m=n.match(/^\[plan_suggestion_selected\]\[([^\]]+)\]$/)){ if(v==="1") plano(m[1]).sel=String(vcb||"1"); continue; }
+  if(n==="[value_is_percent_global]"){ P.percentual=v==="1"; continue; }
+  if(m=n.match(/^\[enabled_activities\]\[(\w+)\]$/)){ ativ(m[1]).ativa=v==="1"; continue; }
+  if(m=n.match(/^\[activities\]\[(\w+)\]\[plans\]\[(.+)\]$/)){ ativ(m[1]).planos[m[2]]=v==="1"; continue; }
+  if(m=n.match(/^\[activities\]\[(\w+)\]\[name\]$/)){ ativ(m[1]).nome=v; continue; }
+  if(m=n.match(/^\[activities\]\[(\w+)\]\[taxations\]\[[^\]]+\]\[name\]$/)){ const a=ativ(m[1]); a._t=v; a.trib[v]=a.trib[v]||[]; continue; }
+  if(m=n.match(/^\[activities\]\[(\w+)\]\[taxations\]\[[^\]]+\]\[ranges\]\[[^\]]+\]\[(name|value)\]$/)){ const a=ativ(m[1]); const l=a.trib[a._t]=a.trib[a._t]||[];
+   if(m[2]==="name") l.push({nome:v,valor:0}); else if(l.length) l[l.length-1].valor=precoNum(v); continue; }
+  if(m=n.match(/^\[criterions\]\[([^\]]+)\]\[(type|action|description|name)\]$/)){ const c=crit(m[1]); c[{type:"tipo",action:"acao",description:"descricao",name:"nome"}[m[2]]]=v; continue; }
+  if(m=n.match(/^\[criterions\]\[([^\]]+)\]\[plans\]\[(.+)\]$/)){ crit(m[1]).planos[m[2]]=v==="1"; continue; }
+  if(m=n.match(/^\[criterions\]\[([^\]]+)\]\[ranges\]\[[^\]]+\]\[(name|value)\]$/)){ const c=crit(m[1]); if(m[2]==="name") c.faixas.push({nome:v,valor:0}); else if(c.faixas.length) c.faixas[c.faixas.length-1].valor=precoNum(v); continue; }
+  if(m=n.match(/^\[products_extras\]\[([^\]]+)\]\[(name|value)\]$/)){ if(!ex[m[1]]){ ex[m[1]]={id:m[1],nome:"",valor:0}; exOrd.push(m[1]); } if(m[2]==="name") ex[m[1]].nome=v; else ex[m[1]].valor=precoNum(v); continue; }
+ }
+ P.planos=ord.map((id,i)=>{ const p=pl[id]; return {id,nome:p.nome||PRECO_CHAVES_PLANO[i],chave:PRECO_CHAVES_PLANO[i]||p.nome,valor:p.valor,percentual:p.percentual,desativado:p.desativado,cor:p.cor,
+  inclusos:(p.sug[p.sel]||p.sug["1"]||[]).filter(x=>x.nome)}; });
+ P.atividades=atOrd.map(k=>{ const a=at[k]; return {chave:k,nome:a.nome,ativa:a.ativa,planos:a.planos,tributacoes:Object.entries(a.trib).filter(([t,l])=>t&&l.length).map(([t,l])=>({nome:t,faixas:l}))}; }).filter(a=>a.tributacoes.length);
+ P.criterios=crOrd.map(id=>cr[id]).filter(c=>c.nome).map(c=>({...c,ativo:Object.values(c.planos).some(Boolean),
+  forma:/sim ou n/i.test(c.tipo)?"simnao":(/m[uú]ltipla/i.test(c.tipo)?"escolha":"numero"),fator:/fator/i.test(c.acao)}));
+ P.extras=exOrd.map(id=>ex[id]).filter(e=>e.nome);
+ return P; }
+
+// respostas: {faturamento, tributacao, atividade, crit:{[id]: número ou nome da opção}}
+function precoCalcular(P,r){
+ const out={planos:[],avisos:[]}; const ativ=P.atividades.find(a=>a.chave===r.atividade)||null;
+ let tabela=null, faixaFat=null;
+ if(ativ){ const t=ativ.tributacoes.find(x=>x.nome===r.tributacao);
+  if(t){ const h=precoAchaFaixa(t.faixas,r.faturamento); faixaFat=h.faixa; tabela=h.faixa?h.faixa.valor:0; if(h.fora) out.avisos.push("Faturamento fora da tabela de "+t.nome+": usei a faixa mais próxima ("+(h.faixa?h.faixa.nome:"nenhuma")+")."); }
+  else if(P.atividades.length) out.avisos.push("Não há tabela de "+r.tributacao+" para "+ativ.nome+".");
+ }
+ let totalBasico=null;
+ P.planos.forEach((p,i)=>{ if(p.desativado) return; const linhas=[];
+  if(ativ&&tabela!=null&&ativ.planos[p.chave]!==false) linhas.push({rotulo:`Mensalidade ${ativ.nome} · ${r.tributacao} · ${faixaFat?faixaFat.nome:""}`,valor:tabela});
+  let vp=p.valor; if((P.percentual||p.percentual)&&i>0&&totalBasico!=null){ vp=totalBasico*p.valor/100; }
+  if(vp) linhas.push({rotulo:"Valor do plano "+p.nome,valor:vp});
+  (p.inclusos||[]).forEach(x=>{ if(x.valor) linhas.push({rotulo:x.nome,valor:x.valor}); });
+  P.criterios.forEach(c=>{ if(!c.planos[p.chave]) return; const resp=r.crit?r.crit[c.id]:undefined; if(resp===undefined||resp===""||resp===null) return;
+   let val=0, det="";
+   if(c.forma==="numero"){ const q=Number(resp)||0; if(!q&&!c.faixas.some(f=>{const fr=precoFaixa(f.nome);return fr&&fr.lo===0;})) return;
+    const h=precoAchaFaixa(c.faixas,q); if(!h.faixa) return; val=c.fator?q*h.faixa.valor:h.faixa.valor; det=c.fator?`${q} × ${precoMoeda(h.faixa.valor)}`:h.faixa.nome; }
+   else { const f=c.faixas.find(x=>x.nome===resp); if(!f) return; val=f.valor; det=f.nome; }
+   if(val) linhas.push({rotulo:`${c.nome} (${det})`,valor:val}); });
+  const total=Math.round(linhas.reduce((s,l)=>s+l.valor,0)*100)/100; if(i===0) totalBasico=total;
+  out.planos.push({id:p.id,nome:p.nome,cor:p.cor,total,linhas,inclusos:p.inclusos}); });
+ return out; }
+function precoMoeda(v){ return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+
+// ================= CRM · SIMULADOR DE PLANOS E PROPOSTA (tabela de preços da Resilcon) =================
+CRM_ICO.preco='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 19h8"/></svg>';
+(function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_contatos"); CRM_SECOES.splice(i<0?2:i,0,["crm_precos","Simulador de planos","preco"]); })();
+(function(){ if(document.getElementById("preco-css")) return; const st=document.createElement("style"); st.id="preco-css"; st.textContent=`
+.preco-barra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.preco-grade{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2.4fr);gap:14px;align-items:start}
+.preco-grade2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:14px;align-items:start;margin-top:14px}
+.preco-perg{display:grid;gap:12px}.preco-perg h3,.preco-grade2 h3{margin:0 0 4px}
+.preco-ops{display:flex;flex-wrap:wrap;gap:6px}.preco-op{display:inline-flex;align-items:center;padding:7px 12px;border:1.5px solid var(--line,#d5dde2);border-radius:999px;cursor:pointer;font-size:13px}
+.preco-op input{position:absolute;opacity:0;pointer-events:none}.preco-op.on{border-color:#006789;background:rgba(0,103,137,.1);color:#006789;font-weight:700}
+.pt{--bg:#0b1a20;display:grid;grid-template-columns:minmax(170px,1.3fr) repeat(var(--n),minmax(130px,1fr));background:var(--bg);background-image:radial-gradient(90% 70% at 0% 0%,rgba(0,103,137,.55) 0%,rgba(0,103,137,0) 70%);border-radius:18px;color:#e8f1f4;overflow:hidden;font-size:13px;box-shadow:0 16px 40px rgba(0,30,45,.18)}
+.pt>div{padding:11px 14px;display:flex;align-items:center;min-width:0}
+.pt-l{color:#b9cbd3;justify-content:flex-start;line-height:1.35}
+.pt-c{justify-content:center;flex-direction:column;text-align:center;border-left:1px solid rgba(255,255,255,.06)}
+.pt-z{background:rgba(255,255,255,.035)}
+.pt-dest{background:linear-gradient(180deg,#00799f,#006789)!important;color:#fff;border-left:0;box-shadow:0 0 0 1px rgba(127,208,234,.35)}
+.pt-dest.pt-z{background:linear-gradient(180deg,#00718f,#005f7f)!important}
+.pt-titulo{flex-direction:column;align-items:flex-start!important;justify-content:flex-end!important;gap:2px}.pt-titulo span{font-size:22px;font-weight:800;color:#fff}.pt-titulo b{color:#7fd0ea;font-size:12px;font-weight:600}
+.pt-cab{padding-top:18px!important;gap:3px;position:relative}.pt-nome{font-size:17px;letter-spacing:.04em;color:var(--pc)}.pt-dest .pt-nome{color:#fff}.pt-sub{font-size:11.5px;color:#9fb6bf}.pt-dest .pt-sub{color:#d6eef5}
+.pt-selo{position:absolute;top:0;left:50%;transform:translate(-50%,0);background:#7fd0ea;color:#0b1a20;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 10px;border-radius:0 0 8px 8px}
+.pt-precorot{font-weight:700;color:#fff}.pt-precocel{padding:16px 8px!important;border-bottom:1px solid rgba(255,255,255,.08)}
+.pt-preco{display:flex;align-items:flex-start;justify-content:center;gap:2px;color:#7fd0ea;line-height:1}.pt-dest .pt-preco{color:#fff}
+.pt-preco small{font-size:14px;margin-top:6px}.pt-preco b{font-size:34px;font-weight:800}.pt-preco sup{font-size:15px;margin-top:4px}.pt-preco em{font-style:normal;font-size:11px;color:#9fb6bf;align-self:flex-end;margin-left:2px}.pt-dest .pt-preco em{color:#d6eef5}
+.pt-tab{font-size:11px;color:#9fb6bf;margin-top:4px}.pt-vazio{font-size:12px;color:#9fb6bf}
+.pt-ok{color:#3fc29a;display:inline-flex}.pt-dest .pt-ok{color:#fff}.pt-no{color:#e0675a;display:inline-flex;opacity:.85}.pt-dest .pt-no{color:#ffd2cc}
+.pt-acao,.pt-acoesrot{padding:16px 10px!important;border-top:1px solid rgba(255,255,255,.08)}.pt-acoesrot .txt-btn{color:#7fd0ea;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;font-size:12.5px}
+.pt-btn{font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px;border-radius:8px;border:0;cursor:pointer;background:#7fd0ea;color:#0b1a20;transition:transform .1s,background .15s}
+.pt-btn:hover{background:#a9e2f3}.pt-btn:active{transform:scale(.97)}.pt-btn[disabled]{opacity:.4;cursor:not-allowed}.pt-dest .pt-btn{background:#fff;color:#006789}.pt-btn.on{background:transparent;color:#fff;box-shadow:inset 0 0 0 2px currentColor}
+.pt-calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.pt-area{min-width:0}.pt-wrap{overflow-x:auto;border-radius:18px}
+@media (max-width:760px){.pt{min-width:600px;font-size:12px}.pt-preco b{font-size:24px}.pt>div{padding:9px 8px}}
+.preco-planos{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.preco-plano{padding:0;overflow:hidden;display:flex;flex-direction:column}.preco-topo{background:var(--pc);color:#fff;padding:12px 16px;text-align:center;letter-spacing:.04em}
+.preco-valor{text-align:center;padding:16px 10px 4px}.preco-valor .num{font-size:28px;font-weight:800}.preco-valor small{color:var(--muted,#5b6770);margin-left:4px}
+.preco-inc{margin:8px 16px;padding-left:18px;font-size:12.5px;line-height:1.45;flex:1}.preco-inc li{margin-bottom:3px}
+.preco-calc{margin:0 16px 10px;font-size:12.5px}.preco-calc summary{cursor:pointer;color:#006789;font-weight:600;margin-bottom:6px}
+.preco-plano>button{margin:0 16px 16px}
+.preco-exs{display:grid;gap:6px;margin-top:10px;max-height:460px;overflow:auto}.preco-ex{border:1px solid var(--line,#e3e9ec);border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.preco-ex.on{border-color:#006789;background:rgba(0,103,137,.05)}.preco-ex-cfg{display:flex;gap:8px;flex-wrap:wrap}.preco-ex-cfg label{display:grid;gap:2px}.preco-ex-cfg .inp{width:120px;padding:6px 8px}
+.preco-resumo{display:grid;gap:10px;position:sticky;top:12px}.preco-tot{display:grid;grid-template-columns:1fr 1fr;gap:10px}.preco-tot div{background:rgba(0,103,137,.08);border-radius:10px;padding:10px 12px}.preco-tot span{display:block;font-size:12px;color:var(--muted,#5b6770)}.preco-tot b{font-size:20px}
+@media (max-width:1000px){.preco-barra,.preco-grade,.preco-grade2{grid-template-columns:1fr}.preco-resumo{position:static}}
+`; document.head.appendChild(st); })();
+const PRECO_ARQS=[["plano_resilcon","Plano Resilcon"],["ctb","Contábil: serviço, comércio e indústria"],["low_ticket","Planos contábeis low ticket"],["credito_estoque_st","Crédito de estoque ST"],["pjm","PJ / MEI"],["bps","BPO: empresas de serviços"],["bpc","BPO: empresas de comércio"]];
+const PRECO_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
+let PRECO_DB=null; // {chave:{nome,P,nichos}}
+let PRECO_ST={arq:"plano_resilcon",nicho:"",negocio:null,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15};
+
+async function precoCarregar(){
+ if(PRECO_DB) return PRECO_DB; const db={};
+ const tok=(await sb.auth.getSession()).data.session?.access_token||"";
+ await Promise.all(PRECO_ARQS.map(async([k,rot])=>{ let raw=null;
+  try{ const {data,error}=await sb.storage.from("crm-arquivos").download(`precificacao/${k}.json`); if(!error&&data) raw=JSON.parse(await data.text()); }catch(_){}
+  if(!raw){ try{ const r=await fetch(`${PRECO_FN}?arquivo=${k}`,{headers:{Authorization:"Bearer "+tok}}); if(r.ok) raw=await r.json(); }catch(_){} }
+  if(raw&&raw.dados) db[k]={chave:k,nome:rot,P:precoNormalizar(raw.dados),nichos:(raw.dados.nichos||[]),importado:raw.importado_em};
+ }));
+ if(!Object.keys(db).length) throw new Error("Não encontrei a tabela de preços. Peça ao suporte para importar de novo.");
+ PRECO_DB=db; return db; }
+
+function precoTeto(v){ return Math.ceil(Math.round((Number(v)||0)*100)/100); }
+function precoNichos(){ const s=new Set(); Object.values(PRECO_DB||{}).forEach(a=>a.nichos.forEach(n=>s.add(n))); return [...s].sort((a,b)=>a.localeCompare(b,"pt-BR")); }
+function precoArqsDoNicho(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean).filter(a=>!n||a.nichos.includes(n)); }
+
+async function crmVPrecos(v){
+ v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.","")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
+ try{ await precoCarregar(); }catch(e){ v.querySelector("#crmBox").innerHTML=`<div class="card"><div class="empty">${esc(e.message||String(e))}</div></div>`; return; }
+ if(!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } }
+ if(PRECO_ST.negocio&&!PRECO_ST.negLista.find(x=>x.id===PRECO_ST.negocio.id)) PRECO_ST.negLista.unshift(PRECO_ST.negocio);
+ if(MODE!=="crm_precos") return;
+ precoPintar(v);
+}
+
+function precoPintar(v){
+ const box=v.querySelector("#crmBox"); const S=PRECO_ST;
+ const arqs=precoArqsDoNicho(S.nicho); if(!arqs.find(a=>a.chave===S.arq)) S.arq=(arqs[0]||PRECO_DB[Object.keys(PRECO_DB)[0]]).chave;
+ const A=PRECO_DB[S.arq], P=A.P;
+ const ativs=P.atividades.filter(a=>a.ativa!==false);
+ if(ativs.length&&!ativs.find(a=>a.chave===S.resp.atividade)) S.resp.atividade=ativs[0].chave;
+ const ativ=ativs.find(a=>a.chave===S.resp.atividade);
+ const tribs=ativ?ativ.tributacoes.map(t=>t.nome):[];
+ if(tribs.length&&!tribs.includes(S.resp.tributacao)) S.resp.tributacao=tribs[0];
+ const crits=P.criterios.filter(c=>c.ativo);
+ const R=precoCalcular(P,{faturamento:precoNum(S.resp.faturamento),tributacao:S.resp.tributacao,atividade:S.resp.atividade,crit:S.resp.crit});
+ const neg=S.negocio;
+ const negOpts=(S.negLista||[]).map(o=>`<option value="${o.id}" ${neg&&neg.id===o.id?"selected":""}>${esc(o.titulo)}${o.contato_nome?" · "+esc(o.contato_nome):""}</option>`).join("");
+ const radio=(nome,ops,sel,attr)=>`<div class="preco-ops">${ops.map(([val,rot])=>`<label class="preco-op ${String(sel)===String(val)?"on":""}"><input type="radio" name="${nome}" value="${escAttr(val)}" ${attr} ${String(sel)===String(val)?"checked":""}><span>${esc(rot)}</span></label>`).join("")}</div>`;
+ const campoCrit=c=>{ const vv=S.resp.crit[c.id];
+  if(c.forma==="numero") return `<label class="crm-f"><span>${esc(c.nome)}</span><input class="inp" type="number" min="0" step="1" data-crit="${c.id}" value="${escAttr(vv??"")}" placeholder="0"></label>`;
+  return `<div class="crm-f"><span>${esc(c.nome)}</span>${radio("c_"+c.id,c.faixas.map(f=>[f.nome,f.nome]),vv??"",`data-crit="${c.id}"`)}</div>`; };
+ const fat=precoNum(S.resp.faturamento);
+ const planoCard=(p,i)=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
+  const naCesta=S.cesta.find(x=>x.arq===S.arq&&x.planoId===p.id);
+  return `<div class="card preco-plano" style="--pc:${escAttr(p.cor||"#006789")}"><div class="preco-topo"><b>${esc(p.nome)}</b></div>
+   <div class="preco-valor">${(ativs.length&&!fat)?`<span class="sub">Informe o faturamento</span>`:`<span class="num">${precoMoeda(final)}</span><small>/mês</small>`}</div>
+   ${aj!=null&&aj!==""?`<div class="sub" style="text-align:center">Tabela: ${precoMoeda(base)}</div>`:""}
+   <ul class="preco-inc">${(p.inclusos||[]).map(x=>`<li>${esc(x.nome.charAt(0)+x.nome.slice(1).toLowerCase())}</li>`).join("")||`<li class="sub">Sem itens cadastrados</li>`}</ul>
+   <details class="preco-calc"><summary>Como chegamos nesse valor</summary>${p.linhas.map(l=>`<div class="ce-row"><span>${esc(l.rotulo)}</span><b class="num">${precoMoeda(l.valor)}</b></div>`).join("")||`<p class="sub">Nada somado ainda.</p>`}
+    ${base!==p.total?`<div class="ce-row sub"><span>Arredondamento para cima</span><span class="num">${precoMoeda(base-p.total)}</span></div>`:""}
+    <label class="crm-f" style="margin-top:8px"><span>Ajustar valor deste plano (opcional)</span><input class="inp" data-ajuste="${p.id}" value="${escAttr(aj??"")}" placeholder="${escAttr(String(base))}" inputmode="decimal"></label></details>
+   <button class="view-btn ${naCesta?"ghost":"ce-pri"}" data-escolher="${p.id}" ${(ativs.length&&!fat)?"disabled":""}>${naCesta?"Escolhido ✓":"Escolher este plano"}</button></div>`; };
+ // extras
+ const exSel=S.extras;
+ const busca=(S.busca||"").toLowerCase();
+ const todosEx=P.extras.map(e=>({...e,arq:S.arq}));
+ const visEx=todosEx.filter(e=>exSel[S.arq+":"+e.id]||(busca&&e.nome.toLowerCase().includes(busca))).slice(0,40);
+ const linhaEx=e=>{ const k=S.arq+":"+e.id, s=exSel[k];
+  return `<div class="preco-ex ${s?"on":""}"><label class="crm-chk"><input type="checkbox" data-ex="${k}" ${s?"checked":""}><span>${esc(e.nome)}</span></label>
+   ${s?`<div class="preco-ex-cfg"><label><span class="sub">Valor</span><input class="inp" data-exv="${k}" value="${escAttr(s.valor)}" inputmode="decimal"></label>
+    <label><span class="sub">Cobrança</span><select class="inp" data-exc="${k}"><option value="mensal" ${s.cobranca==="mensal"?"selected":""}>Todo mês</option><option value="avulso" ${s.cobranca==="avulso"?"selected":""}>Uma vez</option><option value="hora" ${s.cobranca==="hora"?"selected":""}>Por hora</option><option value="volume" ${s.cobranca==="volume"?"selected":""}>Por quantidade</option></select></label>
+    <label><span class="sub">${s.cobranca==="hora"?"Horas":"Qtd."}</span><input class="inp" type="number" min="1" data-exq="${k}" value="${escAttr(s.qtd)}"></label></div>`:`<span class="sub num">${e.valor?precoMoeda(e.valor):"a combinar"}</span>`}</div>`; };
+ const tot=precoTotais();
+ box.innerHTML=`
+ <div class="card ce-pad preco-barra">
+  <label class="crm-f"><span>Negócio (opcional)</span><select class="inp" id="prNeg"><option value="">Sem negócio vinculado</option>${negOpts}</select></label>
+  <label class="crm-f"><span>Nicho do cliente</span><select class="inp" id="prNicho"><option value="">Todos os nichos</option>${precoNichos().map(n=>`<option ${S.nicho===n?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+  <label class="crm-f"><span>Produto</span><select class="inp" id="prArq">${arqs.map(a=>`<option value="${a.chave}" ${a.chave===S.arq?"selected":""}>${esc(a.nome)}</option>`).join("")}</select></label>
+ </div>
+ <div class="preco-grade">
+  <div class="card ce-pad preco-perg"><h3>Dados do cliente</h3>
+   ${ativs.length?`<label class="crm-f"><span>Faturamento médio mensal (R$)</span><input class="inp" id="prFat" value="${escAttr(S.resp.faturamento)}" placeholder="Ex.: 85.000,00" inputmode="decimal"></label>
+   <div class="crm-f"><span>Atividade</span>${radio("prAtiv",ativs.map(a=>[a.chave,a.nome.charAt(0)+a.nome.slice(1).toLowerCase()]),S.resp.atividade,'data-ativ="1"')}</div>
+   <div class="crm-f"><span>Tributação</span>${radio("prTrib",tribs.map(t=>[t,t]),S.resp.tributacao,'data-trib="1"')}</div>`:""}
+   ${crits.map(campoCrit).join("")||(ativs.length?"":`<p class="sub">Este produto não tem perguntas: o valor vem do plano escolhido.</p>`)}
+   ${R.avisos.map(a=>`<div class="ce-note crit">${esc(a)}</div>`).join("")}
+  </div>
+  ${R.planos.length?`<div class="pt-area">${precoTabela(R,S,ativs,fat)}</div>`:`<div class="card"><div class="empty">Nenhum plano ativo neste produto.</div></div>`}
+ </div>
+ <div class="preco-grade2">
+  <div class="card ce-pad"><h3>Serviços extras</h3><p class="sub" style="margin:0 0 10px">Busque e marque o que entra na proposta. Os valores sugeridos vêm da tabela e podem ser ajustados.</p>
+   <input class="inp" id="prBusca" placeholder="Buscar serviço (ex.: abertura, holding, certificado, parcelamento)" value="${escAttr(S.busca)}">
+   <div class="preco-exs">${visEx.map(linhaEx).join("")||`<p class="sub" style="margin:10px 0 0">${busca?"Nada encontrado com essa busca.":`Digite para buscar entre os ${todosEx.length} serviços da tabela.`}</p>`}</div>
+   ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")).length?`<p class="sub" style="margin-top:8px">Há ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")).length} extra(s) marcado(s) em outros produtos e eles continuam na proposta.</p>`:""}
+  </div>
+  <div class="card ce-pad preco-resumo"><h3>Proposta</h3>
+   ${S.cesta.length?S.cesta.map((c,i)=>`<div class="ce-row"><span><b>${esc(c.plano)}</b><br><span class="sub">${esc(c.produto)}</span></span><span style="display:flex;gap:8px;align-items:center"><b class="num">${precoMoeda(c.valor)}/mês</b><button class="txt-btn crm-perigo" data-tirar="${i}">Tirar</button></span></div>`).join(""):`<p class="sub">Escolha um plano ao lado. Se o cliente precisar de mais de um produto (por exemplo, Contábil e BPO), troque o produto no topo e escolha o plano dele também.</p>`}
+   ${tot.extrasM.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">extra mensal</span></span><b class="num">${precoMoeda(e.total)}/mês</b></div>`).join("")}
+   ${tot.extrasU.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">${e.qtd>1?e.qtd+" × "+precoMoeda(e.valor):"cobrança única"}</span></span><b class="num">${precoMoeda(e.total)}</b></div>`).join("")}
+   <div class="preco-tot"><div><span>Mensalidade</span><b class="num">${precoMoeda(tot.mensal)}</b></div><div><span>Serviços avulsos</span><b class="num">${precoMoeda(tot.avulso)}</b></div></div>
+   ${tot.avulso?`<label class="crm-f"><span>Parcelar os avulsos em</span><select class="inp" id="prParc">${[1,2,3,4,5,6,7,8,9,10,11,12,24,36].map(n=>`<option value="${n}" ${+S.parcelas===n?"selected":""}>${n===1?"Uma parcela":n+" parcelas"} de ${precoMoeda(tot.avulso/n)}</option>`).join("")}</select></label>`:""}
+   <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" type="number" min="1" id="prVal" value="${escAttr(S.validade)}"></label>
+   <label class="crm-f"><span>Observações para o cliente</span><textarea class="inp" id="prObs" rows="3">${esc(S.obs)}</textarea></label>
+   <div class="crm-pe" style="flex-wrap:wrap;gap:8px"><button class="view-btn ghost" id="prLimpar">Limpar</button><span style="flex:1"></span>
+    <button class="view-btn ghost" id="prPdf" ${S.cesta.length?"":"disabled"}>Gerar proposta</button>
+    <button class="view-btn ce-pri" id="prSalvar" ${S.cesta.length&&S.negocio?"":"disabled"} title="${S.negocio?"":"Escolha o negócio no topo"}">Salvar no negócio</button></div>
+  </div>
+ </div>`;
+ precoLigar(v,R,A);
+}
+
+// Tabela comparativa dos planos (colunas por plano, linhas por item incluso)
+function precoTabela(R,S,ativs,fat){
+ const semFat=!!(ativs.length&&!fat); const n=R.planos.length;
+ const escolhido=S.cesta.find(x=>x.arq===S.arq); const iDest=escolhido?R.planos.findIndex(p=>p.id===escolhido.planoId):Math.min(1,n-1);
+ const chave=x=>String(x||"").trim().toUpperCase().replace(/\s+/g," ");
+ const itens=[]; const vistos=new Set();
+ R.planos.slice().sort((a,b)=>(a.inclusos||[]).length-(b.inclusos||[]).length).forEach(p=>(p.inclusos||[]).forEach(x=>{ const k=chave(x.nome); if(!vistos.has(k)){ vistos.add(k); itens.push({k,nome:x.nome}); } }));
+ const tem=(p,k)=>(p.inclusos||[]).some(x=>chave(x.nome)===k);
+ const cap=t=>{ t=String(t||"").toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); };
+ const sub=["Essencial","Mais completo","Consultivo","Premium"];
+ const col=(i,html,extra)=>`<div class="pt-c ${i===iDest?"pt-dest":""} ${extra||""}">${html}</div>`;
+ const cols=R.planos.map((p,i)=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
+  const [int,dec]=precoMoeda(final).replace("R$","").trim().split(","); return {p,i,base,aj,final,int,dec}; });
+ const ok='<svg viewBox="0 0 24 24" width="18" height="18" aria-label="Incluso"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ const no='<svg viewBox="0 0 24 24" width="16" height="16" aria-label="Não incluso"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+ const corNome=c=>{ const h=String(c||"").replace("#",""); if(!/^[0-9a-f]{6}$/i.test(h)) return "#7fd0ea"; const [r,g,b]=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); return (0.299*r+0.587*g+0.114*b)<110?"#e8f1f4":"#"+h; };
+ return `<div class="pt-wrap"><div class="pt" style="--n:${n}">
+  <div class="pt-l pt-titulo"><span>Planos</span><b>${esc(PRECO_DB[S.arq].nome)}</b></div>
+  ${cols.map(c=>col(c.i,`${c.i===iDest?`<span class="pt-selo">${escolhido?"Escolhido":"Recomendado"}</span>`:""}<b class="pt-nome" style="--pc:${escAttr(corNome(c.p.cor))}">${esc(c.p.nome.split(" - ")[0])}</b><span class="pt-sub">${esc(c.p.nome.split(" - ")[1]||sub[c.i]||"")}</span>`,"pt-cab")).join("")}
+  <div class="pt-l pt-precorot">Mensalidade</div>
+  ${cols.map(c=>col(c.i,semFat?`<span class="pt-vazio">Informe o faturamento</span>`:`<div class="pt-preco"><small>R$</small><b>${c.int}</b><sup>,${c.dec}</sup><em>/mês</em></div>${c.aj!=null&&c.aj!==""?`<span class="pt-tab">tabela ${precoMoeda(c.base)}</span>`:""}`,"pt-precocel")).join("")}
+  ${itens.map((it,r)=>`<div class="pt-l ${r%2?"pt-z":""}">${esc(cap(it.nome))}</div>${cols.map(c=>col(c.i,tem(c.p,it.k)?`<span class="pt-ok">${ok}</span>`:`<span class="pt-no">${no}</span>`,r%2?"pt-z":"")).join("")}`).join("")}
+  <div class="pt-l pt-acoesrot"><button class="txt-btn" id="ptCalc">${S.verCalc?"Esconder o cálculo":"Ver como chegamos nos valores"}</button></div>
+  ${cols.map(c=>{ const na=S.cesta.find(x=>x.arq===S.arq&&x.planoId===c.p.id); return col(c.i,`<button class="pt-btn ${na?"on":""}" data-escolher="${c.p.id}" ${semFat?"disabled":""}>${na?"Escolhido ✓":"Escolher"}</button>`,"pt-acao"); }).join("")}
+ </div></div>
+ ${S.verCalc?`<div class="pt-calc">${cols.map(c=>`<div class="card ce-pad"><h4 style="margin:0 0 8px">${esc(c.p.nome)}</h4>${c.p.linhas.map(l=>`<div class="ce-row"><span>${esc(l.rotulo)}</span><b class="num">${precoMoeda(l.valor)}</b></div>`).join("")||`<p class="sub">Nada somado ainda.</p>`}
+   ${c.base!==c.p.total?`<div class="ce-row sub"><span>Arredondamento para cima</span><span class="num">${precoMoeda(c.base-c.p.total)}</span></div>`:""}
+   <div class="ce-row"><span><b>Total da tabela</b></span><b class="num">${precoMoeda(c.base)}</b></div>
+   <label class="crm-f" style="margin-top:8px"><span>Ajustar o valor deste plano (opcional)</span><input class="inp" data-ajuste="${c.p.id}" value="${escAttr(c.aj??"")}" placeholder="${escAttr(String(c.base))}" inputmode="decimal"></label></div>`).join("")}</div>`:""}</div>`;
+}
+
+function precoTotais(){ const S=PRECO_ST; const ex=Object.entries(S.extras).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
+ const extrasM=ex.filter(e=>e.cobranca==="mensal"), extrasU=ex.filter(e=>e.cobranca!=="mensal");
+ const mensal=S.cesta.reduce((s,c)=>s+c.valor,0)+extrasM.reduce((s,e)=>s+e.total,0);
+ return {extrasM,extrasU,mensal,avulso:extrasU.reduce((s,e)=>s+e.total,0)}; }
+
+function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox"); const re=()=>precoPintar(v);
+ let t=null; const reLento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement; const id=f&&f.id, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
+   let n=id?box.querySelector("#"+id):null; if(!n&&ds){ const k=Object.keys(ds)[0]; if(k) n=box.querySelector(`[data-${k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase())}="${ds[k]}"]`); }
+   if(n&&n.focus){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },350); };
+ box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; re(); };
+ box.querySelector("#prNicho").onchange=e=>{ S.nicho=e.target.value; re(); };
+ box.querySelector("#prArq").onchange=e=>{ S.arq=e.target.value; re(); };
+ const fat=box.querySelector("#prFat"); if(fat) fat.oninput=()=>{ S.resp.faturamento=fat.value; reLento(); };
+ box.querySelectorAll("[data-ativ]").forEach(i=>i.onchange=()=>{ S.resp.atividade=i.value; re(); });
+ box.querySelectorAll("[data-trib]").forEach(i=>i.onchange=()=>{ S.resp.tributacao=i.value; re(); });
+ box.querySelectorAll("[data-crit]").forEach(i=>{ const ev=i.type==="radio"?"onchange":"oninput"; i[ev]=()=>{ S.resp.crit[i.dataset.crit]=i.value; i.type==="radio"?re():reLento(); }; });
+ const pc2=box.querySelector("#ptCalc"); if(pc2) pc2.onclick=()=>{ S.verCalc=!S.verCalc; re(); };
+ box.querySelectorAll("[data-ajuste]").forEach(i=>i.oninput=()=>{ S.ajuste[S.arq+":"+i.dataset.ajuste]=i.value; reLento(); });
+ box.querySelectorAll("[data-escolher]").forEach(b=>b.onclick=()=>{ const p=R.planos.find(x=>x.id===b.dataset.escolher); const aj=S.ajuste[S.arq+":"+p.id];
+  const valor=aj!=null&&aj!==""?precoNum(aj):precoTeto(p.total);
+  S.cesta=S.cesta.filter(c=>c.arq!==S.arq); S.cesta.push({arq:S.arq,produto:A.nome,planoId:p.id,plano:p.nome,valor,tabela:precoTeto(p.total),inclusos:(p.inclusos||[]).map(x=>x.nome),linhas:p.linhas,
+   respostas:{faturamento:S.resp.faturamento,atividade:S.resp.atividade,tributacao:S.resp.tributacao,crit:Object.fromEntries(Object.entries(S.resp.crit).map(([k,vv])=>[(A.P.criterios.find(c=>c.id===k)||{}).nome||k,vv]))}});
+  crmToast(p.nome+" adicionado à proposta"); re(); });
+ box.querySelectorAll("[data-tirar]").forEach(b=>b.onclick=()=>{ S.cesta.splice(+b.dataset.tirar,1); re(); });
+ const bs=box.querySelector("#prBusca"); bs.oninput=()=>{ S.busca=bs.value; reLento(); };
+ box.querySelectorAll("[data-ex]").forEach(c=>c.onchange=()=>{ const k=c.dataset.ex; if(c.checked){ const e=A.P.extras.find(x=>S.arq+":"+x.id===k); S.extras[k]={nome:e.nome,valor:e.valor,cobranca:"avulso",qtd:1}; } else delete S.extras[k]; re(); });
+ box.querySelectorAll("[data-exv]").forEach(i=>i.oninput=()=>{ S.extras[i.dataset.exv].valor=i.value; reLento(); });
+ box.querySelectorAll("[data-exq]").forEach(i=>i.oninput=()=>{ S.extras[i.dataset.exq].qtd=Math.max(1,+i.value||1); reLento(); });
+ box.querySelectorAll("[data-exc]").forEach(i=>i.onchange=()=>{ S.extras[i.dataset.exc].cobranca=i.value; re(); });
+ const pc=box.querySelector("#prParc"); if(pc) pc.onchange=()=>{ S.parcelas=+pc.value; re(); };
+ box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
+ box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
+ box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
+ box.querySelector("#prPdf").onclick=()=>precoProposta();
+ box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
+}
+
+function precoResumoTexto(){ const S=PRECO_ST, t=precoTotais();
+ return ["Proposta montada no simulador de planos:",...S.cesta.map(c=>`• ${c.produto}: ${c.plano} = ${precoMoeda(c.valor)}/mês`+(c.valor!==c.tabela?` (tabela ${precoMoeda(c.tabela)})`:"")),
+  ...t.extrasM.map(e=>`• Extra mensal: ${e.nome} = ${precoMoeda(e.total)}/mês`),...t.extrasU.map(e=>`• Avulso: ${e.nome} = ${precoMoeda(e.total)}`),
+  `Mensalidade total: ${precoMoeda(t.mensal)}`+(t.avulso?` · Avulsos: ${precoMoeda(t.avulso)} em ${S.parcelas}x`:""),S.obs?("Obs.: "+S.obs):""].filter(Boolean).join("\n"); }
+
+async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.length) return; b.disabled=true; b.textContent="Salvando…";
+ try{ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:S.negocio.id}}); const o=(f.negocios||[]).find(x=>x.id===S.negocio.id); if(!o) throw new Error("Negócio não encontrado");
+  const t=precoTotais();
+  const itens=[...S.cesta.map(c=>({servico_id:null,nome:`${c.plano} (${c.produto})`,valor:c.valor,qtd:1,desconto:0,recorrencia:"mensal"})),
+   ...t.extrasM.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"mensal"})),
+   ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"unico"}))];
+  const proposta={gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso};
+  await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
+   tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
+  try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
+  crmToast("Proposta salva no negócio: valores e itens atualizados"); b.textContent="Salvo ✓";
+ }catch(e){ b.disabled=false; b.textContent="Salvar no negócio"; crmToast(crmErro(e)); } }
+
+function precoProposta(){ const S=PRECO_ST, t=precoTotais(); const hoje=new Date(); const val=new Date(hoje.getTime()+S.validade*864e5);
+ const cli=S.negocio?(S.negocio.contato_nome||S.negocio.empresa_nome||S.negocio.titulo):"";
+ const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ const cap=s=>{ s=String(s||""); return s.charAt(0)+s.slice(1).toLowerCase(); };
+ const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta Resilcon${cli?" · "+e(cli):""}</title>
+<style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#f3f6f8}.pg{max-width:820px;margin:0 auto;background:#fff;min-height:100vh}
+.hero{background:#0b1a20;background-image:radial-gradient(120% 120% at 0% 0%,#006789 0%,rgba(0,103,137,.3) 45%,rgba(11,26,32,0) 75%);color:#fff;padding:36px 44px}
+.hero img{height:40px}.hero h1{font-size:30px;margin:26px 0 6px}.hero p{margin:0;color:#cfdde3}
+.sec{padding:26px 44px;border-bottom:1px solid #e6edf0}.sec h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#006789;margin:0 0 14px}
+.plano{border:1px solid #d5dde2;border-left:6px solid var(--c,#006789);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.plano .t{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.plano b{font-size:18px}.plano .v{font-size:22px;font-weight:800;color:#006789}
+.plano ul{margin:10px 0 0;padding-left:18px;columns:2;column-gap:28px;font-size:13px;color:#33414a}.plano li{margin:0 0 5px;break-inside:avoid}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:9px 0;border-bottom:1px solid #eef2f4}td.r{text-align:right;white-space:nowrap}
+.tot{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tot div{background:#f3f8fa;border-radius:12px;padding:16px 18px}.tot span{display:block;font-size:12px;color:#5b6770;text-transform:uppercase;letter-spacing:.08em}.tot b{font-size:24px;color:#0b1a20}
+.obs{white-space:pre-wrap;font-size:14px;color:#33414a}.rod{padding:22px 44px;font-size:12px;color:#5b6770}
+.bar{position:sticky;top:0;background:#006789;color:#fff;padding:10px 16px;text-align:center;font-size:14px}.bar button{margin-left:10px;padding:8px 16px;border-radius:999px;border:0;font-weight:700;cursor:pointer}
+@media print{.bar{display:none}body{background:#fff}.sec{break-inside:avoid}}
+</style></head><body><div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div><div class="pg">
+<div class="hero"><img src="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/montar-email?logo=branco" alt="Resilcon"><h1>Proposta comercial</h1><p>${cli?"Preparada para "+e(cli)+" · ":""}${hoje.toLocaleDateString("pt-BR")}</p></div>
+<div class="sec"><h2>Plano escolhido</h2>${S.cesta.map(c=>`<div class="plano" style="--c:${e((PRECO_DB[c.arq]&&(PRECO_DB[c.arq].P.planos.find(p=>p.id===c.planoId)||{}).cor)||"#006789")}"><div class="t"><div><b>${e(c.plano)}</b><div style="font-size:13px;color:#5b6770">${e(c.produto)}</div></div><div class="v">${precoMoeda(c.valor)}<span style="font-size:13px;color:#5b6770;font-weight:400">/mês</span></div></div>
+ ${c.inclusos.length?`<ul>${c.inclusos.map(x=>`<li>${e(cap(x))}</li>`).join("")}</ul>`:""}</div>`).join("")}</div>
+${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais</h2><table>${t.extrasM.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">${x.qtd>1?x.qtd+" × "+precoMoeda(precoNum(x.valor)):"cobrança única"}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
+<div class="sec"><h2>Investimento</h2><div class="tot"><div><span>Mensalidade</span><b>${precoMoeda(t.mensal)}</b></div><div><span>Serviços avulsos</span><b>${precoMoeda(t.avulso)}</b>${t.avulso&&S.parcelas>1?`<div style="font-size:13px;color:#5b6770;margin-top:4px">em ${S.parcelas}x de ${precoMoeda(t.avulso/S.parcelas)}</div>`:""}</div></div></div>
+${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</div></div>`:""}
+<div class="rod">Proposta válida até ${val.toLocaleDateString("pt-BR")}. Valores sujeitos a revisão se houver mudança no faturamento, no regime tributário ou no volume de operações informado.<br>Resilcon Contabilidade Consultiva · WhatsApp (11) 97414-4223 · resilcon.com.br</div>
+</div></body></html>`;
+ const w=window.open("","_blank"); if(!w){ crmToast("O navegador bloqueou a janela da proposta. Libere pop-ups para o Resiltrack."); return; } w.document.open(); w.document.write(html); w.document.close(); }
+
+// abre o simulador já com o negócio escolhido (usado pela ficha do negócio)
+function precoAbrirNegocio(o){ PRECO_ST.negocio=o?{id:o.id,titulo:o.titulo,contato_nome:o.contato_nome,empresa_nome:o.empresa_nome}:null;
+
+ closeModal(); setMode("crm_precos"); }
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
