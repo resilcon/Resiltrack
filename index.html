@@ -739,6 +739,33 @@
   .crm-momentos{margin-bottom:14px}.crm-momentos summary{cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .crm-momentos .ce-row{gap:12px}
   .crm-regra{align-items:flex-start}.crm-rod{display:flex;flex-direction:column;gap:6px}
+
+  /* ===== CRM fases 3 e 4 ===== */
+  .crm-barras{display:flex;flex-direction:column;gap:8px}
+  .crm-barra{display:grid;grid-template-columns:minmax(90px,170px) 1fr auto;gap:10px;align-items:center;font-size:13px}
+  .crm-barra-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+  .crm-barra-t{height:12px;background:var(--surface-2);border-radius:999px;overflow:hidden}.crm-barra-t span{display:block;height:100%;border-radius:999px}
+  .crm-barra-v{font-weight:700;white-space:nowrap}.crm-barra-v small{font-weight:400;color:var(--muted);margin-left:4px}
+  .crm-rel th{font-size:11px}.crm-rel td{font-size:13.5px}
+  .crm-evo{display:flex;gap:10px;align-items:flex-end;height:210px;padding-top:6px}
+  .crm-evo-c{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;font-size:12px;color:var(--muted)}
+  .crm-evo-b{flex:1;width:100%;display:flex;gap:3px;align-items:flex-end;justify-content:center}
+  .crm-evo-b span{width:40%;max-width:26px;border-radius:6px 6px 2px 2px;min-height:2px}
+  .crm-evo-c b{color:var(--ink);font-size:12.5px}.crm-evo-c small{font-size:11px}
+  .crm-leg{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}.crm-leg i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-left:6px}
+  .crm-acoes-ficha{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .crm-acoes-ficha .txt-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+  .crm-ia-btn svg{width:16px;height:16px;color:#7B5BA6}
+  .crm-wa{color:#1E8449}
+  .crm-ia{margin-bottom:14px;border-color:color-mix(in srgb,#7B5BA6 35%,var(--border));background:color-mix(in srgb,#7B5BA6 5%,var(--surface))}
+  .crm-ia-h{display:flex;gap:8px;align-items:center}.crm-ia-h svg{width:18px;height:18px;color:#7B5BA6}
+  .crm-ia-t{margin:10px 0 6px;font-size:14px;line-height:1.5}
+  .crm-ia-passo{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:8px 0}
+  .crm-ia-r{margin:6px 0 10px;padding-left:18px;font-size:13px;color:var(--ink-2)}
+  .crm-passos-ol{margin:0;padding-left:20px;line-height:1.7;font-size:14px}
+  .crm-prior{margin-bottom:14px}.crm-rank{flex:none;width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;font-weight:700;font-size:12.5px;display:grid;place-items:center}
+  .crm-motivos{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}.crm-motivos span{font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 8px;color:var(--ink-2)}
+  @media (max-width:600px){.crm-barra{grid-template-columns:90px 1fr auto}.crm-evo{height:170px}}
 </style>
 </head>
 <body>
@@ -778,7 +805,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.3 (CRM: tarefas e contratos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.4 (CRM completo)</footer>
   </div>
 </div>
 
@@ -794,7 +821,7 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial (CRM de vendas)"],["emails","Central de E-mails"]];
+const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial (CRM de vendas)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
 try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
@@ -3769,21 +3796,25 @@ const CRM_ICO={
  cfg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
  tar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
  contr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
+ rel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>',
+ ia:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
  cli:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="5" height="16" rx="1.2"/><rect x="9.5" y="4" width="5" height="10" rx="1.2"/><rect x="16" y="4" width="5" height="13" rx="1.2"/></svg>'
 };
-const CRM_SECOES=[["crm","Clientes","cli"],["crm_funil","Funil de vendas","funil"],["crm_tarefas","Tarefas","tar"],["crm_contatos","Contatos e empresas","cont"],["crm_contratos","Contratos","contr"],["crm_indic","Indicações","ind"],["crm_importar","Importar planilha","imp"],["crm_config","Configurações","cfg"]];
+const CRM_SECOES=[["crm","Clientes","cli"],["crm_funil","Funil de vendas","funil"],["crm_tarefas","Tarefas","tar"],["crm_relatorios","Relatórios","rel"],["crm_contatos","Contatos e empresas","cont"],["crm_contratos","Contratos","contr"],["crm_indic","Indicações","ind"],["crm_importar","Importar planilha","imp"],["crm_config","Configurações","cfg"]];
 let CRMB=null; const CRMD={};
 let CRMF={funil:"vendas",lado:"leads",vis:"quadro",q:"",resp:"",origem:"",lim:{}};
 let CRMC={aba:"contatos",q:"",tipo:"",origem:""}, CRMI={st:"",q:""}, CRMIMP=null;
 
 function podeVendas(){ return isAdmin() || podeModulo("comercial"); }
 function podeFinCRM(){ return isAdmin() || podeModulo("financeiro_editar") || podeModulo("financeiro"); }
-function crmSecaoPode(m){ if(m==="crm") return podeCRM(); if(m==="crm_indic"||m==="crm_contratos") return podeVendas()||podeFinCRM(); return podeVendas(); }
+function crmSecaoPode(m){ if(m==="crm") return podeCRM(); if(m==="crm_config") return podeVendas()&&podeGestorCRM(); if(m==="crm_indic"||m==="crm_contratos") return podeVendas()||podeFinCRM(); return podeVendas(); }
 function crmMenuPrincipal(){ return podeCRM()?"crm":(podeVendas()?"crm_funil":(podeFinCRM()?"crm_indic":null)); }
 
 async function crmRpc(fn,args){ const {data,error}=await sb.rpc(fn,args||{}); if(error) throw error; return data; }
 async function crmBase(force){ if(!CRMB||force) CRMB=await crmRpc("crm_dados",{p_secao:"base"}); return CRMB; }
 function crmErro(e){ const m=String((e&&e.message)||e||"");
+ if(m.includes("sem_permissao_neg")) return "Esse registro é de outro vendedor. Peça ao gestor comercial para transferir.";
+ if(m.includes("sem_permissao_gestor")) return "Só o gestor comercial ou um admin pode mudar as configurações do CRM.";
  if(m.includes("sem_permissao_fin")) return "Só o financeiro pode registrar pagamentos de indicação.";
  if(m.includes("sem_permissao")) return "Seu usuário não tem acesso ao CRM de vendas. Peça a um admin para liberar a permissão Comercial no painel Admin.";
  if(m.includes("Could not find the function")||m.includes("crm_dados")||m.includes("does not exist")) return "As funções do CRM ainda não foram criadas no Supabase. Rode o arquivo crm-fase1.sql no SQL Editor.";
@@ -3813,7 +3844,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -4053,7 +4084,7 @@ async function crmFichaNegocio(id,preset){
    </div>
    <div class="crm-pe">${o.id&&isAdmin()?`<button class="txt-btn crm-perigo" id="nDel">Excluir negócio</button>`:""}<span style="flex:1"></span>${o.id&&cont?`<button class="txt-btn" id="nVerCont">Abrir contato</button>`:""}${crmPri('id="nSalvar">Salvar</button>')}</div>
   </div>
-  <div class="crm-colline">${o.id?(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
+  <div class="crm-colline">${o.id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="nIA">${CRM_ICO.ia}Copiloto IA</button>${crmAcoesContatoHTML(cont)}</div><div id="iaBox"></div>`+(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
  const pintaItens=()=>{ m.querySelector("#nItens").innerHTML=itens.map(linhaItem).join("")||`<tr><td colspan="6" class="sub">Nenhum serviço adicionado.</td></tr>`;
   const t=totais(); m.querySelector("#nTot").innerHTML=itens.length?`<span>Mensal <b class="num">${brl(t.m)}</b></span><span>Único <b class="num">${brl(t.u)}</b></span><span>Primeiro ano <b class="num">${brl(t.m*12+t.u)}</b></span>`:"";
   m.querySelector("#nValMan").hidden=!!itens.length;
@@ -4064,7 +4095,8 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
- if(o.id){ crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
+ if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
+  crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
  const dl=m.querySelector("#nDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
   try{ await crmRpc("crm_excluir",{p_tipo:"negocio",p_id:o.id}); closeModal(); crmToast("Negócio excluído"); crmAposSalvar(); }catch(e){ crmToast(crmErro(e)); } };
@@ -4113,8 +4145,8 @@ async function crmFichaContato(id){
   ${id?`<div class="panel"><h4>Negócios</h4>${(f.negocios||[]).map(o=>`<div class="ce-row crm-click" data-neg="${o.id}"><span>${esc(o.titulo)}</span><span class="crm-etq" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">${esc(crmEtapaNome(o.funil_id,o.etapa))}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhum negócio.</p>`}
    <button class="view-btn ghost" id="cNovoNeg" style="margin-top:8px">Novo negócio para este contato</button></div>`:""}
   <div class="crm-pe">${id&&isAdmin()?`<button class="txt-btn crm-perigo" id="cDel">Excluir contato</button>`:""}<span style="flex:1"></span>${crmPri('id="cSalvar">Salvar</button>')}</div>
- </div><div class="crm-colline">${id?crmTarefasPainel(tars,{contato_id:id,empresa_id:c.empresa_id})+crmReguasPainel(rg,c)+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
- if(id){ crmLigarLinha(m,()=>crmFichaContato(id)); crmLigarTarefas(m,tars,()=>crmFichaContato(id));
+ </div><div class="crm-colline">${id?`<div class="crm-acoes-ficha">${crmAcoesContatoHTML({...c,id})}</div>`+crmTarefasPainel(tars,{contato_id:id,empresa_id:c.empresa_id})+crmReguasPainel(rg,c)+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
+ if(id){ crmLigarAcoesContato(m,{...c,id},null,()=>crmFichaContato(id)); crmLigarLinha(m,()=>crmFichaContato(id)); crmLigarTarefas(m,tars,()=>crmFichaContato(id));
   const ri=m.querySelector("#rgIncl"); if(ri) ri.onclick=async()=>{ const ch=crmVal(m,"#rgSel"); if(!ch){ crmToast("Escolha a régua."); return; }
    try{ const r=await crmRpc("crm_inscrever_regua",{p_contatos:[id],p_chave:ch}); crmToast(r.inscritos?"Contato incluído na régua":"Não entrou: sem e-mail, sem consentimento ou já está nessa régua."); crmFichaContato(id); }catch(e){ crmToast(crmErro(e)); } }; }
  m.querySelectorAll("[data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
@@ -4474,7 +4506,8 @@ function crmTarefaModal(t,ctx,depois){
   <div class="crm-w2 crm-rapido">${crmPrazoRapido().map(([l,v])=>`<button type="button" class="view-btn ghost" data-dia="${v}">${l}</button>`).join("")}</div>
   <label class="crm-f crm-w2"><span>Detalhes</span><textarea class="inp" id="tObs" style="min-height:60px">${esc(t.obs||"")}</textarea></label></div>
   ${t.status&&t.status!=="pendente"?`<p class="sub">${t.status==="feita"?"Concluída":"Cancelada"} em ${crmDataHora(t.feita_em)}${t.feita_por?" por "+esc(crmNomeResp(t.feita_por)):""}${t.resultado?`. ${esc(t.resultado)}`:""}</p>`:""}
-  <div class="crm-pe">${!nova?`<button class="txt-btn crm-perigo" id="tDel">Excluir</button>`:""}<span style="flex:1"></span><button class="txt-btn" data-close2>Fechar</button>${crmPri('id="tOk">Salvar tarefa</button>')}</div>`);
+  <div class="crm-pe">${!nova?`<button class="txt-btn crm-perigo" id="tDel">Excluir</button>`:""}${!nova&&t.vence_em?`<button class="txt-btn" id="tIcs">Adicionar ao Outlook</button>`:""}<span style="flex:1"></span><button class="txt-btn" data-close2>Fechar</button>${crmPri('id="tOk">Salvar tarefa</button>')}</div>`);
+ const ics=m.querySelector("#tIcs"); if(ics) ics.onclick=()=>crmBaixarIcs(t);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
  m.querySelectorAll("[data-dia]").forEach(b=>b.onclick=()=>m.querySelector("#tDia").value=b.dataset.dia);
  const del=m.querySelector("#tDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
@@ -4500,14 +4533,20 @@ function crmConcluirModal(t,depois){
 
 // ---------- página de tarefas ----------
 async function crmVTarefas(v){
- v.innerHTML=crmHead("Tarefas e follow-ups","Próximos passos de cada negócio e cliente. As automáticas são criadas pelas regras em Configurações.",crmPri('id="crmTarNova">Nova tarefa</button>'))+`<div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ if(CRMT.escopo==="todas"&&!podeGestorCRM()) CRMT.escopo="minhas";
+ v.innerHTML=crmHead("Tarefas e follow-ups","Próximos passos de cada negócio e cliente. As automáticas são criadas pelas regras em Configurações.",`<button class="txt-btn" id="crmOutlook">Agenda no Outlook</button>`+crmPri('id="crmTarNova">Nova tarefa</button>'))+`<div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#crmTarNova").onclick=()=>crmTarefaModal(null,{},()=>crmVTarefas(v));
- try{ CRMD.tar=await crmRpc("crm_tarefas",{p:{escopo:CRMT.escopo,abertas:!CRMT.feitas,responsavel:CRMT.escopo==="todas"&&CRMT.resp?CRMT.resp:null}}); if(MODE==="crm_tarefas") crmTarPinta(v); }
+ v.querySelector("#crmOutlook").onclick=()=>crmOutlookModal();
+ try{ const [t,neg,ta]=await Promise.all([crmRpc("crm_tarefas",{p:{escopo:CRMT.escopo,abertas:!CRMT.feitas,responsavel:CRMT.escopo==="todas"&&CRMT.resp?CRMT.resp:null}}),
+    crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}).catch(()=>[]),CRMT.escopo==="todas"?Promise.resolve(null):crmRpc("crm_tarefas",{p:{escopo:podeGestorCRM()?"todas":"minhas"}}).catch(()=>[])]);
+  CRMD.tar=t; const tp={}; (ta||t||[]).forEach(x=>{ if(x.status!=="pendente"||!x.oportunidade_id) return; const a=tp[x.oportunidade_id]; if(!a||(x.vence_em||"9")<(a.vence_em||"9")) tp[x.oportunidade_id]=x; });
+  CRMD.prior=CRMT.feitas?[]:crmPrioridades(neg,tp,CRMT.escopo!=="todas"||!!CRMT.resp).filter(x=>!CRMT.resp||x.o.responsavel_email===CRMT.resp);
+  if(MODE==="crm_tarefas") crmTarPinta(v); }
  catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); }
 }
 function crmTarPinta(v){
  const l=CRMD.tar||[], bar=v.querySelector("#crmBar"), box=v.querySelector("#crmBox");
- bar.innerHTML=`<div class="filters crm-bar2"><div class="seg"><button data-esc="minhas" class="${CRMT.escopo==="minhas"?"on":""}">Minhas</button><button data-esc="todas" class="${CRMT.escopo==="todas"?"on":""}">Equipe</button></div>
+ bar.innerHTML=`<div class="filters crm-bar2">${podeGestorCRM()?`<div class="seg"><button data-esc="minhas" class="${CRMT.escopo==="minhas"?"on":""}">Minhas</button><button data-esc="todas" class="${CRMT.escopo==="todas"?"on":""}">Equipe</button></div>`:""}
   ${CRMT.escopo==="todas"?`<select class="fsel" id="crmTResp" aria-label="Responsável">${crmOpt(((CRMB&&CRMB.responsaveis)||[]).map(r=>[r.email,r.nome||crmNomeResp(r.email)]),CRMT.resp,"Todos os responsáveis")}</select>`:""}
   <div class="seg"><button data-fe="0" class="${!CRMT.feitas?"on":""}">Abertas</button><button data-fe="1" class="${CRMT.feitas?"on":""}">Com concluídas (30 dias)</button></div></div>`;
  bar.querySelectorAll("[data-esc]").forEach(b=>b.onclick=()=>{ CRMT.escopo=b.dataset.esc; crmVTarefas(v); });
@@ -4517,10 +4556,11 @@ function crmTarPinta(v){
  const grupos=[["Atrasadas",t=>crmAtrasada(t),"crit"],["Hoje",t=>t.status==="pendente"&&crmDiaDe(t.vence_em)===h],["Amanhã",t=>t.status==="pendente"&&crmDiaDe(t.vence_em)===am],
   ["Próximos 7 dias",t=>t.status==="pendente"&&crmDiaDe(t.vence_em)>am&&crmDiaDe(t.vence_em)<=sem],["Mais para frente",t=>t.status==="pendente"&&crmDiaDe(t.vence_em)>sem],["Sem data",t=>t.status==="pendente"&&!t.vence_em],["Concluídas e canceladas",t=>t.status!=="pendente"]];
  const pend=l.filter(t=>t.status==="pendente");
- box.innerHTML=`<div class="crm-tar-kpis">${[["Atrasadas",pend.filter(crmAtrasada).length,"crit"],["Para hoje",pend.filter(t=>crmDiaDe(t.vence_em)===h).length,"warn"],["Abertas",pend.length,""]].map(([t,n,c])=>`<div class="crm-mini ${c}"><b class="num">${n}</b><span>${t}</span></div>`).join("")}</div>
+ box.innerHTML=crmPrioridadesHTML(CRMD.prior||[])+`<div class="crm-tar-kpis">${[["Atrasadas",pend.filter(crmAtrasada).length,"crit"],["Para hoje",pend.filter(t=>crmDiaDe(t.vence_em)===h).length,"warn"],["Abertas",pend.length,""]].map(([t,n,c])=>`<div class="crm-mini ${c}"><b class="num">${n}</b><span>${t}</span></div>`).join("")}</div>
   ${grupos.map(([nome,f,c])=>{ const its=l.filter(f); if(!its.length) return ""; return `<div class="card ce-pad crm-tar-grupo ${c||""}"><div class="ce-ch"><h3>${nome}</h3><span class="pill ${c||"neutral"}">${its.length}</span></div>${its.map(t=>crmTarefaLinha(t,false)).join("")}</div>`; }).join("")
   ||`<div class="card"><div class="empty">${CRMT.escopo==="minhas"?"Nenhuma tarefa para você. Bom trabalho.":"Nenhuma tarefa aberta na equipe."}</div></div>`}`;
  crmLigarTarefas(box,l,()=>crmVTarefas(v));
+ box.querySelectorAll(".crm-prior [data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
 }
 
 // ---------- contratos ----------
@@ -4724,6 +4764,165 @@ async function crmConfigAutomacoes(v){
   if(at&&!mem.length){ crmToast("Marque quem entra no rodízio."); return; }
   try{ await crmRpc("crm_salvar_automacao",{p_tipo:"rodizio",p:{ativo:at,membros:mem}}); crmToast("Rodízio salvo"); recarga(); }catch(e){ crmToast(crmErro(e)); } };
 }
+
+// ================= CRM · FASE 3: relatórios e permissões por vendedor =================
+let CRMR={per:"90",vend:""};
+function podeGestorCRM(){ return (CRMB&&CRMB.eu&&CRMB.eu.gestor)||isAdmin()||podeModulo("comercial_gestor"); }
+const crmOrigTxt=o=>String(o||"").startsWith("regua:")?"Régua de e-mail":(CRM_ORIG[o]||o||"Sem origem");
+const crmPct=(a,b)=>b?Math.round(a/b*100)+"%":"–";
+function crmBarras(lista,cor,fmtV,fmtSub){
+ const max=Math.max(1,...lista.map(x=>+x.v||0));
+ return lista.length?`<div class="crm-barras">${lista.map(x=>`<div class="crm-barra"><span class="crm-barra-l" title="${escAttr(x.l)}">${esc(x.l)}</span>
+  <span class="crm-barra-t"><span style="width:${Math.max(2,(+x.v||0)/max*100)}%;background:${x.c||cor}"></span></span><span class="crm-barra-v num">${fmtV(x.v)}${fmtSub?`<small>${fmtSub(x)}</small>`:""}</span></div>`).join("")}</div>`:`<p class="sub">Sem dados no período.</p>`;
+}
+function crmPeriodo(){ const h=new Date(); let de;
+ if(CRMR.per==="ano") de=`${h.getFullYear()}-01-01`; else { const d=new Date(); d.setDate(d.getDate()-(+CRMR.per)); de=d.toLocaleDateString("sv-SE"); }
+ return {de,ate:h.toLocaleDateString("sv-SE")}; }
+async function crmVRelatorios(v){
+ const gestor=podeGestorCRM();
+ v.innerHTML=crmHead("Relatórios de vendas",gestor?"Previsão de receita, conversão do funil, desempenho da equipe, origem das vendas e campanha de indicação.":"Seus números: previsão, conversão, ciclo de vendas e origem dos seus negócios.","")+
+ `<div class="filters crm-bar2"><div class="seg">${[["30","30 dias"],["90","90 dias"],["180","6 meses"],["365","12 meses"],["ano","Este ano"]].map(([k,t])=>`<button data-per="${k}" class="${CRMR.per===k?"on":""}">${t}</button>`).join("")}</div>
+  ${gestor?`<select class="fsel" id="crmRVend" aria-label="Vendedor">${crmOpt(((CRMB&&CRMB.responsaveis)||[]).map(r=>[r.email,r.nome||crmNomeResp(r.email)]),CRMR.vend,"Equipe toda")}</select>`:""}</div><div id="crmBox"><div class="card"><div class="empty">Calculando…</div></div></div>`;
+ v.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{ CRMR.per=b.dataset.per; crmVRelatorios(v); });
+ const sv=v.querySelector("#crmRVend"); if(sv) sv.onchange=()=>{ CRMR.vend=sv.value; crmVRelatorios(v); };
+ try{ const r=await crmRpc("crm_relatorio",{p:{...crmPeriodo(),vendedor:CRMR.vend||null}}); if(MODE==="crm_relatorios") crmRelPinta(v,r); }
+ catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); }
+}
+function crmRelPinta(v,r){
+ const R=r.resumo||{}, box=v.querySelector("#crmBox"), fech=(+R.ganhos||0)+(+R.perdidos||0); const per=r.periodo||{};
+ const etN=e=>crmEtapaNome("vendas",e);
+ const evo=r.evolucao||[]; const maxE=Math.max(1,...evo.map(m=>Math.max(+m.novos||0,+m.ganhos||0)));
+ const mesTxt=m=>{ const [a,b]=m.split("-"); return new Date(+a,+b-1,1).toLocaleDateString("pt-BR",{month:"short"}).replace(".",""); };
+ box.innerHTML=`<p class="sub" style="margin:0 0 12px">De ${crmData(per.de+"T12:00")} a ${crmData(per.ate+"T12:00")}${per.vendedor?` · ${esc(crmNomeResp(per.vendedor))}`:" · equipe toda"}</p>
+ <div class="kpis">
+  <div class="tile"><div class="ic">${_ICO_FIN}</div><div><div class="lbl">Receita prevista do funil</div><div class="val num" style="font-size:26px">${brl(R.previsto_mensal)}<small>/mês</small></div><div class="sub">de ${brl(R.pipeline_mensal)}/mês em ${R.abertos} negócio(s) abertos</div></div></div>
+  <div class="tile"><div class="ic">${_ICO_OK}</div><div><div class="lbl">Ganhos no período</div><div class="val num">${R.ganhos}</div><div class="sub">${brl(R.ganho_mensal)}/mês${+R.ganho_unico?` + ${brl(R.ganho_unico)} único`:""}</div></div></div>
+  <div class="tile"><div class="ic">${CRM_ICO.funil}</div><div><div class="lbl">Taxa de conversão</div><div class="val num">${crmPct(R.ganhos,fech)}</div><div class="sub">${R.ganhos} ganhos e ${R.perdidos} perdidos · ${R.novos} novos</div></div></div>
+  <div class="tile"><div class="ic">${CRM_ICO.tar}</div><div><div class="lbl">Ciclo de venda</div><div class="val num">${R.ciclo_dias!=null?String(R.ciclo_dias).replace(".",","):"–"}<small> dias</small></div><div class="sub">1º contato em ${R.primeiro_contato_horas!=null?crmHoras(R.primeiro_contato_horas):"–"}</div></div></div></div>
+ ${(+R.sem_tarefa||+R.parados_15)?`<div class="ce-aviso" style="margin-top:14px">${CE_ICO.alert}<span><b>Atenção no funil:</b> ${R.sem_tarefa} negócio(s) aberto(s) sem próxima tarefa e ${R.parados_15} parado(s) há mais de 15 dias na mesma etapa.</span></div>`:""}
+ <div class="ce-g2">
+  <div class="card ce-pad"><div class="ce-ch"><h3>Funil e previsão</h3></div>
+   <div style="overflow-x:auto"><table class="crm-rel"><thead><tr><th>Etapa</th><th class="center">Abertos</th><th class="right">Valor mensal</th><th class="center">Chance de fechar</th><th class="right">Previsto</th><th class="center">Entraram no período</th></tr></thead><tbody>
+   ${(r.por_etapa||[]).map(x=>{ const pb=(r.probabilidades||{})[x.etapa]||{}; return `<tr><td><span class="crm-etq" style="--c:${CRM_ETAPA_COR[x.etapa]}">${esc(etN(x.etapa))}</span></td><td class="center num">${x.abertos}</td><td class="right num">${brl(x.mensal)}</td>
+    <td class="center num" title="${pb.historico?`Calculado com ${pb.n} negócios encerrados nos últimos 12 meses`:"Estimativa padrão: ainda há poucos negócios encerrados para calcular"}">${Math.round((+x.prob||0)*100)}%${pb.historico?"":"*"}</td><td class="right num">${brl((+x.mensal||0)*(+x.prob||0))}</td><td class="center num">${x.entraram}</td></tr>`; }).join("")}
+   </tbody></table></div>
+   <p class="sub" style="margin:8px 0 0">* Chance estimada. Quando houver pelo menos 5 negócios encerrados que passaram pela etapa, o cálculo passa a usar o histórico da Resilcon.</p>
+   ${(r.previsao_meses||[]).length?`<h4 style="margin:16px 0 8px">Previsão por mês de fechamento</h4>${crmBarras(r.previsao_meses.map(m=>({l:mesTxt(m.mes)+"/"+m.mes.slice(2,4),v:m.previsto,n:m.n,m:m.mensal})),"#269A9E",v2=>brl(v2),x=>` ${x.n} neg.`)}`:""}</div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Últimos 6 meses</h3><span class="crm-leg"><i style="background:#C9DDE3"></i>novos <i style="background:#066789"></i>ganhos</span></div>
+   <div class="crm-evo">${evo.map(m=>`<div class="crm-evo-c"><div class="crm-evo-b"><span style="height:${(+m.novos||0)/maxE*100}%;background:#C9DDE3" title="${m.novos} novos"></span><span style="height:${(+m.ganhos||0)/maxE*100}%;background:#066789" title="${m.ganhos} ganhos"></span></div>
+    <b class="num">${m.ganhos}/${m.novos}</b><small class="num">${+m.ganho_mensal?brl(m.ganho_mensal).replace(",00",""):"–"}</small><span>${mesTxt(m.mes)}</span></div>`).join("")}</div>
+   <p class="sub" style="margin:8px 0 0">Ganhos sobre novos negócios em cada mês. Embaixo, o valor mensal fechado.</p></div>
+ </div>
+ ${(r.por_vendedor||[]).length?`<div class="card ce-pad" style="margin-bottom:16px"><div class="ce-ch"><h3>${per.gestor&&!per.vendedor?"Equipe":"Desempenho"}</h3></div><div style="overflow-x:auto"><table class="crm-rel"><thead><tr><th>Vendedor</th><th class="center">Abertos</th><th class="right">Pipeline</th><th class="center">Ganhos</th><th class="right">Valor ganho</th><th class="center">Perdidos</th><th class="center">Conversão</th><th class="center">Ciclo</th><th class="center">Atividades</th><th class="center">Tarefas atrasadas</th></tr></thead><tbody>
+  ${r.por_vendedor.map(x=>`<tr><td class="r-name">${x.vendedor?esc(crmNomeResp(x.vendedor)):'<span class="sub">Sem responsável</span>'}</td><td class="center num">${x.abertos}</td><td class="right num">${brl(x.aberto_mensal)}</td><td class="center num">${x.ganhos}</td><td class="right num">${brl(x.ganho_mensal)}</td>
+   <td class="center num">${x.perdidos}</td><td class="center num">${crmPct(x.ganhos,(+x.ganhos)+(+x.perdidos))}</td><td class="center num">${x.ciclo_dias!=null?String(x.ciclo_dias).replace(".",",")+"d":"–"}</td><td class="center num">${x.atividades}</td>
+   <td class="center num">${+x.tarefas_atrasadas?`<span class="crm-atr">${x.tarefas_atrasadas}</span>`:"0"}</td></tr>`).join("")}
+ </tbody></table></div><p class="sub" style="margin:8px 0 0">Atividades: anotações, ligações, reuniões, WhatsApp, e-mails e tarefas concluídas registradas no período.</p></div>`:""}
+ <div class="ce-g2">
+  <div class="card ce-pad"><div class="ce-ch"><h3>Origem das vendas</h3><span class="sub">valor mensal ganho</span></div>
+   ${crmBarras((r.por_origem||[]).map(x=>({l:crmOrigTxt(x.origem),v:x.ganho_mensal,x})),"#7B5BA6",v2=>brl(v2),o=>` ${o.x.ganhos} de ${o.x.novos} novos`)}</div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Por que perdemos</h3><span class="sub">${R.perdidos} perdido(s)</span></div>
+   ${crmBarras((r.motivos_perda||[]).map(x=>({l:x.motivo,v:x.n})),"#B4553A",v2=>String(v2))}</div>
+ </div>
+ <div class="card ce-pad"><div class="ce-ch"><h3>Campanha de indicação</h3><span class="sub">indicações registradas no período</span></div>
+  <div class="ce-nums" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">${[["Indicações",(r.indicacao||{}).total],["Viraram cliente",(r.indicacao||{}).clientes],["Mensal gerado",brl((r.indicacao||{}).mensal_gerado)],["1º honorários",brl((r.indicacao||{}).honorarios)],["Prêmios pagos",brl((r.indicacao||{}).premios_pagos)],["Prêmios a pagar",brl((r.indicacao||{}).premios_a_pagar)]].map(([l,n])=>`<div><b class="num">${n??0}</b><span>${l}</span></div>`).join("")}</div>
+  ${((r.indicacao||{}).top||[]).length?`<h4 style="margin:16px 0 8px">Clientes que mais indicam</h4>${crmBarras(r.indicacao.top.map(x=>({l:x.nome,v:x.total,x})),"#E2557A",v2=>String(v2),o=>` · ${o.x.clientes} fechou`)}`:""}</div>`;
+}
+const crmHoras=h=>{ h=+h; if(h<1) return Math.max(1,Math.round(h*60))+" min"; if(h<48) return String(Math.round(h*10)/10).replace(".",",")+" h"; return String(Math.round(h/24*10)/10).replace(".",",")+" dias"; };
+
+// ================= CRM · FASE 4: e-mail, WhatsApp, Outlook, copiloto de IA e prioridades =================
+function crmWaLink(tel,txt){ let d=dig(tel); if(d.length<10) return null; if(d.length<=11) d="55"+d; return `https://wa.me/${d}${txt?`?text=${encodeURIComponent(txt)}`:""}`; }
+const crmPrimeiroNome=n=>String(n||"").trim().split(/\s+/)[0]||"";
+function crmAcoesContatoHTML(c){ if(!c) return "";
+ const wa=crmWaLink(c.telefone);
+ return `${c.email?`<button class="txt-btn" data-env-email>Enviar e-mail</button>`:""}${wa?`<a class="txt-btn crm-wa" href="${escAttr(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`; }
+function crmLigarAcoesContato(m,c,opId,depois){ const b=m.querySelector("[data-env-email]"); if(b) b.onclick=()=>crmEmailModal(c,opId,depois); }
+function crmEmailModal(c,opId,depois){
+ const eu=crmNomeResp((CRMB.eu||{}).email);
+ const mm=crmModal("Enviar e-mail",c.nome||c.email,crmChip(esc(c.email)),`<div class="crm-form">
+  <label class="crm-f crm-w2"><span>Assunto</span><input class="inp" id="eAss" placeholder="Ex.: Proposta de contabilidade para a sua empresa"></label>
+  <label class="crm-f crm-w2"><span>Mensagem</span><textarea class="inp" id="eTxt" style="min-height:180px">Olá, ${esc(crmPrimeiroNome(c.nome))}!\n\n</textarea></label></div>
+  <p class="sub" style="margin:0">Sai pela Central de E-mails com a sua assinatura (${esc(eu)}, Resilcon e o WhatsApp do escritório). A resposta do cliente chega no seu e-mail. A abertura aparece na linha do tempo.</p>
+  <div class="crm-pe"><span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="eOk">Enviar</button>')}</div>`);
+ mm.classList.remove("prodm"); mm.querySelector("[data-close2]").onclick=closeModal;
+ const ta=mm.querySelector("#eTxt"); ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
+ mm.querySelector("#eOk").onclick=async ev=>{ const ass=crmVal(mm,"#eAss"), txt=crmVal(mm,"#eTxt");
+  if(!ass||txt.replace(/^Olá,?[^\n]*\n*/,"").trim().length<3){ crmToast("Escreva o assunto e a mensagem."); return; }
+  const b=ev.currentTarget; b.disabled=true; b.textContent="Enviando…";
+  try{ await crmRpc("crm_enviar_email",{p:{contato_id:c.id,oportunidade_id:opId||null,assunto:ass,texto:txt}}); closeModal(); crmToast("E-mail enviado para a fila. Ele aparece na linha do tempo em instantes."); depois&&depois(); }
+  catch(e){ b.disabled=false; b.textContent="Enviar"; crmToast(crmErro(e)); } };
+}
+
+// ---------- copiloto de IA ----------
+async function crmCopiloto(m,o,contato,depois){
+ const box=m.querySelector("#iaBox"); if(!box) return;
+ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Copiloto</b></div><p class="sub" style="margin:6px 0 0">Lendo o histórico do negócio…</p></div>`;
+ let r;
+ try{ const {data,error}=await sb.functions.invoke("crm-copiloto",{body:{negocio:o.id}});
+  if(error){ let msg=""; try{ const j=await error.context.json(); msg=j.erro||""; }catch(_){}
+   throw new Error(msg||(String(error.message||"").includes("Failed to send")||String(error.message||"").includes("404")?"A função crm-copiloto ainda não foi publicada no Supabase.":String(error.message||error))); }
+  r=data; if(r&&r.erro) throw new Error(r.erro);
+ }catch(e){ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Copiloto</b></div><p class="sub" style="margin:6px 0 0">${esc(e.message||String(e))}</p></div>`; return; }
+ const ch={alta:["good","Chance alta"],media:["warn","Chance média"],baixa:["crit","Chance baixa"]}[r.chance]||["neutral","Chance não avaliada"];
+ const wa=contato&&crmWaLink(contato.telefone);
+ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Copiloto</b><span class="pill ${ch[0]}" title="${escAttr(r.motivo_chance||"")}">${ch[1]}</span><span style="flex:1"></span><button class="crm-x" data-ia-fechar aria-label="Fechar análise">✕</button></div>
+  <p class="crm-ia-t">${esc(r.resumo||"")}</p>${r.motivo_chance?`<p class="sub" style="margin:0 0 8px">${esc(r.motivo_chance)}</p>`:""}
+  <div class="crm-ia-passo"><span class="sub">Próximo passo</span><b>${esc(r.proximo_passo||"")}</b></div>
+  ${(r.riscos||[]).length?`<ul class="crm-ia-r">${r.riscos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  ${r.tarefa&&r.tarefa.titulo?`<button class="view-btn ce-pri" data-ia-tar>Criar tarefa: ${esc(r.tarefa.titulo)}</button>`:""}
+  ${r.mensagem_whatsapp?`<label class="crm-f" style="margin-top:12px"><span>Mensagem sugerida</span><textarea class="inp" id="iaMsg" style="min-height:96px">${esc(r.mensagem_whatsapp)}</textarea></label>
+   <div class="crm-pe" style="margin-top:6px"><button class="view-btn ghost" data-ia-copiar>Copiar</button>${wa?`<button class="view-btn" data-ia-wa>Abrir no WhatsApp</button>`:""}</div>`:""}
+  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no CRM. Confira antes de usar.</p></div>`;
+ box.querySelector("[data-ia-fechar]").onclick=()=>box.innerHTML="";
+ const bt=box.querySelector("[data-ia-tar]"); if(bt) bt.onclick=async()=>{ const t=r.tarefa; const d=new Date(); d.setDate(d.getDate()+(+t.prazo_dias||0));
+  try{ await crmRpc("crm_salvar_tarefa",{p:{titulo:t.titulo,tipo:CRM_TAR_TIPOS[t.tipo]?t.tipo:"outro",vence_em:new Date(d.toLocaleDateString("sv-SE")+"T18:00:00").toISOString(),oportunidade_id:o.id,contato_id:o.contato_id}});
+   crmToast("Tarefa criada"); crmResumoTarefas(true); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
+ const cp=box.querySelector("[data-ia-copiar]"); if(cp) cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(crmVal(box,"#iaMsg")); crmToast("Mensagem copiada"); }catch(_){ crmToast("Não consegui copiar. Selecione o texto e copie."); } };
+ const bw=box.querySelector("[data-ia-wa]"); if(bw) bw.onclick=()=>window.open(crmWaLink(contato.telefone,crmVal(box,"#iaMsg")),"_blank","noopener");
+}
+
+// ---------- Outlook ----------
+function crmIcsTexto(ev){ const f=d=>d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); const e=s=>String(s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+ const ini=new Date(ev.vence_em), fim=new Date(ini.getTime()+30*60000);
+ return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Resilcon//CRM Resiltrack//PT-BR","BEGIN:VEVENT",`UID:${ev.id}@crm.resilcon.com.br`,`DTSTAMP:${f(new Date())}`,`DTSTART:${f(ini)}`,`DTEND:${f(fim)}`,
+  `SUMMARY:${e(`[${CRM_TAR_TIPOS[ev.tipo]||"Tarefa"}] ${ev.titulo}`)}`,`DESCRIPTION:${e([ev.negocio_titulo,ev.contato_nome,ev.contato_telefone,ev.obs].filter(Boolean).join("\n"))}`,
+  "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Tarefa do CRM","TRIGGER:-PT15M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
+function crmBaixarIcs(t){ const b=new Blob([crmIcsTexto(t)],{type:"text/calendar"}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="tarefa-crm.ics"; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
+async function crmOutlookModal(){
+ let tok; try{ tok=await crmRpc("crm_agenda_link",{p_novo:false}); }catch(e){ crmToast(crmErro(e)); return; }
+ const url=t=>`${SUPABASE_URL}/functions/v1/crm-agenda?t=${t}`;
+ const m=crmModal("Agenda no Outlook","Suas tarefas do CRM no calendário","",`<p style="margin:0">Assine este link uma vez e as suas tarefas abertas aparecem no calendário do Outlook, com lembrete 15 minutos antes.</p>
+  <label class="crm-f"><span>Seu link pessoal (não compartilhe)</span><div class="crm-par"><input class="inp" id="olUrl" readonly value="${escAttr(url(tok))}"><button class="view-btn" id="olCop">Copiar</button></div></label>
+  <ol class="crm-passos-ol"><li>No Outlook, abra o <b>Calendário</b>.</li><li>Clique em <b>Adicionar calendário</b> e depois em <b>Assinar da Web</b> (no Outlook do Windows: <b>Adicionar calendário › Da Internet</b>).</li>
+   <li>Cole o link, dê o nome "Tarefas do CRM" e confirme.</li></ol>
+  <p class="sub" style="margin:0">O Outlook atualiza calendários assinados sozinho, normalmente a cada poucas horas. Para concluir uma tarefa, use o Resiltrack. Se o link vazar, gere um novo: o antigo para de funcionar.</p>
+  <div class="crm-pe"><button class="txt-btn" id="olNovo">Gerar novo link</button><span style="flex:1"></span><button class="txt-btn" data-close2>Fechar</button></div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#olCop").onclick=async()=>{ try{ await navigator.clipboard.writeText(crmVal(m,"#olUrl")); crmToast("Link copiado"); }catch(_){ m.querySelector("#olUrl").select(); } };
+ const nv=m.querySelector("#olNovo"); nv.onclick=async()=>{ if(nv.dataset.ok!=="1"){ nv.dataset.ok="1"; nv.textContent="Confirmar: o link atual deixa de funcionar"; return; }
+  try{ const t=await crmRpc("crm_agenda_link",{p_novo:true}); m.querySelector("#olUrl").value=url(t); nv.dataset.ok=""; nv.textContent="Gerar novo link"; crmToast("Novo link gerado. Assine de novo no Outlook."); }catch(e){ crmToast(crmErro(e)); } };
+}
+
+// ---------- prioridades do dia ----------
+const CRM_PROB_PADRAO={atracao:.05,nutricao:.1,conversao:.3,decisao:.55};
+function crmPrioridades(neg,tarPorNeg,soMeus){
+ const eu=(CRMB.eu||{}).email, hoje=crmHojeISO(), em7=new Date(Date.now()+7*864e5).toLocaleDateString("sv-SE");
+ return (neg||[]).filter(o=>!["ganha","perdida"].includes(o.etapa)&&(!soMeus||!o.responsavel_email||o.responsavel_email===eu)).map(o=>{
+  const val=(+o.valor_mensal||0)*12+(+o.valor_unico||0), prob=CRM_PROB_PADRAO[o.etapa]??.1, tp=tarPorNeg[o.id], mot=[]; let s=Math.min(40,prob*val/500);
+  if(tp&&crmAtrasada(tp)){ s+=30; mot.push("tarefa atrasada"); } else if(!tp){ s+=15; mot.push("sem próxima tarefa"); } else if(crmDiaDe(tp.vence_em)===hoje){ s+=12; mot.push("tarefa para hoje"); }
+  if(o.previsao_fechamento&&o.previsao_fechamento<=em7){ s+=25; mot.push(o.previsao_fechamento<hoje?"previsão de fechamento passou":"fecha nesta semana"); }
+  const dp=crmDias(o.etapa_desde); if(dp>=10){ s+=10; mot.push(`${dp} dias parado`); }
+  const uc=o.ultimo_contato?crmDias(o.ultimo_contato):null; if(uc===null||uc>7){ s+=8; mot.push(uc===null?"nenhum contato registrado":`${uc} dias sem contato`); }
+  if(o.etapa==="decisao"){ s+=15; mot.push("em Decisão"); }
+  if(o.origem==="indicacao"){ s+=8; mot.push("veio por indicação"); }
+  if(val) mot.unshift(brl(o.valor_mensal||o.valor_unico)+(o.valor_mensal?"/mês":""));
+  return {o,s,mot}; }).sort((a,b)=>b.s-a.s);
+}
+function crmPrioridadesHTML(lista){ if(!lista.length) return "";
+ return `<div class="card ce-pad crm-prior"><div class="ce-ch"><h3>Prioridades de hoje</h3><span class="sub">negócios com mais chance e mais urgência</span></div>
+  ${lista.slice(0,6).map((x,i)=>`<div class="ce-row crm-click" data-neg="${x.o.id}"><div style="min-width:0;display:flex;gap:12px;align-items:center"><span class="crm-rank">${i+1}</span><div style="min-width:0"><b>${esc(x.o.titulo)}</b>
+   <div class="sub">${esc([x.o.empresa_nome,x.o.contato_nome].filter(Boolean).join(" · "))}</div><div class="crm-motivos">${x.mot.slice(0,4).map(t=>`<span>${esc(t)}</span>`).join("")}</div></div></div>
+   <span class="crm-etq" style="--c:${CRM_ETAPA_COR[x.o.etapa]}">${esc(crmEtapaNome(x.o.funil_id,x.o.etapa))}</span></div>`).join("")}</div>`; }
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
