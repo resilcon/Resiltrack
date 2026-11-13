@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.9.1 (tabela de planos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.0 (contratos)</footer>
   </div>
 </div>
 
@@ -4016,7 +4016,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,modelos:crmVModelos,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -4256,7 +4256,7 @@ async function crmFichaNegocio(id,preset){
    </div>
    <div class="crm-pe">${o.id&&isAdmin()?`<button class="txt-btn crm-perigo" id="nDel">Excluir negócio</button>`:""}<span style="flex:1"></span>${o.id&&cont?`<button class="txt-btn" id="nVerCont">Abrir contato</button>`:""}${crmPri('id="nSalvar">Salvar</button>')}</div>
   </div>
-  <div class="crm-colline">${o.id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="nIA">${CRM_ICO.ia}Copiloto IA</button><button class="txt-btn" id="nProp">Montar proposta</button>${crmAcoesContatoHTML(cont)}</div><div id="iaBox"></div>`+(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
+  <div class="crm-colline">${o.id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="nIA">${CRM_ICO.ia}Copiloto IA</button><button class="txt-btn" id="nProp">Montar proposta</button><button class="txt-btn" id="nContr">Gerar contrato</button>${crmAcoesContatoHTML(cont)}</div><div id="iaBox"></div>`+(o.etapa==="ganha"?crmContratosPainel(ks,{oportunidade_id:o.id,contato_id:o.contato_id}):"")+crmTarefasPainel(tars,{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id})+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
  const pintaItens=()=>{ m.querySelector("#nItens").innerHTML=itens.map(linhaItem).join("")||`<tr><td colspan="6" class="sub">Nenhum serviço adicionado.</td></tr>`;
   const t=totais(); m.querySelector("#nTot").innerHTML=itens.length?`<span>Mensal <b class="num">${brl(t.m)}</b></span><span>Único <b class="num">${brl(t.u)}</b></span><span>Primeiro ano <b class="num">${brl(t.m*12+t.u)}</b></span>`:"";
   m.querySelector("#nValMan").hidden=!!itens.length;
@@ -4267,7 +4267,7 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
- if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
+ if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); const nc=m.querySelector("#nContr"); if(nc) nc.onclick=()=>ctGerar({negocio:o}); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
   crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
  const dl=m.querySelector("#nDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
@@ -5426,7 +5426,7 @@ function precoPintar(v){
    <ul class="preco-inc">${(p.inclusos||[]).map(x=>`<li>${esc(x.nome.charAt(0)+x.nome.slice(1).toLowerCase())}</li>`).join("")||`<li class="sub">Sem itens cadastrados</li>`}</ul>
    <details class="preco-calc"><summary>Como chegamos nesse valor</summary>${p.linhas.map(l=>`<div class="ce-row"><span>${esc(l.rotulo)}</span><b class="num">${precoMoeda(l.valor)}</b></div>`).join("")||`<p class="sub">Nada somado ainda.</p>`}
     ${base!==p.total?`<div class="ce-row sub"><span>Arredondamento para cima</span><span class="num">${precoMoeda(base-p.total)}</span></div>`:""}
-    <label class="crm-f" style="margin-top:8px"><span>Ajustar valor deste plano (opcional)</span><input class="inp" data-ajuste="${p.id}" value="${escAttr(aj??"")}" placeholder="${escAttr(String(base))}" inputmode="decimal"></label></details>
+    <label class="crm-f" style="margin-top:8px"><span>Ajustar valor deste plano (opcional)</span><input class="inp" data-ajuste="${p.id}" value="${escAttr(aj??"")}" placeholder="${escAttr(precoValorTxt(base))}" inputmode="decimal"></label></details>
    <button class="view-btn ${naCesta?"ghost":"ce-pri"}" data-escolher="${p.id}" ${(ativs.length&&!fat)?"disabled":""}>${naCesta?"Escolhido ✓":"Escolher este plano"}</button></div>`; };
  // extras
  const exSel=S.extras;
@@ -5447,7 +5447,7 @@ function precoPintar(v){
  </div>
  <div class="preco-grade">
   <div class="card ce-pad preco-perg"><h3>Dados do cliente</h3>
-   ${ativs.length?`<label class="crm-f"><span>Faturamento médio mensal (R$)</span><input class="inp" id="prFat" value="${escAttr(S.resp.faturamento)}" placeholder="Ex.: 85.000,00" inputmode="decimal"></label>
+   ${ativs.length?`<label class="crm-f"><span>Faturamento médio mensal (R$)</span><input class="inp" id="prFat" value="${escAttr(S.resp.faturamento)}" placeholder="Digite só os números, ex.: 85000" inputmode="numeric"></label>
    <div class="crm-f"><span>Atividade</span>${radio("prAtiv",ativs.map(a=>[a.chave,a.nome.charAt(0)+a.nome.slice(1).toLowerCase()]),S.resp.atividade,'data-ativ="1"')}</div>
    <div class="crm-f"><span>Tributação</span>${radio("prTrib",tribs.map(t=>[t,t]),S.resp.tributacao,'data-trib="1"')}</div>`:""}
    ${crits.map(campoCrit).join("")||(ativs.length?"":`<p class="sub">Este produto não tem perguntas: o valor vem do plano escolhido.</p>`)}
@@ -5471,6 +5471,7 @@ function precoPintar(v){
    <label class="crm-f"><span>Observações para o cliente</span><textarea class="inp" id="prObs" rows="3">${esc(S.obs)}</textarea></label>
    <div class="crm-pe" style="flex-wrap:wrap;gap:8px"><button class="view-btn ghost" id="prLimpar">Limpar</button><span style="flex:1"></span>
     <button class="view-btn ghost" id="prPdf" ${S.cesta.length?"":"disabled"}>Gerar proposta</button>
+    <button class="view-btn ghost" id="prContrato" ${S.cesta.length?"":"disabled"}>Gerar contrato</button>
     <button class="view-btn ce-pri" id="prSalvar" ${S.cesta.length&&S.negocio?"":"disabled"} title="${S.negocio?"":"Escolha o negócio no topo"}">Salvar no negócio</button></div>
   </div>
  </div>`;
@@ -5505,8 +5506,16 @@ function precoTabela(R,S,ativs,fat){
  ${S.verCalc?`<div class="pt-calc">${cols.map(c=>`<div class="card ce-pad"><h4 style="margin:0 0 8px">${esc(c.p.nome)}</h4>${c.p.linhas.map(l=>`<div class="ce-row"><span>${esc(l.rotulo)}</span><b class="num">${precoMoeda(l.valor)}</b></div>`).join("")||`<p class="sub">Nada somado ainda.</p>`}
    ${c.base!==c.p.total?`<div class="ce-row sub"><span>Arredondamento para cima</span><span class="num">${precoMoeda(c.base-c.p.total)}</span></div>`:""}
    <div class="ce-row"><span><b>Total da tabela</b></span><b class="num">${precoMoeda(c.base)}</b></div>
-   <label class="crm-f" style="margin-top:8px"><span>Ajustar o valor deste plano (opcional)</span><input class="inp" data-ajuste="${c.p.id}" value="${escAttr(c.aj??"")}" placeholder="${escAttr(String(c.base))}" inputmode="decimal"></label></div>`).join("")}</div>`:""}</div>`;
+   <label class="crm-f" style="margin-top:8px"><span>Ajustar o valor deste plano (opcional)</span><input class="inp" data-ajuste="${c.p.id}" value="${escAttr(c.aj??"")}" placeholder="${escAttr(precoValorTxt(c.base))}" inputmode="decimal"></label></div>`).join("")}</div>`:""}</div>`;
 }
+
+// Máscara de dinheiro: o usuário digita só números (85000 vira 85.000) e a vírgula dos centavos é opcional; ao sair do campo completa com ,00
+function precoMascara(v){ v=String(v==null?"":v); const temVirg=v.includes(","); let [i,...d]=v.split(","); i=i.replace(/\D/g,"").replace(/^0+(?=\d)/,""); d=d.join("").replace(/\D/g,"").slice(0,2);
+ const fi=i.replace(/\B(?=(\d{3})+(?!\d))/g,"."); return temVirg?(fi||"0")+","+d:fi; }
+function precoMascaraFim(v){ v=precoMascara(v); if(!v) return v; if(!v.includes(",")) return v+",00"; const [i,d]=v.split(","); return i+","+(d+"00").slice(0,2); }
+function precoValorTxt(n){ return (Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function precoLigarMascara(el,salvar){ if(!el) return; el.addEventListener("input",()=>{ const m=precoMascara(el.value); if(m!==el.value){ el.value=m; try{ el.setSelectionRange(m.length,m.length); }catch(_){} } salvar(el.value); });
+ el.addEventListener("blur",()=>{ const m=precoMascaraFim(el.value); if(m!==el.value){ el.value=m; salvar(m); } }); }
 
 function precoTotais(){ const S=PRECO_ST; const ex=Object.entries(S.extras).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
  const extrasM=ex.filter(e=>e.cobranca==="mensal"), extrasU=ex.filter(e=>e.cobranca!=="mensal");
@@ -5520,12 +5529,12 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; re(); };
  box.querySelector("#prNicho").onchange=e=>{ S.nicho=e.target.value; re(); };
  box.querySelector("#prArq").onchange=e=>{ S.arq=e.target.value; re(); };
- const fat=box.querySelector("#prFat"); if(fat) fat.oninput=()=>{ S.resp.faturamento=fat.value; reLento(); };
+ const fat=box.querySelector("#prFat"); precoLigarMascara(fat,v=>{ S.resp.faturamento=v; reLento(); });
  box.querySelectorAll("[data-ativ]").forEach(i=>i.onchange=()=>{ S.resp.atividade=i.value; re(); });
  box.querySelectorAll("[data-trib]").forEach(i=>i.onchange=()=>{ S.resp.tributacao=i.value; re(); });
  box.querySelectorAll("[data-crit]").forEach(i=>{ const ev=i.type==="radio"?"onchange":"oninput"; i[ev]=()=>{ S.resp.crit[i.dataset.crit]=i.value; i.type==="radio"?re():reLento(); }; });
  const pc2=box.querySelector("#ptCalc"); if(pc2) pc2.onclick=()=>{ S.verCalc=!S.verCalc; re(); };
- box.querySelectorAll("[data-ajuste]").forEach(i=>i.oninput=()=>{ S.ajuste[S.arq+":"+i.dataset.ajuste]=i.value; reLento(); });
+ box.querySelectorAll("[data-ajuste]").forEach(i=>precoLigarMascara(i,v=>{ S.ajuste[S.arq+":"+i.dataset.ajuste]=v; reLento(); }));
  box.querySelectorAll("[data-escolher]").forEach(b=>b.onclick=()=>{ const p=R.planos.find(x=>x.id===b.dataset.escolher); const aj=S.ajuste[S.arq+":"+p.id];
   const valor=aj!=null&&aj!==""?precoNum(aj):precoTeto(p.total);
   S.cesta=S.cesta.filter(c=>c.arq!==S.arq); S.cesta.push({arq:S.arq,produto:A.nome,planoId:p.id,plano:p.nome,valor,tabela:precoTeto(p.total),inclusos:(p.inclusos||[]).map(x=>x.nome),linhas:p.linhas,
@@ -5533,15 +5542,15 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
   crmToast(p.nome+" adicionado à proposta"); re(); });
  box.querySelectorAll("[data-tirar]").forEach(b=>b.onclick=()=>{ S.cesta.splice(+b.dataset.tirar,1); re(); });
  const bs=box.querySelector("#prBusca"); bs.oninput=()=>{ S.busca=bs.value; reLento(); };
- box.querySelectorAll("[data-ex]").forEach(c=>c.onchange=()=>{ const k=c.dataset.ex; if(c.checked){ const e=A.P.extras.find(x=>S.arq+":"+x.id===k); S.extras[k]={nome:e.nome,valor:e.valor,cobranca:"avulso",qtd:1}; } else delete S.extras[k]; re(); });
- box.querySelectorAll("[data-exv]").forEach(i=>i.oninput=()=>{ S.extras[i.dataset.exv].valor=i.value; reLento(); });
+ box.querySelectorAll("[data-ex]").forEach(c=>c.onchange=()=>{ const k=c.dataset.ex; if(c.checked){ const e=A.P.extras.find(x=>S.arq+":"+x.id===k); S.extras[k]={nome:e.nome,valor:precoValorTxt(e.valor),cobranca:"avulso",qtd:1,arq:S.arq}; } else delete S.extras[k]; re(); });
+ box.querySelectorAll("[data-exv]").forEach(i=>precoLigarMascara(i,v=>{ if(S.extras[i.dataset.exv]){ S.extras[i.dataset.exv].valor=v; reLento(); } }));
  box.querySelectorAll("[data-exq]").forEach(i=>i.oninput=()=>{ S.extras[i.dataset.exq].qtd=Math.max(1,+i.value||1); reLento(); });
  box.querySelectorAll("[data-exc]").forEach(i=>i.onchange=()=>{ S.extras[i.dataset.exc].cobranca=i.value; re(); });
  const pc=box.querySelector("#prParc"); if(pc) pc.onchange=()=>{ S.parcelas=+pc.value; re(); };
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prPdf").onclick=()=>precoProposta();
+ box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -5595,6 +5604,269 @@ ${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</di
 function precoAbrirNegocio(o){ PRECO_ST.negocio=o?{id:o.id,titulo:o.titulo,contato_nome:o.contato_nome,empresa_nome:o.empresa_nome}:null;
 
  closeModal(); setMode("crm_precos"); }
+
+// ================= CRM · CONTRATOS: modelos (vindos da 4C + personalizados), editor e geração a partir do plano =================
+CRM_ICO.contr2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg>';
+(function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_contratos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i+1,0,["crm_modelos","Modelos de contrato","contr2"]); })();
+const CT_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
+const CT_PALAVRAS=[
+ ["Cliente",[["CLIENTE_NOME","Nome do cliente (representante)"],["CLIENTE_CPF","CPF do cliente"],["CLIENTE_RG","RG do cliente"],["CLIENTE_ESTADO_CIVIL","Estado civil"],["CLIENTE_E-MAIL","E-mail do cliente"],["CLIENTE_TELEFONE","Telefone do cliente"],
+  ["CLIENTE_EMPRESA_NOME","Razão social da empresa"],["CLIENTE_EMPRESA_DOCUMENTO","CNPJ da empresa"],["CLIENTE_LOGRADOURO","Rua"],["CLIENTE_NUMERO","Número"],["CLIENTE_COMPLEMENTO","Complemento"],["CLIENTE_BAIRRO","Bairro"],["CLIENTE_CIDADE","Cidade"],["CLIENTE_UF","UF"],["CLIENTE_CEP","CEP"],["CONTRATANTE","Dados do contratante em um só texto"]]],
+ ["Contrato e valores",[["NOME_PLANO","Nome do plano escolhido"],["SERVICOS_INCLUSOS","Lista de serviços do plano"],["VALOR_PROPOSTA","Mensalidade total"],["VALOR_PROPOSTA_CONTABIL","Mensalidade contábil (plano + extras mensais)"],["VALOR_PROPOSTA_BPO","Mensalidade BPO"],
+  ["VALOR_PLANO_CONTABIL","Valor do plano contábil"],["VALOR_PLANO_BPO","Valor do plano BPO"],["VALOR_PRODUTOS_SERVICOS_EXTRAS_CONTABIL","Extras contábeis"],["VALOR_PRODUTOS_SERVICOS_EXTRAS_CONTABIL_SEPARADOS","Extras contábeis cobrados à parte"],
+  ["VALOR_PRODUTOS_SERVICOS_EXTRAS_BPO","Extras de BPO"],["VALOR_PRODUTOS_SERVICOS_EXTRAS_BPO_SEPARADOS","Extras de BPO cobrados à parte"],["DATA_VIGENCIA_DE","Início da vigência"],["DATA_VIGENCIA_ATE","Fim da vigência"],["DIA_ATUAL","Dia de hoje"],["MES_ATUAL","Mês atual"],["ANO_ATUAL","Ano atual"]]],
+ ["Resilcon",[["CONTABILIDADE_NOME","Razão social da Resilcon"],["CONTABILIDADE_CNPJ","CNPJ"],["CONTABILIDADE_CPF","CPF (se pessoa física)"],["CONTABILIDADE_RESPONSAVEL_NOME","Responsável"],["CONTABILIDADE_RESPONSAVEL_CPF","CPF do responsável"],["CONTABILIDADE_RESPONSAVEL_E-MAIL","E-mail do responsável"],
+  ["CONTABILIDADE_LOGRADOURO","Rua"],["CONTABILIDADE_NUMERO","Número"],["CONTABILIDADE_COMPLEMENTO","Complemento"],["CONTABILIDADE_BAIRRO","Bairro"],["CONTABILIDADE_CIDADE","Cidade"],["CONTABILIDADE_UF","UF"],["CONTABILIDADE_CEP","CEP"]]]];
+const CT_CONFIG_PADRAO={CONTABILIDADE_NOME:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",CONTABILIDADE_CNPJ:"64.018.658/0001-03",CONTABILIDADE_RESPONSAVEL_NOME:"Elmer de Oliveira Andrade","CONTABILIDADE_RESPONSAVEL_E-MAIL":"comercial@resilcon.com.br",CONTABILIDADE_CEP:"04621-270",CONTABILIDADE_CIDADE:"São Paulo",CONTABILIDADE_UF:"SP"};
+// biblioteca de blocos (mesmos tipos do editor da 4C)
+const CT_BLOCOS={
+ "capa-contrato":{nome:"Capa",estilo:{backgroundColor:"#0b1a20",textColor:"#ffffff"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",title:"Contrato de Prestação de Serviços",subtitle:"Condições comerciais e operacionais",clientName:"[CLIENTE_NOME]",date:"[MES_ATUAL] de [ANO_ATUAL]",vigencia:"[DATA_VIGENCIA_DE] até [DATA_VIGENCIA_ATE]"}},
+ "cabecalho-contrato":{nome:"Cabeçalho",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",tagline:"Contabilidade consultiva"}},
+ "partes":{nome:"Partes (contratante e contratada)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{textoContratante:"[CONTRATANTE]",textoContratada:"[CONTABILIDADE_NOME], inscrita no CNPJ sob nº [CONTABILIDADE_CNPJ], com sede na [CONTABILIDADE_LOGRADOURO], nº [CONTABILIDADE_NUMERO], [CONTABILIDADE_BAIRRO], [CONTABILIDADE_CIDADE]/[CONTABILIDADE_UF], CEP [CONTABILIDADE_CEP], neste ato representada por [CONTABILIDADE_RESPONSAVEL_NOME]."}},
+ "info-garantias":{nome:"Informações e garantias",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Informações e Garantias",items:[{title:"Das partes",description:"Texto"}]}},
+ "resumo-contratual":{nome:"Resumo do contrato (indicadores)",estilo:{backgroundColor:"#006789",textColor:"#ffffff"},conteudo:{title:"Resumo Contratual",kpis:[{label:"Plano",value:"[NOME_PLANO]"},{label:"Mensalidade",value:"[VALOR_PROPOSTA]"},{label:"Vigência",value:"12 meses"},{label:"Início",value:"[DATA_VIGENCIA_DE]"}]}},
+ "servicos-inclusos":{nome:"Serviços inclusos (vêm do plano escolhido)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Serviços Inclusos",items:["Preenchido automaticamente com os serviços do plano"]}},
+ "extras-selecionados-contrato":{nome:"Serviços extras contratados (vêm da proposta)",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Serviços Adicionais Contratados",items:[]}},
+ "pagamento-contrato":{nome:"Pagamento",estilo:{backgroundColor:"#0b1a20",textColor:"#ffffff"},conteudo:{title:"Pagamento",methods:"Boleto bancário ou PIX",dueDate:"Todo dia 10",terms:"Primeira cobrança proporcional ao início da operação."}},
+ "secao-conteudo":{nome:"Seção de texto com tópicos",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título da seção",text:"Texto da seção",bullets:["Tópico 1","Tópico 2"]}},
+ "secao-foto":{nome:"Seção com foto",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título",text:"Texto",imageUrl:""}},
+ "split-image-text":{nome:"Imagem e texto lado a lado",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Título",text:"Texto",bullets:["Tópico"],imageUrl:"",imageSide:"left"}},
+ "hero-image":{nome:"Imagem grande",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"",subtitle:"",backgroundImageUrl:""}},
+ "clausulas":{nome:"Cláusulas",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{title:"Cláusulas Contratuais",clauses:[{number:"1",title:"Do objeto",text:"Texto da cláusula"}]}},
+ "assinaturas":{nome:"Assinaturas",estilo:{backgroundColor:"#ffffff",textColor:"#111827"},conteudo:{local:"[CONTABILIDADE_CIDADE], [DIA_ATUAL] de [MES_ATUAL] de [ANO_ATUAL].",contratante:"[CLIENTE_EMPRESA_NOME]",contratada:"[CONTABILIDADE_NOME]",testemunhas:"sim"}},
+ "rodape-contrato":{nome:"Rodapé",estilo:{backgroundColor:"#111827",textColor:"#f5f5f5"},conteudo:{companyName:"RESILCON ASSESSORIA CONTÁBIL E FISCAL S/S LTDA.",phone:"(11) 5661-1555",email:"comercial@resilcon.com.br",website:"https://www.resilcon.com.br"}}
+};
+const CT_CAMPOS_ROT={companyName:"Empresa",title:"Título",subtitle:"Subtítulo",clientName:"Cliente",date:"Data",vigencia:"Vigência",tagline:"Frase",textoContratante:"Texto do contratante",textoContratada:"Texto da contratada",items:"Itens",kpis:"Indicadores",methods:"Formas de pagamento",dueDate:"Vencimento",terms:"Condições",text:"Texto",bullets:"Tópicos (um por linha)",imageUrl:"Endereço da imagem",imageSide:"Lado da imagem (left ou right)",backgroundImageUrl:"Endereço da imagem",clauses:"Cláusulas",phone:"Telefone",email:"E-mail",website:"Site",local:"Local e data",contratante:"Assina pelo contratante",contratada:"Assina pela contratada",testemunhas:"Testemunhas (sim ou não)",label:"Rótulo",value:"Valor",description:"Descrição",number:"Número"};
+let CT={indice:null,cache:{},config:null};
+
+async function ctTok(){ return (await sb.auth.getSession()).data.session?.access_token||""; }
+async function ctLer(chave){ if(CT.cache[chave]) return CT.cache[chave]; let raw=null;
+ try{ const {data,error}=await sb.storage.from("crm-arquivos").download(`precificacao/${chave}.json`); if(!error&&data) raw=JSON.parse(await data.text()); }catch(_){}
+ if(!raw){ const r=await fetch(`${CT_FN}?arquivo=${chave}`,{headers:{Authorization:"Bearer "+await ctTok()}}); if(r.ok) raw=await r.json(); }
+ if(!raw) throw new Error("Não consegui abrir "+chave); CT.cache[chave]=raw; return raw; }
+async function ctIndice(force){ if(CT.indice&&!force) return CT.indice; if(force) delete CT.cache.contratos_indice; const r=await ctLer("contratos_indice"); CT.indice=((r.dados&&r.dados.modelos)||r.modelos||[]); return CT.indice; }
+async function ctModelo(chave){ const r=await ctLer(chave); return r.dados; }
+async function ctConfig(){ if(CT.config) return CT.config; try{ const m=await ctModelo("contrato_config_resilcon"); CT.config={...CT_CONFIG_PADRAO,...(m.valores||{})}; }catch(_){ CT.config={...CT_CONFIG_PADRAO}; } return CT.config; }
+async function ctSalvar(chave,modelo){ const r=await fetch(CT_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await ctTok()},body:JSON.stringify({acao:"salvar_modelo",chave,modelo})});
+ const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.erro||"Não foi possível salvar"); delete CT.cache[chave]; CT.indice=null; return j; }
+async function ctExcluir(chave){ const r=await fetch(CT_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await ctTok()},body:JSON.stringify({acao:"excluir_modelo",chave})});
+ const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.erro||"Não foi possível excluir"); delete CT.cache[chave]; CT.indice=null; }
+
+// ---------- variáveis ----------
+const CT_MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function ctDataBR(iso){ if(!iso) return ""; const [a,m,d]=String(iso).slice(0,10).split("-"); return d&&m&&a?`${d}/${m}/${a}`:iso; }
+function ctVariaveis(f,cfg){ const v={...cfg}; const hoje=new Date();
+ Object.assign(v,{DIA_ATUAL:String(hoje.getDate()).padStart(2,"0"),MES_ATUAL:CT_MESES[hoje.getMonth()],ANO_ATUAL:String(hoje.getFullYear())});
+ ["CLIENTE_NOME","CLIENTE_CPF","CLIENTE_RG","CLIENTE_ESTADO_CIVIL","CLIENTE_E-MAIL","CLIENTE_TELEFONE","CLIENTE_EMPRESA_NOME","CLIENTE_EMPRESA_DOCUMENTO","CLIENTE_LOGRADOURO","CLIENTE_NUMERO","CLIENTE_COMPLEMENTO","CLIENTE_BAIRRO","CLIENTE_CIDADE","CLIENTE_UF","CLIENTE_CEP"].forEach(k=>v[k]=f.cli[k]||"");
+ v.DATA_VIGENCIA_DE=ctDataBR(f.inicio); v.DATA_VIGENCIA_ATE=ctDataBR(f.fim);
+ const c=f.cesta||[], bpo=x=>/^bp/.test(x.arq||""); const pc=c.filter(x=>!bpo(x)), pb=c.filter(bpo);
+ const ex=f.extras||[], exB=ex.filter(bpo), exC=ex.filter(x=>!bpo(x)); const tot=e=>(precoNum(e.valor)||0)*(Number(e.qtd)||1);
+ const linhaEx=e=>`${e.nome} – ${precoMoeda(tot(e))}${e.cobranca==="mensal"?" por mês":e.cobranca==="hora"?` (${e.qtd} h)`:e.cobranca==="volume"?` (${e.qtd} un.)`:" (cobrança única)"}`;
+ const soma=(l,fn)=>l.reduce((s,x)=>s+fn(x),0);
+ v.VALOR_PLANO_CONTABIL=pc.length?precoMoeda(soma(pc,x=>x.valor)):""; v.VALOR_PLANO_BPO=pb.length?precoMoeda(soma(pb,x=>x.valor)):"";
+ const mC=soma(pc,x=>x.valor)+soma(exC.filter(e=>e.cobranca==="mensal"),tot), mB=soma(pb,x=>x.valor)+soma(exB.filter(e=>e.cobranca==="mensal"),tot);
+ v.VALOR_PROPOSTA_CONTABIL=pc.length||exC.length?precoMoeda(mC):""; v.VALOR_PROPOSTA_BPO=pb.length||exB.length?precoMoeda(mB):""; v.VALOR_PROPOSTA=precoMoeda(mC+mB);
+ v.VALOR_PRODUTOS_SERVICOS_EXTRAS_CONTABIL=exC.filter(e=>!e.separado).map(linhaEx).join("; "); v.VALOR_PRODUTOS_SERVICOS_EXTRAS_CONTABIL_SEPARADOS=exC.filter(e=>e.separado).map(linhaEx).join("; ");
+ v.VALOR_PRODUTOS_SERVICOS_EXTRAS_BPO=exB.filter(e=>!e.separado).map(linhaEx).join("; "); v.VALOR_PRODUTOS_SERVICOS_EXTRAS_BPO_SEPARADOS=exB.filter(e=>e.separado).map(linhaEx).join("; ");
+ v.NOME_PLANO=c.map(x=>x.plano).join(" + "); v.SERVICOS_INCLUSOS=[...new Set(c.flatMap(x=>x.inclusos||[]))].join("; ");
+ const cli=f.cli; v.CONTRATANTE=[cli.CLIENTE_EMPRESA_NOME||cli.CLIENTE_NOME,cli.CLIENTE_EMPRESA_DOCUMENTO?`inscrita no CNPJ sob nº ${cli.CLIENTE_EMPRESA_DOCUMENTO}`:"",
+  cli.CLIENTE_LOGRADOURO?`com sede na ${cli.CLIENTE_LOGRADOURO}, nº ${cli.CLIENTE_NUMERO||"s/n"}${cli.CLIENTE_COMPLEMENTO?", "+cli.CLIENTE_COMPLEMENTO:""}, ${cli.CLIENTE_BAIRRO||""}, ${cli.CLIENTE_CIDADE||""}/${cli.CLIENTE_UF||""}, CEP ${cli.CLIENTE_CEP||""}`:"",
+  cli.CLIENTE_NOME&&cli.CLIENTE_EMPRESA_NOME?`neste ato representada por ${cli.CLIENTE_NOME}${cli.CLIENTE_CPF?", CPF "+cli.CLIENTE_CPF:""}`:""].filter(Boolean).join(", ");
+ return v; }
+function ctTroca(t,v,marcar){ return String(t==null?"":t).replace(/\[([A-ZÇÃÕÁÉÍÓÚÂÊÔ0-9_\-]{3,})\]/g,(m,k)=>{ if(v&&v[k]!=null&&v[k]!=="") return v[k]; return marcar?`⟦${k}⟧`:m; }); }
+
+// ---------- renderização do contrato ----------
+function ctEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function ctTxt(s,v,marcar){ return ctEsc(ctTroca(s,v,marcar)).replace(/⟦([^⟧]+)⟧/g,'<mark title="Falta preencher">[$1]</mark>').replace(/\n/g,"<br>"); }
+function ctRenderBloco(b,v,ctx,marcar){ if(b.visible===false) return ""; const c=b.content||{}, st=b.style||{}; const T=s=>ctTxt(s,v,marcar);
+ const css=`background:${st.backgroundColor||"#fff"};color:${st.textColor||"#111827"};padding:${Math.max(14,Number(st.padding)||24)}px 34px;${st.fontScale?`font-size:${15*Number(st.fontScale)}px;`:""}`;
+ const tit=t=>t?`<h2 style="text-align:${c.titleAlign||"left"}">${T(t)}</h2>`:"";
+ switch(b.type){
+  case "capa-contrato": return `<section class="ct-capa" style="${css};text-align:${c.textAlign||"center"}"><div class="ct-k">${T(c.companyName)}</div><h1>${T(c.title)}</h1><p>${T(c.subtitle)}</p><div class="ct-capa-cli">Cliente: <b>${T(c.clientName)}</b><br><small>${T(c.date)}${c.vigencia?"<br>Vigência: "+T(c.vigencia):""}</small></div></section>`;
+  case "cabecalho-contrato": return `<section style="${css}"><h2 style="margin:0">${T(c.companyName)}</h2><p style="margin:2px 0 0;opacity:.75">${T(c.tagline)}</p></section>`;
+  case "partes": return `<section style="${css}"><div class="ct-parte"><b>CONTRATANTE</b><p style="text-align:${c.textAlignContratante||"justify"}">${T(c.textoContratante)}</p></div><div class="ct-parte"><b>CONTRATADA</b><p style="text-align:${c.textAlignContratada||"justify"}">${T(c.textoContratada)}</p></div></section>`;
+  case "info-garantias": return `<section style="${css}">${tit(c.title)}${(c.items||[]).map(i=>`<div class="ct-item"><b>${T(i.title)}</b><p style="text-align:${i.descriptionAlign||"justify"}">${T(i.description)}</p></div>`).join("")}</section>`;
+  case "resumo-contratual": return `<section style="${css}">${tit(c.title)}<div class="ct-kpis">${(c.kpis||[]).map(k=>`<div><span>${T(k.label)}</span><b>${T(k.value)}</b></div>`).join("")}</div></section>`;
+  case "servicos-inclusos": { const it=(ctx.inclusos&&ctx.inclusos.length)?ctx.inclusos:(c.items||[]); return `<section style="${css}">${tit(c.title)}<ul class="ct-lista">${it.map(x=>`<li>${T(typeof x==="string"?x:(x.name||x.nome||x.title||""))}</li>`).join("")}</ul></section>`; }
+  case "extras-selecionados-contrato": { const ex=ctx.extras||[]; if(!ex.length) return ""; return `<section style="${css}">${tit(c.title)}<table class="ct-tab">${ex.map(e=>`<tr><td>${ctEsc(e.nome)}</td><td>${e.cobranca==="mensal"?"mensal":e.cobranca==="hora"?e.qtd+" hora(s)":e.cobranca==="volume"?e.qtd+" unidade(s)":"cobrança única"}</td><td class="r">${precoMoeda((precoNum(e.valor)||0)*(Number(e.qtd)||1))}</td></tr>`).join("")}</table></section>`; }
+  case "extras-nao-selecionados-contrato": return "";
+  case "pagamento-contrato": return `<section style="${css}">${tit(c.title)}<div class="ct-kpis"><div><span>Formas de pagamento</span><b>${T(c.methods)}</b></div><div><span>Vencimento</span><b>${T(c.dueDate)}</b></div></div>${c.terms?`<p>${T(c.terms)}</p>`:""}</section>`;
+  case "secao-conteudo": return `<section style="${css}">${tit(c.title)}${c.text?`<p style="text-align:${c.textAlign||"justify"}">${T(c.text)}</p>`:""}${(c.bullets||[]).length?`<ul class="ct-lista">${c.bullets.map(x=>`<li>${T(x)}</li>`).join("")}</ul>`:""}</section>`;
+  case "secao-foto": return `<section style="${css}">${tit(c.title)}${c.text?`<p style="text-align:${c.textAlign||"justify"}">${T(c.text)}</p>`:""}${c.imageUrl?`<img class="ct-img" src="${ctEsc(c.imageUrl)}" alt="">`:""}</section>`;
+  case "hero-image": return (c.backgroundImageUrl||st.backgroundImageUrl)?`<section class="ct-hero" style="background-image:url('${ctEsc(c.backgroundImageUrl||st.backgroundImageUrl)}')">${c.title?`<h2>${T(c.title)}</h2>`:""}${c.subtitle?`<p>${T(c.subtitle)}</p>`:""}</section>`:"";
+  case "split-image-text": return `<section style="${css}"><div class="ct-split ${c.imageSide==="right"?"dir":""}">${c.imageUrl?`<img class="ct-img" src="${ctEsc(c.imageUrl)}" alt="">`:""}<div>${tit(c.title)}${c.text?`<p>${T(c.text)}</p>`:""}${(c.bullets||[]).length?`<ul class="ct-lista">${c.bullets.map(x=>`<li>${T(x)}</li>`).join("")}</ul>`:""}</div></div></section>`;
+  case "clausulas": return `<section style="${css}">${tit(c.title)}${(c.clauses||[]).map(k=>`<div class="ct-clausula">${k.title?`<h3>${k.number?ctEsc(k.number)+". ":""}${T(k.title)}</h3>`:""}<div style="text-align:${k.textAlign||"justify"}">${ctTxt(k.text,v,marcar).replace(/(<br>){2,}/g,"</p><p>")}</div></div>`).join("")}</section>`;
+  case "assinaturas": return `<section style="${css}" class="ct-ass"><p>${T(c.local)}</p><div class="ct-ass-g"><div><span></span>${T(c.contratante)}<small>CONTRATANTE</small></div><div><span></span>${T(c.contratada)}<small>CONTRATADA</small></div>${String(c.testemunhas).toLowerCase().startsWith("s")?`<div><span></span>Testemunha 1<small>Nome e CPF</small></div><div><span></span>Testemunha 2<small>Nome e CPF</small></div>`:""}</div></section>`;
+  case "rodape-contrato": return `<section style="${css};text-align:center;font-size:12px">${T(c.companyName)} · ${T(c.phone)} · ${T(c.email)} · ${T(c.website)}</section>`;
+  default: { const txt=Object.values(c).filter(x=>typeof x==="string").map(T).join("<br>"); return txt?`<section style="${css}">${txt}</section>`:""; }
+ } }
+function ctDocumento(modelo,v,ctx,marcar){ const tema=modelo.tema||{}; const prim=tema.primary||"#0b1a20";
+ const corpo=modelo.tipo==="texto"?`<section style="padding:34px">${ctTroca(modelo.html||"",v,marcar).replace(/⟦([^⟧]+)⟧/g,'<mark>[$1]</mark>')}</section>`:(modelo.blocos||[]).map(b=>ctRenderBloco(b,v,ctx,marcar)).join("");
+ return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${ctEsc(ctTroca(modelo.nome,v))}</title><style>
+*{box-sizing:border-box}body{margin:0;background:#eef2f4;font-family:Inter,Arial,Helvetica,sans-serif;color:#111827;line-height:1.55}.doc{max-width:860px;margin:0 auto;background:#fff}
+section{border-bottom:1px solid rgba(0,0,0,.05)}h1{font-family:Georgia,serif;font-size:32px;margin:14px 0 6px}h2{font-family:Georgia,serif;font-size:21px;margin:0 0 12px;color:inherit}h3{font-size:15px;margin:16px 0 6px}
+.ct-capa{padding:70px 40px!important}.ct-k{letter-spacing:.2em;font-size:11px;font-weight:700;opacity:.85}.ct-capa-cli{margin-top:40px;font-size:14px}
+.ct-parte{background:rgba(0,0,0,.03);border-radius:10px;padding:14px 18px;margin:0 0 12px}.ct-parte b{font-size:12px;letter-spacing:.08em}.ct-parte p{margin:6px 0 0}
+.ct-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.ct-kpis div{background:rgba(255,255,255,.08);border:1px solid rgba(127,127,127,.25);border-radius:10px;padding:12px}.ct-kpis span{display:block;font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.06em}.ct-kpis b{font-size:16px}
+.ct-lista{margin:0;padding-left:20px;columns:2;column-gap:28px}.ct-lista li{margin:0 0 6px;break-inside:avoid}.ct-tab{width:100%;border-collapse:collapse}.ct-tab td{padding:8px 0;border-bottom:1px solid rgba(0,0,0,.08)}.ct-tab .r{text-align:right;white-space:nowrap}
+.ct-item{margin-bottom:10px}.ct-item p{margin:4px 0 0}.ct-img{max-width:100%;border-radius:10px;display:block;margin:10px 0}.ct-hero{min-height:220px;background-size:cover;background-position:center;color:#fff;padding:40px!important}
+.ct-split{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:center}.ct-split.dir img{order:2}.ct-clausula p{margin:0 0 8px}
+.ct-ass-g{display:grid;grid-template-columns:1fr 1fr;gap:40px 30px;margin-top:40px}.ct-ass-g div{text-align:center;font-size:13px}.ct-ass-g span{display:block;border-top:1px solid #111;margin-bottom:6px;height:1px}.ct-ass-g small{display:block;opacity:.7}
+mark{background:#fff2a8;color:#7a5b00;padding:0 2px;border-radius:3px}
+.bar{position:sticky;top:0;background:${ctEsc(prim)};color:#fff;padding:10px;text-align:center;font-size:14px;z-index:5}.bar button{margin-left:10px;padding:8px 16px;border:0;border-radius:999px;font-weight:700;cursor:pointer}
+@media print{.bar{display:none}body{background:#fff}mark{background:none;color:inherit}section{break-inside:avoid-page}.ct-clausula{break-inside:auto}}
+@media(max-width:640px){.ct-lista{columns:1}.ct-split{grid-template-columns:1fr}section{padding-left:18px!important;padding-right:18px!important}}
+</style></head><body>${ctx.barra?`<div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div>`:""}<div class="doc">${corpo}</div></body></html>`; }
+
+// ---------- tela: modelos de contrato ----------
+async function crmVModelos(v){
+ v.innerHTML=crmHead("Modelos de contrato","Os modelos que vocês já usam na 4C estão aqui. Gere o contrato a partir do plano escolhido ou crie modelos novos do jeito que quiser.",
+  `<button class="txt-btn" id="ctCfg">Dados da Resilcon</button><button class="txt-btn" id="ctGerar">Gerar contrato</button>${crmPri('id="ctNovo">Novo modelo</button>')}`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando modelos…</div></div></div>`;
+ v.querySelector("#ctNovo").onclick=()=>ctNovoModelo(()=>crmVModelos(v));
+ v.querySelector("#ctGerar").onclick=()=>ctGerar({});
+ v.querySelector("#ctCfg").onclick=()=>ctEditarConfig();
+ let lista; try{ lista=(await ctIndice(true)).filter(m=>m.tipo!=="config"); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="crm_modelos") return;
+ v.querySelector("#crmBox").innerHTML=`<div class="card" style="overflow-x:auto"><table><thead><tr><th>Modelo</th><th>Origem</th><th>Formato</th><th>Atualizado</th><th></th></tr></thead><tbody>
+  ${lista.map(m=>`<tr><td><b>${esc(m.nome)}</b>${m.ativo===false?` <span class="pill neutral">inativo</span>`:""}</td><td class="sub">${m.origem==="4c"?"Trazido da 4C":"Criado no Resiltrack"}${m.por?" · "+esc(m.por):""}</td><td class="sub">${m.tipo==="texto"?"Texto corrido":"Blocos"}</td>
+   <td class="sub num">${m.atualizado_em?new Date(m.atualizado_em).toLocaleDateString("pt-BR"):""}</td>
+   <td class="right" style="white-space:nowrap"><button class="txt-btn" data-ct-ver="${m.chave}">Ver</button><button class="txt-btn" data-ct-usar="${m.chave}">Gerar contrato</button><button class="txt-btn" data-ct-ed="${m.chave}">Editar</button><button class="txt-btn" data-ct-dup="${m.chave}">Duplicar</button></td></tr>`).join("")}
+  </tbody></table></div>`;
+ const box=v.querySelector("#crmBox");
+ box.querySelectorAll("[data-ct-ver]").forEach(b=>b.onclick=async()=>{ try{ const m=await ctModelo(b.dataset.ctVer); const cfg=await ctConfig(); ctAbrirJanela(ctDocumento(m,ctVariaveis({cli:{},cesta:[],extras:[]},cfg),{barra:true},true)); }catch(e){ crmToast(crmErro(e)); } });
+ box.querySelectorAll("[data-ct-usar]").forEach(b=>b.onclick=()=>ctGerar({modelo:b.dataset.ctUsar}));
+ box.querySelectorAll("[data-ct-ed]").forEach(b=>b.onclick=async()=>{ try{ ctEditor(b.dataset.ctEd,await ctModelo(b.dataset.ctEd),()=>crmVModelos(v)); }catch(e){ crmToast(crmErro(e)); } });
+ box.querySelectorAll("[data-ct-dup]").forEach(b=>b.onclick=async()=>{ try{ const m=JSON.parse(JSON.stringify(await ctModelo(b.dataset.ctDup))); m.nome=m.nome+" (cópia)"; m.origem="resiltrack"; delete m.id;
+   ctEditor("contrato_"+Date.now().toString(36),m,()=>crmVModelos(v)); }catch(e){ crmToast(crmErro(e)); } });
+}
+function ctAbrirJanela(html){ const w=window.open("","_blank"); if(!w){ crmToast("O navegador bloqueou a janela. Libere pop-ups para o Resiltrack."); return null; } w.document.open(); w.document.write(html); w.document.close(); return w; }
+function ctNovoModelo(depois){ const tipos=["capa-contrato","partes","resumo-contratual","servicos-inclusos","extras-selecionados-contrato","pagamento-contrato","clausulas","assinaturas","rodape-contrato"];
+ ctEditor("contrato_"+Date.now().toString(36),{nome:"Novo modelo de contrato",tipo:"blocos",origem:"resiltrack",tema:{primary:"#006789"},blocos:tipos.map(t=>({id:"b"+Math.random().toString(36).slice(2,8),type:t,visible:true,style:{...CT_BLOCOS[t].estilo},content:JSON.parse(JSON.stringify(CT_BLOCOS[t].conteudo))}))},depois); }
+
+async function ctEditarConfig(){ const cfg=await ctConfig(); const ks=CT_PALAVRAS[2][1];
+ const m=crmModal("Modelos de contrato","Dados da Resilcon nos contratos","",`<p class="sub" style="margin:0 0 12px">Esses dados preenchem as palavras-chave [CONTABILIDADE_...] de todos os contratos.</p>
+  <div class="crm-form">${ks.map(([k,r])=>`<label class="crm-f"><span>${esc(r)}</span><input class="inp" data-cfg="${k}" value="${escAttr(cfg[k]||"")}"></label>`).join("")}</div>
+  <div class="crm-pe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ce-pri" id="cfgOk">Salvar</button></div>`);
+ m.querySelector("#cfgOk").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; const val={}; m.querySelectorAll("[data-cfg]").forEach(i=>val[i.dataset.cfg]=i.value.trim());
+  try{ await ctSalvar("contrato_config_resilcon",{nome:"Dados da Resilcon",tipo:"config",valores:val}); CT.config=null; closeModal(); crmToast("Dados da Resilcon salvos"); }catch(e){ b.disabled=false; crmToast(e.message); } }; }
+
+// ---------- editor de modelo ----------
+function ctEditor(chave,modelo,depois){
+ const M=JSON.parse(JSON.stringify(modelo)); M.blocos=M.blocos||[]; let sel=M.tipo==="texto"?null:0; let ultimoCampo=null;
+ const m=crmModal("Modelos de contrato","Editar modelo","",`<div class="ct-ed">
+  <div class="ct-ed-l"><label class="crm-f"><span>Nome do modelo</span><input class="inp" id="edNome" value="${escAttr(M.nome||"")}"></label>
+   <label class="crm-chk"><input type="checkbox" id="edAtivo" ${M.ativo===false?"":"checked"}><span>Ativo (aparece na hora de gerar)</span></label>
+   ${M.tipo==="texto"?`<p class="sub">Modelo em texto corrido. Edite direto no documento ao lado.</p>`:`<div id="edBlocos"></div><div class="crm-pe" style="margin-top:8px"><select class="inp" id="edAdd"><option value="">Adicionar bloco…</option>${Object.entries(CT_BLOCOS).map(([k,b])=>`<option value="${k}">${esc(b.nome)}</option>`).join("")}</select></div>`}
+   <details class="ct-vars"><summary>Palavras-chave (clique para inserir)</summary>${CT_PALAVRAS.map(([g,l])=>`<b>${esc(g)}</b><div>${l.map(([k,r])=>`<button type="button" class="ct-var" data-var="${k}" title="${escAttr(r)}">[${k}]</button>`).join("")}</div>`).join("")}</details></div>
+  <div class="ct-ed-c">${M.tipo==="texto"?`<div class="ct-tb"><button type="button" data-cmd="bold"><b>N</b></button><button type="button" data-cmd="italic"><i>I</i></button><button type="button" data-cmd="underline"><u>S</u></button><button type="button" data-cmd="insertUnorderedList">• Lista</button><button type="button" data-cmd="insertOrderedList">1. Lista</button><button type="button" data-cmd="justifyFull">Justificar</button></div><div class="ct-rich" id="edRich" contenteditable="true">${M.html||""}</div>`
+   :`<div id="edCampos"></div>`}</div>
+  <div class="ct-ed-r"><p class="sub" style="margin:0 0 6px">Prévia (as palavras-chave aparecem destacadas)</p><iframe id="edPrev" title="Prévia do contrato"></iframe></div></div>
+  <div class="crm-pe" style="margin-top:12px">${M.origem!=="4c"?`<button class="txt-btn crm-perigo" id="edDel">Excluir</button>`:""}<span style="flex:1"></span><button class="view-btn ghost" id="edVer">Abrir em tela cheia</button><button class="view-btn ce-pri" id="edSalvar">Salvar modelo</button></div>`);
+ modal.classList.add("ct-modal");
+ const prev=async()=>{ const cfg=await ctConfig(); if(M.tipo==="texto") M.html=m.querySelector("#edRich").innerHTML; m.querySelector("#edPrev").srcdoc=ctDocumento(M,ctVariaveis({cli:{},cesta:[],extras:[]},cfg),{},true); };
+ let t=null; const prevLento=()=>{ clearTimeout(t); t=setTimeout(prev,400); };
+ const pintaBlocos=()=>{ const el=m.querySelector("#edBlocos"); if(!el) return;
+  el.innerHTML=M.blocos.map((b,i)=>`<div class="ct-bl ${i===sel?"on":""} ${b.visible===false?"off":""}" data-sel="${i}"><span>${esc((CT_BLOCOS[b.type]||{}).nome||b.type)}${(b.content&&b.content.title)?`<small>${esc(String(b.content.title).slice(0,40))}</small>`:""}</span>
+   <span class="ct-bl-a"><button type="button" data-up="${i}" title="Subir">↑</button><button type="button" data-down="${i}" title="Descer">↓</button><button type="button" data-vis="${i}" title="Mostrar ou esconder">${b.visible===false?"◌":"●"}</button><button type="button" data-rm="${i}" title="Remover">×</button></span></div>`).join("");
+  el.querySelectorAll("[data-sel]").forEach(d=>d.onclick=e=>{ if(e.target.closest("button")) return; sel=+d.dataset.sel; pintaBlocos(); pintaCampos(); });
+  el.querySelectorAll("[data-up]").forEach(x=>x.onclick=()=>{ const i=+x.dataset.up; if(i>0){ [M.blocos[i-1],M.blocos[i]]=[M.blocos[i],M.blocos[i-1]]; sel=i-1; pintaBlocos(); pintaCampos(); prevLento(); } });
+  el.querySelectorAll("[data-down]").forEach(x=>x.onclick=()=>{ const i=+x.dataset.down; if(i<M.blocos.length-1){ [M.blocos[i+1],M.blocos[i]]=[M.blocos[i],M.blocos[i+1]]; sel=i+1; pintaBlocos(); pintaCampos(); prevLento(); } });
+  el.querySelectorAll("[data-vis]").forEach(x=>x.onclick=()=>{ const b=M.blocos[+x.dataset.vis]; b.visible=b.visible===false; pintaBlocos(); prevLento(); });
+  el.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{ if(x.dataset.ok!=="1"){ x.dataset.ok="1"; x.textContent="?"; return; } M.blocos.splice(+x.dataset.rm,1); sel=Math.min(sel,M.blocos.length-1); pintaBlocos(); pintaCampos(); prevLento(); }); };
+ const campoHTML=(path,k,val)=>{ const rot=CT_CAMPOS_ROT[k]||k; if(/^(id|imageRef|textAlign.*|titleAlign|methodsAlign|dueDateAlign|descriptionAlign|ctaText|ctaLink)$/.test(k)) return "";
+  if(Array.isArray(val)&&val.every(x=>typeof x==="string")) return `<label class="crm-f"><span>${esc(rot)}</span><textarea class="inp" rows="${Math.min(10,Math.max(3,val.length+1))}" data-path="${path}" data-arr="1">${esc(val.join("\n"))}</textarea></label>`;
+  if(Array.isArray(val)) return `<div class="crm-f"><span>${esc(rot)}</span>${val.map((o,j)=>`<div class="ct-grupo">${Object.entries(o||{}).map(([kk,vv])=>typeof vv==="string"?campoHTML(`${path}.${j}.${kk}`,kk,vv):"").join("")}<button type="button" class="txt-btn crm-perigo" data-rmit="${path}.${j}">Remover</button></div>`).join("")}<button type="button" class="txt-btn" data-addit="${path}">Adicionar</button></div>`;
+  if(val&&typeof val==="object") return "";
+  const longo=String(val||"").length>70||/text|description|terms/i.test(k);
+  return `<label class="crm-f"><span>${esc(rot)}</span>${longo?`<textarea class="inp" rows="${Math.min(18,Math.max(3,Math.ceil(String(val||"").length/70)))}" data-path="${path}">${esc(val||"")}</textarea>`:`<input class="inp" data-path="${path}" value="${escAttr(val||"")}">`}</label>`; };
+ const pega=(o,p)=>p.split(".").reduce((a,k)=>a==null?a:a[k],o);
+ const poe=(o,p,v)=>{ const ks=p.split("."); const last=ks.pop(); const a=ks.reduce((x,k)=>x[k],o); a[last]=v; };
+ const pintaCampos=()=>{ const el=m.querySelector("#edCampos"); if(!el) return; const b=M.blocos[sel]; if(!b){ el.innerHTML=`<p class="sub">Adicione um bloco para começar.</p>`; return; }
+  b.style=b.style||{}; b.content=b.content||{};
+  el.innerHTML=`<h4 style="margin:0 0 10px">${esc((CT_BLOCOS[b.type]||{}).nome||b.type)}</h4>
+   ${b.type==="servicos-inclusos"?`<div class="ce-note">Na hora de gerar, a lista vem do plano escolhido na proposta. Os itens abaixo só aparecem se não houver plano.</div>`:""}
+   ${b.type==="extras-selecionados-contrato"?`<div class="ce-note">Este bloco é preenchido com os extras da proposta. Se não houver extras, ele não aparece.</div>`:""}
+   <div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Cor de fundo</span><input type="color" class="inp" data-cor="backgroundColor" value="${escAttr(/^#[0-9a-f]{6}$/i.test(b.style.backgroundColor||"")?b.style.backgroundColor:"#ffffff")}"></label>
+   <label class="crm-f"><span>Cor do texto</span><input type="color" class="inp" data-cor="textColor" value="${escAttr(/^#[0-9a-f]{6}$/i.test(b.style.textColor||"")?b.style.textColor:"#111827")}"></label></div>
+   ${Object.entries(b.content).map(([k,vv])=>campoHTML("content."+k,k,vv)).join("")}`;
+  el.querySelectorAll("[data-cor]").forEach(i=>i.oninput=()=>{ b.style[i.dataset.cor]=i.value; prevLento(); });
+  el.querySelectorAll("[data-path]").forEach(i=>{ i.onfocus=()=>{ ultimoCampo=i; }; i.oninput=()=>{ poe(b,i.dataset.path,i.dataset.arr?i.value.split("\n").map(x=>x.trim()).filter(Boolean):i.value); prevLento(); if(/title$/.test(i.dataset.path)) pintaBlocos(); }; });
+  el.querySelectorAll("[data-addit]").forEach(x=>x.onclick=()=>{ const arr=pega(b,x.dataset.addit); const mod=arr[0]?Object.fromEntries(Object.keys(arr[0]).map(k=>[k,""])):{title:"",text:""}; arr.push(mod); pintaCampos(); prevLento(); });
+  el.querySelectorAll("[data-rmit]").forEach(x=>x.onclick=()=>{ const p=x.dataset.rmit.split("."); const j=+p.pop(); pega(b,p.join(".")).splice(j,1); pintaCampos(); prevLento(); }); };
+ pintaBlocos(); pintaCampos(); prev();
+ const add=m.querySelector("#edAdd"); if(add) add.onchange=()=>{ const t2=add.value; if(!t2) return; const d=CT_BLOCOS[t2]; M.blocos.splice(sel+1,0,{id:"b"+Math.random().toString(36).slice(2,8),type:t2,visible:true,style:{...d.estilo},content:JSON.parse(JSON.stringify(d.conteudo))}); sel=sel+1; add.value=""; pintaBlocos(); pintaCampos(); prevLento(); };
+ const rich=m.querySelector("#edRich"); if(rich){ rich.oninput=prevLento; rich.onfocus=()=>{ ultimoCampo=rich; }; m.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>{ e.preventDefault(); document.execCommand(b.dataset.cmd); prevLento(); }); }
+ m.querySelectorAll("[data-var]").forEach(b=>b.onmousedown=e=>{ e.preventDefault(); const tok="["+b.dataset.var+"]";
+  if(ultimoCampo===rich&&rich){ rich.focus(); document.execCommand("insertText",false,tok); prevLento(); return; }
+  if(ultimoCampo&&ultimoCampo.isConnected){ const i=ultimoCampo, s=i.selectionStart??i.value.length, f=i.selectionEnd??s; i.value=i.value.slice(0,s)+tok+i.value.slice(f); i.focus(); i.setSelectionRange(s+tok.length,s+tok.length); i.dispatchEvent(new Event("input")); return; }
+  navigator.clipboard&&navigator.clipboard.writeText(tok); crmToast(tok+" copiado. Clique num campo e cole."); });
+ m.querySelector("#edVer").onclick=async()=>{ await prev(); const cfg=await ctConfig(); ctAbrirJanela(ctDocumento(M,ctVariaveis({cli:{},cesta:[],extras:[]},cfg),{barra:true},true)); };
+ m.querySelector("#edSalvar").onclick=async ev=>{ const b=ev.currentTarget; M.nome=crmVal(m,"#edNome")||"Modelo sem nome"; M.ativo=m.querySelector("#edAtivo").checked; if(rich) M.html=rich.innerHTML;
+  b.disabled=true; b.textContent="Salvando…"; try{ await ctSalvar(chave,M); closeModal(); crmToast("Modelo salvo"); depois&&depois(); }catch(e){ b.disabled=false; b.textContent="Salvar modelo"; crmToast(e.message); } };
+ const del=m.querySelector("#edDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ await ctExcluir(chave); closeModal(); crmToast("Modelo excluído"); depois&&depois(); }catch(e){ crmToast(e.message); } };
+}
+
+// ---------- gerar contrato a partir do negócio / proposta ----------
+// opts: {modelo, negocio:{id,...}, proposta:{cesta,extras}}
+async function ctGerar(opts){
+ let lista=[]; try{ lista=(await ctIndice()).filter(m=>m.tipo!=="config"&&m.ativo!==false); }catch(e){ crmToast(crmErro(e)); return; }
+ const cfg=await ctConfig();
+ let negs=[]; try{ negs=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}))||[]; }catch(_){}
+ const st={modelo:opts.modelo||(lista.find(m=>/b[aá]sico$/i.test(m.nome))||lista[0]||{}).chave,negocio:opts.negocio?opts.negocio.id:"",proposta:opts.proposta||null,cli:{},inicio:new Date().toISOString().slice(0,10),fim:"",oNeg:null,contato:null};
+ const f=new Date(); f.setFullYear(f.getFullYear()+1); f.setDate(f.getDate()-1); st.fim=f.toISOString().slice(0,10);
+ const m=crmModal("Contratos","Gerar contrato","",`<div class="ct-ed ct-ger">
+  <div class="ct-ed-l"><label class="crm-f"><span>Negócio</span><select class="inp" id="gNeg"><option value="">Sem negócio (preencher à mão)</option>${negs.map(o=>`<option value="${o.id}" ${o.id===st.negocio?"selected":""}>${esc(o.titulo)}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Modelo de contrato</span><select class="inp" id="gMod">${lista.map(x=>`<option value="${x.chave}" ${x.chave===st.modelo?"selected":""}>${esc(x.nome)}</option>`).join("")}</select></label>
+   <div id="gProp" class="ce-note"></div>
+   <div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Início da vigência</span><input type="date" class="inp" id="gIni" value="${st.inicio}"></label><label class="crm-f"><span>Fim da vigência</span><input type="date" class="inp" id="gFim" value="${st.fim}"></label></div>
+   <h4 class="crm-h4">Dados do cliente</h4><div class="crm-form" id="gCli" style="grid-template-columns:1fr 1fr"></div></div>
+  <div class="ct-ed-r ct-ger-r"><p class="sub" style="margin:0 0 6px">Prévia. O que estiver em amarelo ainda falta preencher.</p><iframe id="gPrev" title="Prévia do contrato"></iframe></div></div>
+  <div class="crm-pe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ce-pri" id="gSalvar">Salvar no CRM</button></div>`);
+ modal.classList.add("ct-modal");
+ const camposCli=CT_PALAVRAS[0][1].filter(([k])=>k!=="CONTRATANTE");
+ const pintaCli=()=>{ m.querySelector("#gCli").innerHTML=camposCli.map(([k,r])=>`<label class="crm-f"><span>${esc(r)}</span><input class="inp" data-cli="${k}" value="${escAttr(st.cli[k]||"")}"></label>`).join("");
+  m.querySelectorAll("[data-cli]").forEach(i=>i.oninput=()=>{ st.cli[i.dataset.cli]=i.value; prevLento(); }); };
+ const ctx=()=>{ const p=st.proposta||{}; return {cesta:p.cesta||[],extras:p.extras||[],inclusos:[...new Set((p.cesta||[]).flatMap(x=>x.inclusos||[]))]}; };
+ const pintaProp=()=>{ const p=st.proposta; m.querySelector("#gProp").innerHTML=p&&p.cesta&&p.cesta.length?`<b>Proposta usada:</b> ${p.cesta.map(c=>esc(c.plano)+" "+precoMoeda(c.valor)+"/mês").join(" + ")}${(p.extras||[]).length?` · ${p.extras.length} extra(s)`:""}. Os serviços do plano entram sozinhos no contrato.`
+  :`Este negócio ainda não tem proposta salva. Monte no Simulador de planos e clique em "Salvar no negócio" para o contrato puxar o plano e os valores.`; };
+ const doc=async(barra,marcar)=>{ const mod=await ctModelo(st.modelo); const c=ctx(); const v=ctVariaveis({cli:st.cli,inicio:st.inicio,fim:st.fim,cesta:c.cesta,extras:c.extras},cfg); return {mod,v,html:ctDocumento(mod,v,{...c,barra},marcar)}; };
+ let t=null; const prevLento=()=>{ clearTimeout(t); t=setTimeout(async()=>{ try{ m.querySelector("#gPrev").srcdoc=(await doc(false,true)).html; }catch(e){ crmToast(crmErro(e)); } },350); };
+ const carregarNeg=async id=>{ st.negocio=id; st.oNeg=null; st.contato=null; if(!id){ pintaProp(); pintaCli(); prevLento(); return; }
+  try{ const fi=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:id}}); const o=(fi.negocios||[]).find(x=>x.id===id)||{}; const c=fi.contato||{}; st.oNeg=o; st.contato=c;
+   if(!opts.proposta||opts.negocio&&opts.negocio.id!==id) st.proposta=(o.campos&&o.campos.proposta)||null;
+   const cc=c.campos||{}; st.cli={...st.cli,CLIENTE_NOME:c.nome||"",["CLIENTE_E-MAIL"]:c.email||"",CLIENTE_TELEFONE:c.telefone||"",CLIENTE_EMPRESA_NOME:c.empresa_nome||c.empresa||"",CLIENTE_EMPRESA_DOCUMENTO:c.cnpj?(typeof fmtCnpj==="function"?fmtCnpj(c.cnpj):c.cnpj):(st.cli.CLIENTE_EMPRESA_DOCUMENTO||""),
+    CLIENTE_CIDADE:c.cidade||"",CLIENTE_UF:c.uf||"",CLIENTE_CPF:cc.cpf||st.cli.CLIENTE_CPF||"",CLIENTE_LOGRADOURO:cc.logradouro||st.cli.CLIENTE_LOGRADOURO||"",CLIENTE_NUMERO:cc.numero||st.cli.CLIENTE_NUMERO||"",CLIENTE_BAIRRO:cc.bairro||st.cli.CLIENTE_BAIRRO||"",CLIENTE_CEP:cc.cep||st.cli.CLIENTE_CEP||""};
+  }catch(e){ crmToast(crmErro(e)); }
+  pintaProp(); pintaCli(); prevLento(); };
+ m.querySelector("#gNeg").onchange=e=>carregarNeg(e.target.value);
+ m.querySelector("#gMod").onchange=e=>{ st.modelo=e.target.value; prevLento(); };
+ m.querySelector("#gIni").oninput=e=>{ st.inicio=e.target.value; prevLento(); }; m.querySelector("#gFim").oninput=e=>{ st.fim=e.target.value; prevLento(); };
+ m.querySelector("#gPdf").onclick=async()=>{ const d=await doc(true,false); ctAbrirJanela(d.html); };
+ m.querySelector("#gSalvar").onclick=async ev=>{ const b=ev.currentTarget; if(!st.negocio){ crmToast("Escolha o negócio para salvar o contrato no CRM. Sem negócio, use Imprimir ou salvar PDF."); return; }
+  b.disabled=true; b.textContent="Salvando…";
+  try{ const d=await doc(true,false); const nomeArq=`Contrato ${(st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||"cliente")} ${st.inicio}.html`;
+   const path=`contratos/${new Date().getFullYear()}/${Date.now()}-${nomeArq.normalize("NFD").replace(/[^\w.\-]+/g,"_")}`;
+   const {error}=await sb.storage.from("crm-arquivos").upload(path,new Blob([d.html],{type:"text/html"}),{contentType:"text/html"}); if(error) throw error;
+   await crmRpc("crm_salvar_contrato",{p:{oportunidade_id:st.negocio,contato_id:st.oNeg&&st.oNeg.contato_id,cliente_nome:st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||null,cnpj:st.cli.CLIENTE_EMPRESA_DOCUMENTO||null,
+    titulo:d.mod.nome,servicos:d.v.NOME_PLANO?`${d.v.NOME_PLANO}: ${d.v.SERVICOS_INCLUSOS}`:null,valor_mensal:precoNum(d.v.VALOR_PROPOSTA)||null,status:"rascunho",inicio:st.inicio,fim:st.fim,arquivo_path:path,arquivo_nome:nomeArq,obs:"Gerado no Resiltrack com o modelo "+d.mod.nome}});
+   closeModal(); crmToast("Contrato salvo em Contratos como rascunho. Quando voltar assinado, anexe o PDF e marque como assinado.");
+  }catch(e){ b.disabled=false; b.textContent="Salvar no CRM"; crmToast(crmErro(e)); } };
+ pintaCli(); pintaProp(); if(st.negocio) carregarNeg(st.negocio); else prevLento();
+}
+
+(function(){ if(document.getElementById("ct-css")) return; const s=document.createElement("style"); s.id="ct-css"; s.textContent=`
+.ct-modal{max-width:min(1380px,96vw)!important;width:96vw}
+.ct-ed{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(280px,1.1fr) minmax(320px,1.3fr);gap:16px;align-items:start}.ct-ger{grid-template-columns:minmax(300px,1fr) minmax(360px,1.3fr)}
+.ct-ed-l{display:grid;gap:10px}.ct-ed-c{max-height:72vh;overflow:auto;padding-right:4px}.ct-ed-r iframe{width:100%;height:72vh;border:1px solid var(--line,#d5dde2);border-radius:12px;background:#fff}
+.ct-bl{display:flex;justify-content:space-between;gap:6px;align-items:center;padding:8px 10px;border:1px solid var(--line,#e3e9ec);border-radius:10px;margin-bottom:6px;cursor:pointer;font-size:13px}.ct-bl small{display:block;color:var(--muted,#5b6770);font-size:11px}
+.ct-bl.on{border-color:#006789;background:rgba(0,103,137,.08)}.ct-bl.off{opacity:.5}.ct-bl-a{display:flex;gap:2px}.ct-bl-a button{border:0;background:none;cursor:pointer;padding:2px 5px;border-radius:6px;font-size:13px}.ct-bl-a button:hover{background:rgba(0,0,0,.06)}
+.ct-grupo{border:1px dashed var(--line,#d5dde2);border-radius:10px;padding:10px;margin:0 0 8px;display:grid;gap:8px}
+.ct-vars summary{cursor:pointer;color:#006789;font-weight:600;font-size:13px}.ct-vars b{display:block;font-size:12px;margin:8px 0 4px}.ct-var{font:11px/1.2 monospace;border:1px solid var(--line,#d5dde2);background:#f6f9fa;border-radius:6px;padding:3px 5px;margin:0 4px 4px 0;cursor:pointer}
+.ct-tb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.ct-tb button{border:1px solid var(--line,#d5dde2);background:#fff;border-radius:6px;padding:4px 8px;cursor:pointer}
+.ct-rich{min-height:60vh;border:1px solid var(--line,#d5dde2);border-radius:10px;padding:16px;background:#fff;color:#111;font-size:14px;line-height:1.55;outline:none}
+@media(max-width:1100px){.ct-ed,.ct-ger{grid-template-columns:1fr}.ct-ed-r iframe{height:60vh}}
+`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
