@@ -8,7 +8,7 @@
 <meta name="description" content="Painel de qualidade de atendimento da Resilcon">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
 <style>
   :root{
     --bg:#f4f5fa;--surface:#fff;--surface-2:#fafbff;--ink:#1a1b28;--ink-2:#4a4d63;--muted:#83879c;
@@ -19,8 +19,8 @@
   }
   /* tema claro unico — sem modo escuro */
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  h1,h2,h3{font-family:"Sora",system-ui,sans-serif;margin:0;text-wrap:balance}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:"Urbanist",system-ui,sans-serif;margin:0;text-wrap:balance}
   .num{font-variant-numeric:tabular-nums}
   .wrap{max-width:1200px;margin:0 auto;padding:0 24px 72px}
   img{max-width:100%}
@@ -61,7 +61,7 @@
   .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start}
   .tile .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none}
   .tile .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
-  .tile .val{font-family:"Sora",sans-serif;font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-top:3px}
+  .tile .val{font-family:"Urbanist",sans-serif;font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-top:3px}
   .tile .val small{font-size:14px;color:var(--muted);font-weight:600;margin-left:4px}
   .ic.violet{background:var(--accent-soft);color:var(--accent)}.ic.amber{background:var(--warn-soft);color:var(--warn)}
   .ic.green{background:var(--good-soft);color:var(--good)}.ic.red{background:var(--crit-soft);color:var(--crit)}
@@ -82,11 +82,11 @@
   .chip.err{color:var(--crit);background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
   .chip.churn{color:var(--crit);background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 30%,transparent);font-weight:600}
   .canal{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
-  .nota{font-family:"Sora",sans-serif;font-weight:700;font-size:14px;padding:5px 9px;border-radius:8px;display:inline-block;min-width:44px;text-align:center}
+  .nota{font-family:"Urbanist",sans-serif;font-weight:700;font-size:14px;padding:5px 9px;border-radius:8px;display:inline-block;min-width:44px;text-align:center}
   .nota.g{color:var(--good);background:var(--good-soft)}.nota.a{color:var(--warn);background:var(--warn-soft)}.nota.r{color:var(--crit);background:var(--crit-soft)}.nota.n{color:var(--muted);background:var(--surface-2)}
   .score-wrap{display:flex;align-items:center;gap:10px}
   .meter{width:76px;height:7px;border-radius:4px;background:var(--border);overflow:hidden}.meter>span{display:block;height:100%;border-radius:4px}
-  .score-num{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
+  .score-num{font-family:"Urbanist",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
   .view-btn{border:1px solid var(--border);background:var(--surface);color:var(--accent);font:inherit;font-size:12px;font-weight:600;padding:6px 11px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
   .view-btn:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
   .view-btn.ghost{color:var(--ink-2)}
@@ -112,7 +112,7 @@
   .ecard .en{font-weight:600;font-size:14.5px;line-height:1.3}
   .ecard .ecnpj{font-size:11.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
   .ecard .stats{display:flex;gap:16px;margin-top:14px}
-  .ecard .st .n{font-family:"Sora",sans-serif;font-weight:700;font-size:18px}
+  .ecard .st .n{font-family:"Urbanist",sans-serif;font-weight:700;font-size:18px}
   .ecard .st .l{font-size:11px;color:var(--muted)}
   .health{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap;flex:none}
   .health.fa{color:var(--good);background:var(--good-soft)}.health.sensivel{color:var(--crit);background:var(--crit-soft)}.health.neutro{color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border)}
@@ -124,7 +124,7 @@
   .modal-head{background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;padding:22px 24px;display:flex;gap:16px;align-items:flex-start}
   .modal-head .mh-l{flex:1}.modal-head .m-sub{font-size:12px;opacity:.85}.modal-head h3{font-size:19px;font-weight:700;margin:2px 0 8px}
   .modal-head .m-chips{display:flex;gap:8px;flex-wrap:wrap}.modal-head .m-chip{font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px;font-weight:500}
-  .m-score{text-align:center;flex:none}.m-score .big{font-family:"Sora",sans-serif;font-size:34px;font-weight:700;line-height:1}.m-score .of{font-size:12px;opacity:.8}.m-score .tag{font-size:11px;font-weight:600;margin-top:6px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:999px;display:inline-block}
+  .m-score{text-align:center;flex:none}.m-score .big{font-family:"Urbanist",sans-serif;font-size:34px;font-weight:700;line-height:1}.m-score .of{font-size:12px;opacity:.8}.m-score .tag{font-size:11px;font-weight:600;margin-top:6px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:999px;display:inline-block}
   .modal-body{padding:22px 24px;display:flex;flex-direction:column;gap:18px}
   /* produtividade: pop-up centralizado */
   .overlay.prodov{align-items:center;overflow-y:auto}
@@ -133,25 +133,25 @@
   .prodhead h3{font-size:19px;font-weight:700;margin:2px 0 4px}.prodhead .m-sub{font-size:12px;opacity:.88}
   .prodhead .close-x{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;width:32px;height:32px;cursor:pointer}
   .prodbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface-2)}
-  .psec{display:flex;flex-direction:column;gap:10px}.psec h4{font-family:"Sora",sans-serif;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#066789;margin:0}
+  .psec{display:flex;flex-direction:column;gap:10px}.psec h4{font-family:"Urbanist",sans-serif;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#066789;margin:0}
   .ptile{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface)}.ptile .pl{font-size:11px;color:var(--ink-2)}.ptile .pv{font-size:18px;font-weight:700}.ptile .ps{font-size:11px;color:var(--ink-2);margin-top:2px}
   .pgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.pgrid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .pbar{display:grid;grid-template-columns:140px 1fr auto;gap:10px;align-items:center;font-size:13px;margin-bottom:6px}.pbt{height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}.pbt div{height:100%;background:#066789}
   .pstack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2)}.plegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:6px}.plegend b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
-  .pbig{font-family:"Sora",sans-serif;font-size:30px;font-weight:700;color:#066789}.pbig small{font-size:12px;font-weight:500;color:var(--ink-2)}
+  .pbig{font-family:"Urbanist",sans-serif;font-size:30px;font-weight:700;color:#066789}.pbig small{font-size:12px;font-weight:500;color:var(--ink-2)}
   .papps>div{display:grid;grid-template-columns:24px 1fr auto 56px auto;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px}.papps .pan{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.papps em{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px}.papps em.ok{background:#dff5e8;color:#16714a}.papps em.neu{background:var(--surface-2);color:var(--ink-2)}
   .pcls{display:flex;gap:16px;flex-wrap:wrap}.pcls>div{display:flex;gap:8px;align-items:center}
   .ptbl{width:100%;border-collapse:collapse;font-size:13px}.ptbl th{text-align:left;font-size:11px;color:#066789;padding:6px 8px;position:sticky;top:0;background:var(--surface)}.ptbl td{padding:6px 8px;border-top:1px solid var(--border);white-space:nowrap}
   @media (max-width:700px){.pgrid4{grid-template-columns:repeat(2,1fr)}.pgrid3{grid-template-columns:1fr 1fr}.pbar{grid-template-columns:100px 1fr}.pbar .pbv{grid-column:1/-1}}
   .panel{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
-  .panel h4{font-family:"Sora",sans-serif;font-size:13px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .panel h4{font-family:"Urbanist",sans-serif;font-size:13px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:8px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
   .field .k{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}.field .v{font-size:13.5px;color:var(--ink);margin-top:1px}
   .prose{font-size:13.5px;color:var(--ink-2);line-height:1.6}
   .axis{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px dashed var(--border)}.axis:last-child{border-bottom:none}
   .axis .ax-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
   .axis .ax-main{flex:1}.axis .ax-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-  .axis .ax-name{font-weight:600;font-size:13.5px}.axis .ax-note{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
+  .axis .ax-name{font-weight:600;font-size:13.5px}.axis .ax-note{font-family:"Urbanist",sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
   .axis .ax-just{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
   ul.melhorias{margin:0;padding-left:18px}ul.melhorias li{font-size:13px;color:var(--ink-2);margin-bottom:6px;line-height:1.5}
   .close-x{background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;display:grid;place-items:center;flex:none}.close-x:hover{background:rgba(255,255,255,.28)}
@@ -204,11 +204,11 @@
   /* mini kpi (pendências) */
   .mini-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
   .mini-kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-  .mini-kpi .n{font-family:"Sora",sans-serif;font-size:24px;font-weight:700;line-height:1.1}
+  .mini-kpi .n{font-family:"Urbanist",sans-serif;font-size:24px;font-weight:700;line-height:1.1}
   .mini-kpi .l{font-size:12px;color:var(--muted);margin-top:3px}
 
   /* risco / status cliente */
-  .risco{font-family:"Sora",sans-serif;font-weight:700;font-variant-numeric:tabular-nums;padding:4px 9px;border-radius:8px;display:inline-block;min-width:40px;text-align:center;font-size:13px}
+  .risco{font-family:"Urbanist",sans-serif;font-weight:700;font-variant-numeric:tabular-nums;padding:4px 9px;border-radius:8px;display:inline-block;min-width:40px;text-align:center;font-size:13px}
   .risco.saudavel{color:var(--good);background:var(--good-soft)}.risco.alerta{color:var(--warn);background:var(--warn-soft)}.risco.critico{color:var(--crit);background:var(--crit-soft)}
   .st-ic{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px}
   .st-ic.saudavel{color:var(--good);background:var(--good-soft)}.st-ic.alerta{color:var(--warn);background:var(--warn-soft)}.st-ic.critico{color:var(--crit);background:var(--crit-soft)}
@@ -217,12 +217,12 @@
   .team{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px}
   .team.risco{border-color:color-mix(in srgb,var(--crit) 35%,transparent);background:color-mix(in srgb,var(--crit-soft) 55%,var(--surface))}
   .team .th{display:flex;align-items:flex-start;gap:12px}
-  .team .rank{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:"Sora",sans-serif;font-weight:700;background:var(--accent-soft);color:var(--accent);flex:none}
+  .team .rank{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:"Urbanist",sans-serif;font-weight:700;background:var(--accent-soft);color:var(--accent);flex:none}
   .team .rank.gold{background:#fdf3d6;color:#b7791f}.team .rank.silver{background:#eef0f5;color:#6b7280}.team .rank.bronze{background:#f6e9dd;color:#a9611f}
-  .team .tname{font-family:"Sora",sans-serif;font-weight:700;font-size:16px}
+  .team .tname{font-family:"Urbanist",sans-serif;font-weight:700;font-size:16px}
   .team .tmeta{font-size:12px;color:var(--muted);margin-top:2px}
   .team .tscores{display:flex;gap:22px;margin-left:auto;text-align:right}
-  .team .tscores .sc .v{font-family:"Sora",sans-serif;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+  .team .tscores .sc .v{font-family:"Urbanist",sans-serif;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
   .team .tscores .sc .k{font-size:11px;color:var(--muted)}
   .team .tclientes{display:flex;gap:14px;font-size:12.5px;flex-wrap:wrap}
   .team .tclientes span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
@@ -240,7 +240,7 @@
   .kpi-big{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .kpi-big .box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .kpi-big .box .cap{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
-  .kpi-big .box .big{font-family:"Sora",sans-serif;font-size:42px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:4px 0 2px}
+  .kpi-big .box .big{font-family:"Urbanist",sans-serif;font-size:42px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:4px 0 2px}
   .kpi-big .box .sub2{font-size:12.5px;color:var(--muted)}
   .kpi-big .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:12px;background:var(--border)}
   .kpi-big .bar span{display:block;height:100%}
@@ -253,7 +253,7 @@
   .grid-setor td.setor-c{font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1}
   .grid-setor thead th.setor-c{position:sticky;left:0;z-index:2}
   .gcell{border-radius:9px;padding:7px 8px;text-align:center;min-width:82px;line-height:1.25}
-  .gcell .celm{font-family:"Sora",sans-serif;font-weight:700;font-size:15px}
+  .gcell .celm{font-family:"Urbanist",sans-serif;font-weight:700;font-size:15px}
   .gcell .cela{font-size:10.5px;opacity:.8}
   .gcell .celp{font-size:10px;margin-top:2px}
   .gcell.g9{background:#d7f0e2;color:#0f7a4f}.gcell.g{background:#e6f5ee;color:#128a5b}
@@ -271,7 +271,7 @@
   .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
   .kcol{flex:0 0 300px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:72vh}
   .kcol-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top-left-radius:12px;border-top-right-radius:12px;background:var(--surface);border-bottom:1px solid var(--border)}
-  .kcol-nome{font-family:"Sora",sans-serif;font-weight:600;font-size:13.5px}
+  .kcol-nome{font-family:"Urbanist",sans-serif;font-weight:600;font-size:13.5px}
   .kcol-n{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 9px}
   .kcol-body{padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:60px}
   .kcol-body.dragover{background:var(--accent-soft);border-radius:0 0 12px 12px}
@@ -303,7 +303,7 @@
   .wrap.wide{max-width:none;padding:12px 14px 40px}
   .perf-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#066789;color:#fff;border-radius:12px 12px 0 0}
   .perf-head .pi{width:36px;height:36px;border-radius:10px;background:#f08a3c;display:grid;place-items:center;color:#fff}
-  .perf-head b{display:block;font-family:"Sora",sans-serif;font-size:15px}.perf-head span{font-size:12px;opacity:.8}
+  .perf-head b{display:block;font-family:"Urbanist",sans-serif;font-size:15px}.perf-head span{font-size:12px;opacity:.8}
   .perf-card{overflow:hidden}
   @media(max-width:1250px){.perf-tbl th:nth-child(2),.perf-tbl td:nth-child(2){display:none}}
   .perf-tbl{width:100%;min-width:0!important;table-layout:auto}
@@ -325,7 +325,7 @@
   .canalbar{display:flex;height:7px;width:64px;border-radius:4px;overflow:hidden;gap:1px;margin:0 auto;background:var(--border)}.canalbar span{display:block;height:100%}
   .icon-act{background:none;border:none;cursor:pointer;color:var(--ink-2);padding:6px;border-radius:8px}.icon-act:hover{background:var(--surface-2);color:var(--accent)}
   .kcol-tot{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
-  .kcard-val{font-family:"Sora",sans-serif;font-weight:700;font-size:15px;margin-top:8px}
+  .kcard-val{font-family:"Urbanist",sans-serif;font-weight:700;font-size:15px;margin-top:8px}
   .kval-sub{font-family:inherit;font-weight:500;font-size:11px;color:var(--muted)}
   .kav{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;flex:none}
   .kav.vazio{background:var(--border);color:var(--muted)}
@@ -451,7 +451,7 @@
   .wb-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
   .wb-title span{display:block;font-size:11.5px;font-weight:500;color:#9aa0b4;margin-top:2px}
   .wb-clock{text-align:right;flex:none}
-  .wb-clock .t{font-family:"Sora",sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;line-height:1}
+  .wb-clock .t{font-family:"Urbanist",sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;line-height:1}
   .wb-clock .d{font-size:11.5px;color:#9aa0b4;margin-top:3px}
   .wb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
   .wb-monthnav{display:inline-flex;align-items:center;gap:2px;background:#1c2029;border:1px solid #2a2f3c;border-radius:10px;padding:3px}
@@ -470,7 +470,7 @@
   .wb-tile.c-warn::before{background:var(--warn)}
   .wb-tile.c-good::before{background:var(--good)}
   .wb-tile .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#9aa0b4;font-weight:700}
-  .wb-tile .v{font-family:"Sora",sans-serif;font-size:34px;font-weight:700;line-height:1.15;margin-top:6px}
+  .wb-tile .v{font-family:"Urbanist",sans-serif;font-size:34px;font-weight:700;line-height:1.15;margin-top:6px}
   .wb-tile.c-crit .v{color:#ff6b7f}
   .wb-tile.c-warn .v{color:#ffb648}
   .wb-tile.c-good .v{color:#3ddc97}
@@ -480,14 +480,14 @@
   .wb-gauge{display:flex;flex-direction:column;align-items:center;gap:8px}
   .wb-gauge .ring{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;position:relative}
   .wb-gauge .ring .hole{width:88px;height:88px;border-radius:50%;background:#12151d;display:grid;place-items:center;flex-direction:column}
-  .wb-gauge .ring .hole b{font-family:"Sora",sans-serif;font-size:22px;font-weight:700}
+  .wb-gauge .ring .hole b{font-family:"Urbanist",sans-serif;font-size:22px;font-weight:700}
   .wb-gauge .ring .hole small{font-size:9.5px;color:#9aa0b4;text-transform:uppercase;letter-spacing:.04em;margin-top:1px}
   .wb-gauge .lbl{font-size:11.5px;font-weight:600;color:#c7cbdb;text-align:center}
   .wb-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:16px}
   .wb-ring-item{display:flex;flex-direction:column;align-items:center;gap:7px}
   .wb-ring-item .ring{width:78px;height:78px;border-radius:50%;display:grid;place-items:center}
   .wb-ring-item .ring .hole{width:58px;height:58px;border-radius:50%;background:#12151d;display:grid;place-items:center}
-  .wb-ring-item .ring .hole b{font-family:"Sora",sans-serif;font-size:15px;font-weight:700}
+  .wb-ring-item .ring .hole b{font-family:"Urbanist",sans-serif;font-size:15px;font-weight:700}
   .wb-ring-item .lbl{font-size:10.5px;font-weight:600;color:#9aa0b4;text-align:center;text-transform:uppercase;letter-spacing:.03em}
   .wb-list-h{font-size:11.5px;font-weight:700;color:#c7cbdb;text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px}
   .wb-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #232733}
@@ -501,6 +501,135 @@
   .wb-row .rc b{color:#ff6b7f}
   .wb-empty{padding:22px 0;text-align:center;color:#9aa0b4;font-size:12.5px}
   @media(max-width:640px){ .wb-mid{grid-template-columns:1fr} .wb-gauge{flex-direction:row;justify-content:center} }
+
+  /* =================================================================
+     LAYOUT NOVO (W3Admin + paleta Resilcon) — camada aplicada por cima
+     Moldura com menu lateral, painel claro de cantos arredondados,
+     tema da moldura claro (padrão) ou escuro (botão no cabeçalho).
+     ================================================================= */
+  :root{
+    --bg:#F3F6F7;--surface:#FFFFFF;--surface-2:#F7FAFB;--ink:#1C1C1C;--ink-2:#3D4B50;--muted:#66777E;
+    --border:#DCE5E8;--border-strong:#C3D4D9;--accent:#066789;--accent-soft:#DCEAEF;--accent-deep:#044B64;
+    --accent-2:#269A9E;--grad:linear-gradient(135deg,#006789 0%,#269A9E 100%);
+    --good:#2E8B57;--good-soft:#DDF1E1;--warn:#B7791F;--warn-soft:#F8ECCB;--crit:#B4553A;--crit-soft:#F6DED5;
+    --p-teal:#D3EEEC;--p-blue:#DCEAEF;--p-sand:#F5EACB;--p-mint:#DDF1E1;--edge:#1C1C1C;
+    --shadow:none;--shadow-lg:0 18px 50px rgba(5,48,61,.18);--radius:20px;
+    --frame:#FFFFFF;--frame-2:#EAF3F5;--frame-hover:#D6E9EE;--frame-ink:#3D4B50;--frame-ink-2:#7E9198;--frame-strong:#05303D;--frame-line:#DCE5E8;
+    --main-edge:0 0 0 1px #DCE5E8;--side-w:268px;
+  }
+  :root[data-shell="escuro"]{
+    --frame:#05303D;--frame-2:#0A3C4B;--frame-hover:#0F4B5C;--frame-ink:#B7D1D9;--frame-ink-2:#7FA3AE;--frame-strong:#FFFFFF;--frame-line:transparent;--main-edge:none;
+  }
+  body{background:var(--frame);font-size:14.5px}
+  h1,h2,h3,h4{letter-spacing:-.01em}
+
+  /* menu lateral */
+  #siderail{width:var(--side-w);background:var(--frame);border-right:0;padding:22px 16px 28px max(16px,env(safe-area-inset-left,0px));gap:3px}
+  #siderail .srl-brand{padding:4px 6px 20px}
+  #siderail .srl-brand .logo-img{width:170px}
+  :root[data-shell="escuro"] #siderail .logo-img{filter:brightness(0) invert(1)}
+  .srl-title{color:var(--frame-ink-2);font-size:11px;letter-spacing:.12em;padding:16px 10px 8px}
+  .srl-item{gap:12px;padding:6px 8px;border:0;border-radius:14px;color:var(--frame-ink);font-weight:500;font-size:14.5px}
+  .srl-item svg{width:38px;height:38px;padding:10px;border-radius:50%;background:var(--frame-2);transition:background .2s,box-shadow .2s}
+  .srl-item:hover{background:transparent;color:var(--frame-strong)}
+  .srl-item:hover svg{background:var(--frame-hover)}
+  .srl-item.on{background:transparent;color:var(--frame-strong);font-weight:700;border:0}
+  .srl-item.on svg{background:var(--grad);color:#fff;box-shadow:0 6px 18px rgba(38,154,158,.35)}
+  .srl-sub{border-left:1px solid var(--frame-line);margin:4px 0 6px 26px}
+  :root[data-shell="escuro"] .srl-sub{border-left-color:rgba(255,255,255,.12)}
+  .srl-sub button{color:var(--frame-ink-2)}
+  .srl-sub button:hover{color:var(--frame-strong);background:var(--frame-2)}
+
+  /* painel principal */
+  #app.appwrap{padding-left:0;margin-left:var(--side-w);background:var(--bg);border-radius:28px 0 0 28px;box-shadow:var(--main-edge);min-height:100vh}
+  header{background:color-mix(in srgb,var(--bg) 90%,transparent);border-bottom:1px solid var(--border);border-top-left-radius:28px}
+  .bar{max-width:none;padding:16px 28px}
+  header .logo-img{display:none}
+  .brand p{font-size:13px;color:var(--muted)}
+  nav.tabs{max-width:none;padding:0 28px 12px;gap:6px}
+  nav.tabs button{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:7px 14px;font-size:13.5px;color:var(--ink-2);border-bottom:1px solid var(--border)}
+  nav.tabs button:hover{color:var(--ink);border-color:var(--accent-2)}
+  nav.tabs button.on{background:var(--grad);color:#fff;border-color:transparent}
+  .wrap{max-width:none;padding:0 max(16px,env(safe-area-inset-right,0px)) 72px 28px}
+  .page-head h2{font-size:30px;font-weight:800}
+  .sec-head h2{font-size:17px;font-weight:700}
+
+  /* botões do cabeçalho */
+  .icon-btn{width:42px;height:42px;border-radius:12px}
+  .txt-btn{border-radius:10px;padding:9px 14px}
+  #shellBtn svg{width:18px;height:18px}
+
+  /* cartões de números: estilo pastel com contorno */
+  .kpis .tile,.cx .tile{border:1px solid var(--edge);border-radius:22px;box-shadow:none}
+  .kpis .tile:nth-child(4n+1){background:var(--p-teal)}
+  .kpis .tile:nth-child(4n+2){background:var(--p-blue)}
+  .kpis .tile:nth-child(4n+3){background:var(--p-sand)}
+  .kpis .tile:nth-child(4n+4){background:var(--p-mint)}
+  .tile .ic{background:var(--surface)!important;border-radius:50%;border:1px solid var(--edge)}
+  .tile .lbl{color:var(--ink-2)}
+  .tile .val{font-size:32px;font-weight:800}
+
+  /* cartões, tabelas e componentes */
+  .card,.ecard,.modal,.login-card{border-radius:22px;box-shadow:none;border-color:var(--border)}
+  .ecard:hover{border-color:var(--accent-2)}
+  thead th{background:var(--surface-2)}
+  .view-btn{border-radius:10px}
+  .view-btn:hover{border-color:var(--accent-2)}
+  .search input,select.inp{border-radius:12px}
+  .modal-head{background:var(--grad)}
+  .prodhead{background:var(--grad)}
+  footer{opacity:.8}
+
+  /* login */
+  #login{background:var(--frame)}
+  :root[data-shell="escuro"] #login .login-card{border-color:transparent}
+  .login-card button[type="submit"],#loginBtn{background:var(--grad)!important;border:0;border-radius:12px}
+
+  @media (max-width:900px){
+    #app.appwrap{margin-left:0;border-radius:0}
+    header{border-top-left-radius:0}
+    #siderail{width:auto;padding:8px 12px}
+    .srl-item svg{width:32px;height:32px;padding:7px}
+    .bar,nav.tabs{padding-left:16px;padding-right:16px}
+    .wrap{padding-left:16px;padding-right:16px}
+  }
+  @media (prefers-reduced-motion:reduce){.srl-item svg,.ecard{transition:none}}
+
+  /* ===== Central de E-mails ===== */
+  .ce-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  .ce-aviso{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);color:var(--ink);border-radius:14px;padding:12px 16px;margin:0 0 16px;font-size:13.5px}
+  .ce-aviso svg,.ce-note svg{width:18px;height:18px;flex:none;margin-top:1px;color:var(--warn)}
+  .ce-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin:16px 0}
+  .ce-pad{padding:18px 20px}
+  .ce-ch{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .ce-ch h3{font-size:16px;font-weight:700;margin:0}
+  .ce-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+  .ce-row:last-child{border-bottom:0}
+  .ce-ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ce-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}
+  .ce-tabs button{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:7px 13px;font:inherit;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+  .ce-tabs button .num{opacity:.65;margin-left:4px}
+  .ce-tabs button.on{background:var(--grad);color:#fff;border-color:transparent}
+  .ce-regua{display:flex;flex-direction:column;gap:10px}
+  .ce-desc{margin:0;color:var(--ink-2);font-size:13.5px;line-height:1.5}
+  .ce-note{display:flex;gap:8px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:13px}
+  .ce-note svg{color:var(--accent-2)}
+  .ce-note.crit{background:var(--crit-soft);border-color:transparent}.ce-note.crit svg{color:var(--crit)}
+  .ce-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .ce-nums div{background:var(--surface-2);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}
+  .ce-nums b{font-size:18px}.ce-nums span{font-size:11.5px;color:var(--muted)}
+  .view-btn.ce-pri{background:var(--grad);color:#fff;border-color:transparent}
+  .view-btn[disabled]{opacity:.45;cursor:not-allowed}
+  .ce-passos{margin:0;padding:0;list-style:none;border-top:1px solid var(--border)}
+  .ce-passos li{display:flex;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px dashed var(--border)}
+  .ce-passos li .num{min-width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent-deep);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+  .ce-kanban{display:grid;gap:12px}
+  .ce-col{background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .ce-op{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+  .ce-op .view-btn{align-self:flex-start;margin-top:4px}
+  .ce-op-det{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:13px}
+  .ce-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:var(--shadow-lg)}
+  @media (max-width:600px){.ce-g2{grid-template-columns:1fr}.ce-nums{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -532,6 +661,7 @@
       <div class="spacer"></div>
       <span id="periodoChip"></span>
       <span class="user-chip" id="userChip"></span>
+      <button class="icon-btn" id="shellBtn" type="button" title="Alternar tema do menu" aria-label="Alternar tema do menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
       <button class="txt-btn" id="outBtn">Sair</button>
     </div>
     <nav class="tabs" id="tabs"></nav>
@@ -555,10 +685,10 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial"]];
+const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial"],["emails","Central de E-mails"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
-try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm") MODE=_m; }catch(e){}
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&_m.startsWith("ce_"))) MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
@@ -841,11 +971,13 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
   if(MODE==="crm" && podeCRM()){ tabsEl.classList.add("hidden"); viewClientes(v); bindActions(); return; }
+  if(MODE.startsWith("ce_") && (MODE==="ce_funil"?podeFunilCE():podeEmails())){ tabsEl.classList.add("hidden"); ceView(v); return; }
+  if(MODE.startsWith("ce_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="crm" && !podeCRM()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="financeiro" && !podeModulo("financeiro")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="gestor" && !podePainelGestor()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
@@ -885,6 +1017,7 @@ function renderSide(){
   }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   if(podeCRM()) h+=`<button class="srl-item ${MODE==='crm'?'on':''}" data-mode="crm">${_ICO_CRM}CRM</button>`;
+  if(podeFunilCE()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
   s.innerHTML=h;
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -2473,7 +2606,7 @@ function baixarRelatorioPDF(dateStr,btn){
   const [yy,mm,dd]=dateStr.split("-").map(Number); const dow=DOW[new Date(Date.UTC(yy,mm-1,dd)).getUTCDay()];
   const rowsPiores=R.piores.map(a=>`<tr><td style="padding:2px 6px 2px 0">${esc(a.cliente)}</td><td style="padding:2px 6px 2px 0">${esc(a.atendente)}</td><td style="text-align:center;font-weight:600;color:${cor(a.nota)}">${fmt1(a.nota)}</td><td style="padding:2px 6px 2px 0">${esc(motivoPior(a))}</td></tr>`).join("")||`<tr><td colspan="4" style="color:${M}">—</td></tr>`;
   const rowsDep=R.porDep.map((g,i)=>`<tr><td style="padding:2px 6px 2px 0">${i+1}</td><td style="padding:2px 6px 2px 0">${esc(g.dep)}</td><td style="text-align:center">${g.n}</td><td style="text-align:center;color:${cor(g.media)};font-weight:600">${fmt1(g.media)}</td><td style="text-align:center;color:${g.ab?CR:M}">${g.ab}</td></tr>`).join("");
-  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+  const html=`<div style="font-family:'DM Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
       <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório diário${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</div>
       <div style="font-size:20px;font-weight:700;margin-top:4px">${dow}, ${fmtDataBR(dateStr)}</div>
@@ -2625,20 +2758,20 @@ function renderDrill(v){
   d.innerHTML=`
   <section><div class="sec-head"><h2>${esc(sel.setor)} · ${titulo}</h2><span class="hint">${ag.n} atendimento(s) · média ${fmt1(ag.media)} · ${baixas.length} nota(s) &lt; 7</span></div>
   <div class="drill">
-    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Sora;font-weight:600;font-size:13px">Top 3 colaboradores · maior impacto em notas &lt; 7</div>
+    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Urbanist,"DM Sans",sans-serif;font-weight:600;font-size:13px">Top 3 colaboradores · maior impacto em notas &lt; 7</div>
       <table><thead><tr><th>Colaborador</th><th class="center">Total</th><th class="center">Média</th><th class="center">Notas &lt; 7</th><th class="center">Contrib.</th></tr></thead><tbody>${
         cols.length?cols.map(c=>`<tr><td class="r-name"><button class="link-name" data-col="${escAttr(String(c.key))}">${esc(c.nome)}</button></td><td class="center num">${c.total}</td><td class="center"><span class="nota ${notaClass(c.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(c.media)}</span></td><td class="center num" style="color:var(--crit);font-weight:600">${c.ab}</td><td class="center num">${Math.round(c.contrib)}%</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Nenhuma nota abaixo de 7 no período. Ótimo sinal.</td></tr>`
       }</tbody></table></div>
-    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Sora;font-weight:600;font-size:13px">Top 3 clientes · notas mais baixas</div>
+    <div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:Urbanist,"DM Sans",sans-serif;font-weight:600;font-size:13px">Top 3 clientes · notas mais baixas</div>
       <table><thead><tr><th>Cliente</th><th class="center">Total</th><th class="center">Média</th><th class="center">Notas &lt; 7</th></tr></thead><tbody>${
         clis.length?clis.map(c=>`<tr><td class="r-name">${esc(c.nome)}</td><td class="center num">${c.total}</td><td class="center"><span class="nota ${notaClass(c.media)} num" style="min-width:auto;padding:2px 8px">${fmt1(c.media)}</span></td><td class="center num">${c.ab?`<span style="color:var(--crit);font-weight:600">${c.ab}</span>`:'<span class="sub">0</span>'}</td></tr>`).join(""):`<tr><td colspan="4" class="empty">Sem clientes vinculados no período.</td></tr>`
       }</tbody></table></div>
   </div>
   <div class="drill">
-    <div class="card" style="padding:16px 18px"><div style="font-family:Sora;font-weight:600;font-size:13px;margin-bottom:10px">Apontamentos do período</div>${
+    <div class="card" style="padding:16px 18px"><div style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:600;font-size:13px;margin-bottom:10px">Apontamentos do período</div>${
       topErr.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${topErr.map(([e,n])=>`<span class="chip err">${esc(e)}${n>1?` <span class="sub">×${n}</span>`:""}</span>`).join("")}</div>`:'<div class="sub">Nenhum erro apontado no período.</div>'
     }</div>
-    <div class="card" style="padding:16px 18px"><div style="font-family:Sora;font-weight:600;font-size:13px;margin-bottom:10px">Sugestões de melhoria</div>${
+    <div class="card" style="padding:16px 18px"><div style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:600;font-size:13px;margin-bottom:10px">Sugestões de melhoria</div>${
       topMel.length?`<ul class="melhorias">${topMel.map(([m,n])=>`<li>${esc(m)}${n>1?` <span class="sub">(${n}×)</span>`:""}</li>`).join("")}</ul>`:'<div class="sub">Sem sugestões registradas no período.</div>'
     }</div>
   </div></section>`;
@@ -2736,7 +2869,7 @@ async function baixarAvaliacaoPDF(i,btn){
     const when=m[1]?` <span style="color:${M};font-weight:400">${esc(m[1])}</span>`:"";
     return `<div style="padding:4px 0"><span style="font-size:10.5px;font-weight:700;color:${isAt?AC:GD}">${nome}${when}</span><div style="font-size:12px;color:${H};white-space:pre-wrap;word-break:break-word">${esc(m[3])}</div></div>`; }).join("");
   const chips=arr=>arr.map(e=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}</span>`).join("");
-  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+  const html=`<div style="font-family:'DM Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
       <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Avaliação de atendimento</div>
       <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(a.assunto)}</div>
@@ -2831,10 +2964,10 @@ function finPanelEmpresa(emp){
   const reg=dd?(FIN.reg||[]).filter(r=>dig(r.cnpj_cpf)===dd).length:0;
   if(!f) return `<div class="panel"><h4>Financeiro</h4><div class="prose">Nenhum título em aberto no momento.${reg?` Já teve ${reg} título(s) regularizado(s).`:""}</div></div>`;
   return `<div class="panel" style="border-color:color-mix(in srgb,var(--crit) 30%,transparent)"><h4 style="color:var(--crit)">Financeiro · inadimplência</h4>
-    <div class="grid2"><div class="field"><div class="k">Em aberto</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${brl(f.valor)}</div></div>
-    <div class="field"><div class="k">Títulos</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${f.qtd}</div></div>
-    <div class="field"><div class="k">Maior atraso</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${f.maxAtraso} dias</div></div>
-    <div class="field"><div class="k">Situação</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${esc(FIN_ABAS[f.aba]||f.aba)}</div></div></div>
+    <div class="grid2"><div class="field"><div class="k">Em aberto</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${brl(f.valor)}</div></div>
+    <div class="field"><div class="k">Títulos</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${f.qtd}</div></div>
+    <div class="field"><div class="k">Maior atraso</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${f.maxAtraso} dias</div></div>
+    <div class="field"><div class="k">Situação</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${esc(FIN_ABAS[f.aba]||f.aba)}</div></div></div>
     <div class="sub" style="margin:8px 0">Cobrança automática ${f.ativos?"ligada":"desligada"} · ${f.cobrados} cobrança(s) enviada(s)${f.ult?" · última em "+fmtD(f.ult):""}${reg?` · ${reg} título(s) já regularizado(s)`:""}</div>
     <button class="btn-line" data-openfin="${escAttr(f.cnpj)}">Abrir no Financeiro</button></div>`;
 }
@@ -2842,7 +2975,7 @@ function omiePanelEmpresa(empId,emp){
   if(!crmVerFin()||!OMIE||!OMIE.ok) return "";
   const it={cnpj:emp.cnpj,ag:empresaAgg(empId)}; const m=omieMetricas(it); if(!m) return `<div class="panel"><h4>Contrato e faturamento (Omie)</h4><div class="sub">Cliente não encontrado no Omie pelo CNPJ.</div></div>`;
   const all=(CRMITENS.length?CRMITENS:crmItens()).filter(x=>x.sc); all.forEach(x=>{x.om=omieMetricas(x);}); const diag=omieDiag(m,omieMediana(all));
-  const kv=(l,v)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px">${v}</div></div>`;
+  const kv=(l,v)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${v}</div></div>`;
   return `<div class="panel"><h4>Contrato e faturamento (Omie)</h4><div class="grid2">${kv("Contrato mensal",brl(m.contrato))}${kv("Faturado em 12 meses",brl(m.fat12))}${kv("Recebido em 12 meses",brl(m.rec12))}${kv("Em atraso",brl(m.atraso))}${kv("Horas de atendimento/mês",m.horasMes==null?"—":m.horasMes.toLocaleString("pt-BR",{maximumFractionDigits:1}))}${kv("R$ por hora",m.rph?brl(m.rph):"—")}</div>${diag?`<div class="sub" style="margin-top:8px;color:${_diagCor(diag)};font-weight:600">${esc(diag)}</div>`:""}</div>`;
 }
 function openEmpresa(empId){
@@ -2855,7 +2988,7 @@ function openEmpresa(empId){
   const desfEnt=Object.entries(ag.desfechos).sort((a,b)=>b[1]-a[1]);
   const errEnt=Object.entries(ag.erros).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const melEnt=Object.entries(ag.melhorias).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const kpi=(l,val,cor)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Sora;font-weight:700;font-size:16px${cor?`;color:${cor}`:""}">${val}</div></div>`;
+  const kpi=(l,val,cor)=>`<div class="field"><div class="k">${l}</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px${cor?`;color:${cor}`:""}">${val}</div></div>`;
   openModal(`
     <div class="modal-head"><div class="mh-l"><div class="m-sub num">${esc(fmtCnpj(emp.cnpj))}</div><h3>${esc(emp.apelido||emp.nome)}</h3>
       <div class="m-chips"><span class="m-chip">${stTxt[sc.status]}</span><span class="m-chip">${ag.count} atendimento(s)</span><span class="m-chip">risco ${sc.risco.toFixed(1).replace(".",",")}</span>${ag.churn?`<span class="m-chip">⚠ possível troca</span>`:""}</div></div>
@@ -2946,7 +3079,7 @@ function baixarClientePDF(empId,btn){
   const desfEnt=Object.entries(ag.desfechos).sort((a,b)=>b[1]-a[1]);
   const errEnt=Object.entries(ag.erros).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const chips=arr=>arr.map(([e,n])=>`<span style="display:inline-block;font-size:11px;color:${H};background:#f4f5fa;border:1px solid ${B};border-radius:6px;padding:2px 8px;margin:0 4px 4px 0">${esc(e)}${n>1?" ×"+n:""}</span>`).join("");
-  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+  const html=`<div style="font-family:'DM Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
       <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório de cliente</div>
       <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(emp.apelido||emp.nome)}</div>
@@ -3095,7 +3228,7 @@ function baixarColaboradorPDF(key,btn){
   const lista=arr=>`<ul style="margin:0;padding-left:16px;font-size:12.5px;color:#4a4d63;line-height:1.6">${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`;
   const semTable=`<table style="width:100%;font-size:11.5px;border-collapse:collapse"><tr style="color:${M}"><td>Semana</td><td>Período</td><td style="text-align:center">Qtd</td><td style="text-align:center">Média</td><td style="text-align:center">&lt;7</td><td style="text-align:center">≥7</td></tr>${R.semanas.map(s=>`<tr><td style="padding:2px 0">SEM ${s.n}</td><td>${s.label}</td><td style="text-align:center">${s.ag.n}</td><td style="text-align:center;color:${cor(s.ag.media)};font-weight:600">${fmt1(s.ag.media)}</td><td style="text-align:center;color:${CR}">${s.ag.q-s.ag.ac}</td><td style="text-align:center;color:${GD}">${s.ag.ac}</td></tr>`).join("")}</table>`;
   const evolTxt=R.evol?`<div style="font-size:12.5px;color:${R.evol.dir==='down'?CR:(R.evol.dir==='up'?GD:H)}"><strong>${R.evol.dir==='down'?'Piorou':(R.evol.dir==='up'?'Melhorou':'Estável')} ${Math.abs(R.evol.pct).toFixed(1)}%</strong> entre a primeira e a última semana. Média ${fmt1(R.evol.de)} → ${fmt1(R.evol.para)}.</div>`:'';
-  const html=`<div style="font-family:'IBM Plex Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
+  const html=`<div style="font-family:'DM Sans',Arial,sans-serif;color:${H};padding:26px 28px;width:720px;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${AC};padding-bottom:14px;margin-bottom:14px">
       <div><div style="font-size:11px;color:${M};font-weight:600">RESILTRACK · Relatório individual</div>
       <div style="font-size:20px;font-weight:700;margin-top:4px">${esc(R.nome)}</div>
@@ -3326,11 +3459,198 @@ document.getElementById("loginForm").addEventListener("submit",async e=>{ e.prev
   if(error){ err.textContent="E-mail ou senha inválidos."; return; } showApp(data.session); });
 document.getElementById("outBtn").addEventListener("click",async()=>{ await sb.auth.signOut(); showLogin(); });
 
+// ================= CENTRAL DE E-MAILS (módulo) =================
+// Lê o Supabase com o login do próprio Resiltrack, pelas funções public.ce_dados / ce_status_regua / ce_mover_oportunidade.
+const CE_ICO={
+ mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>',
+ flow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8M18 8l-5 8"/></svg>',
+ send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>',
+ funnel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>',
+ users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.6"/></svg>',
+ eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+ bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9z"/></svg>',
+ alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>'
+};
+const CE_ASSUNTOS={"bv_1_apresentacao":"Bem-vindo à Resilcon, {{nome}}","bv_2_como_ajudamos":"{{nome}}, veja como a Resilcon pode ajudar a sua empresa","mat_1_entrega":"Seu material chegou: {{material_nome}}","mat_2_relacionado":"{{nome}}, conseguiu ver o material?","seg_drogaria":"Drogarias: três pontos fiscais que pesam no caixa","seg_distribuidora":"Distribuidoras: onde costuma estar o imposto pago a mais","seg_saude":"Profissionais da saúde: o regime certo faz diferença","seg_geral":"{{nome}}, a sua empresa está no regime tributário certo?","seg_fechamento":"Quer que a gente olhe os números da sua empresa?","rt_1_precificacao":"Reforma Tributária: o que muda na sua precificação","rt_2_caixa":"Reforma Tributária: atenção ao fluxo de caixa","rt_3_erp":"Reforma Tributária: seu ERP está pronto?","ev_convite":"Convite: {{evento_nome}}","ev_programacao":"{{evento_nome}}: veja a programação","ev_ultimo_aviso":"Últimas vagas para o {{evento_nome}}","ev_confirmacao":"Inscrição confirmada: {{evento_nome}}","ev_lembrete":"É amanhã: {{evento_nome}}","ev_pos_presente":"Obrigado por participar do {{evento_nome}}","ev_pos_ausente":"Sentimos sua falta no {{evento_nome}}","ev_pos_conversa":"{{nome}}, vamos continuar a conversa?","vd_recebemos":"Recebemos seu pedido, {{nome}}","op_pos_proposta":"{{nome}}, ficou alguma dúvida sobre a proposta?","op_retomada":"{{nome}}, ainda faz sentido conversarmos?","re_1_conteudo":"{{nome}}, separamos este conteúdo para você","re_2_interesses":"Você quer continuar recebendo nossos e-mails?","cli_1_boas_vindas":"Boas-vindas à Resilcon, {{nome}}","cli_2_documentos":"Checklist de documentos para começarmos","cli_3_proximos_passos":"Como vai funcionar o dia a dia com a Resilcon","rel_orientacao":"{{titulo_comunicado}}","ps_convite":"{{nome}}, como está sendo a experiência com a Resilcon?","ps_lembrete":"Ainda dá tempo de responder a pesquisa","sc_bpo_notas":"{{nome}}, e se a gente cuidasse das suas notas fiscais?","sc_diagnostico":"Diagnóstico tributário para clientes Resilcon","aviso_comercial":"Lead para o comercial: {{contato_nome}}"};
+const CE_ETAPAS=[["novo","Novo"],["qualificado","Qualificado"],["reuniao","Reunião"],["proposta_enviada","Proposta enviada"],["negociacao","Negociação"],["ganha","Ganha"],["perdida","Perdida"]];
+const CE_ETAPA_TXT=Object.fromEntries(CE_ETAPAS);
+const CE_CAT={relacionamento:"Relacionamento",vendas:"Vendas",eventos:"Eventos",clientes:"Clientes"};
+const CE_ST_REGUA={ativa:["good","Ativa"],pausada:["warn","Pausada"],rascunho:["neutral","Rascunho"],encerrada:["neutral","Encerrada"]};
+const CE_ST_ENVIO={fila:["neutral","Na fila"],enviado:["neutral","Enviado"],entregue:["good","Entregue"],devolvido:["crit","Devolvido"],reclamado:["crit","Spam"],rejeitado:["crit","Rejeitado"],atrasado:["warn","Atrasado"],falhou:["crit","Falhou"],suprimido:["neutral","Bloqueado"]};
+const CE_ST_CONT={ativo:["good","Ativo"],descadastrado:["neutral","Descadastrado"],devolvido:["crit","Devolvido"],reclamou:["crit","Marcou spam"],inativo:["warn","Inativo"]};
+const CE_SECOES=[["ce_geral","Visão geral","mail"],["ce_reguas","Réguas","flow"],["ce_envios","Envios","send"],["ce_funil","Funil comercial","funnel"],["ce_contatos","Contatos","users"]];
+const CE_CACHE={};let ceCatFiltro="todas",ceReguaAberta=null,ceBuscaEnv="",ceBuscaCont="",ceTipoCont="todos",ceOpAberta=null,ceOcupado=false;
+
+function podeEmails(){ return isAdmin() || !!(ACCESS && (ACCESS.permissoes||[]).includes("emails")); }
+function podeFunilCE(){ return podeEmails() || podeModulo("comercial"); }
+const cePill=(m,k)=>{const v=m[k]||["neutral",k||"–"];return `<span class="pill ${v[0]}">${esc(v[1])}</span>`};
+const ceDt=s=>s?new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+const ceDd=s=>s?new Date(s).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}):"";
+const cePct=(a,b)=>b?Math.round(a/b*100)+"%":"–";
+const ceErroTxt=e=>{const m=String((e&&e.message)||e||"");if(m.includes("sem_permissao")) return "Seu usuário não tem acesso à Central de E-mails. Peça a um admin para liberar a permissão Central de E-mails no painel Admin.";if(m.includes("ce_dados")||m.includes("function")) return "As funções da Central ainda não foram criadas no Supabase. Rode o arquivo central-emails-resiltrack.sql no SQL Editor.";return "Não foi possível carregar os dados agora. Tente de novo em alguns segundos."};
+
+async function ceCarregar(secao,forcar){
+ if(CE_CACHE[secao]&&!forcar) return CE_CACHE[secao];
+ const {data,error}=await sb.rpc("ce_dados",{p_secao:secao});
+ if(error) throw error; CE_CACHE[secao]=data; return data;
+}
+const ceHead=(t,sub)=>`<div class="page-head ce-head"><div><h2>${t}</h2><p>${sub}</p></div><button class="txt-btn" data-ce-atualizar>Atualizar</button></div>`;
+const ceAviso=`<div class="ce-aviso">${CE_ICO.alert}<span><b>Envio em modo de teste.</b> Até a AWS liberar o acesso de produção, os e-mails só chegam a endereços verificados. Deixe as réguas em rascunho até lá.</span></div>`;
+
+function ceView(v){
+ const secao=MODE.slice(3);
+ const titulo={geral:["Central de E-mails","Envios, réguas e base de contatos dos últimos 30 dias"],reguas:["Réguas de automação","Sequências de e-mails que rodam sozinhas a partir de um gatilho"],envios:["Envios","Tudo o que saiu pela Central, com status de entrega"],funil:["Funil comercial","Oportunidades criadas pelas réguas e pelo comercial"],contatos:["Contatos","Base de e-mail da Resilcon"]}[secao]||["Central de E-mails",""];
+ v.innerHTML=ceHead(titulo[0],titulo[1])+(["geral","reguas"].includes(secao)?ceAviso:"")+`<div id="ce-box"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ const pinta=(d)=>{const b=document.getElementById("ce-box");if(!b||MODE!=="ce_"+secao) return;b.innerHTML=({geral:ceGeral,reguas:ceReguas,envios:ceEnvios,funil:ceFunil,contatos:ceContatos})[secao](d)};
+ if(CE_CACHE[secao]) pinta(CE_CACHE[secao]);
+ ceCarregar(secao,true).then(pinta).catch(e=>{const b=document.getElementById("ce-box");if(b&&!CE_CACHE[secao]) b.innerHTML=`<div class="card"><div class="empty">${esc(ceErroTxt(e))}<div style="margin-top:14px"><button class="txt-btn" data-ce-atualizar>Tentar de novo</button></div></div></div>`});
+}
+function ceRepinta(secao){const b=document.getElementById("ce-box");if(b&&CE_CACHE[secao]) b.innerHTML=({geral:ceGeral,reguas:ceReguas,envios:ceEnvios,funil:ceFunil,contatos:ceContatos})[secao](CE_CACHE[secao])}
+
+function ceGrafico(lista){
+ const mapa=Object.fromEntries((lista||[]).map(x=>[x.dia,x.n]));const dias=[];
+ for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toLocaleDateString("sv-SE");dias.push([k,mapa[k]||0])}
+ const max=Math.max(1,...dias.map(x=>x[1])),W=600,H=120,bw=W/30,f=k=>k.split("-").reverse().slice(0,2).join("/");
+ return `<svg viewBox="0 0 ${W} ${H+22}" width="100%" role="img" aria-label="E-mails por dia nos últimos 30 dias" style="display:block"><line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="var(--border)"/>${dias.map(([k,n],i)=>n?`<rect x="${i*bw+3}" y="${H-(n/max)*(H-8)}" width="${bw-6}" height="${(n/max)*(H-8)}" rx="3" fill="var(--accent-2)"><title>${f(k)}: ${n}</title></rect>`:"").join("")}<text x="0" y="${H+16}" font-size="11" fill="var(--muted)">${f(dias[0][0])}</text><text x="${W}" y="${H+16}" font-size="11" fill="var(--muted)" text-anchor="end">hoje</text><text x="${W}" y="12" font-size="11" fill="var(--muted)" text-anchor="end">máx. ${max}/dia</text></svg>`;
+}
+function ceGeral(d){
+ const e=d.envios||{},c=d.contatos||{},f=d.fila||{},fu=d.funil||{};
+ const aberto=CE_ETAPAS.filter(x=>!["ganha","perdida"].includes(x[0])).reduce((s,[k])=>s+(fu[k]||0),0);
+ const linha=(l,v)=>`<div class="ce-row"><span>${l}</span>${v}</div>`;
+ return `<div class="kpis">
+  <div class="tile"><div class="ic">${CE_ICO.mail}</div><div><div class="lbl">Enviados em 30 dias</div><div class="val num">${e.total||0}</div><div class="sub">${e.entregues||0} entregues</div></div></div>
+  <div class="tile"><div class="ic">${CE_ICO.eye}</div><div><div class="lbl">Taxa de abertura</div><div class="val num">${cePct(e.abertos||0,e.entregues||0)}</div><div class="sub">${cePct(e.clicados||0,e.entregues||0)} clicaram</div></div></div>
+  <div class="tile"><div class="ic">${CE_ICO.flow}</div><div><div class="lbl">Réguas ativas</div><div class="val num">${d.reguas.ativas}<small>/ ${d.reguas.total}</small></div><div class="sub">${d.inscritos} contatos dentro de réguas</div></div></div>
+  <div class="tile"><div class="ic">${CE_ICO.funnel}</div><div><div class="lbl">Funil aberto</div><div class="val num">${aberto}</div><div class="sub">${fu.ganha||0} ganhas · ${fu.perdida||0} perdidas</div></div></div>
+ </div>
+ <div class="ce-g2">
+  <div class="card ce-pad"><div class="ce-ch"><h3>E-mails por dia</h3><span class="sub">últimos 30 dias</span></div>${ceGrafico(d.por_dia)}</div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Saúde da base</h3></div>
+   ${linha("Contatos",`<b class="num">${c.total||0}</b>`)}${linha("Clientes · Leads",`<b class="num">${c.clientes||0} · ${c.leads||0}</b>`)}${linha("Endereços bloqueados",`<b class="num">${d.bloqueados}</b>`)}
+   ${linha("Devoluções (30 dias)",`<span class="pill ${(e.devolvidos||0)/(e.total||1)>.02?"crit":"good"}">${e.devolvidos||0} · ${cePct(e.devolvidos||0,e.total||0)}</span>`)}
+   ${linha("Marcações de spam",`<span class="pill ${(e.spam||0)/(e.total||1)>.001?"crit":"good"}">${e.spam||0} · ${cePct(e.spam||0,e.total||0)}</span>`)}
+   ${linha("Fila das réguas",`<span class="sub">${f.pendente||0} pendentes · ${f.erro||0} com erro</span>`)}
+   ${linha("Agendamento (a cada 10 min)",d.agenda?'<span class="pill good">Ligado</span>':'<span class="pill crit">Desligado</span>')}
+   <p class="sub" style="margin:10px 0 0">A AWS revisa a conta quando as devoluções passam de 5% ou o spam passa de 0,5%.</p></div>
+ </div>
+ <div class="card ce-pad"><div class="ce-ch"><h3>Últimos envios</h3><button class="view-btn" data-mode="ce_envios">Ver todos</button></div>
+  ${(d.ultimos||[]).length?d.ultimos.map(x=>`<div class="ce-row"><div style="min-width:0;flex:1"><div class="r-name ce-ell">${esc(x.assunto||"(sem assunto)")}</div><div class="sub">${esc(x.email)} · ${esc(x.sistema||x.origem||"")} · ${ceDt(x.criado_em)}</div></div>${cePill(CE_ST_ENVIO,x.status)}</div>`).join(""):`<div class="empty">Nenhum e-mail enviado ainda.</div>`}
+ </div>`;
+}
+function ceGatilho(g){g=g||{};const f=g.filtro||{};
+ return ({conversao:"Preencheu formulário"+(f.finalidade?` de ${({cadastro:"cadastro",material:"material",diagnostico:"diagnóstico",evento:"evento"})[f.finalidade]||f.finalidade}`:"")+(f.tema?` sobre ${f.tema==="reforma_tributaria"?"Reforma Tributária":f.tema}`:""),
+  evento:"Evento"+(f.status?`: ${f.status}`:": participou ou faltou"),oportunidade:"Oportunidade"+(f.etapa?` em ${CE_ETAPA_TXT[f.etapa]||f.etapa}`:""),
+  tag:`Recebeu a tag ${f.tag||""}`,lista:`Entrou na lista ${f.lista||""}`,novo_cliente:"Virou cliente",segmento:"Entrou no perfil (confere a cada 10 min)"})[g.tipo]||g.tipo||"Manual";}
+function ceRegra(r){if(!r) return "";if(r.ou) return r.ou.map(ceRegra).join(" ou ");if(r.e) return r.e.map(ceRegra).join(" e ");if(r.nao) return "não "+ceRegra(r.nao);
+ if(r.campo) return `${r.campo} ${r.op==="in"?"em "+[].concat(r.valor).join(", "):(r.op||"=")+" "+r.valor}`;if(r.clicou_dias) return `clicou em ${r.clicou_dias} dias`;if(r.abriu_dias) return `abriu em ${r.abriu_dias} dias`;
+ if(r.pontuacao_min) return `pontuação ≥ ${r.pontuacao_min}`;if(r.oportunidade_aberta!==undefined) return r.oportunidade_aberta?"tem oportunidade aberta":"sem oportunidade aberta";
+ if(r.ctx) return Object.entries(r.ctx).map(([k,v])=>`${k} ${v}`).join(", ");if(r.evento) return `inscrição ${[].concat(r.evento.status).join("/")}`;
+ if(r.oportunidade) return `oportunidade ${[].concat(r.oportunidade.etapa||[]).map(x=>CE_ETAPA_TXT[x]||x).join("/")}${r.oportunidade.parada_dias?` parada há ${r.oportunidade.parada_dias} dias`:""}`;return "regra";}
+function cePasso(p){const c=p.c||{};
+ switch(p.t){
+  case "email":return "E-mail: "+esc((CE_ASSUNTOS[c.modelo]||c.modelo||"").replace(/\{\{\s*(\w+)\s*\}\}/g,(_,k)=>"["+k.replace(/_/g," ")+"]"));
+  case "espera":return c.antes_do_evento_horas?`Espera até ${c.antes_do_evento_horas}h antes do evento`:`Espera ${c.dias?c.dias+" dia"+(c.dias>1?"s":""):""}${c.horas?c.horas+"h":""}${c.minutos?c.minutos+"min":""}`;
+  case "condicao":return `Se ${esc(ceRegra(c.regra))}: vai ao passo ${c.se_sim}, senão ${c.se_nao}`;
+  case "ir_para":return `Pula para o passo ${c.ordem}`;
+  case "notificar":return `Avisa o comercial: ${esc(c.motivo||"")}`;
+  case "oportunidade":return `Cria oportunidade no funil${c.titulo?`: ${esc(c.titulo)}`:""}`;
+  case "pontuacao":return `Soma ${c.pontos} pontos`;
+  case "tag":return `${c.acao==="remover"?"Remove":"Adiciona"} a tag ${esc(c.tag)}`;
+  case "atualizar_campo":return `Muda ${esc(c.campo)} para ${esc(c.valor)}`;
+  case "mover_fluxo":return `Segue para a régua ${esc(c.fluxo)}`;
+  case "fim":return "Fim";
+  default:return esc(p.t);
+ }}
+function ceReguas(lista){
+ const cats=["todas",...new Set(lista.map(r=>r.categoria))];
+ const vis=lista.filter(r=>ceCatFiltro==="todas"||r.categoria===ceCatFiltro);
+ return `<div class="ce-tabs">${cats.map(c=>`<button class="${ceCatFiltro===c?"on":""}" data-ce-cat="${c}">${c==="todas"?"Todas":CE_CAT[c]||c} <span class="num">${c==="todas"?lista.length:lista.filter(r=>r.categoria===c).length}</span></button>`).join("")}</div>
+ <div class="ce-g2">${vis.map(r=>{const emails=(r.passos||[]).filter(p=>p.t==="email").length;const editar=JSON.stringify(r.passos||[]).includes("EDITAR ANTES DE ATIVAR");
+  return `<div class="card ce-pad ce-regua"><div class="ce-ch" style="align-items:flex-start"><div style="min-width:0"><h3>${esc(r.nome)}</h3><div class="sub">${esc(CE_CAT[r.categoria]||r.categoria||"")} · ${emails} e-mail${emails===1?"":"s"}</div></div>${cePill(CE_ST_REGUA,r.status)}</div>
+   <p class="ce-desc">${esc(r.descricao||"")}</p>
+   <div class="ce-note">${CE_ICO.bolt}<span><b>Entra quando:</b> ${esc(ceGatilho(r.gatilho))}</span></div>
+   ${editar?`<div class="ce-note crit">${CE_ICO.alert}<span>Texto do comunicado ainda não foi escrito. Edite antes de ativar.</span></div>`:""}
+   <div class="ce-nums">${[["Na régua",r.ativos],["Concluíram",r.concluidos],["Enviados",r.envios],["Abertura",cePct(r.abertos,r.envios)]].map(([l,v])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join("")}</div>
+   <div class="row-actions" style="justify-content:flex-start;flex-wrap:wrap">
+    <button class="view-btn ghost" data-ce-passos="${r.chave}">${ceReguaAberta===r.chave?"Esconder passos":"Ver passos"}</button>
+    ${r.status==="ativa"?`<button class="view-btn" data-ce-status="pausada" data-ce-chave="${r.chave}">Pausar</button>`:`<button class="view-btn ce-pri" data-ce-status="ativa" data-ce-chave="${r.chave}" ${editar?'disabled title="Edite o comunicado antes de ativar"':""}>Ativar</button>`}
+    ${r.status==="pausada"?`<button class="view-btn ghost" data-ce-status="rascunho" data-ce-chave="${r.chave}">Voltar para rascunho</button>`:""}
+   </div>
+   ${ceReguaAberta===r.chave?`<ol class="ce-passos">${(r.passos||[]).map(p=>`<li><span class="num">${p.o}</span><span>${cePasso(p)}</span></li>`).join("")}</ol>`:""}
+  </div>`}).join("")}</div>`;
+}
+function ceEnvios(l){const f=ceBuscaEnv.toLowerCase();const vis=l.filter(x=>!f||[x.email,x.assunto,x.regua,x.sistema].join(" ").toLowerCase().includes(f));
+ return `<div class="toolbar"><div class="search"><input id="ce-busca-env" placeholder="Buscar por e-mail, assunto ou régua" value="${escAttr(ceBuscaEnv)}" aria-label="Buscar envios"></div></div>
+ <div class="card" style="overflow-x:auto"><table><thead><tr><th>Quando</th><th>Para</th><th>Assunto</th><th>Origem</th><th>Status</th><th class="center">Aberturas</th><th class="center">Cliques</th></tr></thead><tbody>
+ ${vis.length?vis.map(x=>`<tr><td class="num sub" style="white-space:nowrap">${ceDt(x.criado_em)}</td><td>${esc(x.email)}</td><td style="max-width:320px">${esc(x.assunto||"")}${x.erro?`<div class="sub" style="color:var(--crit)">${esc(String(x.erro).slice(0,120))}</div>`:""}</td><td class="sub">${esc(x.regua||x.sistema||x.origem||"")}</td><td>${cePill(CE_ST_ENVIO,x.status)}</td><td class="num center">${x.aberturas}</td><td class="num center">${x.cliques}</td></tr>`).join(""):`<tr><td colspan="7"><div class="empty">${l.length?"Nenhum envio com esse filtro.":"Nenhum e-mail enviado ainda."}</div></td></tr>`}
+ </tbody></table></div>`}
+function ceFunil(l){
+ const cols=CE_ETAPAS.filter(([k])=>k!=="perdida");const dias=s=>Math.floor((Date.now()-new Date(s))/864e5);
+ return `<div class="ce-note">${CE_ICO.funnel}<span>Mudar a etapa dispara as réguas ligadas a ela. Em <b>Proposta enviada</b>, por exemplo, o cliente recebe o acompanhamento depois de 3 dias.</span></div>
+ <div style="overflow-x:auto;margin-top:14px"><div class="ce-kanban" style="grid-template-columns:repeat(${cols.length},minmax(220px,1fr));min-width:${cols.length*232}px">
+ ${cols.map(([k,t])=>{const its=l.filter(o=>o.etapa===k);return `<div class="ce-col"><div class="ce-ch"><b>${t}</b><span class="pill ${k==="ganha"?"good":"neutral"}">${its.length}</span></div>
+  ${its.map(o=>`<div class="ce-op"><b>${esc(o.empresa||o.nome||o.email||"Contato")}</b><span class="sub">${esc(o.titulo)}</span><span class="sub">${dias(o.etapa_desde)} dia${dias(o.etapa_desde)===1?"":"s"} nesta etapa${o.responsavel_nome?" · "+esc(o.responsavel_nome):""}</span>
+   ${ceOpAberta===o.id?`<div class="ce-op-det">${o.email?`<span>${esc(o.email)}</span>`:""}${o.telefone?`<span>${esc(o.telefone)}</span>`:""}<label class="sub" for="ce-etapa-${o.id}">Mover para</label><select id="ce-etapa-${o.id}" class="inp">${CE_ETAPAS.map(([v,tt])=>`<option value="${v}" ${v===o.etapa?"selected":""}>${tt}</option>`).join("")}</select><button class="view-btn ce-pri" data-ce-mover="${o.id}">Salvar etapa</button></div>`:`<button class="view-btn ghost" data-ce-op="${o.id}">Detalhes</button>`}
+  </div>`).join("")||`<span class="sub" style="text-align:center;padding:10px 0">Vazio</span>`}</div>`}).join("")}
+ </div></div>
+ ${l.some(o=>o.etapa==="perdida")?`<div class="card ce-pad" style="margin-top:14px"><div class="ce-ch"><h3>Perdidas</h3></div>${l.filter(o=>o.etapa==="perdida").map(o=>`<div class="ce-row"><span>${esc(o.empresa||o.nome||o.email)}</span><span class="sub">${esc(o.titulo)} · ${ceDd(o.etapa_desde)}</span></div>`).join("")}</div>`:""}`;
+}
+function ceContatos(l){const f=ceBuscaCont.toLowerCase();const tipos=["todos","cliente","lead","prospect","colaborador"];
+ const vis=l.filter(x=>(ceTipoCont==="todos"||x.tipo===ceTipoCont)&&(!f||[x.email,x.nome,x.empresa,x.segmento].join(" ").toLowerCase().includes(f)));
+ return `<div class="toolbar"><div class="search"><input id="ce-busca-cont" placeholder="Buscar por nome, e-mail ou empresa" value="${escAttr(ceBuscaCont)}" aria-label="Buscar contatos"></div>
+ <div class="ce-tabs" style="margin:0">${tipos.map(t=>`<button class="${ceTipoCont===t?"on":""}" data-ce-tipo="${t}">${t==="todos"?"Todos":t[0].toUpperCase()+t.slice(1)}</button>`).join("")}</div></div>
+ <div class="card" style="overflow-x:auto"><table><thead><tr><th>Contato</th><th>Tipo</th><th>Segmento</th><th>Status</th><th class="center">Pontos</th><th class="center">Réguas</th><th>Última abertura</th><th>Origem</th></tr></thead><tbody>
+ ${vis.length?vis.map(x=>`<tr><td><div class="r-name">${esc(x.nome||x.email)}</div><div class="sub">${esc(x.nome?x.email:"")}${x.empresa?" · "+esc(x.empresa):""}</div></td><td>${esc(x.tipo)}</td><td class="sub">${esc(x.segmento||"")}</td><td>${cePill(CE_ST_CONT,x.status)}</td><td class="num center">${x.pontuacao}</td><td class="num center">${x.reguas}</td><td class="sub num">${ceDd(x.ultima_abertura_em)}</td><td>${x.origem==="lista_comprada"?'<span class="pill warn">Lista comprada</span>':`<span class="sub">${esc(x.origem||"")}</span>`}</td></tr>`).join(""):`<tr><td colspan="8"><div class="empty">${l.length?"Nenhum contato com esse filtro.":"Nenhum contato ainda. Eles entram pelos formulários, pelos sistemas internos e pela importação da RD Station."}</div></td></tr>`}
+ </tbody></table><p class="sub" style="padding:10px 16px;margin:0">Mostrando os 500 contatos atualizados mais recentemente.</p></div>`}
+
+function ceAviso2(t){let el=document.getElementById("ce-toast");if(!el){el=document.createElement("div");el.id="ce-toast";el.className="ce-toast";document.body.appendChild(el)}el.textContent=t;el.hidden=false;clearTimeout(el._t);el._t=setTimeout(()=>el.hidden=true,3400)}
+document.addEventListener("click",async ev=>{
+ const t=ev.target.closest("button");if(!t||!MODE.startsWith("ce_")) return;
+ const sec=MODE.slice(3);
+ if(t.dataset.mode&&t.dataset.mode.startsWith("ce_")&&!t.closest("#siderail")){setMode(t.dataset.mode);return}
+ if(t.hasAttribute("data-ce-atualizar")){ceView(document.getElementById("view"));return}
+ if(t.dataset.ceCat){ceCatFiltro=t.dataset.ceCat;ceRepinta("reguas");return}
+ if(t.dataset.cePassos){ceReguaAberta=ceReguaAberta===t.dataset.cePassos?null:t.dataset.cePassos;ceRepinta("reguas");return}
+ if(t.dataset.ceTipo){ceTipoCont=t.dataset.ceTipo;ceRepinta("contatos");return}
+ if(t.dataset.ceOp){ceOpAberta=t.dataset.ceOp;ceRepinta("funil");return}
+ if(t.dataset.ceStatus&&!ceOcupado){
+  const chave=t.dataset.ceChave,st=t.dataset.ceStatus;
+  if(t.dataset.confirma!=="1"){const orig=t.textContent;t.dataset.confirma="1";t.textContent=st==="ativa"?"Confirmar ativação":"Confirmar";setTimeout(()=>{if(t.isConnected){t.dataset.confirma="";t.textContent=orig}},4000);return}
+  ceOcupado=true;t.disabled=true;t.textContent="Salvando…";
+  const {error}=await sb.rpc("ce_status_regua",{p_chave:chave,p_status:st});ceOcupado=false;
+  if(error){ceAviso2(String(error.message||"").includes("EDITAR")||String(error.message||"").includes("Edite")?"Edite o texto do comunicado antes de ativar.":ceErroTxt(error));ceRepinta("reguas");return}
+  ceAviso2(st==="ativa"?"Régua ativada":st==="pausada"?"Régua pausada":"Régua voltou para rascunho");delete CE_CACHE.geral;ceView(document.getElementById("view"));return}
+ if(t.dataset.ceMover&&!ceOcupado){
+  const id=t.dataset.ceMover,sel=document.getElementById("ce-etapa-"+id),et=sel&&sel.value;if(!CE_ETAPA_TXT[et]) return;
+  ceOcupado=true;t.disabled=true;t.textContent="Salvando…";
+  const {error}=await sb.rpc("ce_mover_oportunidade",{p_id:id,p_etapa:et});ceOcupado=false;
+  if(error){ceAviso2(ceErroTxt(error));ceRepinta("funil");return}
+  ceAviso2("Etapa atualizada");ceOpAberta=null;ceView(document.getElementById("view"));return}
+});
+document.addEventListener("input",ev=>{
+ const id=ev.target.id;if(id!=="ce-busca-env"&&id!=="ce-busca-cont") return;
+ const pos=ev.target.selectionStart;
+ if(id==="ce-busca-env"){ceBuscaEnv=ev.target.value;ceRepinta("envios")} else {ceBuscaCont=ev.target.value;ceRepinta("contatos")}
+ const n=document.getElementById(id);if(n){n.focus();n.setSelectionRange(pos,pos)}
+});
+
+
+
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   const { data }=await sb.auth.getSession();
   if(data.session) showApp(data.session); else showLogin();
+})();
+
+</script>
+<script>
+/* tema da moldura (claro padrão / escuro) */
+(function(){
+  const r=document.documentElement;
+  try{ if(localStorage.getItem("resiltrack_shell")==="escuro") r.dataset.shell="escuro"; }catch(e){}
+  const b=document.getElementById("shellBtn");
+  if(b) b.addEventListener("click",()=>{ const esc=r.dataset.shell==="escuro"; if(esc) delete r.dataset.shell; else r.dataset.shell="escuro"; try{localStorage.setItem("resiltrack_shell",esc?"claro":"escuro");}catch(e){} });
 })();
 </script>
 </body>
