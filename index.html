@@ -766,6 +766,10 @@
   .crm-prior{margin-bottom:14px}.crm-rank{flex:none;width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;font-weight:700;font-size:12.5px;display:grid;place-items:center}
   .crm-motivos{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}.crm-motivos span{font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:1px 8px;color:var(--ink-2)}
   @media (max-width:600px){.crm-barra{grid-template-columns:90px 1fr auto}.crm-evo{height:170px}}
+
+  .crm-email-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+  .crm-email-prev{width:100%;height:520px;border:1px solid var(--border);border-radius:12px;background:#EDEFF0}
+  @media (max-width:860px){.crm-email-g{grid-template-columns:1fr}.crm-email-prev{height:380px}}
 </style>
 </head>
 <body>
@@ -805,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.4 (CRM completo)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.7 (teste e saída de réguas)</footer>
   </div>
 </div>
 
@@ -3613,10 +3617,10 @@ const CE_ICO={
  bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9z"/></svg>',
  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>'
 };
-const CE_ASSUNTOS={"bv_1_apresentacao":"Bem-vindo à Resilcon, {{nome}}","bv_2_como_ajudamos":"{{nome}}, veja como a Resilcon pode ajudar a sua empresa","mat_1_entrega":"Seu material chegou: {{material_nome}}","mat_2_relacionado":"{{nome}}, conseguiu ver o material?","seg_drogaria":"Drogarias: três pontos fiscais que pesam no caixa","seg_distribuidora":"Distribuidoras: onde costuma estar o imposto pago a mais","seg_saude":"Profissionais da saúde: o regime certo faz diferença","seg_geral":"{{nome}}, a sua empresa está no regime tributário certo?","seg_fechamento":"Quer que a gente olhe os números da sua empresa?","rt_1_precificacao":"Reforma Tributária: o que muda na sua precificação","rt_2_caixa":"Reforma Tributária: atenção ao fluxo de caixa","rt_3_erp":"Reforma Tributária: seu ERP está pronto?","ev_convite":"Convite: {{evento_nome}}","ev_programacao":"{{evento_nome}}: veja a programação","ev_ultimo_aviso":"Últimas vagas para o {{evento_nome}}","ev_confirmacao":"Inscrição confirmada: {{evento_nome}}","ev_lembrete":"É amanhã: {{evento_nome}}","ev_pos_presente":"Obrigado por participar do {{evento_nome}}","ev_pos_ausente":"Sentimos sua falta no {{evento_nome}}","ev_pos_conversa":"{{nome}}, vamos continuar a conversa?","vd_recebemos":"Recebemos seu pedido, {{nome}}","op_pos_proposta":"{{nome}}, ficou alguma dúvida sobre a proposta?","op_retomada":"{{nome}}, ainda faz sentido conversarmos?","re_1_conteudo":"{{nome}}, separamos este conteúdo para você","re_2_interesses":"Você quer continuar recebendo nossos e-mails?","cli_1_boas_vindas":"Boas-vindas à Resilcon, {{nome}}","cli_2_documentos":"Checklist de documentos para começarmos","cli_3_proximos_passos":"Como vai funcionar o dia a dia com a Resilcon","rel_orientacao":"{{titulo_comunicado}}","ps_convite":"{{nome}}, como está sendo a experiência com a Resilcon?","ps_lembrete":"Ainda dá tempo de responder a pesquisa","sc_bpo_notas":"{{nome}}, e se a gente cuidasse das suas notas fiscais?","sc_diagnostico":"Diagnóstico tributário para clientes Resilcon","aviso_comercial":"Lead para o comercial: {{contato_nome}}"};
+const CE_ASSUNTOS={"bv_1_apresentacao": "Bem-vindo à Resilcon, {{nome}}", "bv_2_como_ajudamos": "{{nome}}, veja como a Resilcon pode ajudar a sua empresa", "mat_1_entrega": "Seu material chegou: {{material_nome}}", "mat_2_relacionado": "{{nome}}, conseguiu ver o material?", "seg_drogaria": "Drogarias: três pontos fiscais que pesam no caixa", "seg_distribuidora": "Distribuidoras: onde costuma estar o imposto pago a mais", "seg_saude": "Profissionais da saúde: o regime certo faz diferença", "seg_geral": "{{nome}}, a sua empresa está no regime tributário certo?", "seg_fechamento": "Quer que a gente olhe os números da sua empresa?", "rt_1_precificacao": "Reforma Tributária: o que muda na sua precificação", "rt_2_caixa": "Reforma Tributária: atenção ao fluxo de caixa", "rt_3_erp": "Reforma Tributária: seu ERP está pronto?", "ev_convite": "Convite: {{evento_nome}}", "ev_programacao": "{{evento_nome}}: veja a programação", "ev_ultimo_aviso": "Últimas vagas para o {{evento_nome}}", "ev_confirmacao": "Inscrição confirmada: {{evento_nome}}", "ev_lembrete": "É amanhã: {{evento_nome}}", "ev_pos_presente": "Obrigado por participar do {{evento_nome}}", "ev_pos_ausente": "Sentimos sua falta no {{evento_nome}}", "ev_pos_conversa": "{{nome}}, vamos continuar a conversa?", "vd_recebemos": "Recebemos seu pedido, {{nome}}", "op_pos_proposta": "{{nome}}, ficou alguma dúvida sobre a proposta?", "op_retomada": "{{nome}}, ainda faz sentido conversarmos?", "re_1_conteudo": "{{nome}}, separamos este conteúdo para você", "re_2_interesses": "Você quer continuar recebendo nossos e-mails?", "cli_1_boas_vindas": "Boas-vindas à Resilcon, {{nome}}", "cli_2_documentos": "Checklist de documentos para começarmos", "cli_3_proximos_passos": "Como vai funcionar o dia a dia com a Resilcon", "rel_orientacao": "{{titulo_comunicado}}", "ps_convite": "{{nome}}, como está sendo a experiência com a Resilcon?", "ps_lembrete": "Ainda dá tempo de responder a pesquisa", "sc_bpo_notas": "{{nome}}, e se a gente cuidasse das suas notas fiscais?", "sc_diagnostico": "Diagnóstico tributário para clientes Resilcon", "aviso_comercial": "Lead para o comercial: {{contato_nome}}", "jc_00_atencao": "{{nome}}, um alerta rápido sobre os impostos da sua empresa", "jc_03_margem": "O erro silencioso que faz empresas de SP perderem margem", "jc_06_margem_real": "{{nome}}, você sabe qual é a margem líquida real da sua empresa?", "jc_09_prova": "Como uma empresa de serviços em SP pode reduzir o imposto pela metade", "jc_12_diagnostico": "{{nome}}, posso fazer uma análise gratuita do seu enquadramento?", "jc_15_objecao": "\"Trocar de contabilidade dá muito trabalho?\"", "jc_18_urgencia": "{{nome}}, cada mês sem ajuste é imposto que não volta", "sc_00_boas_vindas": "Bem-vindo à Resilcon, {{nome}}! Veja seus próximos passos", "sc_03_alinhamento": "Como vamos organizar seus números nas próximas semanas", "sc_06_primeiras_impressoes": "{{nome}}, nosso time já está olhando os números da sua empresa", "sc_30_lealdade": "Seu primeiro mês com a Resilcon: vamos revisar juntos?", "sc_60_reforma": "Reforma Tributária: o que muda para empresas de São Paulo", "sc_90_planejamento": "{{nome}}, já pensou no planejamento tributário do próximo ano?", "sc_120_indicacao": "Conhece outro empresário que precisa destravar o caixa?"};
 const CE_ETAPAS=[["atracao","Atração"],["nutricao","Nutrição"],["conversao","Conversão"],["decisao","Decisão"],["ganha","Ganha"],["perdida","Perdida"]];
 const CE_ETAPA_TXT=Object.fromEntries(CE_ETAPAS);
-const CE_CAT={relacionamento:"Relacionamento",vendas:"Vendas",eventos:"Eventos",clientes:"Clientes"};
+const CE_CAT={relacionamento:"Relacionamento",vendas:"Vendas",eventos:"Eventos",clientes:"Clientes",substituidas:"Substituídas"};
 const CE_ST_REGUA={ativa:["good","Ativa"],pausada:["warn","Pausada"],rascunho:["neutral","Rascunho"],encerrada:["neutral","Encerrada"]};
 const CE_ST_ENVIO={fila:["neutral","Na fila"],enviado:["neutral","Enviado"],entregue:["good","Entregue"],devolvido:["crit","Devolvido"],reclamado:["crit","Spam"],rejeitado:["crit","Rejeitado"],atrasado:["warn","Atrasado"],falhou:["crit","Falhou"],suprimido:["neutral","Bloqueado"]};
 const CE_ST_CONT={ativo:["good","Ativo"],descadastrado:["neutral","Descadastrado"],devolvido:["crit","Devolvido"],reclamou:["crit","Marcou spam"],inativo:["warn","Inativo"]};
@@ -3691,7 +3695,7 @@ function ceRegra(r){if(!r) return "";if(r.ou) return r.ou.map(ceRegra).join(" ou
 function cePasso(p){const c=p.c||{};
  switch(p.t){
   case "email":return "E-mail: "+esc((CE_ASSUNTOS[c.modelo]||c.modelo||"").replace(/\{\{\s*(\w+)\s*\}\}/g,(_,k)=>"["+k.replace(/_/g," ")+"]"));
-  case "espera":return c.antes_do_evento_horas?`Espera até ${c.antes_do_evento_horas}h antes do evento`:`Espera ${c.dias?c.dias+" dia"+(c.dias>1?"s":""):""}${c.horas?c.horas+"h":""}${c.minutos?c.minutos+"min":""}`;
+  case "espera":return c.antes_do_evento_horas?`Espera até ${c.antes_do_evento_horas}h antes do evento`:`Espera ${c.dias?c.dias+" dia"+(c.dias>1?"s":""):""}${c.horas?c.horas+"h":""}${c.minutos?c.minutos+"min":""}${c.janela?` e envia de ${["","seg","ter","qua","qui","sex","sáb","dom"].filter((_,i)=>(c.janela.dias||[]).includes(i)).join(", ")}, das ${c.janela.inicio} às ${c.janela.fim}`:""}`;
   case "condicao":return `Se ${esc(ceRegra(c.regra))}: vai ao passo ${c.se_sim}, senão ${c.se_nao}`;
   case "ir_para":return `Pula para o passo ${c.ordem}`;
   case "notificar":return `Avisa o comercial: ${esc(c.motivo||"")}`;
@@ -3717,6 +3721,7 @@ function ceReguas(lista){
     <button class="view-btn ghost" data-ce-passos="${r.chave}">${ceReguaAberta===r.chave?"Esconder passos":"Ver passos"}</button>
     ${r.status==="ativa"?`<button class="view-btn" data-ce-status="pausada" data-ce-chave="${r.chave}">Pausar</button>`:`<button class="view-btn ce-pri" data-ce-status="ativa" data-ce-chave="${r.chave}" ${editar?'disabled title="Edite o comunicado antes de ativar"':""}>Ativar</button>`}
     ${r.status==="pausada"?`<button class="view-btn ghost" data-ce-status="rascunho" data-ce-chave="${r.chave}">Voltar para rascunho</button>`:""}
+    ${emails?`<button class="view-btn ghost" data-ce-teste="${r.chave}">Enviar teste</button>`:""}
    </div>
    ${ceReguaAberta===r.chave?`<ol class="ce-passos">${(r.passos||[]).map(p=>`<li><span class="num">${p.o}</span><span>${cePasso(p)}</span></li>`).join("")}</ol>`:""}
   </div>`}).join("")}</div>`;
@@ -3755,6 +3760,7 @@ document.addEventListener("click",async ev=>{
  if(t.dataset.cePassos){ceReguaAberta=ceReguaAberta===t.dataset.cePassos?null:t.dataset.cePassos;ceRepinta("reguas");return}
  if(t.dataset.ceTipo){ceTipoCont=t.dataset.ceTipo;ceRepinta("contatos");return}
  if(t.dataset.ceOp){ceOpAberta=t.dataset.ceOp;ceRepinta("funil");return}
+ if(t.dataset.ceTeste){ceTesteModal(t.dataset.ceTeste);return}
  if(t.dataset.ceStatus&&!ceOcupado){
   const chave=t.dataset.ceChave,st=t.dataset.ceStatus;
   if(t.dataset.confirma!=="1"){const orig=t.textContent;t.dataset.confirma="1";t.textContent=st==="ativa"?"Confirmar ativação":"Confirmar";setTimeout(()=>{if(t.isConnected){t.dataset.confirma="";t.textContent=orig}},4000);return}
@@ -3777,6 +3783,172 @@ document.addEventListener("input",ev=>{
 });
 
 
+
+// Layout dos e-mails da Resilcon (azul #006789, preto e branco), inspirado no modelo "Recruiter".
+// Usado pela função montar-email (réguas) e pelo Resiltrack (envio individual pelo CRM).
+// Estilos: 'marketing' (blocos com hero escuro), 'carta' (parece escrito pelo consultor) e 'sistema' (aviso interno).
+var RESILCON_EMAIL = (function () {
+  const AZUL = '#006789', AZUL_ESC = '#004E68', PRETO = '#1B1B1B', GRAFITE = '#2A2A2A', TEXTO = '#333333', CINZA = '#7C8487', CLARO = '#F4F6F7', LINHA = '#E3E8EA';
+  const F = "font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const LOGO = 'https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/montar-email?logo=';
+  const logo = (tipo, largura) => `<img src="${LOGO}${tipo}" width="${largura}" height="${Math.round(largura * 155 / 600)}" alt="Resilcon Contabilidade Consultiva" style="display:block;border:0;outline:none;width:${largura}px;max-width:100%;height:auto;${F}font-size:16px;font-weight:800;letter-spacing:3px;color:${tipo === 'branco' ? '#FFFFFF' : AZUL};">`;
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const preencher = (t, d) => String(t ?? '').replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (d[k] === undefined || d[k] === null ? '' : String(d[k])));
+  const rico = (t, cor) => esc(t).replace(/\*\*(.+?)\*\*/g, `<strong style="color:${cor || PRETO};">$1</strong>`).replace(/\n/g, '<br>');
+  const temLink = (l) => /^https?:\/\//.test(String(l || '').trim());
+
+  function botao(txt, link, tipo) {
+    if (!txt || !temLink(link)) return '';
+    const cheio = tipo !== 'contorno' && tipo !== 'contorno_branco';
+    const cor = tipo === 'contorno_branco' ? '#FFFFFF' : (cheio ? '#FFFFFF' : PRETO);
+    const borda = tipo === 'contorno_branco' ? '#FFFFFF' : (cheio ? AZUL : PRETO);
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:6px auto 0;"><tr>`
+      + `<td align="center" bgcolor="${cheio ? AZUL : ''}" style="${cheio ? `background:${AZUL};` : ''}border:2px solid ${borda};border-radius:4px;">`
+      + `<a href="${esc(link)}" target="_blank" style="display:inline-block;padding:13px 28px;${F}font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${cor};text-decoration:none;">${esc(txt)}</a>`
+      + `</td></tr></table>`;
+  }
+  const divisor = (cor) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:16px auto 22px;"><tr><td width="70" height="2" style="background:${cor || AZUL};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+  const titulo = (t, cor) => t ? `<h2 style="margin:0;${F}font-size:24px;line-height:32px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${cor || PRETO};text-align:center;">${esc(t)}</h2>${divisor(cor === '#FFFFFF' ? '#FFFFFF' : AZUL)}` : '';
+  const paragrafos = (t, cor, alinhar) => String(t || '').split(/\n\s*\n/).filter((p) => p.trim())
+    .map((p) => `<p style="margin:0 0 14px;${F}font-size:15px;line-height:25px;color:${cor || TEXTO};text-align:${alinhar || 'left'};">${rico(p.trim(), cor === '#FFFFFF' ? '#FFFFFF' : PRETO)}</p>`).join('');
+  const secao = (fundo, conteudo, pad) => `<tr><td bgcolor="${fundo}" style="background:${fundo};padding:${pad || '44px 40px'};" class="pad">${conteudo}</td></tr>`;
+
+  function bloco(b, f) {
+    const tx = (k) => f(b[k]);
+    switch (b.tipo) {
+      case 'texto': return secao(b.fundo === 'claro' ? CLARO : '#FFFFFF', titulo(tx('titulo')) + paragrafos(tx('texto'), TEXTO, b.centro ? 'center' : 'left') + botao(tx('botao_texto'), tx('botao_link'), b.botao_estilo));
+      case 'faixa': return secao(AZUL, titulo(tx('titulo'), '#FFFFFF') + paragrafos(tx('texto'), '#FFFFFF', 'center') + botao(tx('botao_texto'), tx('botao_link'), 'contorno_branco'));
+      case 'citacao': return `<tr><td bgcolor="${AZUL}" style="background:${AZUL};height:6px;font-size:0;line-height:0;">&nbsp;</td></tr>`
+        + secao(GRAFITE, `<p style="margin:0;${F}font-size:22px;line-height:32px;font-weight:700;color:#FFFFFF;text-align:center;">&ldquo;${rico(tx('texto'), '#FFFFFF')}&rdquo;</p>`
+          + (b.autor ? `<p style="margin:14px 0 0;${F}font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#9FC6D3;text-align:center;">${esc(tx('autor'))}</p>` : ''));
+      case 'cards': {
+        const itens = (b.itens || []).map((it) => `<div class="col" style="display:inline-block;vertical-align:top;width:100%;max-width:${(b.itens || []).length >= 3 ? 170 : 255}px;margin:0 8px 18px;text-align:left;">`
+          + `<div style="${F}font-size:28px;font-weight:800;color:${AZUL};line-height:30px;margin-bottom:8px;">${esc(f(it.icone || ''))}</div>`
+          + `<div style="${F}font-size:16px;line-height:22px;font-weight:700;color:${PRETO};margin-bottom:6px;">${esc(f(it.titulo))}</div>`
+          + `<div style="${F}font-size:14px;line-height:22px;color:${CINZA};">${rico(f(it.texto), PRETO)}</div></div>`).join('');
+        return secao(b.fundo === 'claro' ? CLARO : '#FFFFFF', titulo(tx('titulo')) + (b.texto ? paragrafos(tx('texto'), CINZA, 'center') : '') + `<div style="text-align:center;font-size:0;">${itens}</div>` + botao(tx('botao_texto'), tx('botao_link'), b.botao_estilo));
+      }
+      case 'numeros': {
+        const itens = (b.itens || []).map((it) => `<div class="col" style="display:inline-block;vertical-align:top;width:100%;max-width:170px;margin:0 8px 16px;text-align:center;">`
+          + `<div style="${F}font-size:30px;line-height:36px;font-weight:800;color:${AZUL};">${esc(f(it.valor))}</div>`
+          + `<div style="${F}font-size:13px;line-height:19px;color:${CINZA};">${esc(f(it.legenda))}</div></div>`).join('');
+        return secao(b.fundo === 'claro' ? CLARO : '#FFFFFF', titulo(tx('titulo')) + `<div style="text-align:center;font-size:0;">${itens}</div>` + (b.texto ? paragrafos(tx('texto'), CINZA, 'center') : ''));
+      }
+      case 'passos': {
+        const itens = (b.itens || []).map((it, i) => `<tr><td width="44" valign="top" style="padding:0 14px 18px 0;"><div style="width:34px;height:34px;line-height:34px;border-radius:50%;background:${AZUL};${F}font-size:15px;font-weight:800;color:#FFFFFF;text-align:center;">${i + 1}</div></td>`
+          + `<td valign="top" style="padding:0 0 18px;"><div style="${F}font-size:16px;line-height:22px;font-weight:700;color:${PRETO};">${esc(f(it.titulo))}</div><div style="${F}font-size:14px;line-height:22px;color:${CINZA};margin-top:3px;">${rico(f(it.texto), PRETO)}</div></td></tr>`).join('');
+        return secao(b.fundo === 'claro' ? CLARO : '#FFFFFF', titulo(tx('titulo')) + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${itens}</table>` + botao(tx('botao_texto'), tx('botao_link'), b.botao_estilo));
+      }
+      case 'destaque': return secao('#FFFFFF', `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-left:4px solid ${AZUL};background:${CLARO};padding:18px 22px;${F}font-size:15px;line-height:24px;color:${TEXTO};">${rico(tx('texto'))}</td></tr></table>`, '0 40px 30px');
+      default: return '';
+    }
+  }
+
+  function cabecalho(hero, f) {
+    const kicker = f(hero.kicker), t1 = f(hero.titulo_azul), t2 = f(hero.titulo), sub = f(hero.subtitulo);
+    return `<tr><td bgcolor="${PRETO}" style="background:${PRETO};padding:34px 40px 46px;text-align:center;" class="pad">`
+      + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td align="center">${logo('branco', 200)}</td></tr></table>`
+      + `<div style="height:38px;line-height:38px;font-size:0;">&nbsp;</div>`
+      + (kicker ? `<div style="display:inline-block;border:2px solid #FFFFFF;padding:8px 16px;${F}font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#FFFFFF;margin-bottom:22px;">${esc(kicker)}</div>` : '')
+      + `<h1 style="margin:0;${F}font-size:34px;line-height:42px;font-weight:300;letter-spacing:.5px;color:#FFFFFF;">${t1 ? `<span style="color:#3FA9C9;font-weight:300;">${esc(t1)}</span> ` : ''}<strong style="font-weight:800;">${esc(t2)}</strong></h1>`
+      + (sub ? `<p style="margin:18px auto 0;max-width:480px;${F}font-size:16px;line-height:25px;color:#C9D2D4;">${rico(sub, '#FFFFFF')}</p>` : '')
+      + (hero.botao_texto ? `<div style="height:26px;font-size:0;">&nbsp;</div>` + botao(f(hero.botao_texto), f(hero.botao_link)) : '')
+      + `</td></tr>`;
+  }
+
+  // m: modelo; d: dados já mesclados; opcoes: { link_descadastro }
+  function montar(m, dadosIn, opcoes) {
+    const d = Object.assign({}, m.padroes || {});
+    for (const [k, v] of Object.entries(dadosIn || {})) if (v !== null && v !== undefined && v !== '') d[k] = v;
+    const f = (t) => preencher(t, d);
+    const estilo = m.estilo || (m.layout === 'sistema' ? 'sistema' : 'marketing');
+    const linkSair = (opcoes && opcoes.link_descadastro) || '';
+    const previa = f(m.previa).trim();
+    const saud = m.saudacao !== undefined ? f(m.saudacao) : (d.nome ? `Olá, ${d.nome}!` : 'Olá!');
+    let corpo = '';
+
+    if (estilo === 'carta') {
+      const assinatura = f(m.assinatura || '{{consultor}}\nResilcon Contabilidade Consultiva\nWhatsApp (11) 97414-4223');
+      const [nomeAss, ...resto] = assinatura.split('\n');
+      corpo = `<tr><td style="padding:26px 40px 18px;border-bottom:3px solid ${AZUL};" class="pad">${logo('cor', 170)}</td></tr>`
+        + `<tr><td style="padding:30px 40px 10px;" class="pad">`
+        + (saud ? `<p style="margin:0 0 16px;${F}font-size:15px;line-height:25px;color:${TEXTO};">${esc(saud)}</p>` : '')
+        + paragrafos(f(m.texto), TEXTO)
+        + (m.destaque ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px;"><tr><td style="border-left:4px solid ${AZUL};background:${CLARO};padding:14px 18px;${F}font-size:15px;line-height:24px;color:${TEXTO};">${rico(f(m.destaque))}</td></tr></table>` : '')
+        + (m.botao && temLink(f(m.botao[1])) ? `<p style="margin:6px 0 20px;"><a href="${esc(f(m.botao[1]))}" target="_blank" style="display:inline-block;background:${AZUL};border-radius:4px;padding:12px 24px;${F}font-size:14px;font-weight:700;color:#FFFFFF;text-decoration:none;">${esc(f(m.botao[0]))}</a></p>` : '')
+        + `<p style="margin:18px 0 0;${F}font-size:15px;line-height:23px;color:${TEXTO};">${esc(f(m.despedida || 'Um abraço,'))}</p>`
+        + `<p style="margin:6px 0 28px;${F}font-size:14px;line-height:21px;color:${CINZA};"><strong style="color:${PRETO};font-size:15px;">${esc(nomeAss)}</strong>${resto.length ? '<br>' + resto.map(esc).join('<br>') : ''}</p>`
+        + `</td></tr>`;
+    } else if (estilo === 'sistema') {
+      corpo = `<tr><td bgcolor="${PRETO}" style="background:${PRETO};padding:20px 40px;" class="pad">${logo('branco', 150)}</td></tr>`
+        + `<tr><td style="padding:30px 40px 24px;" class="pad">`
+        + (m.etiqueta ? `<div style="${F}font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${AZUL};margin-bottom:8px;">${esc(f(m.etiqueta))}</div>` : '')
+        + `<h1 style="margin:0 0 16px;${F}font-size:22px;line-height:30px;font-weight:800;color:${PRETO};">${esc(f(m.titulo))}</h1>`
+        + paragrafos(f(m.texto), TEXTO)
+        + (m.destaque ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 16px;"><tr><td style="border-left:4px solid ${AZUL};background:${CLARO};padding:14px 18px;${F}font-size:15px;line-height:24px;color:${TEXTO};">${rico(f(m.destaque))}</td></tr></table>` : '')
+        + (m.botao ? botao(f(m.botao[0]), f(m.botao[1])) : '') + `</td></tr>`;
+    } else {
+      const hero = m.hero || { kicker: m.etiqueta, titulo: m.titulo };
+      corpo = cabecalho(hero, f);
+      if (m.secoes && m.secoes.length) {
+        const abertura = saud ? `<p style="margin:0 0 14px;${F}font-size:16px;line-height:25px;font-weight:700;color:${PRETO};">${esc(saud)}</p>` : '';
+        let primeira = true;
+        for (const b of m.secoes) {
+          if (b.se && !d[b.se]) continue;
+          if (b.se_nao && d[b.se_nao]) continue;
+          if (primeira && b.tipo === 'texto') { corpo += secao(b.fundo === 'claro' ? CLARO : '#FFFFFF', titulo(f(b.titulo)) + abertura + paragrafos(f(b.texto)) + botao(f(b.botao_texto), f(b.botao_link), b.botao_estilo)); primeira = false; continue; }
+          primeira = false; corpo += bloco(b, f);
+        }
+      } else {
+        // modelos antigos (texto, destaque, botao) no visual novo
+        corpo += secao('#FFFFFF', `<p style="margin:0 0 14px;${F}font-size:16px;line-height:25px;font-weight:700;color:${PRETO};">${esc(saud)}</p>` + paragrafos(f(m.texto))
+          + (m.destaque ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px;"><tr><td style="border-left:4px solid ${AZUL};background:${CLARO};padding:14px 18px;${F}font-size:15px;line-height:24px;color:${TEXTO};">${rico(f(m.destaque))}</td></tr></table>` : '')
+          + (m.botao ? botao(f(m.botao[0]), f(m.botao[1])) : ''));
+      }
+      corpo += `<tr><td style="padding:28px 40px 36px;" class="pad"><p style="margin:0;${F}font-size:14px;line-height:22px;color:${CINZA};">Um abraço,<br><strong style="color:${PRETO};">${esc(f(m.assinatura_mkt || 'Equipe Resilcon'))}</strong></p></td></tr>`;
+    }
+
+    const rodape = estilo === 'sistema'
+      ? `Aviso automático da Central de E-mails Resilcon.`
+      : `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 12px;"><tr><td align="center">${logo('branco', 140)}</td></tr></table>Contabilidade consultiva em São Paulo<br><a href="https://wa.me/5511974144223" style="color:#9FC6D3;text-decoration:none;">WhatsApp (11) 97414-4223</a> &nbsp;·&nbsp; <a href="https://resilcon.com.br" style="color:#9FC6D3;text-decoration:none;">resilcon.com.br</a>`
+        + (linkSair ? `<br><br><span style="color:#8C9799;">Você recebe este e-mail porque tem relacionamento com a Resilcon ou se cadastrou para receber nossos conteúdos.</span> <a href="${esc(linkSair)}" style="color:#FFFFFF;text-decoration:underline;">Não quero mais receber</a>` : '');
+    const tituloDoc = esc(f(m.assunto));
+    const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">`
+      + `<title>${tituloDoc}</title><link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,800" rel="stylesheet">`
+      + `<style>body{margin:0;padding:0}a{text-decoration:none}@media only screen and (max-width:620px){.pad{padding-left:22px!important;padding-right:22px!important}.col{max-width:100%!important;margin:0 0 18px!important}h1{font-size:27px!important;line-height:34px!important}}</style></head>`
+      + `<body style="margin:0;padding:0;background:#EDEFF0;">`
+      + (previa ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(previa)}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>` : '')
+      + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EDEFF0" style="background:#EDEFF0;"><tr><td align="center" style="padding:24px 10px;">`
+      + `<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:640px;background:#FFFFFF;">`
+      + corpo
+      + `<tr><td bgcolor="${PRETO}" style="background:${PRETO};padding:28px 40px;text-align:center;${F}font-size:12px;line-height:20px;color:#AEB7B9;" class="pad">${rodape}</td></tr>`
+      + `</table></td></tr></table></body></html>`;
+    return { assunto: f(m.assunto).replace(/\s+/g, ' ').trim(), html, estilo };
+  }
+  return { montar, esc };
+})();
+
+// Envio de teste de uma régua: manda os e-mails na hora para um endereço, sem inscrever ninguém
+function ceTesteModal(chave){
+ const lista=(CE_CACHE.reguas&&CE_CACHE.reguas.lista)||CE_CACHE.reguas||[];
+ const r=(Array.isArray(lista)?lista:[]).find(x=>x.chave===chave)||{chave,nome:chave,passos:[]};
+ const mods=(r.passos||[]).filter(p=>p.t==="email").map(p=>(p.c||{}).modelo).filter(Boolean);
+ const tit=m=>(CE_ASSUNTOS[m]||m).replace(/\{\{\s*(\w+)\s*\}\}/g,(_,k)=>"["+k.replace(/_/g," ")+"]");
+ const m=crmModal("Central de E-mails · teste","Enviar teste: "+r.nome,"",`
+  <div class="ce-note">${CE_ICO.alert}<span>O teste sai na hora, sem esperar os intervalos da régua e sem inscrever ninguém. Enquanto a conta da Amazon estiver em modo de teste, o endereço precisa estar verificado no SES.</span></div>
+  <div class="crm-form" style="margin-top:12px">
+   <label class="crm-f"><span>E-mail que vai receber</span><input class="inp" id="ceTeEmail" type="email" value="${escAttr(typeof ME==="string"?ME:"")}"></label>
+   <label class="crm-f"><span>Nome para preencher o e-mail (opcional)</span><input class="inp" id="ceTeNome" placeholder="Usa o nome do cadastro, se houver"></label>
+   <label class="crm-f"><span>Quais e-mails</span><select class="inp" id="ceTeMod"><option value="">Todos os ${mods.length} e-mails da régua</option>${mods.map((x,i)=>`<option value="${escAttr(x)}">${i+1}. ${esc(tit(x))}</option>`).join("")}</select></label>
+  </div>
+  <div class="crm-pe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ce-pri" id="ceTeOk">Enviar teste</button></div>`);
+ m.querySelector("#ceTeOk").onclick=async ev=>{ const b=ev.currentTarget; const email=m.querySelector("#ceTeEmail").value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ ceAviso2("Informe um e-mail válido."); return; }
+  b.disabled=true; b.textContent="Enviando…";
+  const {data,error}=await sb.rpc("ce_enviar_teste",{p_chave:chave,p_email:email,p_nome:m.querySelector("#ceTeNome").value.trim()||null,p_modelo:m.querySelector("#ceTeMod").value||null});
+  if(error){ b.disabled=false; b.textContent="Enviar teste"; ceAviso2(ceErroTxt(error)); return; }
+  closeModal(); ceAviso2(`${data} e-mail${data===1?"":"s"} de teste a caminho de ${email}. Acompanhe em Envios.`); delete CE_CACHE.envios; };
+}
 
 // ================= CRM DE VENDAS (Fase 1) =================
 // Funil completo (Atração → Indicação), contatos, empresas, linha do tempo, indicações, importação e configurações.
@@ -4148,7 +4320,9 @@ async function crmFichaContato(id){
  </div><div class="crm-colline">${id?`<div class="crm-acoes-ficha">${crmAcoesContatoHTML({...c,id})}</div>`+crmTarefasPainel(tars,{contato_id:id,empresa_id:c.empresa_id})+crmReguasPainel(rg,c)+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
  if(id){ crmLigarAcoesContato(m,{...c,id},null,()=>crmFichaContato(id)); crmLigarLinha(m,()=>crmFichaContato(id)); crmLigarTarefas(m,tars,()=>crmFichaContato(id));
   const ri=m.querySelector("#rgIncl"); if(ri) ri.onclick=async()=>{ const ch=crmVal(m,"#rgSel"); if(!ch){ crmToast("Escolha a régua."); return; }
-   try{ const r=await crmRpc("crm_inscrever_regua",{p_contatos:[id],p_chave:ch}); crmToast(r.inscritos?"Contato incluído na régua":"Não entrou: sem e-mail, sem consentimento ou já está nessa régua."); crmFichaContato(id); }catch(e){ crmToast(crmErro(e)); } }; }
+   try{ const r=await crmRpc("crm_inscrever_regua",{p_contatos:[id],p_chave:ch}); crmToast(r.inscritos?"Contato incluído na régua":"Não entrou: sem e-mail, sem consentimento ou já está nessa régua."); crmFichaContato(id); }catch(e){ crmToast(crmErro(e)); } };
+  m.querySelectorAll("[data-rg-sair]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar"; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=""; b.textContent="Tirar"; } },4000); return; }
+   b.disabled=true; try{ await crmRpc("crm_sair_regua",{p_contato:id,p_chave:b.dataset.rgSair}); crmToast("Contato retirado da régua"); crmFichaContato(id); }catch(e){ crmToast(crmErro(e)); b.disabled=false; } }); }
  m.querySelectorAll("[data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
  const nn=m.querySelector("#cNovoNeg"); if(nn) nn.onclick=async()=>{ await crmContatosLista(); crmFichaNegocio(null,{contato_id:id,titulo:"",empresa_id:c.empresa_id}); setTimeout(()=>{ const x=modal.querySelector("#nCont"); const op=[...modal.querySelectorAll("#nContL option")].find(o=>o.dataset.id===id); if(x&&op) x.value=op.value; },0); };
  const dl=m.querySelector("#cDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
@@ -4435,8 +4609,14 @@ function crmVConfig(v){
 function crmReguasPainel(rg,c){
  if(!rg) return ""; const st={ativa:"Recebendo",concluida:"Concluiu",saiu:"Saiu",erro:"Erro"};
  const bloq=!c.email?"Sem e-mail cadastrado":(c.origem==="lista_comprada"&&!c.consentimento_em?"Sem consentimento: não entra em réguas":"");
- return `<div class="panel"><h4>Réguas de e-mail</h4>${(rg.do_contato||[]).map(r=>`<div class="ce-row"><span>${esc(r.nome)}${r.regua_status!=="ativa"?`<span class="sub"> · régua em rascunho</span>`:""}</span><span class="sub">${esc(st[r.status]||r.status)} · ${crmData(r.desde)}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Não está em nenhuma régua.</p>`}
-  ${bloq?`<p class="sub" style="margin:8px 0 0">${bloq}.</p>`:`<div class="crm-pe" style="margin-top:8px"><select class="fsel" id="rgSel" aria-label="Régua">${crmOpt((rg.reguas||[]).map(r=>[r.chave,r.nome+(r.status!=="ativa"?" (rascunho)":"")]),"","Incluir em uma régua…")}</select><button class="view-btn" id="rgIncl">Incluir</button></div>`}</div>`;
+ const linha=r=>{ const espera=r.status==="ativa"&&r.regua_status!=="ativa";
+  const rot=espera?(r.regua_status==="pausada"?"Régua pausada":"Aguardando ativação"):(st[r.status]||r.status);
+  const dica=espera?"O contato já está inscrito, mas nenhum e-mail sai até a régua ser ativada na Central de E-mails.":(r.status==="saiu"&&r.motivo?r.motivo:"");
+  return `<div class="ce-row" ${dica?`title="${escAttr(dica)}"`:""}><span>${esc(r.nome)}</span><span class="sub" style="display:flex;gap:8px;align-items:center">${esc(rot)} · ${crmData(r.desde)}${r.status==="ativa"?`<button class="txt-btn crm-perigo" data-rg-sair="${escAttr(r.chave)}">Tirar</button>`:""}</span></div>`; };
+ const esperando=(rg.do_contato||[]).some(r=>r.status==="ativa"&&r.regua_status!=="ativa");
+ return `<div class="panel"><h4>Réguas de e-mail</h4>${(rg.do_contato||[]).map(linha).join("")||`<p class="sub" style="margin:4px 0">Não está em nenhuma régua.</p>`}
+  ${esperando?`<p class="sub" style="margin:6px 0 0">"Aguardando ativação": a inscrição está feita, mas nenhum e-mail sai enquanto a régua não for ativada.</p>`:""}
+  ${bloq?`<p class="sub" style="margin:8px 0 0">${bloq}.</p>`:`<div class="crm-pe" style="margin-top:8px"><select class="fsel" id="rgSel" aria-label="Régua">${crmOpt((rg.reguas||[]).map(r=>[r.chave,r.nome+(r.status!=="ativa"?" (ainda não ativa)":"")]),"","Incluir em uma régua…")}</select><button class="view-btn" id="rgIncl">Incluir</button></div>`}</div>`;
 }
 
 // ================= CRM · FASE 2: tarefas, contratos, automações, rodízio, ações em massa =================
@@ -4837,19 +5017,44 @@ function crmAcoesContatoHTML(c){ if(!c) return "";
  const wa=crmWaLink(c.telefone);
  return `${c.email?`<button class="txt-btn" data-env-email>Enviar e-mail</button>`:""}${wa?`<a class="txt-btn crm-wa" href="${escAttr(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`; }
 function crmLigarAcoesContato(m,c,opId,depois){ const b=m.querySelector("[data-env-email]"); if(b) b.onclick=()=>crmEmailModal(c,opId,depois); }
+const CRM_EMAIL_MODELOS=[
+ ["branco","Em branco","",""],
+ ["diagnostico","Convite para o diagnóstico","{{nome}}, posso analisar o enquadramento da {{empresa}}?","Olá, {{nome}}!\n\nObrigado pela conversa. Como combinamos, quero te convidar para um **diagnóstico tributário e financeiro gratuito**, de 30 minutos.\n\nNele, revisamos o regime tributário, a forma de cálculo dos impostos e os principais números da empresa. Você sai sabendo onde está pagando a mais e o que dá para ajustar.\n\nQual dia fica melhor para você nesta semana?"],
+ ["proposta","Proposta enviada","Proposta da Resilcon para a {{empresa}}","Olá, {{nome}}!\n\nConforme conversamos, segue a nossa proposta para a {{empresa}}.\n\nResumo do que está incluído:\n- Contabilidade e fiscal em dia, com olhar consultivo\n- Planejamento tributário\n- Relatórios mensais para apoiar suas decisões\n\nFico à disposição para apresentar os detalhes em uma conversa rápida. Qual o melhor horário para você?"],
+ ["followup","Follow-up da proposta","{{nome}}, conseguiu ver a proposta?","Olá, {{nome}}!\n\nPassando para saber se você conseguiu avaliar a proposta que enviei.\n\nSe ficou alguma dúvida sobre valores, migração da contabilidade ou prazos, posso te explicar em 15 minutos. A troca não dá trabalho para você: quem faz tudo é a gente.\n\nPosso te ligar amanhã?"],
+ ["reuniao","Depois da reunião","Obrigado pela conversa, {{nome}}","Olá, {{nome}}!\n\nObrigado pelo tempo de hoje. Foi ótimo entender melhor o momento da {{empresa}}.\n\nComo próximos passos, combinamos:\n- \n- \n\nQualquer dúvida, é só me chamar."],
+ ["indicacao","Pedido de indicação (cliente)","{{nome}}, conhece alguém que precisa de uma contabilidade como a nossa?","Olá, {{nome}}!\n\nFicamos muito felizes com o retorno que você tem dado sobre o nosso trabalho.\n\nSe conhecer outro empresário que sofre com imposto alto, caixa apertado ou falta de orientação, a gente adoraria conversar com ele. Pelo nosso programa de indicação, **você recebe metade do primeiro honorário** de cada empresa indicada que fechar com a Resilcon.\n\nÉ só me responder com o nome e o telefone da pessoa."]];
+function crmMontarEmailHTML(layout,assunto,texto,consultor){
+ if(typeof RESILCON_EMAIL==="undefined") return "";
+ const m=layout==="destaque"
+  ? {estilo:"marketing",assunto,saudacao:"",hero:{titulo:assunto},assinatura_mkt:consultor+" · Resilcon",
+     secoes:[{tipo:"texto",texto},{tipo:"faixa",titulo:"Vamos conversar?",texto:"Me chame no WhatsApp do escritório. Respondo pessoalmente.",botao_texto:"Falar no WhatsApp",botao_link:"https://wa.me/5511974144223?text="+encodeURIComponent("Olá! Recebi o e-mail de "+consultor+", da Resilcon.")}]}
+  : {estilo:"carta",assunto,saudacao:"",texto,assinatura:consultor+"\nResilcon Contabilidade Consultiva\nWhatsApp (11) 97414-4223"};
+ return RESILCON_EMAIL.montar(m,{},{}).html;
+}
 function crmEmailModal(c,opId,depois){
- const eu=crmNomeResp((CRMB.eu||{}).email);
- const mm=crmModal("Enviar e-mail",c.nome||c.email,crmChip(esc(c.email)),`<div class="crm-form">
-  <label class="crm-f crm-w2"><span>Assunto</span><input class="inp" id="eAss" placeholder="Ex.: Proposta de contabilidade para a sua empresa"></label>
-  <label class="crm-f crm-w2"><span>Mensagem</span><textarea class="inp" id="eTxt" style="min-height:180px">Olá, ${esc(crmPrimeiroNome(c.nome))}!\n\n</textarea></label></div>
-  <p class="sub" style="margin:0">Sai pela Central de E-mails com a sua assinatura (${esc(eu)}, Resilcon e o WhatsApp do escritório). A resposta do cliente chega no seu e-mail. A abertura aparece na linha do tempo.</p>
+ const eu=crmNomeResp((CRMB.eu||{}).email); const vars={nome:crmPrimeiroNome(c.nome)||"tudo bem",empresa:c.empresa_nome||c.empresa||"sua empresa"};
+ const pre=t=>String(t||"").replace(/\{\{\s*(\w+)\s*\}\}/g,(_,k)=>vars[k]||"");
+ const mm=crmModal("Enviar e-mail",c.nome||c.email,crmChip(esc(c.email)),`<div class="crm-email-g"><div>
+  <div class="crm-form">
+   <label class="crm-f"><span>Modelo</span><select class="inp" id="eMod">${crmOpt(CRM_EMAIL_MODELOS.map(x=>[x[0],x[1]]),"branco")}</select></label>
+   <label class="crm-f"><span>Layout</span><select class="inp" id="eLay">${crmOpt([["carta","Carta pessoal (recomendado)"],["destaque","Destaque Resilcon"]],"carta")}</select></label>
+   <label class="crm-f crm-w2"><span>Assunto</span><input class="inp" id="eAss" placeholder="Ex.: Proposta de contabilidade para a sua empresa"></label>
+   <label class="crm-f crm-w2"><span>Mensagem</span><textarea class="inp" id="eTxt" style="min-height:230px">Olá, ${esc(crmPrimeiroNome(c.nome))}!\n\n</textarea></label></div>
+  <p class="sub" style="margin:8px 0 0">Use **texto** para negrito. Sai pela Central de E-mails com a sua assinatura (${esc(eu)}). A resposta do cliente chega no seu e-mail e a abertura aparece na linha do tempo.</p></div>
+  <div><div class="sub" style="margin-bottom:6px">Prévia</div><iframe id="ePrev" class="crm-email-prev" title="Prévia do e-mail" sandbox></iframe></div></div>
   <div class="crm-pe"><span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="eOk">Enviar</button>')}</div>`);
- mm.classList.remove("prodm"); mm.querySelector("[data-close2]").onclick=closeModal;
- const ta=mm.querySelector("#eTxt"); ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
+ mm.querySelector("[data-close2]").onclick=closeModal;
+ const ta=mm.querySelector("#eTxt"), as=mm.querySelector("#eAss"), pv=mm.querySelector("#ePrev"); let tm;
+ const prev=()=>{ clearTimeout(tm); tm=setTimeout(()=>{ pv.srcdoc=crmMontarEmailHTML(crmVal(mm,"#eLay"),crmVal(mm,"#eAss")||"Assunto do e-mail",ta.value,eu); },180); };
+ mm.querySelector("#eMod").onchange=e=>{ const x=CRM_EMAIL_MODELOS.find(y=>y[0]===e.target.value); if(x&&x[0]!=="branco"){ as.value=pre(x[2]); ta.value=pre(x[3]); } prev(); };
+ mm.querySelector("#eLay").onchange=prev; ta.oninput=prev; as.oninput=prev; prev();
+ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
  mm.querySelector("#eOk").onclick=async ev=>{ const ass=crmVal(mm,"#eAss"), txt=crmVal(mm,"#eTxt");
   if(!ass||txt.replace(/^Olá,?[^\n]*\n*/,"").trim().length<3){ crmToast("Escreva o assunto e a mensagem."); return; }
+  if(/\n-\s*\n/.test(txt+"\n")){ crmToast("Complete os itens da lista antes de enviar."); return; }
   const b=ev.currentTarget; b.disabled=true; b.textContent="Enviando…";
-  try{ await crmRpc("crm_enviar_email",{p:{contato_id:c.id,oportunidade_id:opId||null,assunto:ass,texto:txt}}); closeModal(); crmToast("E-mail enviado para a fila. Ele aparece na linha do tempo em instantes."); depois&&depois(); }
+  try{ await crmRpc("crm_enviar_email",{p:{contato_id:c.id,oportunidade_id:opId||null,assunto:ass,texto:txt,html:crmMontarEmailHTML(crmVal(mm,"#eLay"),ass,txt,eu)}}); closeModal(); crmToast("E-mail enviado para a fila. Ele aparece na linha do tempo em instantes."); depois&&depois(); }
   catch(e){ b.disabled=false; b.textContent="Enviar"; crmToast(crmErro(e)); } };
 }
 
