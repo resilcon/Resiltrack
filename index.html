@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.2 (editor visual de contratos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.3 (nichos vinculados às tabelas)</footer>
   </div>
 </div>
 
@@ -5374,6 +5374,7 @@ CRM_ICO.preco='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const PRECO_ARQS=[["plano_resilcon","Plano Resilcon"],["ctb","Contábil: serviço, comércio e indústria"],["low_ticket","Planos contábeis low ticket"],["credito_estoque_st","Crédito de estoque ST"],["pjm","PJ / MEI"],["bps","BPO: empresas de serviços"],["bpc","BPO: empresas de comércio"]];
 const PRECO_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
 let PRECO_DB=null; // {chave:{nome,P,nichos}}
+let PRECO_NICHOS={lista:[],vinculos:{}}; // nichos da 4C e as tabelas vinculadas a cada um
 let PRECO_ST={arq:"plano_resilcon",nicho:"",negocio:null,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15};
 
 async function precoCarregar(){
@@ -5385,11 +5386,16 @@ async function precoCarregar(){
   if(raw&&raw.dados) db[k]={chave:k,nome:rot,P:precoNormalizar(raw.dados),nichos:(raw.dados.nichos||[]),importado:raw.importado_em};
  }));
  if(!Object.keys(db).length) throw new Error("Não encontrei a tabela de preços. Peça ao suporte para importar de novo.");
+ try{ let raw=null; const {data,error}=await sb.storage.from("crm-arquivos").download("precificacao/nichos_vinculos.json"); if(!error&&data) raw=JSON.parse(await data.text());
+  if(!raw){ const r=await fetch(`${PRECO_FN}?arquivo=nichos_vinculos`,{headers:{Authorization:"Bearer "+tok}}); if(r.ok) raw=await r.json(); }
+  if(raw&&raw.dados) PRECO_NICHOS={lista:raw.dados.lista||[],vinculos:raw.dados.vinculos||{}}; }catch(_){}
  PRECO_DB=db; return db; }
 
 function precoTeto(v){ return Math.ceil(Math.round((Number(v)||0)*100)/100); }
-function precoNichos(){ const s=new Set(); Object.values(PRECO_DB||{}).forEach(a=>a.nichos.forEach(n=>s.add(n))); return [...s].sort((a,b)=>a.localeCompare(b,"pt-BR")); }
-function precoArqsDoNicho(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean).filter(a=>!n||a.nichos.includes(n)); }
+function precoNichos(){ return [...new Set(PRECO_NICHOS.lista)].sort((a,b)=>a.localeCompare(b,"pt-BR")); }
+function precoVinculadas(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean).filter(a=>(PRECO_NICHOS.vinculos[a.chave]||[]).includes(n)); }
+// com nicho escolhido, mostra primeiro as tabelas vinculadas a ele; as outras continuam disponíveis
+function precoArqsDoNicho(n){ const todas=PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean); if(!n) return todas; const v=precoVinculadas(n); return [...v,...todas.filter(a=>!v.includes(a))]; }
 
 async function crmVPrecos(v){
  v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.","")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
@@ -5403,7 +5409,7 @@ async function crmVPrecos(v){
 function precoPintar(v){
  const box=v.querySelector("#crmBox"); const S=PRECO_ST;
  const arqs=precoArqsDoNicho(S.nicho); if(!arqs.find(a=>a.chave===S.arq)) S.arq=(arqs[0]||PRECO_DB[Object.keys(PRECO_DB)[0]]).chave;
- const A=PRECO_DB[S.arq], P=A.P;
+ const A=PRECO_DB[S.arq], P=A.P; const vincN=S.nicho?precoVinculadas(S.nicho):[];
  const ativs=P.atividades.filter(a=>a.ativa!==false);
  if(ativs.length&&!ativs.find(a=>a.chave===S.resp.atividade)) S.resp.atividade=ativs[0].chave;
  const ativ=ativs.find(a=>a.chave===S.resp.atividade);
@@ -5442,8 +5448,11 @@ function precoPintar(v){
  box.innerHTML=`
  <div class="card ce-pad preco-barra">
   <label class="crm-f"><span>Negócio (opcional)</span><select class="inp" id="prNeg"><option value="">Sem negócio vinculado</option>${negOpts}</select></label>
-  <label class="crm-f"><span>Nicho do cliente</span><select class="inp" id="prNicho"><option value="">Todos os nichos</option>${precoNichos().map(n=>`<option ${S.nicho===n?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
-  <label class="crm-f"><span>Produto</span><select class="inp" id="prArq">${arqs.map(a=>`<option value="${a.chave}" ${a.chave===S.arq?"selected":""}>${esc(a.nome)}</option>`).join("")}</select></label>
+  <div class="crm-f"><span>Nicho do cliente</span><div class="preco-nicho"><input class="inp" id="prNicho" list="prNichoL" value="${escAttr(S.nicho)}" placeholder="Digite para buscar, ex.: farmácia" autocomplete="off">${S.nicho?`<button type="button" class="preco-x" id="prNichoX" title="Limpar nicho" aria-label="Limpar nicho">×</button>`:""}</div>
+   <datalist id="prNichoL">${precoNichos().map(n=>`<option value="${escAttr(n)}">${esc(precoNichoTabs(n))}</option>`).join("")}</datalist>
+   ${S.nicho?(vincN.length?`<small class="preco-vinc ok">Tabela vinculada: ${vincN.map(a=>esc(a.nome)).join(", ")}</small>`:`<small class="preco-vinc">Nenhuma tabela vinculada a este nicho. <button type="button" class="txt-btn" id="prNichoLig">Vincular a ${esc(A.nome)}</button></small>`):""}</div>
+  <div class="crm-f"><span>Produto <button type="button" class="txt-btn preco-vbt" id="prVinc">Vincular nichos</button></span><select class="inp" id="prArq">${arqs.map(a=>`<option value="${a.chave}" ${a.chave===S.arq?"selected":""}>${esc(a.nome)}${S.nicho&&vincN.includes(a)?" (vinculada ao nicho)":""}</option>`).join("")}</select>
+   <small class="sub">${(PRECO_NICHOS.vinculos[S.arq]||[]).length} nicho(s) vinculado(s) a esta tabela</small></div>
  </div>
  <div class="preco-grade">
   <div class="card ce-pad preco-perg"><h3>Dados do cliente</h3>
@@ -5526,8 +5535,13 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  let t=null; const reLento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement; const id=f&&f.id, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
    let n=id?box.querySelector("#"+id):null; if(!n&&ds){ const k=Object.keys(ds)[0]; if(k) n=box.querySelector(`[data-${k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase())}="${ds[k]}"]`); }
    if(n&&n.focus){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },350); };
- box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; re(); };
- box.querySelector("#prNicho").onchange=e=>{ S.nicho=e.target.value; re(); };
+ box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; const nn=S.negocio&&S.negocio.campos&&(S.negocio.campos.nicho||(S.negocio.campos.proposta||{}).nicho); if(nn) precoEscolherNicho(nn); re(); };
+ const inN=box.querySelector("#prNicho"); inN.onchange=()=>{ const v=inN.value.trim(); const ach=precoNichos().find(n=>n.toLowerCase()===v.toLowerCase());
+  if(v&&!ach){ inN.value=S.nicho; crmToast("Escolha um nicho da lista, ou cadastre um novo em Vincular nichos."); return; } precoEscolherNicho(ach||""); re(); };
+ inN.oninput=()=>{ const ach=precoNichos().find(n=>n===inN.value); if(ach){ precoEscolherNicho(ach); re(); } };
+ const nx=box.querySelector("#prNichoX"); if(nx) nx.onclick=()=>{ S.nicho=""; re(); };
+ box.querySelector("#prVinc").onclick=()=>precoVincularNichos(S.arq,re);
+ const nl=box.querySelector("#prNichoLig"); if(nl) nl.onclick=async()=>{ const v=PRECO_NICHOS.vinculos; v[S.arq]=[...new Set([...(v[S.arq]||[]),S.nicho])]; try{ await precoSalvarNichos(); crmToast(`${S.nicho} vinculado a ${PRECO_DB[S.arq].nome}`); }catch(e){ crmToast(e.message); } re(); };
  box.querySelector("#prArq").onchange=e=>{ S.arq=e.target.value; re(); };
  const fat=box.querySelector("#prFat"); precoLigarMascara(fat,v=>{ S.resp.faturamento=v; reLento(); });
  box.querySelectorAll("[data-ativ]").forEach(i=>i.onchange=()=>{ S.resp.atividade=i.value; re(); });
@@ -5565,9 +5579,9 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
   const itens=[...S.cesta.map(c=>({servico_id:null,nome:`${c.plano} (${c.produto})`,valor:c.valor,qtd:1,desconto:0,recorrencia:"mensal"})),
    ...t.extrasM.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"mensal"})),
    ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"unico"}))];
-  const proposta={gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso};
+  const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso};
   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
-   tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
+   tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
   try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
   crmToast("Proposta salva no negócio: valores e itens atualizados"); b.textContent="Salvo ✓";
  }catch(e){ b.disabled=false; b.textContent="Salvar no negócio"; crmToast(crmErro(e)); } }
@@ -5604,6 +5618,47 @@ ${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</di
 function precoAbrirNegocio(o){ PRECO_ST.negocio=o?{id:o.id,titulo:o.titulo,contato_nome:o.contato_nome,empresa_nome:o.empresa_nome}:null;
 
  closeModal(); setMode("crm_precos"); }
+
+
+// ---------- nichos ----------
+function precoNichoTabs(n){ const t=precoVinculadas(n); return t.length?t.map(a=>a.nome).join(" · "):"sem tabela vinculada"; }
+function precoEscolherNicho(n){ const S=PRECO_ST; S.nicho=n||""; if(!n) return; const v=precoVinculadas(n); if(v.length&&!v.some(a=>a.chave===S.arq)) S.arq=v[0].chave; }
+async function precoSalvarNichos(){ const tok=(await sb.auth.getSession()).data.session?.access_token||"";
+ const r=await fetch(PRECO_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok},body:JSON.stringify({acao:"salvar_nichos",dados:PRECO_NICHOS})});
+ const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.erro||"Não foi possível salvar os nichos"); }
+// mesma tela "Vincular nichos" da ferramenta comercial: escolhe quais nichos usam cada tabela
+function precoVincularNichos(arq,depois){
+ const L=new Set(PRECO_NICHOS.lista); const V={}; PRECO_ARQS.forEach(([k])=>V[k]=new Set(PRECO_NICHOS.vinculos[k]||[])); let tab=arq, busca="";
+ const m=crmModal("Simulador de planos","Vincular nichos","",`<p class="sub" style="margin:0">Marque os nichos que usam esta tabela. Na hora de montar a proposta, ao escolher o nicho do cliente, o simulador já abre na tabela certa.</p>
+  <div class="crm-form" style="grid-template-columns:1.2fr 1fr;gap:10px"><label class="crm-f"><span>Tabela de preços</span><select class="inp" id="vnTab">${PRECO_ARQS.filter(([k])=>PRECO_DB[k]).map(([k,n])=>`<option value="${k}" ${k===tab?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Pesquisar nichos</span><input class="inp" id="vnBusca" placeholder="Ex.: clínica"></label></div>
+  <div class="vn-grade"><div class="vn-todos" id="vnTodos"></div><div class="vn-sel"><b>Nichos selecionados <span id="vnN"></span></b><div id="vnSel"></div></div></div>
+  <div class="crm-pe" style="gap:8px"><input class="inp" id="vnNovo" placeholder="Cadastrar nicho novo" style="max-width:280px"><button type="button" class="view-btn ghost" id="vnAdd">Adicionar nicho</button><span style="flex:1"></span><button type="button" class="view-btn ce-pri" id="vnOk">Salvar vínculos</button></div>`);
+ const outras=n=>PRECO_ARQS.filter(([k])=>k!==tab&&V[k]&&V[k].has(n)).map(([,nm])=>nm);
+ const pinta=()=>{ const q=busca.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const lista=[...L].sort((a,b)=>a.localeCompare(b,"pt-BR")).filter(n=>!q||n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(q));
+  m.querySelector("#vnTodos").innerHTML=lista.map(n=>{ const o=outras(n); return `<label class="vn-it ${V[tab].has(n)?"on":""}"><input type="checkbox" data-vn="${escAttr(n)}" ${V[tab].has(n)?"checked":""}><span>${esc(n)}${o.length?`<small>também em: ${esc(o.join(", "))}</small>`:""}</span></label>`; }).join("")||`<p class="sub">Nenhum nicho encontrado.</p>`;
+  const sel=[...V[tab]].sort((a,b)=>a.localeCompare(b,"pt-BR")); m.querySelector("#vnN").textContent=`(${sel.length})`;
+  m.querySelector("#vnSel").innerHTML=sel.map(n=>`<label class="vn-it on"><input type="checkbox" checked data-vn="${escAttr(n)}"><span>${esc(n)}</span></label>`).join("")||`<p class="sub">Nenhum nicho vinculado ainda.</p>`;
+  m.querySelectorAll("[data-vn]").forEach(c=>c.onchange=()=>{ c.checked?V[tab].add(c.dataset.vn):V[tab].delete(c.dataset.vn); pinta(); }); };
+ m.querySelector("#vnTab").onchange=e=>{ tab=e.target.value; pinta(); };
+ m.querySelector("#vnBusca").oninput=e=>{ busca=e.target.value; pinta(); };
+ const add=()=>{ const i=m.querySelector("#vnNovo"); const n=i.value.trim().toUpperCase(); if(!n) return; L.add(n); V[tab].add(n); i.value=""; busca=""; m.querySelector("#vnBusca").value=""; pinta(); };
+ m.querySelector("#vnAdd").onclick=add; m.querySelector("#vnNovo").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); add(); } };
+ m.querySelector("#vnOk").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; b.textContent="Salvando…"; const antes=PRECO_NICHOS;
+  PRECO_NICHOS={lista:[...L],vinculos:Object.fromEntries(Object.entries(V).map(([k,s2])=>[k,[...s2]]))};
+  try{ await precoSalvarNichos(); closeModal(); crmToast("Vínculos de nichos salvos"); depois&&depois(); }catch(e){ PRECO_NICHOS=antes; b.disabled=false; b.textContent="Salvar vínculos"; crmToast(e.message); } };
+ pinta(); }
+(function(){ if(document.getElementById("vn-css")) return; const s=document.createElement("style"); s.id="vn-css"; s.textContent=`
+.preco-nicho{position:relative}.preco-nicho .inp{width:100%;padding-right:30px}.preco-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--muted,#83879c)}
+.preco-vinc{display:block;font-size:12px;color:var(--warn,#b7791f);margin-top:2px}.preco-vinc.ok{color:var(--good,#128a5b)}.preco-vinc .txt-btn{padding:0 4px;font-size:12px}
+.preco-vbt{float:right;padding:0 4px;font-size:12px}
+.vn-grade{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}.vn-todos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;max-height:52vh;overflow:auto;padding-right:4px;align-content:start}
+.vn-sel{background:var(--surface-2,#fafbff);border:1px solid var(--border,#e7e9f2);border-radius:12px;padding:12px;max-height:52vh;overflow:auto}.vn-sel b{display:block;font-size:13px;margin-bottom:8px}
+.vn-it{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12.5px}.vn-it:hover{background:var(--accent-soft,#e0eef2)}.vn-it.on{color:var(--accent-deep,#00506a);font-weight:600}.vn-it input{margin-top:2px;accent-color:#006789}
+.vn-it small{display:block;font-weight:400;color:var(--muted,#83879c);font-size:11px}
+@media(max-width:760px){.vn-grade,.vn-todos{grid-template-columns:1fr}}
+`; document.head.appendChild(s); })();
 
 // ================= CRM · CONTRATOS: modelos (vindos da 4C + personalizados), editor e geração a partir do plano =================
 CRM_ICO.contr2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg>';
