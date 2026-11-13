@@ -630,6 +630,79 @@
   .ce-op-det{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:13px}
   .ce-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:var(--shadow-lg)}
   @media (max-width:600px){.ce-g2{grid-template-columns:1fr}.ce-nums{grid-template-columns:repeat(2,1fr)}}
+
+  /* ===== CRM de vendas ===== */
+  .srl-sub button.on{color:var(--frame-strong);font-weight:700}
+  .crm-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .txt-btn.crm-pri{background:var(--grad);color:#fff;border-color:transparent}
+  .txt-btn.crm-pri:disabled{opacity:.6}
+  .crm-amp{display:flex;gap:6px;align-items:center;margin:2px 0 16px;overflow-x:auto;padding-bottom:4px}
+  .crm-seg{flex:1 1 0;min-width:112px;height:var(--h);border:0;cursor:pointer;color:#fff;background:var(--c);border-radius:16px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;opacity:.5;font:inherit;transition:opacity .15s,transform .15s}
+  .crm-seg:hover{opacity:.8}.crm-seg.on{opacity:1}
+  .crm-seg b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:800}
+  .crm-seg span{font-size:24px;font-weight:800;line-height:1.1}.crm-seg small{font-size:11px;opacity:.92}
+  .crm-bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .crm-card{border-left:3px solid var(--c)}.crm-card.drag{opacity:.45}
+  .crm-ind{font-size:11.5px;font-weight:600;color:#A8325A;background:#FBE3EB;border-radius:999px;padding:2px 9px;display:inline-block;margin-top:5px;align-self:flex-start}
+  .crm-parado{color:var(--warn);font-weight:700}
+  .crm-col-soma{padding:6px 6px 0;font-size:12px}
+  .crm-vazio{padding:16px 8px;text-align:center;font-size:12.5px}
+  .crm-fim .kcol-body{min-height:96px;border:1px dashed var(--border-strong);border-radius:12px;padding:8px}
+  .crm-etq{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+  .crm-tr{cursor:pointer}.crm-tr:hover td{background:var(--surface-2)}
+  .crm-click{cursor:pointer}.crm-click:hover span:first-child{color:var(--accent)}
+  .crm-dica{margin:0 0 12px}
+  .crm-etapas,.crm-fases{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .crm-et{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .crm-et:hover{border-color:var(--c)}.crm-et.on{background:var(--c);border-color:var(--c);color:#fff}
+  .view-btn.crm-ganho{background:var(--good);color:#fff;border-color:transparent}
+  .crm-2col{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+  .crm-colform{display:flex;flex-direction:column;gap:14px}
+  .panel h4,.crm-h4{margin:0 0 10px;font-size:14px;font-weight:700;color:var(--ink)}
+  .crm-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+  .crm-f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+  .crm-f .inp{font-weight:400;color:var(--ink);max-width:none;width:100%}
+  input.inp:not([type=checkbox]):not([type=radio]){padding:9px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;min-width:0}
+  input.inp:focus,select.inp:focus,textarea.inp:focus{outline:2px solid color-mix(in srgb,var(--accent-2) 45%,transparent);outline-offset:1px}
+  .crm-w2{grid-column:1/-1}
+  .crm-chk{flex-direction:row;align-items:center;gap:8px;font-weight:500;color:var(--ink);font-size:13.5px}
+  .crm-par{display:flex;gap:6px}
+  .crm-novo-c summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:600;margin-bottom:8px}
+  .crm-form[hidden],.crm-f[hidden]{display:none!important}
+  .crm-nav-mob{display:none;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:4px}
+  .crm-nav-mob button{flex:none;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;color:var(--ink-2);cursor:pointer}
+  .crm-nav-mob button.on{background:var(--grad);color:#fff;border-color:transparent}
+  @media (max-width:900px){.crm-nav-mob{display:flex}}
+  .crm-itens{width:100%;border-collapse:collapse}.crm-itens .inp{padding:7px 9px!important;font-size:13px!important}.crm-itens th{font-size:11px;text-align:left;padding:4px;background:none}.crm-itens td{padding:4px;border:0}
+  .crm-tot{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+  .crm-pe{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .txt-btn.crm-perigo{color:var(--crit)}
+  .crm-x{border:0;background:none;color:var(--muted);cursor:pointer;font:inherit;font-size:12.5px;padding:2px 7px;border-radius:7px}
+  .crm-x:hover,.crm-x.on{color:var(--crit);background:var(--crit-soft)}
+  .crm-comp{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .crm-comp textarea.inp{min-height:70px;background:var(--surface)}
+  .crm-comp .seg{flex-wrap:wrap}
+  .crm-comp-pe{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .crm-anexo{cursor:pointer}
+  .crm-ul{list-style:none;margin:16px 0 0 6px;padding:0 0 0 16px;border-left:2px solid var(--border)}
+  .crm-li{position:relative;padding:0 0 16px 4px}
+  .crm-dot{position:absolute;left:-24px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--accent-2)}
+  .crm-li.t-ganho .crm-dot{border-color:var(--good);background:var(--good)}.crm-li.t-perda .crm-dot{border-color:var(--crit)}
+  .crm-li.t-email .crm-dot{border-color:#7B5BA6}.crm-li.t-etapa .crm-dot,.crm-li.t-criacao .crm-dot,.crm-li.t-fase .crm-dot{border-color:#EE8A2E}.crm-li.t-indicacao .crm-dot{border-color:#E2557A;background:#E2557A}
+  .crm-li-h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:13px}.crm-li-h .crm-x{margin-left:auto}
+  .crm-li-t{font-size:13.5px;margin-top:3px;white-space:pre-wrap;line-height:1.45;color:var(--ink)}
+  .crm-li .view-btn{margin-top:6px}
+  .crm-imp{margin-bottom:16px}.crm-imp h3{margin:0 0 6px;font-size:16px}
+  .crm-drop{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed var(--border-strong);border-radius:18px;padding:36px 16px;cursor:pointer;margin-top:12px;background:var(--surface-2);text-align:center}
+  .crm-drop.on,.crm-drop:hover{border-color:var(--accent-2)}
+  .crm-map{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+  .crm-radio{border:0;padding:0;margin:10px 0 4px;display:flex;flex-direction:column;gap:8px;font-size:14px}.crm-radio legend{font-weight:700;margin-bottom:6px;padding:0}
+  .crm-radio label{display:flex;gap:8px;align-items:flex-start}
+  .crm-add{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .crm-off{opacity:.5}.crm-row-a{display:flex;gap:8px;align-items:center}
+  .crm-funil-cfg{padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+  @media (max-width:860px){.crm-2col{grid-template-columns:1fr}}
+  @media (max-width:600px){.crm-form{grid-template-columns:1fr}.crm-seg{min-width:96px}}
 </style>
 </head>
 <body>
@@ -669,7 +742,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 2.2 (CRM de vendas)</footer>
   </div>
 </div>
 
@@ -685,10 +758,10 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial"],["emails","Central de E-mails"]];
+const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial (CRM de vendas)"],["emails","Central de E-mails"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
-try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&_m.startsWith("ce_"))) MODE=_m; }catch(e){}
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
@@ -971,10 +1044,14 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
+  if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
+  if(MODE==="crm" && !podeCRM() && crmMenuPrincipal()){ MODE=crmMenuPrincipal(); return render(); }
+  if(MODE.startsWith("crm_") && crmSecaoPode(MODE)){ tabsEl.classList.add("hidden"); crmView(v); return; }
+  if(MODE.startsWith("crm_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} return render(); }
   if(MODE==="crm" && podeCRM()){ tabsEl.classList.add("hidden"); viewClientes(v); bindActions(); return; }
   if(MODE.startsWith("ce_") && (MODE==="ce_funil"?podeFunilCE():podeEmails())){ tabsEl.classList.add("hidden"); ceView(v); return; }
   if(MODE.startsWith("ce_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
@@ -1016,8 +1093,10 @@ function renderSide(){
       .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div>`;
   }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
-  if(podeCRM()) h+=`<button class="srl-item ${MODE==='crm'?'on':''}" data-mode="crm">${_ICO_CRM}CRM</button>`;
-  if(podeFunilCE()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
+  { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_');
+    if(mp){ h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}">${_ICO_CRM}CRM</button>`;
+      if(noCRM) h+=`<div class="srl-sub">`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div>`; } }
+  if(podeEmails()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
   s.innerHTML=h;
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -3472,13 +3551,13 @@ const CE_ICO={
  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>'
 };
 const CE_ASSUNTOS={"bv_1_apresentacao":"Bem-vindo à Resilcon, {{nome}}","bv_2_como_ajudamos":"{{nome}}, veja como a Resilcon pode ajudar a sua empresa","mat_1_entrega":"Seu material chegou: {{material_nome}}","mat_2_relacionado":"{{nome}}, conseguiu ver o material?","seg_drogaria":"Drogarias: três pontos fiscais que pesam no caixa","seg_distribuidora":"Distribuidoras: onde costuma estar o imposto pago a mais","seg_saude":"Profissionais da saúde: o regime certo faz diferença","seg_geral":"{{nome}}, a sua empresa está no regime tributário certo?","seg_fechamento":"Quer que a gente olhe os números da sua empresa?","rt_1_precificacao":"Reforma Tributária: o que muda na sua precificação","rt_2_caixa":"Reforma Tributária: atenção ao fluxo de caixa","rt_3_erp":"Reforma Tributária: seu ERP está pronto?","ev_convite":"Convite: {{evento_nome}}","ev_programacao":"{{evento_nome}}: veja a programação","ev_ultimo_aviso":"Últimas vagas para o {{evento_nome}}","ev_confirmacao":"Inscrição confirmada: {{evento_nome}}","ev_lembrete":"É amanhã: {{evento_nome}}","ev_pos_presente":"Obrigado por participar do {{evento_nome}}","ev_pos_ausente":"Sentimos sua falta no {{evento_nome}}","ev_pos_conversa":"{{nome}}, vamos continuar a conversa?","vd_recebemos":"Recebemos seu pedido, {{nome}}","op_pos_proposta":"{{nome}}, ficou alguma dúvida sobre a proposta?","op_retomada":"{{nome}}, ainda faz sentido conversarmos?","re_1_conteudo":"{{nome}}, separamos este conteúdo para você","re_2_interesses":"Você quer continuar recebendo nossos e-mails?","cli_1_boas_vindas":"Boas-vindas à Resilcon, {{nome}}","cli_2_documentos":"Checklist de documentos para começarmos","cli_3_proximos_passos":"Como vai funcionar o dia a dia com a Resilcon","rel_orientacao":"{{titulo_comunicado}}","ps_convite":"{{nome}}, como está sendo a experiência com a Resilcon?","ps_lembrete":"Ainda dá tempo de responder a pesquisa","sc_bpo_notas":"{{nome}}, e se a gente cuidasse das suas notas fiscais?","sc_diagnostico":"Diagnóstico tributário para clientes Resilcon","aviso_comercial":"Lead para o comercial: {{contato_nome}}"};
-const CE_ETAPAS=[["novo","Novo"],["qualificado","Qualificado"],["reuniao","Reunião"],["proposta_enviada","Proposta enviada"],["negociacao","Negociação"],["ganha","Ganha"],["perdida","Perdida"]];
+const CE_ETAPAS=[["atracao","Atração"],["nutricao","Nutrição"],["conversao","Conversão"],["decisao","Decisão"],["ganha","Ganha"],["perdida","Perdida"]];
 const CE_ETAPA_TXT=Object.fromEntries(CE_ETAPAS);
 const CE_CAT={relacionamento:"Relacionamento",vendas:"Vendas",eventos:"Eventos",clientes:"Clientes"};
 const CE_ST_REGUA={ativa:["good","Ativa"],pausada:["warn","Pausada"],rascunho:["neutral","Rascunho"],encerrada:["neutral","Encerrada"]};
 const CE_ST_ENVIO={fila:["neutral","Na fila"],enviado:["neutral","Enviado"],entregue:["good","Entregue"],devolvido:["crit","Devolvido"],reclamado:["crit","Spam"],rejeitado:["crit","Rejeitado"],atrasado:["warn","Atrasado"],falhou:["crit","Falhou"],suprimido:["neutral","Bloqueado"]};
 const CE_ST_CONT={ativo:["good","Ativo"],descadastrado:["neutral","Descadastrado"],devolvido:["crit","Devolvido"],reclamou:["crit","Marcou spam"],inativo:["warn","Inativo"]};
-const CE_SECOES=[["ce_geral","Visão geral","mail"],["ce_reguas","Réguas","flow"],["ce_envios","Envios","send"],["ce_funil","Funil comercial","funnel"],["ce_contatos","Contatos","users"]];
+const CE_SECOES=[["ce_geral","Visão geral","mail"],["ce_reguas","Réguas","flow"],["ce_envios","Envios","send"],["ce_contatos","Contatos","users"]];
 const CE_CACHE={};let ceCatFiltro="todas",ceReguaAberta=null,ceBuscaEnv="",ceBuscaCont="",ceTipoCont="todos",ceOpAberta=null,ceOcupado=false;
 
 function podeEmails(){ return isAdmin() || !!(ACCESS && (ACCESS.permissoes||[]).includes("emails")); }
@@ -3634,6 +3713,607 @@ document.addEventListener("input",ev=>{
  const n=document.getElementById(id);if(n){n.focus();n.setSelectionRange(pos,pos)}
 });
 
+
+
+// ================= CRM DE VENDAS (Fase 1) =================
+// Funil completo (Atração → Indicação), contatos, empresas, linha do tempo, indicações, importação e configurações.
+// Tudo passa pelas funções public.crm_* do Supabase, com o login do Resiltrack.
+const CRM_ETAPA_COR={atracao:"#7B5BA6",nutricao:"#E2557A",conversao:"#EE8A2E",decisao:"#D24F93",retencao:"#D24F93",lealdade:"#EE8A2E",indicacao:"#E2557A",ganha:"#2E8B57",perdida:"#8A9599"};
+const CRM_FASES=[["retencao","Retenção"],["lealdade","Lealdade"],["indicacao","Indicação"]];
+const CRM_FASE_TXT=Object.fromEntries(CRM_FASES);
+const CRM_ORIG={manual:"Cadastro manual",planilha:"Planilha",lista_comprada:"Lista sem consentimento",indicacao:"Indicação",formulario:"Formulário do site",evento:"Evento",site:"Site",whatsapp:"WhatsApp",importacao:"Importação",indicacao_parceiro:"Parceiro"};
+const CRM_TIPOS_CONT={lead:"Lead",prospect:"Prospect",cliente:"Cliente"};
+const CRM_ATIV={nota:"Anotação",ligacao:"Ligação",reuniao:"Reunião",whatsapp:"WhatsApp",email_manual:"E-mail",arquivo:"Arquivo",criacao:"Negócio criado",etapa:"Mudou de etapa",ganho:"Negócio ganho",perda:"Negócio perdido",fase:"Mudou de fase",indicacao:"Indicação",sistema:"Sistema",email:"E-mail da Central"};
+const CRM_IND_ST={indicado:["neutral","Indicado"],em_negociacao:["neutral","Em negociação"],virou_cliente:["warn","Cliente, aguardando 1º honorário"],premio_a_pagar:["warn","Prêmio a pagar"],premio_pago:["good","Prêmio pago"],nao_fechou:["neutral","Não fechou"]};
+const CRM_ICO={
+ funil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4h16l-6 8 6 8H4l6-8z"/></svg>',
+ cont:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+ ind:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>',
+ imp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>',
+ cfg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+ cli:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="5" height="16" rx="1.2"/><rect x="9.5" y="4" width="5" height="10" rx="1.2"/><rect x="16" y="4" width="5" height="13" rx="1.2"/></svg>'
+};
+const CRM_SECOES=[["crm","Clientes","cli"],["crm_funil","Funil de vendas","funil"],["crm_contatos","Contatos e empresas","cont"],["crm_indic","Indicações","ind"],["crm_importar","Importar planilha","imp"],["crm_config","Configurações","cfg"]];
+let CRMB=null; const CRMD={};
+let CRMF={funil:"vendas",lado:"leads",vis:"quadro",q:"",resp:"",origem:"",lim:{}};
+let CRMC={aba:"contatos",q:"",tipo:"",origem:""}, CRMI={st:"",q:""}, CRMIMP=null;
+
+function podeVendas(){ return isAdmin() || podeModulo("comercial"); }
+function podeFinCRM(){ return isAdmin() || podeModulo("financeiro_editar") || podeModulo("financeiro"); }
+function crmSecaoPode(m){ if(m==="crm") return podeCRM(); if(m==="crm_indic") return podeVendas()||podeFinCRM(); return podeVendas(); }
+function crmMenuPrincipal(){ return podeCRM()?"crm":(podeVendas()?"crm_funil":(podeFinCRM()?"crm_indic":null)); }
+
+async function crmRpc(fn,args){ const {data,error}=await sb.rpc(fn,args||{}); if(error) throw error; return data; }
+async function crmBase(force){ if(!CRMB||force) CRMB=await crmRpc("crm_dados",{p_secao:"base"}); return CRMB; }
+function crmErro(e){ const m=String((e&&e.message)||e||"");
+ if(m.includes("sem_permissao_fin")) return "Só o financeiro pode registrar pagamentos de indicação.";
+ if(m.includes("sem_permissao")) return "Seu usuário não tem acesso ao CRM de vendas. Peça a um admin para liberar a permissão Comercial no painel Admin.";
+ if(m.includes("Could not find the function")||m.includes("crm_dados")||m.includes("does not exist")) return "As funções do CRM ainda não foram criadas no Supabase. Rode o arquivo crm-fase1.sql no SQL Editor.";
+ if(m.startsWith("email_existente")) return "Já existe um contato com esse e-mail.";
+ if(m.startsWith("etapa_invalida")) return "Essa etapa não existe neste funil.";
+ return m||"Não foi possível salvar agora. Tente de novo."; }
+const crmToast=t=>ceAviso2(t);
+function crmNum(x){ if(typeof x==="number") return x; let t=String(x??"").trim().replace(/[^0-9,.\-]/g,""); if(!t) return 0;
+ if(t.includes(",")) t=t.replace(/\./g,"").replace(",","."); else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,""); return parseFloat(t)||0; }
+const crmDias=s=>s?Math.max(0,Math.floor((Date.now()-new Date(s))/864e5)):null;
+const crmData=s=>s?new Date(s).toLocaleDateString("pt-BR"):"";
+const crmDataHora=s=>s?new Date(s).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+const crmNomeResp=e=>{ if(!e) return ""; const r=((CRMB&&CRMB.responsaveis)||[]).find(x=>x.email===e); return (r&&r.nome)||String(e).split("@")[0].replace(/[._]/g," ").replace(/\b\w/g,c=>c.toUpperCase()); };
+const crmFunil=id=>((CRMB&&CRMB.funis)||[]).find(f=>f.id===id)||{id:"vendas",nome:"Funil de vendas",etapas:[]};
+const crmEtapaNome=(fid,e)=>e==="ganha"?"Ganho":e==="perdida"?"Perdido":((crmFunil(fid).etapas||[]).find(x=>x.id===e)||{nome:e}).nome;
+const crmOpt=(lista,sel,vazio)=>(vazio!=null?`<option value="">${esc(vazio)}</option>`:"")+lista.map(([v,t])=>`<option value="${escAttr(v)}" ${String(v)===String(sel??"")?"selected":""}>${esc(t)}</option>`).join("");
+const crmPri=t=>`<button class="txt-btn crm-pri" ${t}`;
+const crmVal=(root,sel)=>{ const e=root.querySelector(sel); return e?(e.type==="checkbox"?e.checked:e.value.trim()):""; };
+function crmEmpresasGclick(){ return Object.keys(EMPRESAS||{}).map(id=>({id,nome:EMPRESAS[id].apelido||EMPRESAS[id].nome||"Sem nome",razao:EMPRESAS[id].nome,cnpj:EMPRESAS[id].cnpj,status:EMPRESAS[id].status}))
+  .filter(x=>!/inativ|cancel|encerr|baixad|rescind/i.test(String(x.status||""))).sort((a,b)=>a.nome.localeCompare(b.nome)); }
+const crmRespOpts=sel=>crmOpt(((CRMB&&CRMB.responsaveis)||[]).map(r=>[r.email,r.nome||crmNomeResp(r.email)]),sel,"Sem responsável");
+const crmHead=(t,sub,btns)=>`<div class="page-head ce-head"><div><h2>${t}</h2><p>${sub}</p></div><div class="crm-acoes">${btns||""}</div></div>`;
+const crmCaixaErro=e=>`<div class="card"><div class="empty">${esc(crmErro(e))}<div style="margin-top:14px"><button class="txt-btn" onclick="render()">Tentar de novo</button></div></div></div>`;
+
+// ---------- roteamento ----------
+function crmView(v){
+ const sec=MODE.slice(4);
+ v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
+ const pronto=(sec==="indic"&&!podeVendas())?Promise.resolve():crmBase();
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,contatos:crmVContatos,indic:crmVIndic,importar:crmVImportar,config:crmVConfig})[sec](v);
+   const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${t}</button>`).join("");
+   nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
+  .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
+}
+
+// ---------- campos personalizados ----------
+function crmCamposHTML(ent,vals){ vals=vals||{}; const cs=((CRMB&&CRMB.campos)||[]).filter(c=>c.entidade===ent&&c.ativo); if(!cs.length) return "";
+ return `<div class="crm-form">${cs.map(c=>{ const v=vals[c.chave]??""; const id=`cp-${ent}-${c.chave}`; let inp;
+  if(c.tipo==="lista") inp=`<select class="inp" id="${id}" data-campo="${escAttr(c.chave)}">${crmOpt((c.opcoes||[]).map(o=>[o,o]),v,"")}</select>`;
+  else if(c.tipo==="sim_nao") inp=`<select class="inp" id="${id}" data-campo="${escAttr(c.chave)}">${crmOpt([["sim","Sim"],["nao","Não"]],v,"")}</select>`;
+  else inp=`<input class="inp" id="${id}" data-campo="${escAttr(c.chave)}" type="${c.tipo==="numero"?"number":c.tipo==="data"?"date":"text"}" value="${escAttr(v)}">`;
+  return `<label class="crm-f"><span>${esc(c.rotulo)}</span>${inp}</label>`; }).join("")}</div>`; }
+function crmCamposLer(root,base){ const o={...(base||{})}; root.querySelectorAll("[data-campo]").forEach(e=>{ const v=e.value.trim(); if(v) o[e.dataset.campo]=v; else delete o[e.dataset.campo]; }); return o; }
+
+// ---------- linha do tempo ----------
+function crmLinhaHTML(linha,alvo){
+ const meu=(CRMB&&CRMB.eu&&CRMB.eu.email)||"";
+ const comp=`<div class="crm-comp" data-alvo='${escAttr(JSON.stringify(alvo))}'>
+   <div class="seg crm-tipo">${[["nota","Anotação"],["ligacao","Ligação"],["reuniao","Reunião"],["whatsapp","WhatsApp"],["email_manual","E-mail"]].map(([k,t],i)=>`<button type="button" data-tipo="${k}" class="${i?"":"on"}">${t}</button>`).join("")}</div>
+   <textarea class="inp" placeholder="O que aconteceu? Ex.: liguei, ficou de enviar os documentos na sexta." aria-label="Registro"></textarea>
+   <div class="crm-comp-pe"><label class="txt-btn crm-anexo">Anexar arquivo<input type="file" hidden></label><span class="sub crm-anexo-nome"></span><span style="flex:1"></span>${crmPri('data-registrar>Registrar</button>')}</div></div>`;
+ const itens=(linha||[]).map(x=>{ const d=x.dados||{}; let txt=x.texto?esc(x.texto):"", extra="";
+  if(x.tipo==="etapa"||x.tipo==="criacao"||x.tipo==="ganho"||x.tipo==="perda"){ const f=d.funil||"vendas";
+   txt=(x.tipo==="criacao"?`${esc(d.titulo||"Negócio")} criado em <b>${esc(crmEtapaNome(f,d.para))}</b>`:x.tipo==="etapa"?`${esc(d.titulo||"")}: <b>${esc(crmEtapaNome(f,d.de))}</b> para <b>${esc(crmEtapaNome(f,d.para))}</b>`:`${esc(d.titulo||"")}${x.tipo==="perda"&&x.texto?`. Motivo: ${esc(x.texto)}`:""}`); }
+  if(x.tipo==="fase") txt=`De <b>${esc(CRM_FASE_TXT[d.de]||d.de)}</b> para <b>${esc(CRM_FASE_TXT[d.para]||d.para)}</b>${x.texto?`. ${esc(x.texto)}`:""}`;
+  if(x.tipo==="email") extra=`<span class="sub">${esc(d.regua||d.sistema||"")} · ${esc((CE_ST_ENVIO[d.status]||[0,d.status||""])[1])}${d.aberturas?` · abriu ${d.aberturas}x`:""}${d.cliques?` · clicou ${d.cliques}x`:""}</span>`;
+  if(x.arquivo_path) extra+=`<button class="view-btn ghost" data-arq="${escAttr(x.arquivo_path)}">${esc(x.arquivo_nome||"Abrir arquivo")}</button>`;
+  const apagar=["nota","ligacao","reuniao","whatsapp","email_manual","arquivo"].includes(x.tipo)&&(x.autor===meu||isAdmin())?`<button class="crm-x" data-apagar-ativ="${escAttr(x.id)}" title="Apagar registro" aria-label="Apagar registro">✕</button>`:"";
+  return `<li class="crm-li t-${x.tipo}"><span class="crm-dot"></span><div class="crm-li-c"><div class="crm-li-h"><b>${esc(CRM_ATIV[x.tipo]||x.tipo)}</b><span class="sub">${crmDataHora(x.quando)}${x.autor&&x.autor!=="sistema"?" · "+esc(crmNomeResp(x.autor)):""}</span>${apagar}</div>${txt?`<div class="crm-li-t">${txt}</div>`:""}${extra}</div></li>`; }).join("");
+ return `<div class="crm-linha">${comp}<ul class="crm-ul">${itens||`<li class="sub" style="padding:10px 0">Nada registrado ainda.</li>`}</ul></div>`;
+}
+function crmLigarLinha(root,recarregar){
+ const c=root.querySelector(".crm-comp"); if(!c) return; let tipo="nota", arquivo=null;
+ c.querySelectorAll("[data-tipo]").forEach(b=>b.onclick=()=>{ tipo=b.dataset.tipo; c.querySelectorAll("[data-tipo]").forEach(x=>x.classList.toggle("on",x===b)); });
+ const fi=c.querySelector("input[type=file]"); fi.onchange=()=>{ arquivo=fi.files[0]||null; c.querySelector(".crm-anexo-nome").textContent=arquivo?arquivo.name:""; };
+ c.querySelector("[data-registrar]").onclick=async ev=>{ const b=ev.currentTarget; const texto=c.querySelector("textarea").value.trim(); if(!texto&&!arquivo){ crmToast("Escreva o registro ou anexe um arquivo."); return; }
+  b.disabled=true; b.textContent="Salvando…";
+  try{ const alvo=JSON.parse(c.dataset.alvo); let path=null;
+   if(arquivo){ if(arquivo.size>20*1024*1024) throw new Error("O arquivo passa de 20 MB.");
+    path=`${new Date().getFullYear()}/${Date.now()}-${arquivo.name.normalize("NFD").replace(/[^\w.\-]+/g,"_")}`;
+    const {error}=await sb.storage.from("crm-arquivos").upload(path,arquivo); if(error) throw error; }
+   await crmRpc("crm_atividade",{p:{...alvo,tipo:(arquivo&&!texto)?"arquivo":tipo,texto,arquivo_path:path,arquivo_nome:arquivo?arquivo.name:null}});
+   crmToast("Registrado"); recarregar();
+  }catch(e){ crmToast(crmErro(e)); b.disabled=false; b.textContent="Registrar"; } };
+ root.querySelectorAll("[data-arq]").forEach(b=>b.onclick=async()=>{ const {data,error}=await sb.storage.from("crm-arquivos").createSignedUrl(b.dataset.arq,120); if(error){ crmToast("Não consegui abrir o arquivo."); return; } window.open(data.signedUrl,"_blank","noopener"); });
+ root.querySelectorAll("[data-apagar-ativ]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Apagar?"; b.classList.add("on"); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=""; b.textContent="✕"; b.classList.remove("on"); } },3500); return; }
+  try{ await crmRpc("crm_excluir",{p_tipo:"atividade",p_id:b.dataset.apagarAtiv}); recarregar(); }catch(e){ crmToast(crmErro(e)); } });
+}
+
+// ---------- modal genérico ----------
+function crmModal(sub,titulo,chips,corpo){ openModal(`<div class="modal-head"><div class="mh-l"><div class="m-sub">${sub}</div><h3>${esc(titulo)}</h3>${chips?`<div class="m-chips">${chips}</div>`:""}</div>
+  <button class="close-x" data-close aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="modal-body">${corpo}</div>`);
+ modal.classList.add("prodm"); return modal; }
+const crmChip=t=>`<span class="m-chip">${t}</span>`;
+function crmAposSalvar(){ delete CRMD.contatos; delete CRMD.empresas; if(MODE.startsWith("crm_")) crmView(document.getElementById("view")); }
+
+// ================= FUNIL =================
+async function crmVFunil(v){
+ const funis=CRMB.funis||[]; if(!funis.some(f=>f.id===CRMF.funil)) CRMF.funil="vendas";
+ v.innerHTML=crmHead("Funil de vendas","Leads de Atração a Decisão. Clientes do G-Click em Retenção, Lealdade e Indicação.",
+   `<button class="txt-btn" id="crmBtnInd">Registrar indicação</button>${crmPri('id="crmBtnNovo">Novo negócio</button>')}`)+`<div id="crmAmp"></div><div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#crmBtnNovo").onclick=()=>crmFichaNegocio(null);
+ v.querySelector("#crmBtnInd").onclick=()=>crmNovaIndicacao();
+ try{ const [neg,cli]=await Promise.all([crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:CRMF.funil}}),crmRpc("crm_dados",{p_secao:"clientes"})]);
+  if(MODE!=="crm_funil") return; CRMD.neg=neg; CRMD.cli=cli; crmFunilPinta(v); }
+ catch(e){ const b=v.querySelector("#crmBox"); if(b) b.innerHTML=crmCaixaErro(e); }
+}
+function crmClientesFase(){ const f=(CRMD.cli&&CRMD.cli.fases)||{}, ind=(CRMD.cli&&CRMD.cli.indicacoes)||{};
+ return crmEmpresasGclick().map(c=>({...c,fase:(f[c.id]&&f[c.id].fase)||"retencao",desde:f[c.id]&&f[c.id].desde,ind:ind[c.id]||{total:0,ganhas:0}})); }
+function crmFiltraNeg(l){ const q=CRMF.q.toLowerCase();
+ return l.filter(o=>(!CRMF.resp||(CRMF.resp==="_sem"?!o.responsavel_email:o.responsavel_email===CRMF.resp))&&(!CRMF.origem||o.origem===CRMF.origem)
+  &&(!q||[o.titulo,o.contato_nome,o.contato_email,o.empresa_nome,o.cnpj,o.indicado_por_nome].join(" ").toLowerCase().includes(q))); }
+function crmFunilPinta(v){
+ const f=crmFunil(CRMF.funil), neg=crmFiltraNeg(CRMD.neg||[]), cli=crmClientesFase();
+ const abertos=neg.filter(o=>!["ganha","perdida"].includes(o.etapa));
+ const amp=v.querySelector("#crmAmp");
+ if(CRMF.funil==="vendas"){ const segs=[...(f.etapas||[]).map(e=>({id:e.id,nome:e.nome,lado:"leads",n:abertos.filter(o=>o.etapa===e.id).length,
+     sub:brl(abertos.filter(o=>o.etapa===e.id).reduce((s,o)=>s+(+o.valor_mensal||0),0))+"/mês"})),
+   ...CRM_FASES.map(([id,nome])=>({id,nome,lado:"clientes",n:cli.filter(c=>c.fase===id).length,sub:id==="indicacao"?`${cli.reduce((s,c)=>s+c.ind.total,0)} indicações`:"clientes"}))];
+  amp.innerHTML=`<div class="crm-amp" role="list">${segs.map((s,i)=>`<button role="listitem" class="crm-seg ${CRMF.lado===s.lado?"on":""}" style="--c:${CRM_ETAPA_COR[s.id]};--h:${[104,94,84,74,74,84,94][i]||80}px" data-lado="${s.lado}"><b>${esc(s.nome)}</b><span class="num">${s.n}</span><small>${esc(s.sub)}</small></button>`).join("")}</div>`;
+  amp.querySelectorAll("[data-lado]").forEach(b=>b.onclick=()=>{ CRMF.lado=b.dataset.lado; crmFunilPinta(v); });
+ } else { amp.innerHTML=""; CRMF.lado="leads"; }
+ const resp=[...new Set((CRMD.neg||[]).map(o=>o.responsavel_email).filter(Boolean))], orig=[...new Set((CRMD.neg||[]).map(o=>o.origem).filter(Boolean))];
+ const bar=v.querySelector("#crmBar");
+ bar.innerHTML=`<div class="filters crm-bar2">
+  ${CRMF.funil==="vendas"?`<div class="seg"><button data-lado2="leads" class="${CRMF.lado==="leads"?"on":""}">Leads</button><button data-lado2="clientes" class="${CRMF.lado==="clientes"?"on":""}">Clientes</button></div>`:""}
+  ${(CRMB.funis||[]).length>1&&CRMF.lado==="leads"?`<select class="fsel" id="crmFunilSel" aria-label="Funil">${crmOpt(CRMB.funis.map(x=>[x.id,x.nome]),CRMF.funil)}</select>`:""}
+  <div class="search" style="min-width:220px;flex:1"><input id="crmQ" type="search" placeholder="${CRMF.lado==="leads"?"Buscar negócio, contato, empresa ou CNPJ":"Buscar cliente ou CNPJ"}" value="${escAttr(CRMF.q)}" aria-label="Buscar"></div>
+  ${CRMF.lado==="leads"?`<select class="fsel" id="crmResp" aria-label="Responsável">${crmOpt([["_sem","Sem responsável"],...resp.map(r=>[r,crmNomeResp(r)])],CRMF.resp,"Todos os responsáveis")}</select>
+  <select class="fsel" id="crmOrig" aria-label="Origem">${crmOpt(orig.map(o=>[o,CRM_ORIG[o]||o]),CRMF.origem,"Todas as origens")}</select>
+  <div class="seg"><button data-vis="quadro" class="${CRMF.vis==="quadro"?"on":""}">Quadro</button><button data-vis="lista" class="${CRMF.vis==="lista"?"on":""}">Lista</button></div>`:""}
+ </div>`;
+ bar.querySelectorAll("[data-lado2]").forEach(b=>b.onclick=()=>{ CRMF.lado=b.dataset.lado2; crmFunilPinta(v); });
+ bar.querySelectorAll("[data-vis]").forEach(b=>b.onclick=()=>{ CRMF.vis=b.dataset.vis; crmFunilPinta(v); });
+ const fs=bar.querySelector("#crmFunilSel"); if(fs) fs.onchange=()=>{ CRMF.funil=fs.value; crmVFunil(v); };
+ const sr=bar.querySelector("#crmResp"); if(sr) sr.onchange=()=>{ CRMF.resp=sr.value; crmFunilPinta(v); };
+ const so=bar.querySelector("#crmOrig"); if(so) so.onchange=()=>{ CRMF.origem=so.value; crmFunilPinta(v); };
+ const q=bar.querySelector("#crmQ"); q.oninput=()=>{ CRMF.q=q.value; const p=q.selectionStart; crmFunilPinta(v); const n=v.querySelector("#crmQ"); n.focus(); n.setSelectionRange(p,p); };
+ const box=v.querySelector("#crmBox");
+ if(CRMF.lado==="clientes") return crmQuadroClientes(box,cli,v);
+ if(CRMF.vis==="lista") return crmListaNeg(box,neg,f);
+ crmQuadroNeg(box,neg,f,v);
+}
+function crmCardNeg(o){ const d=crmDias(o.etapa_desde);
+ return `<div class="kcard crm-card" draggable="true" data-neg="${o.id}" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">
+  <div class="kcard-top"><div class="kcard-nome">${esc(o.titulo)}</div></div>
+  <div class="kcard-sub">${esc([o.empresa_nome,o.contato_nome].filter(Boolean).join(" · ")||o.contato_email||"Sem contato")}</div>
+  ${o.origem==="indicacao"?`<span class="crm-ind">Indicação${o.indicado_por_nome?" de "+esc(o.indicado_por_nome):""}</span>`:""}
+  <div class="kcard-l3">${_av(o.responsavel_email?crmNomeResp(o.responsavel_email):"",o.responsavel_email?"Responsável: "+crmNomeResp(o.responsavel_email):"")}
+   ${o.valor_mensal?`<span class="kval">${brl(o.valor_mensal)}/mês</span>`:o.valor_unico?`<span class="kval">${brl(o.valor_unico)}</span>`:""}
+   <span class="kmini ${d>=15&&!["ganha","perdida"].includes(o.etapa)?"crm-parado":""}">${d===0?"hoje":d+"d"} na etapa</span></div></div>`; }
+function crmQuadroNeg(box,neg,f,v){
+ const cols=[...(f.etapas||[]).map(e=>[e.id,e.nome]),["ganha","Ganhos (90 dias)"],["perdida","Perdidos (90 dias)"]];
+ box.innerHTML=`<div class="kanban crm-kanban">${cols.map(([id,nome])=>{ const its=neg.filter(o=>o.etapa===id); const lim=CRMF.lim[id]||60;
+  const soma=its.reduce((s,o)=>s+(+o.valor_mensal||0),0);
+  return `<div class="kcol ${["ganha","perdida"].includes(id)?"crm-fim":""}" style="--cc:${CRM_ETAPA_COR[id]||"var(--accent)"}"><div class="kcol-h"><span class="kcol-nome">${esc(nome)}</span><span class="kcol-n">${its.length}</span></div>
+   ${soma?`<div class="crm-col-soma sub">${brl(soma)}/mês</div>`:""}
+   <div class="kcol-body" data-drop="${id}">${its.slice(0,lim).map(crmCardNeg).join("")||`<div class="crm-vazio sub">${id==="perdida"?"Arraste aqui para marcar como perdido":id==="ganha"?"Arraste aqui quando fechar":"Sem negócios"}</div>`}
+   ${its.length>lim?`<button class="view-btn ghost" data-mais="${id}">Mostrar mais ${its.length-lim}</button>`:""}</div></div>`; }).join("")}</div>`;
+ box.querySelectorAll("[data-neg]").forEach(c=>{ c.onclick=()=>crmFichaNegocio(c.dataset.neg); c.ondragstart=e=>{ e.dataTransfer.setData("text/plain",c.dataset.neg); c.classList.add("drag"); }; c.ondragend=()=>c.classList.remove("drag"); });
+ box.querySelectorAll("[data-mais]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); CRMF.lim[b.dataset.mais]=(CRMF.lim[b.dataset.mais]||60)+120; crmFunilPinta(v); });
+ box.querySelectorAll("[data-drop]").forEach(z=>{ z.ondragover=e=>{ e.preventDefault(); z.classList.add("dragover"); }; z.ondragleave=()=>z.classList.remove("dragover");
+  z.ondrop=async e=>{ e.preventDefault(); z.classList.remove("dragover"); const id=e.dataTransfer.getData("text/plain"); const o=(CRMD.neg||[]).find(x=>x.id===id); const et=z.dataset.drop; if(!o||o.etapa===et) return;
+   if(et==="perdida") return crmPerda(o,()=>crmVFunil(v));
+   const ant=o.etapa; o.etapa=et; o.etapa_desde=new Date().toISOString(); crmFunilPinta(v);
+   try{ await crmRpc("crm_mover_negocio",{p_id:id,p_etapa:et}); crmToast(et==="ganha"?"Negócio ganho. O contato agora é cliente.":"Movido para "+crmEtapaNome(o.funil_id,et)); }
+   catch(err){ o.etapa=ant; crmFunilPinta(v); crmToast(crmErro(err)); } }; });
+}
+function crmListaNeg(box,neg,f){
+ const ord=[...(f.etapas||[]).map(e=>e.id),"ganha","perdida"]; const l=neg.slice().sort((a,b)=>ord.indexOf(a.etapa)-ord.indexOf(b.etapa)||new Date(a.etapa_desde)-new Date(b.etapa_desde));
+ box.innerHTML=`<div class="card" style="overflow-x:auto"><table><thead><tr><th>Negócio</th><th>Empresa e contato</th><th>Etapa</th><th class="right">Mensal</th><th class="right">Único</th><th>Responsável</th><th>Origem</th><th class="center">Dias na etapa</th><th>Previsão</th></tr></thead><tbody>
+ ${l.length?l.map(o=>`<tr class="crm-tr" data-neg="${o.id}"><td><div class="r-name">${esc(o.titulo)}</div></td><td>${esc(o.empresa_nome||"")}<div class="sub">${esc(o.contato_nome||o.contato_email||"")}</div></td>
+  <td><span class="crm-etq" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">${esc(crmEtapaNome(o.funil_id,o.etapa))}</span></td><td class="right num">${o.valor_mensal?brl(o.valor_mensal):""}</td><td class="right num">${o.valor_unico?brl(o.valor_unico):""}</td>
+  <td>${esc(crmNomeResp(o.responsavel_email))}</td><td class="sub">${esc(CRM_ORIG[o.origem]||o.origem||"")}</td><td class="center num">${crmDias(o.etapa_desde)}</td><td class="sub num">${o.previsao_fechamento?crmData(o.previsao_fechamento+"T12:00"):""}</td></tr>`).join(""):`<tr><td colspan="9"><div class="empty">Nenhum negócio com esse filtro.</div></td></tr>`}
+ </tbody></table></div>`;
+ box.querySelectorAll("[data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
+}
+function crmQuadroClientes(box,cli,v){
+ const q=CRMF.q.toLowerCase(); const l=cli.filter(c=>!q||[c.nome,c.razao,c.cnpj,dig(c.cnpj)].join(" ").toLowerCase().includes(q));
+ if(!cli.length){ box.innerHTML=`<div class="card"><div class="empty">Os clientes do G-Click ainda não carregaram. Volte em alguns segundos.</div></div>`; return; }
+ box.innerHTML=`<p class="sub crm-dica">Todo cliente do G-Click começa em Retenção. O CS move para Lealdade quando o relacionamento está bom e para Indicação quando pede uma indicação. Arraste os cards ou abra a ficha.</p>
+ <div class="kanban crm-kanban">${CRM_FASES.map(([id,nome])=>{ const its=l.filter(c=>c.fase===id); const lim=CRMF.lim["f_"+id]||60;
+  return `<div class="kcol" style="--cc:${CRM_ETAPA_COR[id]}"><div class="kcol-h"><span class="kcol-nome">${nome}</span><span class="kcol-n">${its.length}</span></div>
+  <div class="kcol-body" data-dropf="${id}">${its.slice(0,lim).map(c=>`<div class="kcard crm-card" draggable="true" data-cli="${escAttr(c.id)}" style="--c:${CRM_ETAPA_COR[id]}"><div class="kcard-nome">${esc(c.nome)}</div><div class="kcard-sub num">${esc(fmtCnpj(c.cnpj))}</div>
+   <div class="kcard-l3">${c.ind.total?`<span class="crm-ind">${c.ind.total} indicaç${c.ind.total>1?"ões":"ão"}${c.ind.ganhas?` · ${c.ind.ganhas} fechou`:""}</span>`:""}${c.desde?`<span class="kmini">desde ${crmData(c.desde)}</span>`:""}</div></div>`).join("")||`<div class="crm-vazio sub">Ninguém nesta fase</div>`}
+  ${its.length>lim?`<button class="view-btn ghost" data-maisf="${id}">Mostrar mais ${its.length-lim}</button>`:""}</div></div>`; }).join("")}</div>`;
+ box.querySelectorAll("[data-cli]").forEach(c=>{ c.onclick=()=>crmFichaCliente(c.dataset.cli); c.ondragstart=e=>e.dataTransfer.setData("text/plain",c.dataset.cli); });
+ box.querySelectorAll("[data-maisf]").forEach(b=>b.onclick=()=>{ CRMF.lim["f_"+b.dataset.maisf]=(CRMF.lim["f_"+b.dataset.maisf]||60)+150; crmFunilPinta(v); });
+ box.querySelectorAll("[data-dropf]").forEach(z=>{ z.ondragover=e=>{ e.preventDefault(); z.classList.add("dragover"); }; z.ondragleave=()=>z.classList.remove("dragover");
+  z.ondrop=async e=>{ e.preventDefault(); z.classList.remove("dragover"); const id=e.dataTransfer.getData("text/plain"); const fase=z.dataset.dropf; const fs=CRMD.cli.fases; const ant=fs[id]?fs[id].fase:"retencao"; if(ant===fase) return;
+   fs[id]={...(fs[id]||{}),fase,desde:new Date().toISOString()}; crmFunilPinta(v);
+   try{ await crmRpc("crm_fase_cliente",{p_empresa_id:id,p_fase:fase}); crmToast("Cliente movido para "+CRM_FASE_TXT[fase]); }
+   catch(err){ fs[id].fase=ant; crmFunilPinta(v); crmToast(crmErro(err)); } }; });
+}
+function crmPerda(o,depois){
+ const m=crmModal("Marcar como perdido",o.titulo,"",`<label class="crm-f"><span>Por que não fechou?</span><select class="inp" id="crmMot">${crmOpt((CRMB.motivos||[]).filter(x=>x.ativo).map(x=>[x.nome,x.nome]),"","Escolha o motivo")}</select></label>
+  <label class="crm-f"><span>Detalhe (opcional)</span><input class="inp" id="crmMotDet" placeholder="Ex.: fechou com escritório da cidade dele"></label>
+  <div class="crm-pe"><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="crmMotOk">Marcar como perdido</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#crmMotOk").onclick=async ev=>{ const mot=crmVal(m,"#crmMot"), det=crmVal(m,"#crmMotDet"); if(!mot){ crmToast("Escolha o motivo da perda."); return; }
+  ev.currentTarget.disabled=true; try{ await crmRpc("crm_mover_negocio",{p_id:o.id,p_etapa:"perdida",p_motivo:det?`${mot}: ${det}`:mot}); closeModal(); crmToast("Negócio marcado como perdido"); depois&&depois(); }
+  catch(e){ ev.currentTarget.disabled=false; crmToast(crmErro(e)); } };
+}
+
+// ---------- ficha do negócio ----------
+async function crmContatosLista(){ if(!CRMD.contatos) CRMD.contatos=await crmRpc("crm_dados",{p_secao:"contatos"}); return CRMD.contatos; }
+async function crmFichaNegocio(id,preset){
+ let ficha={negocios:[],linha:[]}, o=null;
+ try{ const [f]=await Promise.all([id?crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:id}}):Promise.resolve(null),crmContatosLista()]);
+  if(f){ ficha=f; o=(f.negocios||[]).find(x=>x.id===id); } }catch(e){ crmToast(crmErro(e)); return; }
+ o=o||{funil_id:CRMF.funil||"vendas",etapa:(crmFunil(CRMF.funil).etapas[0]||{}).id||"atracao",itens:[],origem:"manual",responsavel_email:(CRMB.eu||{}).email,...(preset||{})};
+ const fun=crmFunil(o.funil_id), cont=ficha.contato, serv=(CRMB.servicos||[]).filter(s=>s.ativo);
+ const contOpts=(CRMD.contatos||[]).map(c=>`<option value="${escAttr((c.nome||c.email||c.telefone||"Contato")+(c.empresa_nome?" · "+c.empresa_nome:"")+(c.email?" · "+c.email:""))}" data-id="${c.id}"></option>`).join("");
+ const contTxt=c=>c?((c.nome||c.email||c.telefone||"Contato")+(c.empresa_nome||c.empresa?" · "+(c.empresa_nome||c.empresa):"")+(c.email?" · "+c.email:"")):"";
+ let itens=(o.itens||[]).map(x=>({...x}));
+ const linhaItem=(x,i)=>`<tr><td><select class="inp" data-it="servico" data-i="${i}" style="min-width:170px">${crmOpt(serv.map(s=>[s.id,s.nome]),x.servico_id,"Serviço")}</select></td>
+  <td><input class="inp num" data-it="valor" data-i="${i}" value="${escAttr(x.valor??"")}" inputmode="decimal" aria-label="Valor" style="width:100px"></td>
+  <td><select class="inp" data-it="recorrencia" data-i="${i}" style="min-width:96px">${crmOpt([["mensal","Mensal"],["anual","Anual"],["unico","Único"]],x.recorrencia||"mensal")}</select></td>
+  <td><input class="inp num" data-it="qtd" data-i="${i}" value="${escAttr(x.qtd??1)}" inputmode="numeric" aria-label="Quantidade" style="width:64px"></td>
+  <td><input class="inp num" data-it="desconto" data-i="${i}" value="${escAttr(x.desconto??"")}" inputmode="decimal" aria-label="Desconto %" style="width:70px"></td>
+  <td><button class="crm-x" data-it-rm="${i}" aria-label="Remover serviço">✕</button></td></tr>`;
+ const totais=()=>{ let m=0,u=0; itens.forEach(x=>{ const t=crmNum(x.valor)*(crmNum(x.qtd)||1)*(1-crmNum(x.desconto)/100);
+   if(x.recorrencia==="unico") u+=t; else if(x.recorrencia==="anual") m+=t/12; else m+=t; }); return {m,u}; };
+ const fechado=["ganha","perdida"].includes(o.etapa);
+ const chips=o.id?[crmChip(esc(crmEtapaNome(o.funil_id,o.etapa))),o.valor_mensal?crmChip(brl(o.valor_mensal)+"/mês"):"",o.origem==="indicacao"?crmChip("Indicação"+(o.indicado_por_nome?" de "+esc(o.indicado_por_nome):"")):"",o.motivo_perda?crmChip("Motivo: "+esc(o.motivo_perda)):""].join(""):"";
+ const m=crmModal(`${esc(fun.nome)}${o.id?" · criado em "+crmData(o.criado_em):""}`,o.id?o.titulo:"Novo negócio",chips,`
+  ${o.id?`<div class="crm-etapas">${(fun.etapas||[]).map(e=>`<button class="crm-et ${o.etapa===e.id?"on":""}" style="--c:${CRM_ETAPA_COR[e.id]||"var(--accent)"}" data-et="${e.id}">${esc(e.nome)}</button>`).join("")}
+   <span style="flex:1"></span>${fechado?`<button class="view-btn" data-et="${(fun.etapas[0]||{}).id}">Reabrir</button>`:`<button class="view-btn crm-ganho" data-et="ganha">Ganhou</button><button class="view-btn ghost" data-perdeu>Perdeu</button>`}</div>`:""}
+  <div class="crm-2col"><div class="crm-colform">
+   <div class="panel"><h4>Negócio</h4><div class="crm-form">
+    <label class="crm-f crm-w2"><span>Título</span><input class="inp" id="nTit" value="${escAttr(o.titulo||"")}" placeholder="Ex.: Contabilidade e BPO fiscal"></label>
+    <label class="crm-f crm-w2"><span>Contato</span><input class="inp" id="nCont" list="nContL" value="${escAttr(contTxt(cont))}" placeholder="Busque pelo nome, empresa ou e-mail"><datalist id="nContL">${contOpts}</datalist></label>
+    ${!o.id?`<details class="crm-w2 crm-novo-c"><summary>O contato ainda não está cadastrado? Cadastre aqui</summary><div class="crm-form">
+      <label class="crm-f"><span>Nome</span><input class="inp" id="ncNome"></label><label class="crm-f"><span>Empresa</span><input class="inp" id="ncEmp"></label>
+      <label class="crm-f"><span>E-mail</span><input class="inp" id="ncEmail" type="email"></label><label class="crm-f"><span>Telefone</span><input class="inp" id="ncTel" inputmode="tel"></label>
+      <label class="crm-f"><span>CNPJ</span><input class="inp" id="ncCnpj" inputmode="numeric"></label></div></details>`:""}
+    ${!o.id?`<label class="crm-f"><span>Etapa</span><select class="inp" id="nEt">${crmOpt((fun.etapas||[]).map(e=>[e.id,e.nome]),o.etapa)}</select></label>`:""}
+    <label class="crm-f"><span>Responsável</span><select class="inp" id="nResp">${crmRespOpts(o.responsavel_email)}</select></label>
+    <label class="crm-f"><span>Origem</span><select class="inp" id="nOrig">${crmOpt(Object.entries(CRM_ORIG).filter(([k])=>k!=="lista_comprada"||o.origem==="lista_comprada"),o.origem)}</select></label>
+    <label class="crm-f"><span>Previsão de fechamento</span><input class="inp" id="nPrev" type="date" value="${escAttr(o.previsao_fechamento||"")}"></label>
+    <label class="crm-f"><span>Tema</span><input class="inp" id="nTema" value="${escAttr(o.tema||"")}" placeholder="Ex.: reforma_tributaria"></label>
+    <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="nObs" style="min-height:64px">${esc(o.obs||"")}</textarea></label>
+   </div>${crmCamposHTML("negocio",o.campos)}</div>
+   <div class="panel"><h4>Serviços e valores</h4>${serv.length?"":`<p class="sub" style="margin:4px 0 8px">Cadastre os serviços em Configurações para montar a proposta. Enquanto isso, informe os valores abaixo.</p>`}
+    <div style="overflow-x:auto"><table class="crm-itens"><thead><tr><th>Serviço</th><th>Valor</th><th>Cobrança</th><th>Qtd</th><th>Desc. %</th><th></th></tr></thead><tbody id="nItens"></tbody></table></div>
+    ${serv.length?`<button class="view-btn ghost" id="nAddIt" style="margin-top:8px">Adicionar serviço</button>`:""}
+    <div class="crm-tot" id="nTot"></div>
+    <div class="crm-form" id="nValMan" ${itens.length?"hidden":""}><label class="crm-f"><span>Valor mensal</span><input class="inp" id="nVm" value="${escAttr(o.valor_mensal??"")}" inputmode="decimal"></label><label class="crm-f"><span>Valor único</span><input class="inp" id="nVu" value="${escAttr(o.valor_unico??"")}" inputmode="decimal"></label></div>
+   </div>
+   <div class="crm-pe">${o.id&&isAdmin()?`<button class="txt-btn crm-perigo" id="nDel">Excluir negócio</button>`:""}<span style="flex:1"></span>${o.id&&cont?`<button class="txt-btn" id="nVerCont">Abrir contato</button>`:""}${crmPri('id="nSalvar">Salvar</button>')}</div>
+  </div>
+  <div class="crm-colline">${o.id?`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(ficha.linha,{contato_id:o.contato_id,oportunidade_id:o.id,empresa_id:o.empresa_id}):`<div class="panel sub">A linha do tempo aparece depois de salvar o negócio.</div>`}</div></div>`);
+ const pintaItens=()=>{ m.querySelector("#nItens").innerHTML=itens.map(linhaItem).join("")||`<tr><td colspan="6" class="sub">Nenhum serviço adicionado.</td></tr>`;
+  const t=totais(); m.querySelector("#nTot").innerHTML=itens.length?`<span>Mensal <b class="num">${brl(t.m)}</b></span><span>Único <b class="num">${brl(t.u)}</b></span><span>Primeiro ano <b class="num">${brl(t.m*12+t.u)}</b></span>`:"";
+  m.querySelector("#nValMan").hidden=!!itens.length;
+  m.querySelectorAll("[data-it]").forEach(e=>{ e.onchange=e.oninput=()=>{ const it=itens[+e.dataset.i]; it[e.dataset.it==="servico"?"servico_id":e.dataset.it]=e.value;
+    if(e.dataset.it==="servico"){ const s=serv.find(x=>x.id===e.value); if(s){ it.nome=s.nome; it.valor=s.valor; it.recorrencia=s.recorrencia; } pintaItens(); return; }
+    const t2=totais(); m.querySelector("#nTot").innerHTML=`<span>Mensal <b class="num">${brl(t2.m)}</b></span><span>Único <b class="num">${brl(t2.u)}</b></span><span>Primeiro ano <b class="num">${brl(t2.m*12+t2.u)}</b></span>`; }; });
+  m.querySelectorAll("[data-it-rm]").forEach(b=>b.onclick=()=>{ itens.splice(+b.dataset.itRm,1); pintaItens(); }); };
+ pintaItens();
+ const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
+ const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
+ if(o.id) crmLigarLinha(m,()=>crmFichaNegocio(o.id));
+ const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
+ const dl=m.querySelector("#nDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
+  try{ await crmRpc("crm_excluir",{p_tipo:"negocio",p_id:o.id}); closeModal(); crmToast("Negócio excluído"); crmAposSalvar(); }catch(e){ crmToast(crmErro(e)); } };
+ m.querySelectorAll("[data-et]").forEach(b=>b.onclick=async()=>{ const et=b.dataset.et; if(et===o.etapa) return;
+  try{ await crmRpc("crm_mover_negocio",{p_id:o.id,p_etapa:et}); crmToast(et==="ganha"?"Negócio ganho. O contato agora é cliente.":"Etapa atualizada"); recarregar(); }catch(e){ crmToast(crmErro(e)); } });
+ const pd=m.querySelector("[data-perdeu]"); if(pd) pd.onclick=()=>crmPerda(o,()=>{ if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); });
+ m.querySelector("#nSalvar").onclick=async ev=>{ const b=ev.currentTarget;
+  const titulo=crmVal(m,"#nTit"); if(!titulo){ crmToast("Informe o título do negócio."); return; }
+  const ct=crmVal(m,"#nCont"); const op=[...m.querySelectorAll("#nContL option")].find(x=>x.value===ct); let contato_id=op?op.dataset.id:(ct===contTxt(cont)&&cont?cont.id:null);
+  if(ct&&!contato_id){ crmToast("Escolha um contato da lista ou cadastre um novo abaixo."); return; }
+  b.disabled=true; b.textContent="Salvando…";
+  try{
+   if(!contato_id&&!o.id&&(crmVal(m,"#ncNome")||crmVal(m,"#ncEmail")||crmVal(m,"#ncEmp")))
+    contato_id=await crmRpc("crm_salvar_contato",{p:{nome:crmVal(m,"#ncNome"),email:crmVal(m,"#ncEmail"),telefone:crmVal(m,"#ncTel"),empresa:crmVal(m,"#ncEmp"),cnpj:crmVal(m,"#ncCnpj"),origem:crmVal(m,"#nOrig")||"manual",responsavel:crmVal(m,"#nResp")}});
+   const nid=await crmRpc("crm_salvar_negocio",{p:{id:o.id||null,funil_id:o.funil_id,titulo,contato_id,etapa:o.id?undefined:crmVal(m,"#nEt"),responsavel:crmVal(m,"#nResp"),origem:crmVal(m,"#nOrig"),
+     previsao_fechamento:crmVal(m,"#nPrev"),tema:crmVal(m,"#nTema"),obs:crmVal(m,"#nObs"),campos:crmCamposLer(m,o.campos),
+     itens:itens.filter(x=>x.servico_id||x.valor).map(x=>({servico_id:x.servico_id||null,nome:x.nome||((serv.find(s=>s.id===x.servico_id)||{}).nome)||"",valor:x.valor,qtd:x.qtd||1,desconto:x.desconto||0,recorrencia:x.recorrencia||"mensal"})),
+     valor_mensal:crmVal(m,"#nVm"),valor_unico:crmVal(m,"#nVu"),indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome}});
+   crmToast("Negócio salvo"); delete CRMD.contatos; crmFichaNegocio(nid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view"));
+  }catch(e){ b.disabled=false; b.textContent="Salvar"; const msg=String(e.message||""); if(msg.startsWith("email_existente")){ crmToast("Já existe um contato com esse e-mail. Busque-o no campo Contato."); } else crmToast(crmErro(e)); } };
+}
+
+// ---------- ficha do contato ----------
+async function crmFichaContato(id){
+ let f={contato:null,negocios:[],linha:[]};
+ if(id){ try{ f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{contato:id}}); }catch(e){ crmToast(crmErro(e)); return; } }
+ const c=f.contato||{tipo:"lead",origem:"manual",responsavel_comercial:(CRMB.eu||{}).email}; const emp=f.empresa;
+ const emps=CRMD.empresas||[];
+ const chips=id?[crmChip(esc(CRM_TIPOS_CONT[c.tipo]||c.tipo)),crmChip(esc(CRM_ORIG[c.origem]||c.origem||"Sem origem")),c.origem==="lista_comprada"&&!c.consentimento_em?crmChip("Fora das réguas até autorizar"):(c.consentimento_em?crmChip("Autorizou e-mails"):"")].join(""):"";
+ const m=crmModal(id?"Contato":"Novo contato",id?(c.nome||c.email||"Contato"):"Novo contato",chips,`<div class="crm-2col"><div class="crm-colform">
+  <div class="panel"><h4>Dados</h4><div class="crm-form">
+   <label class="crm-f"><span>Nome</span><input class="inp" id="cNome" value="${escAttr(c.nome||"")}"></label>
+   <label class="crm-f"><span>Cargo</span><input class="inp" id="cCargo" value="${escAttr(c.cargo||"")}"></label>
+   <label class="crm-f"><span>E-mail</span><input class="inp" id="cEmail" type="email" value="${escAttr(c.email||"")}"></label>
+   <label class="crm-f"><span>Telefone / WhatsApp</span><input class="inp" id="cTel" inputmode="tel" value="${escAttr(c.telefone||"")}"></label>
+   <label class="crm-f"><span>Empresa</span><input class="inp" id="cEmp" list="cEmpL" value="${escAttr((emp&&emp.nome)||c.empresa||"")}"><datalist id="cEmpL">${emps.map(e=>`<option value="${escAttr(e.nome)}"></option>`).join("")}</datalist></label>
+   <label class="crm-f"><span>CNPJ</span><input class="inp" id="cCnpj" inputmode="numeric" value="${escAttr((emp&&emp.cnpj)||c.cnpj||"")}"></label>
+   <label class="crm-f"><span>Segmento</span><input class="inp" id="cSeg" value="${escAttr(c.segmento||"")}" placeholder="Ex.: varejo_farma, saude, clinica"></label>
+   <label class="crm-f"><span>Cidade / UF</span><span class="crm-par"><input class="inp" id="cCid" value="${escAttr(c.cidade||"")}"><input class="inp" id="cUf" maxlength="2" value="${escAttr(c.uf||"")}" style="width:60px"></span></label>
+   <label class="crm-f"><span>Tipo</span><select class="inp" id="cTipo">${crmOpt(Object.entries(CRM_TIPOS_CONT),c.tipo)}</select></label>
+   <label class="crm-f"><span>Origem</span><select class="inp" id="cOrig">${crmOpt(Object.entries(CRM_ORIG),c.origem)}</select></label>
+   <label class="crm-f"><span>Responsável</span><select class="inp" id="cResp">${crmRespOpts(c.responsavel_comercial)}</select></label>
+   <label class="crm-f crm-chk"><input type="checkbox" id="cCons" ${c.consentimento_em?"checked disabled":""}><span>${c.consentimento_em?`Autorizou receber e-mails em ${crmData(c.consentimento_em)}`:"Autorizou receber e-mails da Resilcon"}</span></label>
+  </div>${crmCamposHTML("contato",c.campos)}</div>
+  ${id?`<div class="panel"><h4>Negócios</h4>${(f.negocios||[]).map(o=>`<div class="ce-row crm-click" data-neg="${o.id}"><span>${esc(o.titulo)}</span><span class="crm-etq" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">${esc(crmEtapaNome(o.funil_id,o.etapa))}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhum negócio.</p>`}
+   <button class="view-btn ghost" id="cNovoNeg" style="margin-top:8px">Novo negócio para este contato</button></div>`:""}
+  <div class="crm-pe">${id&&isAdmin()?`<button class="txt-btn crm-perigo" id="cDel">Excluir contato</button>`:""}<span style="flex:1"></span>${crmPri('id="cSalvar">Salvar</button>')}</div>
+ </div><div class="crm-colline">${id?`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
+ if(id) crmLigarLinha(m,()=>crmFichaContato(id));
+ m.querySelectorAll("[data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
+ const nn=m.querySelector("#cNovoNeg"); if(nn) nn.onclick=async()=>{ await crmContatosLista(); crmFichaNegocio(null,{contato_id:id,titulo:"",empresa_id:c.empresa_id}); setTimeout(()=>{ const x=modal.querySelector("#nCont"); const op=[...modal.querySelectorAll("#nContL option")].find(o=>o.dataset.id===id); if(x&&op) x.value=op.value; },0); };
+ const dl=m.querySelector("#cDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
+  try{ await crmRpc("crm_excluir",{p_tipo:"contato",p_id:id}); closeModal(); crmToast("Contato excluído"); crmAposSalvar(); }catch(e){ crmToast("Não foi possível excluir. O contato pode ter e-mails enviados registrados."); } };
+ m.querySelector("#cSalvar").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; b.textContent="Salvando…";
+  try{ const nid=await crmRpc("crm_salvar_contato",{p:{id:id||null,nome:crmVal(m,"#cNome"),cargo:crmVal(m,"#cCargo"),email:crmVal(m,"#cEmail"),telefone:crmVal(m,"#cTel"),empresa:crmVal(m,"#cEmp"),cnpj:crmVal(m,"#cCnpj"),
+     segmento:crmVal(m,"#cSeg"),cidade:crmVal(m,"#cCid"),uf:crmVal(m,"#cUf"),tipo:crmVal(m,"#cTipo"),origem:crmVal(m,"#cOrig"),responsavel:crmVal(m,"#cResp"),consentimento:m.querySelector("#cCons").checked&&!c.consentimento_em,campos:crmCamposLer(m,c.campos)}});
+   crmToast("Contato salvo"); delete CRMD.contatos; delete CRMD.empresas; crmFichaContato(nid); if(MODE==="crm_contatos") crmVContatos(document.getElementById("view"));
+  }catch(e){ b.disabled=false; b.textContent="Salvar"; const msg=String(e.message||""); if(msg.startsWith("email_existente:")){ const outro=msg.split(":")[1].trim(); crmToast("Esse e-mail já é de outro contato. Abrindo a ficha dele."); crmFichaContato(outro); } else crmToast(crmErro(e)); } };
+}
+
+// ---------- ficha da empresa ----------
+async function crmFichaEmpresa(id){
+ let f={empresa:null,contatos_empresa:[],negocios:[],linha:[]};
+ if(id){ try{ f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{empresa:id}}); }catch(e){ crmToast(crmErro(e)); return; } }
+ const e=f.empresa||{};
+ const m=crmModal(id?"Empresa":"Nova empresa",id?e.nome:"Nova empresa",id&&e.cnpj?crmChip(esc(fmtCnpj(e.cnpj))):"",`<div class="crm-2col"><div class="crm-colform">
+  <div class="panel"><h4>Dados</h4><div class="crm-form">
+   <label class="crm-f crm-w2"><span>Nome</span><input class="inp" id="eNome" value="${escAttr(e.nome||"")}"></label>
+   <label class="crm-f"><span>CNPJ</span><input class="inp" id="eCnpj" inputmode="numeric" value="${escAttr(e.cnpj||"")}"></label>
+   <label class="crm-f"><span>Segmento</span><input class="inp" id="eSeg" value="${escAttr(e.segmento||"")}"></label>
+   <label class="crm-f"><span>Cidade</span><input class="inp" id="eCid" value="${escAttr(e.cidade||"")}"></label>
+   <label class="crm-f"><span>UF</span><input class="inp" id="eUf" maxlength="2" value="${escAttr(e.uf||"")}"></label>
+   <label class="crm-f"><span>Telefone</span><input class="inp" id="eTel" value="${escAttr(e.telefone||"")}"></label>
+   <label class="crm-f"><span>Site</span><input class="inp" id="eSite" value="${escAttr(e.site||"")}"></label>
+  </div>${crmCamposHTML("empresa",e.campos)}</div>
+  ${id?`<div class="panel"><h4>Contatos</h4>${(f.contatos_empresa||[]).map(c=>`<div class="ce-row crm-click" data-cont="${c.id}"><span>${esc(c.nome||c.email)}</span><span class="sub">${esc(c.cargo||c.email||"")}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhum contato.</p>`}</div>
+   <div class="panel"><h4>Negócios</h4>${(f.negocios||[]).map(o=>`<div class="ce-row crm-click" data-neg="${o.id}"><span>${esc(o.titulo)}</span><span class="crm-etq" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">${esc(crmEtapaNome(o.funil_id,o.etapa))}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhum negócio.</p>`}</div>`:""}
+  <div class="crm-pe">${id&&isAdmin()?`<button class="txt-btn crm-perigo" id="eDel">Excluir empresa</button>`:""}<span style="flex:1"></span>${crmPri('id="eSalvar">Salvar</button>')}</div>
+ </div><div class="crm-colline">${id?`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{empresa_id:id}):""}</div></div>`);
+ if(id) crmLigarLinha(m,()=>crmFichaEmpresa(id));
+ m.querySelectorAll("[data-cont]").forEach(r=>r.onclick=()=>crmFichaContato(r.dataset.cont));
+ m.querySelectorAll("[data-neg]").forEach(r=>r.onclick=()=>crmFichaNegocio(r.dataset.neg));
+ const dl=m.querySelector("#eDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
+  try{ await crmRpc("crm_excluir",{p_tipo:"empresa",p_id:id}); closeModal(); crmToast("Empresa excluída"); crmAposSalvar(); }catch(err){ crmToast(crmErro(err)); } };
+ m.querySelector("#eSalvar").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true;
+  try{ const nid=await crmRpc("crm_salvar_empresa",{p:{id:id||null,nome:crmVal(m,"#eNome"),cnpj:crmVal(m,"#eCnpj"),segmento:crmVal(m,"#eSeg"),cidade:crmVal(m,"#eCid"),uf:crmVal(m,"#eUf"),telefone:crmVal(m,"#eTel"),site:crmVal(m,"#eSite"),campos:crmCamposLer(m,e.campos)}});
+   crmToast("Empresa salva"); delete CRMD.empresas; delete CRMD.contatos; crmFichaEmpresa(nid); if(MODE==="crm_contatos") crmVContatos(document.getElementById("view")); }
+  catch(err){ b.disabled=false; crmToast(crmErro(err)); } };
+}
+
+// ---------- ficha do cliente (G-Click) ----------
+async function crmFichaCliente(gid){
+ let f; try{ f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{cliente:gid}}); }catch(e){ crmToast(crmErro(e)); return; }
+ const emp=EMPRESAS[gid]||{}; const fase=(f.fase&&f.fase.fase)||"retencao";
+ const m=crmModal(`Cliente G-Click · ${esc(fmtCnpj(emp.cnpj))}`,emp.apelido||emp.nome||"Cliente",crmChip(CRM_FASE_TXT[fase])+((f.indicacoes||[]).length?crmChip(`${f.indicacoes.length} indicação(ões)`):""),`<div class="crm-2col"><div class="crm-colform">
+  <div class="panel"><h4>Fase no funil</h4><div class="crm-fases">${CRM_FASES.map(([k,t])=>`<button class="crm-et ${fase===k?"on":""}" style="--c:${CRM_ETAPA_COR[k]}" data-fase="${k}">${t}</button>`).join("")}</div>
+   <label class="crm-f" style="margin-top:10px"><span>O que motivou a mudança (opcional)</span><input class="inp" id="fObs" placeholder="Ex.: elogiou o atendimento do fiscal"></label>
+   ${f.fase&&f.fase.desde?`<p class="sub" style="margin:8px 0 0">Nesta fase desde ${crmData(f.fase.desde)}${f.fase.obs?`. ${esc(f.fase.obs)}`:""}</p>`:""}</div>
+  <div class="panel"><h4>Indicações feitas</h4>${(f.indicacoes||[]).map(i=>`<div class="ce-row"><span>${esc(i.indicado_empresa||i.indicado_nome)}<span class="sub"> · ${crmData(i.criado_em)}</span></span>${cePill(CRM_IND_ST,i.status)}</div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhuma indicação ainda.</p>`}
+   <button class="view-btn ce-pri" id="fInd" style="margin-top:10px">Registrar indicação deste cliente</button></div>
+ </div><div class="crm-colline"><h4 class="crm-h4">Linha do tempo</h4>${crmLinhaHTML(f.linha,{gclick_empresa_id:gid})}</div></div>`);
+ crmLigarLinha(m,()=>crmFichaCliente(gid));
+ m.querySelectorAll("[data-fase]").forEach(b=>b.onclick=async()=>{ if(b.dataset.fase===fase) return;
+  try{ await crmRpc("crm_fase_cliente",{p_empresa_id:gid,p_fase:b.dataset.fase,p_obs:crmVal(m,"#fObs")}); crmToast("Fase atualizada"); crmFichaCliente(gid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); }catch(e){ crmToast(crmErro(e)); } });
+ m.querySelector("#fInd").onclick=()=>crmNovaIndicacao(gid);
+}
+
+// ---------- registrar indicação ----------
+function crmNovaIndicacao(gid){
+ const cl=crmEmpresasGclick(); const rot=c=>`${c.nome} · ${fmtCnpj(c.cnpj)}`; const pre=gid?cl.find(c=>c.id===gid):null;
+ const m=crmModal("Campanha de indicação","Registrar indicação","",`<p class="sub" style="margin:0">Quem indicou recebe metade do primeiro honorário do indicado, depois que o financeiro confirmar o pagamento.</p>
+  <div class="crm-form">
+   <label class="crm-f crm-w2"><span>Cliente que indicou</span><input class="inp" id="iInd" list="iIndL" value="${escAttr(pre?rot(pre):"")}" placeholder="Busque pelo nome ou CNPJ"><datalist id="iIndL">${cl.map(c=>`<option value="${escAttr(rot(c))}" data-id="${escAttr(c.id)}"></option>`).join("")}</datalist></label>
+   <label class="crm-f"><span>Nome de quem foi indicado</span><input class="inp" id="iNome"></label>
+   <label class="crm-f"><span>Empresa indicada</span><input class="inp" id="iEmp"></label>
+   <label class="crm-f"><span>CNPJ</span><input class="inp" id="iCnpj" inputmode="numeric"></label>
+   <label class="crm-f"><span>Telefone / WhatsApp</span><input class="inp" id="iTel" inputmode="tel"></label>
+   <label class="crm-f"><span>E-mail</span><input class="inp" id="iEmail" type="email"></label>
+   <label class="crm-f"><span>Responsável no comercial</span><select class="inp" id="iResp">${crmRespOpts((CRMB.eu||{}).email)}</select></label>
+   <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="iObs" style="min-height:60px" placeholder="Ex.: dono de 3 farmácias, quer trocar de contador em janeiro"></textarea></label>
+  </div><div class="crm-pe"><span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="iOk">Registrar indicação</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#iOk").onclick=async ev=>{ const txt=crmVal(m,"#iInd"); const op=[...m.querySelectorAll("#iIndL option")].find(o=>o.value===txt); if(!op){ crmToast("Escolha o cliente que indicou na lista."); return; }
+  const c=cl.find(x=>x.id===op.dataset.id); const b=ev.currentTarget; b.disabled=true;
+  try{ await crmRpc("crm_registrar_indicacao",{p:{indicador_empresa_id:c.id,indicador_nome:c.nome,nome:crmVal(m,"#iNome"),empresa:crmVal(m,"#iEmp"),cnpj:crmVal(m,"#iCnpj"),telefone:crmVal(m,"#iTel"),email:crmVal(m,"#iEmail"),responsavel:crmVal(m,"#iResp"),obs:crmVal(m,"#iObs")}});
+   closeModal(); crmToast("Indicação registrada. O indicado entrou em Atração."); crmAposSalvar(); }
+  catch(e){ b.disabled=false; crmToast(crmErro(e)); } };
+}
+
+// ================= CONTATOS E EMPRESAS =================
+async function crmVContatos(v){
+ v.innerHTML=crmHead("Contatos e empresas","Leads, prospects e clientes cadastrados no CRM. A mesma base usada pela Central de E-mails.",
+  `<button class="txt-btn" data-mode-ir="crm_importar">Importar planilha</button><button class="txt-btn" id="crmNovaEmp">Nova empresa</button>${crmPri('id="crmNovoCont">Novo contato</button>')}`)+`<div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#crmNovoCont").onclick=()=>crmFichaContato(null); v.querySelector("#crmNovaEmp").onclick=()=>crmFichaEmpresa(null);
+ v.querySelector("[data-mode-ir]").onclick=()=>setMode("crm_importar");
+ try{ const [c,e]=await Promise.all([crmContatosLista(),CRMD.empresas?Promise.resolve(CRMD.empresas):crmRpc("crm_dados",{p_secao:"empresas"})]); CRMD.empresas=e; if(MODE==="crm_contatos") crmContPinta(v); }
+ catch(err){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(err); }
+}
+function crmContPinta(v){
+ const bar=v.querySelector("#crmBar"), box=v.querySelector("#crmBox"); const q=CRMC.q.toLowerCase();
+ const origs=[...new Set((CRMD.contatos||[]).map(c=>c.origem).filter(Boolean))];
+ bar.innerHTML=`<div class="filters crm-bar2"><div class="seg"><button data-aba="contatos" class="${CRMC.aba==="contatos"?"on":""}">Contatos <span class="num">${(CRMD.contatos||[]).length}</span></button><button data-aba="empresas" class="${CRMC.aba==="empresas"?"on":""}">Empresas <span class="num">${(CRMD.empresas||[]).length}</span></button></div>
+  <div class="search" style="flex:1;min-width:220px"><input id="crmQc" type="search" value="${escAttr(CRMC.q)}" placeholder="${CRMC.aba==="contatos"?"Buscar nome, e-mail, telefone ou empresa":"Buscar empresa, CNPJ ou cidade"}" aria-label="Buscar"></div>
+  ${CRMC.aba==="contatos"?`<select class="fsel" id="crmTipo" aria-label="Tipo">${crmOpt(Object.entries(CRM_TIPOS_CONT),CRMC.tipo,"Todos os tipos")}</select><select class="fsel" id="crmOrigC" aria-label="Origem">${crmOpt(origs.map(o=>[o,CRM_ORIG[o]||o]),CRMC.origem,"Todas as origens")}</select>`:""}</div>`;
+ bar.querySelectorAll("[data-aba]").forEach(b=>b.onclick=()=>{ CRMC.aba=b.dataset.aba; crmContPinta(v); });
+ const t=bar.querySelector("#crmTipo"); if(t) t.onchange=()=>{ CRMC.tipo=t.value; crmContPinta(v); };
+ const o=bar.querySelector("#crmOrigC"); if(o) o.onchange=()=>{ CRMC.origem=o.value; crmContPinta(v); };
+ const qi=bar.querySelector("#crmQc"); qi.oninput=()=>{ CRMC.q=qi.value; const p=qi.selectionStart; crmContPinta(v); const n=v.querySelector("#crmQc"); n.focus(); n.setSelectionRange(p,p); };
+ if(CRMC.aba==="empresas"){ const l=(CRMD.empresas||[]).filter(e=>!q||[e.nome,e.cnpj,dig(e.cnpj),e.cidade,e.segmento].join(" ").toLowerCase().includes(q));
+  box.innerHTML=`<div class="card" style="overflow-x:auto"><table><thead><tr><th>Empresa</th><th>CNPJ</th><th>Segmento</th><th>Cidade</th><th class="center">Contatos</th><th class="center">Negócios abertos</th></tr></thead><tbody>
+   ${l.slice(0,400).map(e=>`<tr class="crm-tr" data-emp="${e.id}"><td class="r-name">${esc(e.nome)}</td><td class="num sub">${e.cnpj?esc(fmtCnpj(e.cnpj)):""}</td><td class="sub">${esc(e.segmento||"")}</td><td class="sub">${esc([e.cidade,e.uf].filter(Boolean).join("/"))}</td><td class="center num">${e.contatos}</td><td class="center num">${e.negocios_abertos}</td></tr>`).join("")||`<tr><td colspan="6"><div class="empty">Nenhuma empresa cadastrada ainda.</div></td></tr>`}
+   </tbody></table>${l.length>400?`<p class="sub" style="padding:10px 16px;margin:0">Mostrando 400 de ${l.length}. Use a busca para achar as outras.</p>`:""}</div>`;
+  box.querySelectorAll("[data-emp]").forEach(r=>r.onclick=()=>crmFichaEmpresa(r.dataset.emp)); return; }
+ const l=(CRMD.contatos||[]).filter(c=>(!CRMC.tipo||c.tipo===CRMC.tipo)&&(!CRMC.origem||c.origem===CRMC.origem)&&(!q||[c.nome,c.email,c.telefone,dig(c.telefone),c.empresa_nome,c.cnpj,c.segmento].join(" ").toLowerCase().includes(q)));
+ box.innerHTML=`<div class="card" style="overflow-x:auto"><table><thead><tr><th>Contato</th><th>Empresa</th><th>E-mail e telefone</th><th>Tipo</th><th>Origem</th><th>No funil</th><th>Responsável</th></tr></thead><tbody>
+  ${l.slice(0,400).map(c=>`<tr class="crm-tr" data-cont="${c.id}"><td><div class="r-name">${esc(c.nome||c.email||c.telefone||"Sem nome")}</div><div class="sub">${esc(c.cargo||"")}</div></td><td>${esc(c.empresa_nome||"")}</td>
+   <td class="sub">${esc(c.email||"")}<div>${esc(c.telefone||"")}</div></td><td>${esc(CRM_TIPOS_CONT[c.tipo]||c.tipo)}</td>
+   <td>${c.origem==="lista_comprada"&&!c.consentimento_em?`<span class="pill warn" title="Não recebe réguas nem campanhas até autorizar">Sem consentimento</span>`:`<span class="sub">${esc(CRM_ORIG[c.origem]||c.origem||"")}</span>`}</td>
+   <td>${c.etapa_aberta?`<span class="crm-etq" style="--c:${CRM_ETAPA_COR[c.etapa_aberta]||"var(--accent)"}">${esc(crmEtapaNome("vendas",c.etapa_aberta))}</span>`:""}</td><td class="sub">${esc(crmNomeResp(c.responsavel_comercial))}</td></tr>`).join("")||`<tr><td colspan="7"><div class="empty">${(CRMD.contatos||[]).length?"Nenhum contato com esse filtro.":"Nenhum contato ainda. Cadastre um ou importe suas planilhas de leads."}</div></td></tr>`}
+ </tbody></table>${l.length>400?`<p class="sub" style="padding:10px 16px;margin:0">Mostrando 400 de ${l.length}. Use a busca para achar os outros.</p>`:""}</div>`;
+ box.querySelectorAll("[data-cont]").forEach(r=>r.onclick=()=>crmFichaContato(r.dataset.cont));
+}
+
+// ================= INDICAÇÕES =================
+async function crmVIndic(v){
+ v.innerHTML=crmHead("Campanha de indicação","Quem indica recebe metade do primeiro honorário do indicado. O financeiro confirma o pagamento do honorário e do prêmio.",
+  podeVendas()?crmPri('id="crmIndNova">Registrar indicação</button>'):"")+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ const nb=v.querySelector("#crmIndNova"); if(nb) nb.onclick=()=>crmNovaIndicacao();
+ try{ CRMD.ind=await crmRpc("crm_dados",{p_secao:"indicacoes"}); if(MODE==="crm_indic") crmIndPinta(v); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); }
+}
+function crmIndPinta(v){
+ const l=CRMD.ind||[], box=v.querySelector("#crmBox"); const fin=podeFinCRM();
+ const fech=l.filter(i=>["virou_cliente","premio_a_pagar","premio_pago"].includes(i.status));
+ const soma=(arr,k)=>arr.reduce((s,i)=>s+(+i[k]||0),0);
+ const aPagar=l.filter(i=>i.status==="premio_a_pagar"), pagos=l.filter(i=>i.status==="premio_pago");
+ const q=CRMI.q.toLowerCase(); const vis=l.filter(i=>(!CRMI.st||i.status===CRMI.st)&&(!q||[i.indicador_nome,i.indicado_nome,i.indicado_empresa].join(" ").toLowerCase().includes(q)));
+ box.innerHTML=`<div class="kpis">
+  <div class="tile"><div class="ic">${CRM_ICO.ind}</div><div><div class="lbl">Indicações</div><div class="val num">${l.length}</div><div class="sub">${l.filter(i=>["indicado","em_negociacao"].includes(i.status)).length} em andamento</div></div></div>
+  <div class="tile"><div class="ic">${CRM_ICO.funil}</div><div><div class="lbl">Viraram cliente</div><div class="val num">${fech.length}</div><div class="sub">${l.length?Math.round(fech.length/l.length*100):0}% das indicações</div></div></div>
+  <div class="tile"><div class="ic">${_ICO_FIN}</div><div><div class="lbl">Prêmios a pagar</div><div class="val num" style="font-size:24px">${brl(soma(aPagar,"premio_valor"))}</div><div class="sub">${aPagar.length} cliente(s)</div></div></div>
+  <div class="tile"><div class="ic">${_ICO_FIN}</div><div><div class="lbl">Prêmios pagos</div><div class="val num" style="font-size:24px">${brl(soma(pagos,"premio_valor"))}</div><div class="sub">${brl(soma(l,"primeiro_honorario"))} em 1º honorários</div></div></div></div>
+ <div class="filters crm-bar2" style="margin-top:16px"><div class="ce-tabs" style="margin:0">${[["","Todas"],["em_negociacao","Em negociação"],["virou_cliente","Aguardando 1º honorário"],["premio_a_pagar","Prêmio a pagar"],["premio_pago","Pagas"],["nao_fechou","Não fecharam"]].map(([k,t])=>`<button class="${CRMI.st===k?"on":""}" data-st="${k}">${t}</button>`).join("")}</div>
+  <div class="search" style="flex:1;min-width:200px"><input id="crmQi" type="search" value="${escAttr(CRMI.q)}" placeholder="Buscar cliente ou indicado" aria-label="Buscar"></div></div>
+ <div class="card" style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Quem indicou</th><th>Indicado</th><th>Situação</th><th class="right">1º honorário</th><th class="right">Prêmio (50%)</th><th>Pago em</th><th></th></tr></thead><tbody>
+ ${vis.map(i=>`<tr><td class="num sub">${crmData(i.criado_em)}</td><td class="r-name">${esc(i.indicador_nome||"")}</td><td>${esc(i.indicado_empresa||i.indicado_nome||"")}${i.indicado_empresa&&i.indicado_nome?`<div class="sub">${esc(i.indicado_nome)}</div>`:""}</td>
+  <td>${cePill(CRM_IND_ST,i.status)}</td><td class="right num">${i.primeiro_honorario!=null?brl(i.primeiro_honorario):""}${i.honorario_pago_em?`<div class="sub">pago ${crmData(i.honorario_pago_em+"T12:00")}</div>`:""}</td>
+  <td class="right num">${i.premio_valor!=null?brl(i.premio_valor):""}</td><td class="num sub">${i.premio_pago_em?crmData(i.premio_pago_em+"T12:00"):""}</td>
+  <td class="right">${fin&&i.status!=="nao_fechou"?`<button class="view-btn" data-fin="${i.id}">${i.status==="premio_a_pagar"?"Marcar prêmio pago":i.status==="premio_pago"?"Editar":"Registrar honorário"}</button>`:""}${podeVendas()&&i.oportunidade_id?`<button class="view-btn ghost" data-neg="${i.oportunidade_id}">Negócio</button>`:""}</td></tr>`).join("")||`<tr><td colspan="8"><div class="empty">${l.length?"Nenhuma indicação com esse filtro.":"Nenhuma indicação registrada ainda. Elas entram pelo botão Registrar indicação ou pela ficha do cliente."}</div></td></tr>`}
+ </tbody></table></div>`;
+ box.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{ CRMI.st=b.dataset.st; crmIndPinta(v); });
+ const qi=box.querySelector("#crmQi"); qi.oninput=()=>{ CRMI.q=qi.value; const p=qi.selectionStart; crmIndPinta(v); const n=v.querySelector("#crmQi"); n.focus(); n.setSelectionRange(p,p); };
+ box.querySelectorAll("[data-neg]").forEach(b=>b.onclick=()=>crmFichaNegocio(b.dataset.neg));
+ box.querySelectorAll("[data-fin]").forEach(b=>b.onclick=()=>crmIndFin(l.find(i=>i.id===b.dataset.fin),v));
+}
+function crmIndFin(i,v){
+ const hoje=new Date().toLocaleDateString("sv-SE");
+ const m=crmModal("Financeiro · indicação de "+esc(i.indicador_nome||""),i.indicado_empresa||i.indicado_nome||"Indicação","",`
+  <p class="sub" style="margin:0">Registre o primeiro honorário pago pelo indicado. O prêmio é calculado sozinho: metade desse valor.</p>
+  <div class="crm-form">
+   <label class="crm-f"><span>Valor do 1º honorário</span><input class="inp num" id="fHon" inputmode="decimal" value="${escAttr(i.primeiro_honorario??(i.valor_mensal??""))}"></label>
+   <label class="crm-f"><span>Pago pelo indicado em</span><input class="inp" id="fHonDt" type="date" value="${escAttr(i.honorario_pago_em||"")}"></label>
+   <label class="crm-f"><span>Prêmio (50%)</span><input class="inp num" id="fPrem" disabled></label>
+   <label class="crm-f"><span>Prêmio pago a quem indicou em</span><input class="inp" id="fPremDt" type="date" value="${escAttr(i.premio_pago_em||"")}"></label>
+   <label class="crm-f crm-w2"><span>Observações</span><input class="inp" id="fObs" value="${escAttr(i.obs||"")}" placeholder="Ex.: pago por PIX, comprovante no financeiro"></label>
+  </div><div class="crm-pe"><button class="txt-btn" id="fHoje">Prêmio pago hoje</button><span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="fOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const calc=()=>{ const n=crmNum(crmVal(m,"#fHon")); m.querySelector("#fPrem").value=n?brl(n/2):""; }; calc(); m.querySelector("#fHon").oninput=calc;
+ m.querySelector("#fHoje").onclick=()=>{ m.querySelector("#fPremDt").value=hoje; if(!crmVal(m,"#fHonDt")) m.querySelector("#fHonDt").value=hoje; };
+ m.querySelector("#fOk").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true;
+  try{ await crmRpc("crm_indicacao_financeiro",{p_id:i.id,p:{primeiro_honorario:crmVal(m,"#fHon"),honorario_pago_em:crmVal(m,"#fHonDt"),premio_pago_em:crmVal(m,"#fPremDt"),obs:crmVal(m,"#fObs")}});
+   closeModal(); crmToast("Pagamento registrado"); crmVIndic(v); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } };
+}
+
+// ================= IMPORTAR PLANILHA =================
+const CRM_IMP_CAMPOS=[["nome","Nome",/^(nome|name|contato|respons)/i],["email","E-mail",/e-?mail/i],["telefone","Telefone / WhatsApp",/(tel|fone|celular|whats|phone)/i],["empresa","Empresa",/(empresa|raz[aã]o|company|fantasia|farm[aá]cia|drogaria|cl[ií]nica)/i],
+ ["cnpj","CNPJ",/cnpj/i],["cargo","Cargo",/(cargo|fun[cç][aã]o|title)/i],["segmento","Segmento",/(segmento|ramo|setor|atividade)/i],["cidade","Cidade",/(cidade|munic|city)/i],["uf","UF",/^(uf|estado)$/i],["obs","Observações",/(obs|nota|coment)/i]];
+function crmCsv(txt){ txt=txt.replace(/^﻿/,""); const pl=txt.split(/\r?\n/)[0]||""; const sep=(pl.match(/;/g)||[]).length>(pl.match(/,/g)||[]).length?";":(pl.includes("\t")?"\t":",");
+ const rows=[]; let row=[],cur="",q=false;
+ for(let i=0;i<txt.length;i++){ const ch=txt[i];
+  if(q){ if(ch==='"'){ if(txt[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
+  else if(ch==='"') q=true; else if(ch===sep){ row.push(cur); cur=""; } else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&txt[i+1]==="\n") i++; row.push(cur); rows.push(row); row=[]; cur=""; } else cur+=ch; }
+ if(cur||row.length){ row.push(cur); rows.push(row); } return rows.filter(r=>r.some(c=>String(c).trim())); }
+function crmXlsxLib(){ if(window.XLSX) return Promise.resolve(); return new Promise((ok,err)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload=ok; s.onerror=()=>err(new Error("Não consegui carregar o leitor de Excel. Salve a planilha como CSV e tente de novo.")); document.head.appendChild(s); }); }
+function crmVImportar(v){
+ v.innerHTML=crmHead("Importar planilha de leads","Traga suas listas em Excel ou CSV. Contatos repetidos (mesmo e-mail ou telefone) são atualizados, não duplicados.","")+`<div id="crmBox"></div>`;
+ const box=v.querySelector("#crmBox");
+ const passo1=()=>{ box.innerHTML=`<div class="card ce-pad crm-imp"><h3>1. Escolha o arquivo</h3><p class="sub">Aceita .xlsx, .xls e .csv. A primeira linha precisa ter os nomes das colunas (Nome, E-mail, Telefone, Empresa...).</p>
+  <label class="crm-drop" id="crmDrop"><input type="file" id="crmArq" accept=".csv,.xlsx,.xls,.txt" hidden><b>Clique para escolher</b><span class="sub">ou arraste o arquivo para cá</span></label><p class="sub" id="crmArqMsg"></p></div>`;
+  const inp=box.querySelector("#crmArq"), drop=box.querySelector("#crmDrop");
+  const ler=async file=>{ const msg=box.querySelector("#crmArqMsg"); msg.textContent="Lendo "+file.name+"…";
+   try{ let rows;
+    if(/\.xlsx?$/i.test(file.name)){ await crmXlsxLib(); const wb=XLSX.read(await file.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:""}); }
+    else{ const buf=await file.arrayBuffer(); let t=new TextDecoder("utf-8").decode(buf); if(t.includes("�")) t=new TextDecoder("windows-1252").decode(buf); rows=crmCsv(t); }
+    rows=rows.filter(r=>r.some(c=>String(c).trim())); if(rows.length<2) throw new Error("A planilha não tem linhas de dados.");
+    const cab=rows[0].map((c,i)=>String(c||"").trim()||`Coluna ${i+1}`); const mapa={};
+    CRM_IMP_CAMPOS.forEach(([k,,re])=>{ const i=cab.findIndex((c,j)=>re.test(c)&&!Object.values(mapa).includes(j)); if(i>=0) mapa[k]=i; });
+    CRMIMP={arquivo:file.name,cab,linhas:rows.slice(1),mapa,consent:null,criar:true,resp:(CRMB.eu||{}).email}; passo2();
+   }catch(e){ msg.textContent=e.message||"Não consegui ler o arquivo."; } };
+  inp.onchange=()=>inp.files[0]&&ler(inp.files[0]);
+  drop.ondragover=e=>{ e.preventDefault(); drop.classList.add("on"); }; drop.ondragleave=()=>drop.classList.remove("on");
+  drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove("on"); const f=e.dataTransfer.files[0]; if(f) ler(f); }; };
+ const montar=()=>CRMIMP.linhas.map(r=>{ const o={}; Object.entries(CRMIMP.mapa).forEach(([k,i])=>{ if(i!==""&&i!=null) o[k]=String(r[i]??"").trim(); }); return o; });
+ const passo2=()=>{ const I=CRMIMP; const amostra=montar().slice(0,5); const usados=CRM_IMP_CAMPOS.filter(([k])=>I.mapa[k]!=null&&I.mapa[k]!=="");
+  box.innerHTML=`<div class="card ce-pad crm-imp"><div class="ce-ch"><h3>2. Confira as colunas</h3><button class="txt-btn" id="crmTroca">Trocar arquivo</button></div>
+   <p class="sub">${esc(I.arquivo)} · ${I.linhas.length} linha(s). Diga qual coluna da planilha corresponde a cada informação.</p>
+   <div class="crm-form crm-map">${CRM_IMP_CAMPOS.map(([k,t])=>`<label class="crm-f"><span>${t}</span><select class="inp" data-map="${k}">${crmOpt(I.cab.map((c,i)=>[i,c]),I.mapa[k],"Não importar")}</select></label>`).join("")}</div>
+   <h4 style="margin:18px 0 8px">Prévia</h4><div style="overflow-x:auto"><table><thead><tr>${usados.map(([,t])=>`<th>${t}</th>`).join("")}</tr></thead><tbody>${amostra.map(o=>`<tr>${usados.map(([k])=>`<td>${esc(o[k]||"")}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>
+  <div class="card ce-pad crm-imp"><h3>3. Como tratar esses contatos</h3>
+   <fieldset class="crm-radio"><legend>Essas pessoas autorizaram receber e-mails da Resilcon?</legend>
+    <label><input type="radio" name="crmCons" value="sim" ${I.consent===true?"checked":""}> Sim, autorizaram (cadastro, evento, cliente que pediu contato)</label>
+    <label><input type="radio" name="crmCons" value="nao" ${I.consent===false?"checked":""}> Não ou não sei (lista comprada ou de terceiros)</label></fieldset>
+   <p class="sub" id="crmConsMsg">${I.consent===false?"Entram no CRM para o comercial trabalhar, mas ficam fora das réguas e campanhas até autorizarem.":I.consent===true?"Entram no CRM e podem receber as réguas de e-mail quando forem ativadas.":""}</p>
+   <label class="crm-f crm-chk"><input type="checkbox" id="crmCriar" ${I.criar?"checked":""}><span>Criar um negócio em Atração para cada contato novo</span></label>
+   <label class="crm-f" style="max-width:320px"><span>Responsável</span><select class="inp" id="crmImpResp">${crmRespOpts(I.resp)}</select></label>
+   <div class="crm-pe"><span style="flex:1"></span>${crmPri(`id="crmImpOk">Importar ${I.linhas.length} linha(s)</button>`)}</div><div id="crmImpProg"></div></div>`;
+  box.querySelector("#crmTroca").onclick=()=>{ CRMIMP=null; passo1(); };
+  box.querySelectorAll("[data-map]").forEach(s=>s.onchange=()=>{ I.mapa[s.dataset.map]=s.value===""?null:+s.value; passo2(); });
+  box.querySelectorAll("input[name=crmCons]").forEach(r=>r.onchange=()=>{ I.consent=r.value==="sim"; passo2(); });
+  box.querySelector("#crmCriar").onchange=e=>I.criar=e.target.checked; box.querySelector("#crmImpResp").onchange=e=>I.resp=e.target.value;
+  box.querySelector("#crmImpOk").onclick=async ev=>{ if(I.consent===null){ crmToast("Responda se esses contatos autorizaram receber e-mails."); return; }
+   if(I.mapa.nome==null&&I.mapa.email==null&&I.mapa.telefone==null&&I.mapa.empresa==null){ crmToast("Escolha pelo menos a coluna de nome, e-mail, telefone ou empresa."); return; }
+   const b=ev.currentTarget; b.disabled=true; const prog=box.querySelector("#crmImpProg"); const linhas=montar(); const tot={novos:0,atualizados:0,ignorados:0,negocios:0};
+   try{ for(let i=0;i<linhas.length;i+=500){ prog.innerHTML=`<p class="sub">Importando ${Math.min(i+500,linhas.length)} de ${linhas.length}…</p>`;
+     const r=await crmRpc("crm_importar",{p_linhas:linhas.slice(i,i+500),p_opts:{consentimento:I.consent,criar_negocio:I.criar,responsavel:I.resp,arquivo:I.arquivo,origem:"planilha"}});
+     Object.keys(tot).forEach(k=>tot[k]+=r[k]||0); }
+    delete CRMD.contatos; delete CRMD.empresas; CRMIMP=null;
+    box.innerHTML=`<div class="card ce-pad crm-imp"><h3>Importação concluída</h3><div class="ce-nums" style="margin:14px 0">${[["Contatos novos",tot.novos],["Atualizados",tot.atualizados],["Negócios criados",tot.negocios],["Linhas ignoradas",tot.ignorados]].map(([l,n])=>`<div><b class="num">${n}</b><span>${l}</span></div>`).join("")}</div>
+     <p class="sub">Linhas ignoradas não tinham nome, e-mail, telefone nem empresa.</p><div class="crm-pe"><button class="txt-btn" id="crmImpOutra">Importar outra planilha</button><span style="flex:1"></span><button class="txt-btn" data-ir="crm_contatos">Ver contatos</button>${crmPri('data-ir="crm_funil">Ver funil</button>')}</div></div>`;
+    box.querySelector("#crmImpOutra").onclick=passo1; box.querySelectorAll("[data-ir]").forEach(x=>x.onclick=()=>setMode(x.dataset.ir));
+   }catch(e){ b.disabled=false; prog.innerHTML=`<p class="sub" style="color:var(--crit)">${esc(crmErro(e))} ${Object.values(tot).some(Boolean)?`Já importados antes do erro: ${tot.novos} novos, ${tot.atualizados} atualizados.`:""}</p>`; } }; };
+ if(CRMIMP) passo2(); else passo1();
+}
+
+// ================= CONFIGURAÇÕES =================
+function crmVConfig(v){
+ const B=CRMB; const rec={mensal:"Mensal",anual:"Anual",unico:"Único"}; const tipos={texto:"Texto",numero:"Número",data:"Data",lista:"Lista de opções",sim_nao:"Sim ou não"}; const ents={contato:"Contato",negocio:"Negócio",empresa:"Empresa"};
+ v.innerHTML=crmHead("Configurações do CRM","Serviços com valores, motivos de perda, campos personalizados e funis.","")+`<div class="ce-g2">
+  <div class="card ce-pad"><div class="ce-ch"><h3>Serviços</h3></div>
+   ${(B.servicos||[]).map(s=>`<div class="ce-row ${s.ativo?"":"crm-off"}"><span><b>${esc(s.nome)}</b><span class="sub"> · ${esc(rec[s.recorrencia])}</span></span><span class="crm-row-a"><span class="num">${s.valor!=null?brl(s.valor):"sem valor"}</span><button class="view-btn ghost" data-ed-serv="${s.id}">Editar</button></span></div>`).join("")||`<p class="sub">Nenhum serviço cadastrado.</p>`}
+   <div class="crm-form crm-add" id="cfgServ"><input type="hidden" id="sId"><label class="crm-f crm-w2"><span>Serviço</span><input class="inp" id="sNome" placeholder="Ex.: BPO Fiscal"></label>
+    <label class="crm-f"><span>Valor de referência</span><input class="inp" id="sVal" inputmode="decimal" placeholder="1.500,00"></label><label class="crm-f"><span>Cobrança</span><select class="inp" id="sRec">${crmOpt(Object.entries(rec),"mensal")}</select></label>
+    <label class="crm-f crm-chk" id="sAtivoL" hidden><input type="checkbox" id="sAtivo" checked><span>Ativo</span></label>
+    <div class="crm-pe crm-w2"><span style="flex:1"></span><button class="txt-btn" id="sLimpar" hidden>Cancelar</button>${crmPri('id="sOk">Adicionar serviço</button>')}</div></div></div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Motivos de perda</h3></div>
+   ${(B.motivos||[]).map(x=>`<div class="ce-row ${x.ativo?"":"crm-off"}"><span>${esc(x.nome)}</span><button class="view-btn ghost" data-mot="${x.id}" data-ativo="${x.ativo}" data-nome="${escAttr(x.nome)}">${x.ativo?"Desativar":"Ativar"}</button></div>`).join("")}
+   <div class="crm-form crm-add"><label class="crm-f crm-w2"><span>Novo motivo</span><input class="inp" id="mNome" placeholder="Ex.: Achou caro o diagnóstico"></label><div class="crm-pe crm-w2"><span style="flex:1"></span>${crmPri('id="mOk">Adicionar motivo</button>')}</div></div></div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Campos personalizados</h3></div><p class="sub" style="margin-top:0">Aparecem na ficha do contato, da empresa ou do negócio.</p>
+   ${(B.campos||[]).map(c=>`<div class="ce-row ${c.ativo?"":"crm-off"}"><span><b>${esc(c.rotulo)}</b><span class="sub"> · ${ents[c.entidade]} · ${tipos[c.tipo]}${c.opcoes&&c.opcoes.length?": "+esc(c.opcoes.join(", ")):""}</span></span><button class="view-btn ghost" data-campo-t="${c.id}" data-ativo="${c.ativo}" data-rot="${escAttr(c.rotulo)}">${c.ativo?"Desativar":"Ativar"}</button></div>`).join("")||`<p class="sub">Nenhum campo criado.</p>`}
+   <div class="crm-form crm-add"><label class="crm-f"><span>Onde</span><select class="inp" id="cpEnt">${crmOpt(Object.entries(ents),"negocio")}</select></label><label class="crm-f"><span>Tipo</span><select class="inp" id="cpTipo">${crmOpt(Object.entries(tipos),"texto")}</select></label>
+    <label class="crm-f crm-w2"><span>Nome do campo</span><input class="inp" id="cpRot" placeholder="Ex.: Regime tributário"></label>
+    <label class="crm-f crm-w2" id="cpOpL" hidden><span>Opções, separadas por vírgula</span><input class="inp" id="cpOp" placeholder="Simples Nacional, Lucro Presumido, Lucro Real"></label>
+    <div class="crm-pe crm-w2"><span style="flex:1"></span>${crmPri('id="cpOk">Criar campo</button>')}</div></div></div>
+  <div class="card ce-pad"><div class="ce-ch"><h3>Funis</h3></div>
+   ${(B.funis||[]).map(f=>`<div class="crm-funil-cfg"><div class="ce-row"><b>${esc(f.nome)}</b><span class="sub">${f.id==="vendas"?"principal":""}</span></div>
+    <div class="crm-form">${(f.etapas||[]).map(e=>`<label class="crm-f"><span>Etapa</span><input class="inp" data-fe="${escAttr(f.id)}" data-eid="${escAttr(e.id)}" value="${escAttr(e.nome)}"></label>`).join("")}</div>
+    ${isAdmin()?`<div class="crm-pe"><span style="flex:1"></span><button class="view-btn" data-fsalvar="${escAttr(f.id)}" data-fnome="${escAttr(f.nome)}">Salvar nomes</button></div>`:""}</div>`).join("")}
+   ${isAdmin()?`<div class="crm-form crm-add"><label class="crm-f crm-w2"><span>Novo funil</span><input class="inp" id="fnNome" placeholder="Ex.: Pós-venda, Parcerias"></label>
+    <label class="crm-f crm-w2"><span>Etapas, na ordem, separadas por vírgula</span><input class="inp" id="fnEt" placeholder="Contato, Diagnóstico, Proposta"></label><div class="crm-pe crm-w2"><span style="flex:1"></span>${crmPri('id="fnOk">Criar funil</button>')}</div></div>`:`<p class="sub">Só admin cria funis.</p>`}</div>
+ </div>`;
+ const salvar=async(tipo,p,msg)=>{ try{ await crmRpc("crm_config",{p_tipo:tipo,p}); crmToast(msg); await crmBase(true); crmVConfig(v); }catch(e){ crmToast(crmErro(e)); } };
+ const sOk=v.querySelector("#sOk"), sLim=v.querySelector("#sLimpar");
+ v.querySelectorAll("[data-ed-serv]").forEach(b=>b.onclick=()=>{ const s=B.servicos.find(x=>x.id===b.dataset.edServ); v.querySelector("#sId").value=s.id; v.querySelector("#sNome").value=s.nome; v.querySelector("#sVal").value=s.valor!=null?String(s.valor).replace(".",","):""; v.querySelector("#sRec").value=s.recorrencia; v.querySelector("#sAtivo").checked=s.ativo; v.querySelector("#sAtivoL").hidden=false; sOk.textContent="Salvar serviço"; sLim.hidden=false; v.querySelector("#sNome").focus(); });
+ sLim.onclick=()=>crmVConfig(v);
+ sOk.onclick=()=>{ const nome=crmVal(v,"#sNome"); if(!nome){ crmToast("Informe o nome do serviço."); return; } const id=v.querySelector("#sId").value; salvar("servico",{id:id||null,nome,valor:crmVal(v,"#sVal"),recorrencia:crmVal(v,"#sRec"),ativo:id?v.querySelector("#sAtivo").checked:true},"Serviço salvo"); };
+ v.querySelector("#mOk").onclick=()=>{ const nome=crmVal(v,"#mNome"); if(nome) salvar("motivo",{nome},"Motivo adicionado"); };
+ v.querySelectorAll("[data-mot]").forEach(b=>b.onclick=()=>salvar("motivo",{id:b.dataset.mot,nome:b.dataset.nome,ativo:b.dataset.ativo!=="true"},"Motivo atualizado"));
+ v.querySelectorAll("[data-campo-t]").forEach(b=>b.onclick=()=>salvar("campo",{id:b.dataset.campoT,rotulo:b.dataset.rot,ativo:b.dataset.ativo!=="true"},"Campo atualizado"));
+ const ct=v.querySelector("#cpTipo"); ct.onchange=()=>v.querySelector("#cpOpL").hidden=ct.value!=="lista";
+ v.querySelector("#cpOk").onclick=()=>{ const rot=crmVal(v,"#cpRot"); if(!rot){ crmToast("Informe o nome do campo."); return; } salvar("campo",{entidade:crmVal(v,"#cpEnt"),tipo:ct.value,rotulo:rot,opcoes:crmVal(v,"#cpOp").split(",").map(x=>x.trim()).filter(Boolean)},"Campo criado"); };
+ v.querySelectorAll("[data-fsalvar]").forEach(b=>b.onclick=()=>{ const id=b.dataset.fsalvar; const et=[...v.querySelectorAll(`[data-fe="${CSS.escape(id)}"]`)].map(i=>({id:i.dataset.eid,nome:i.value.trim()||i.dataset.eid})); salvar("funil",{id,nome:b.dataset.fnome,etapas:et},"Funil atualizado"); });
+ const fn=v.querySelector("#fnOk"); if(fn) fn.onclick=()=>{ const nome=crmVal(v,"#fnNome"); const et=crmVal(v,"#fnEt").split(",").map(x=>x.trim()).filter(Boolean);
+  if(!nome||et.length<2){ crmToast("Dê um nome e pelo menos 2 etapas."); return; }
+  const slug=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
+  salvar("funil",{nome,etapas:et.map(n=>({id:slug(n)||("e"+Math.random().toString(36).slice(2,6)),nome:n}))},"Funil criado"); };
+}
 
 
 (async function init(){
