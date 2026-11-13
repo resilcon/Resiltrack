@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.3 (nichos vinculados às tabelas)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.5 (contratos da 4C no CRM)</footer>
   </div>
 </div>
 
@@ -4340,6 +4340,7 @@ async function crmFichaEmpresa(id){
  if(id){ try{ f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{empresa:id}}); }catch(e){ crmToast(crmErro(e)); return; } }
  const e=f.empresa||{};
  const m=crmModal(id?"Empresa":"Nova empresa",id?e.nome:"Nova empresa",id&&e.cnpj?crmChip(esc(fmtCnpj(e.cnpj))):"",`<div class="crm-2col"><div class="crm-colform">
+  ${e.gclick_empresa_id?`<div class="ce-note" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>Cliente da carteira (G-Click). Atendimentos, contrato e cobrança ficam na ficha do cliente.</span><button type="button" class="view-btn ce-pri" onclick="crmFichaCliente('${escAttr(String(e.gclick_empresa_id).replace(/[^\w-]/g,""))}')">Abrir ficha do cliente</button></div>`:""}
   <div class="panel"><h4>Dados</h4><div class="crm-form">
    <label class="crm-f crm-w2"><span>Nome</span><input class="inp" id="eNome" value="${escAttr(e.nome||"")}"></label>
    <label class="crm-f"><span>CNPJ</span><input class="inp" id="eCnpj" inputmode="numeric" value="${escAttr(e.cnpj||"")}"></label>
@@ -4366,18 +4367,18 @@ async function crmFichaEmpresa(id){
 
 // ---------- ficha do cliente (G-Click) ----------
 async function crmFichaCliente(gid){
- const emp=EMPRESAS[gid]||{}; let f, tars=[], ks=[];
- try{ const r=await Promise.all([crmRpc("crm_dados",{p_secao:"ficha",p_param:{cliente:gid}}),crmRpc("crm_tarefas",{p:{cliente:gid}}).catch(()=>[]),crmRpc("crm_contratos",{p:{cliente:gid,cnpj:emp.cnpj||""}}).catch(()=>[])]);
-  f=r[0]; tars=r[1]||[]; ks=r[2]||[]; }catch(e){ crmToast(crmErro(e)); return; }
+ const emp=EMPRESAS[gid]||{}; let f, tars=[], ks=[], rt=null;
+ try{ const r=await Promise.all([crmRpc("crm_dados",{p_secao:"ficha",p_param:{cliente:gid}}),crmRpc("crm_tarefas",{p:{cliente:gid}}).catch(()=>[]),crmRpc("crm_contratos",{p:{cliente:gid,cnpj:emp.cnpj||""}}).catch(()=>[]),crmRpc("crm_resumo_cliente",{p_empresa_id:gid}).catch(()=>null)]);
+  f=r[0]; tars=r[1]||[]; ks=r[2]||[]; rt=r[3]; }catch(e){ crmToast(crmErro(e)); return; }
  const fase=(f.fase&&f.fase.fase)||"retencao";
- const m=crmModal(`Cliente G-Click · ${esc(fmtCnpj(emp.cnpj))}`,emp.apelido||emp.nome||"Cliente",crmChip(CRM_FASE_TXT[fase])+((f.indicacoes||[]).length?crmChip(`${f.indicacoes.length} indicação(ões)`):""),`<div class="crm-2col"><div class="crm-colform">${crmContratosPainel(ks,{gclick_empresa_id:gid,cnpj:emp.cnpj,cliente_nome:emp.apelido||emp.nome})}
+ const m=crmModal(`Cliente G-Click · ${esc(fmtCnpj(emp.cnpj))}`,emp.apelido||emp.nome||"Cliente",crmChip(CRM_FASE_TXT[fase])+((f.indicacoes||[]).length?crmChip(`${f.indicacoes.length} indicação(ões)`):""),`<div class="crm-2col"><div class="crm-colform">${crmResiltrackPainel(rt,gid)}${crmContratosPainel(ks,{gclick_empresa_id:gid,cnpj:emp.cnpj,cliente_nome:emp.apelido||emp.nome})}
   <div class="panel"><h4>Fase no funil</h4><div class="crm-fases">${CRM_FASES.map(([k,t])=>`<button class="crm-et ${fase===k?"on":""}" style="--c:${CRM_ETAPA_COR[k]}" data-fase="${k}">${t}</button>`).join("")}</div>
    <label class="crm-f" style="margin-top:10px"><span>O que motivou a mudança (opcional)</span><input class="inp" id="fObs" placeholder="Ex.: elogiou o atendimento do fiscal"></label>
    ${f.fase&&f.fase.desde?`<p class="sub" style="margin:8px 0 0">Nesta fase desde ${crmData(f.fase.desde)}${f.fase.obs?`. ${esc(f.fase.obs)}`:""}</p>`:""}</div>
   <div class="panel"><h4>Indicações feitas</h4>${(f.indicacoes||[]).map(i=>`<div class="ce-row"><span>${esc(i.indicado_empresa||i.indicado_nome)}<span class="sub"> · ${crmData(i.criado_em)}</span></span>${cePill(CRM_IND_ST,i.status)}</div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhuma indicação ainda.</p>`}
    <button class="view-btn ce-pri" id="fInd" style="margin-top:10px">Registrar indicação deste cliente</button></div>
  </div><div class="crm-colline">${crmTarefasPainel(tars,{gclick_empresa_id:gid})}<h4 class="crm-h4">Linha do tempo</h4>${crmLinhaHTML(f.linha,{gclick_empresa_id:gid})}</div></div>`);
- crmLigarLinha(m,()=>crmFichaCliente(gid)); crmLigarTarefas(m,tars,()=>crmFichaCliente(gid)); crmLigarContratos(m,ks,()=>crmFichaCliente(gid));
+ crmLigarLinha(m,()=>crmFichaCliente(gid)); crmLigarTarefas(m,tars,()=>crmFichaCliente(gid)); crmLigarContratos(m,ks,()=>crmFichaCliente(gid)); crmLigarResiltrack(m,rt,gid);
  m.querySelectorAll("[data-fase]").forEach(b=>b.onclick=async()=>{ if(b.dataset.fase===fase) return;
   try{ await crmRpc("crm_fase_cliente",{p_empresa_id:gid,p_fase:b.dataset.fase,p_obs:crmVal(m,"#fObs")}); crmToast("Fase atualizada"); crmFichaCliente(gid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); }catch(e){ crmToast(crmErro(e)); } });
  m.querySelector("#fInd").onclick=()=>crmNovaIndicacao(gid);
@@ -4807,7 +4808,8 @@ function crmLigarContratos(root,lista,recarregar){
  p.querySelectorAll("[data-ct]").forEach(r=>r.onclick=()=>crmContratoModal((lista||[]).find(c=>c.id===r.dataset.ct),null,recarregar));
 }
 async function crmVContratos(v){
- v.innerHTML=crmHead("Contratos","Contrato de prestação de serviço de cada cliente. Em vermelho, quem ainda não tem contrato assinado.","")+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.innerHTML=crmHead("Contratos","Contrato de prestação de serviço de cada cliente. Em vermelho, quem ainda não tem contrato assinado.",`<button class="txt-btn" id="crmSincCart" title="Cadastra no CRM os clientes novos do G-Click, coloca no funil de clientes e liga os contatos do WhatsApp">Atualizar carteira do G-Click</button>`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#crmSincCart").onclick=ev=>crmSincronizarCarteira(ev.currentTarget,()=>crmVContratos(v));
  try{ const [k,neg]=await Promise.all([crmRpc("crm_contratos",{p:{}}),podeVendas()?crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}).catch(()=>[]):Promise.resolve([])]);
   CRMD.contr=k; CRMD.ganhos=(neg||[]).filter(o=>o.etapa==="ganha"); if(MODE==="crm_contratos") crmContrPinta(v); }
  catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); }
@@ -4817,6 +4819,10 @@ function crmLinhasContrato(){
  const l=cli.map(c=>{ const ks=busca(c.id,c.cnpj); return {tipo:"gclick",id:c.id,nome:c.nome,cnpj:c.cnpj,ks,...crmSituacaoContrato(ks)}; });
  (CRMD.ganhos||[]).forEach(o=>{ if(o.cnpj&&cnpjs.has(dig(o.cnpj))) return; const ks=(CRMD.contr||[]).filter(k=>k.oportunidade_id===o.id||(dig(o.cnpj)&&dig(k.cnpj)===dig(o.cnpj)));
   l.push({tipo:"novo",id:o.id,nome:o.empresa_nome||o.contato_nome||o.titulo,cnpj:o.cnpj,op:o,ks,...crmSituacaoContrato(ks)}); });
+ // contratos de clientes que ainda não estão no G-Click nem ganhos no CRM (ex.: importados da 4C)
+ const usados=new Set(l.flatMap(x=>(x.ks||[]).map(k=>k.id))); const sobra={};
+ (CRMD.contr||[]).filter(k=>!usados.has(k.id)&&k.status!=="cancelado").forEach(k=>{ const key=dig(k.cnpj)||String(k.cliente_nome||k.id).toLowerCase(); (sobra[key]=sobra[key]||[]).push(k); });
+ Object.entries(sobra).forEach(([key,ks])=>l.push({tipo:"avulso",id:key,nome:ks[0].cliente_nome||"Cliente",cnpj:ks[0].cnpj,ks,...crmSituacaoContrato(ks)}));
  return l;
 }
 function crmContrPinta(v){
@@ -4826,14 +4832,14 @@ function crmContrPinta(v){
  const vis=l.filter(x=>(!aba[2]||aba[2].includes(x.sit))&&(!q||[x.nome,x.cnpj,dig(x.cnpj)].join(" ").toLowerCase().includes(q))).sort((a,b)=>Object.keys(CRM_CT_SIT).indexOf(b.sit)-Object.keys(CRM_CT_SIT).indexOf(a.sit)||a.nome.localeCompare(b.nome));
  const tot=l.length, ok=n(["assinado","vence"]);
  box.innerHTML=`<div class="kpis">
-  <div class="tile"><div class="ic">${CRM_ICO.cli}</div><div><div class="lbl">Clientes</div><div class="val num">${tot}</div><div class="sub">${l.filter(x=>x.tipo==="novo").length} novos ainda fora do G-Click</div></div></div>
+  <div class="tile"><div class="ic">${CRM_ICO.cli}</div><div><div class="lbl">Clientes</div><div class="val num">${tot}</div><div class="sub">${l.filter(x=>x.tipo!=="gclick").length} ainda fora do G-Click</div></div></div>
   <div class="tile"><div class="ic">${_ICO_OK}</div><div><div class="lbl">Contrato assinado</div><div class="val num">${ok}</div><div class="sub">${tot?Math.round(ok/tot*100):0}% dos clientes</div></div></div>
   <div class="tile"><div class="ic">${CE_ICO.alert}</div><div><div class="lbl">Sem contrato assinado</div><div class="val num">${tot-ok}</div><div class="sub">${n(["aguardando","preparo"])} em andamento</div></div></div>
   <div class="tile"><div class="ic">${CRM_ICO.cfg}</div><div><div class="lbl">Vencendo em 60 dias</div><div class="val num">${n(["vence"])}</div><div class="sub">${n(["vencido"])} já vencido(s)</div></div></div></div>
  <div class="filters crm-bar2" style="margin-top:16px"><div class="ce-tabs" style="margin:0">${abas.map(([k,t,s])=>`<button class="${aba[0]===k?"on":""}" data-ab="${k}">${t} <span class="num">${s?n(s):tot}</span></button>`).join("")}</div>
   <div class="search" style="flex:1;min-width:200px"><input id="crmQk" type="search" value="${escAttr(CRMK.q)}" placeholder="Buscar cliente ou CNPJ" aria-label="Buscar"></div></div>
  <div class="card" style="overflow-x:auto"><table><thead><tr><th>Cliente</th><th>CNPJ</th><th>Situação</th><th>Assinado em</th><th>Vigência</th><th class="right">Honorário</th><th></th></tr></thead><tbody>
- ${vis.slice(0,500).map(x=>{ const c=x.c, s=CRM_CT_SIT[x.sit]; return `<tr><td><button class="crm-link r-name" ${x.tipo==="gclick"?`data-cli="${escAttr(x.id)}"`:`data-neg="${x.id}"`}>${esc(x.nome)}</button>${x.tipo==="novo"?`<div class="sub">Ganho no CRM, ainda fora do G-Click</div>`:""}</td>
+ ${vis.slice(0,500).map(x=>{ const c=x.c, s=CRM_CT_SIT[x.sit]; return `<tr><td><button class="crm-link r-name" ${x.tipo==="gclick"?`data-cli="${escAttr(x.id)}"`:x.tipo==="novo"?`data-neg="${x.id}"`:`data-ctx="${escAttr(x.tipo+":"+x.id)}"`}>${esc(x.nome)}</button>${x.tipo==="novo"?`<div class="sub">Ganho no CRM, ainda fora do G-Click</div>`:x.tipo==="avulso"?`<div class="sub">${x.ks.length>1?x.ks.length+" contratos · ":""}cliente ainda fora do G-Click</div>`:""}</td>
   <td class="num sub">${x.cnpj?esc(fmtCnpj(x.cnpj)):""}</td><td><span class="pill ${s[0]}">${s[1]}</span></td><td class="num sub">${c&&c.assinado_em?crmData(c.assinado_em+"T12:00"):""}</td>
   <td class="num sub">${c?(c.fim?"até "+crmData(c.fim+"T12:00"):(c.status==="assinado"?"indeterminado":"")):""}</td><td class="right num">${c&&c.valor_mensal?brl(c.valor_mensal):""}</td>
   <td class="right" style="white-space:nowrap">${c&&c.arquivo_path?`<button class="view-btn ghost" data-arq="${escAttr(c.arquivo_path)}">Abrir</button>`:""}<button class="view-btn ${x.sit==="sem"?"ce-pri":""}" data-ctx="${escAttr(x.tipo+":"+x.id)}">${c?"Atualizar":"Adicionar contrato"}</button></td></tr>`; }).join("")
@@ -4845,7 +4851,7 @@ function crmContrPinta(v){
  box.querySelectorAll("[data-neg]").forEach(b=>b.onclick=()=>podeVendas()&&crmFichaNegocio(b.dataset.neg));
  box.querySelectorAll("[data-arq]").forEach(b=>b.onclick=async()=>{ const {data,error}=await sb.storage.from("crm-arquivos").createSignedUrl(b.dataset.arq,120); if(error){ crmToast("Não consegui abrir o arquivo."); return; } window.open(data.signedUrl,"_blank","noopener"); });
  box.querySelectorAll("[data-ctx]").forEach(b=>b.onclick=()=>{ const [tipo,id]=b.dataset.ctx.split(/:(.*)/); const x=l.find(y=>y.tipo===tipo&&y.id===id);
-  const alvo=tipo==="gclick"?{gclick_empresa_id:id,cnpj:x.cnpj,cliente_nome:x.nome}:{oportunidade_id:id,cnpj:x.cnpj,cliente_nome:x.nome,contato_id:x.op.contato_id};
+  const alvo=tipo==="gclick"?{gclick_empresa_id:id,cnpj:x.cnpj,cliente_nome:x.nome}:tipo==="novo"?{oportunidade_id:id,cnpj:x.cnpj,cliente_nome:x.nome,contato_id:x.op.contato_id}:{cnpj:x.cnpj,cliente_nome:x.nome};
   crmContratoModal(x.c,x.c?null:alvo,()=>crmVContratos(v)); });
 }
 
@@ -6357,6 +6363,63 @@ body.cte-aberto{overflow:hidden}
 .cte-menu{display:grid;gap:2px}.cte-menu button,.cte-menu label{border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font:13px inherit;color:#1a1b28}.cte-menu button:hover,.cte-menu label:hover{background:#f1f5f9}
 @media(max-width:1100px){.cte-main{grid-template-columns:190px 1fr 300px}.cte-top-c .cte-b{padding:7px 8px}}
 @media(max-width:820px){.cte{inset:0;border-radius:0}.cte-main{display:block;overflow:auto}.cte-lib,.cte-pr{overflow:visible;border:0}.cte-cv{overflow:visible;min-height:60vh;padding:20px 8px}.cte-top{flex-wrap:wrap}.cte-top-r{flex:none}}
+`; document.head.appendChild(s); })();
+
+// ================= CRM · CARTEIRA DE CLIENTES: vínculo com o G-Click, Omie e o Resiltrack Atendimento =================
+const crmDia=s=>!s?"":(/^\d{4}-\d{2}-\d{2}$/.test(s)?s.split("-").reverse().join("/"):crmData(s));
+const CRM_RISCO_TXT={possivel:"Risco possível",provavel:"Risco provável",nenhum:"Sem risco"};
+const CRM_SAT_TXT={positivo:"Satisfeito",negativo:"Insatisfeito",neutro:"Neutro"};
+function crmTelFmt(t){ const d=String(t||"").replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,""); if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`; if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`; return t||""; }
+function crmResiltrackPainel(r,gid){
+ if(!r) return `<div class="panel"><h4>Resiltrack Atendimento</h4><p class="sub" style="margin:4px 0">Não consegui carregar os dados do atendimento agora.</p></div>`;
+ const a=r.atend||{}, fin=r.financeiro, ob=r.obrigacoes, emp=r.empresa||{}, cs=r.cs;
+ const tile=(rot,val,sub,cls)=>`<div class="crt-k ${cls||""}"><span>${rot}</span><b class="num">${val}</b>${sub?`<small>${sub}</small>`:""}</div>`;
+ const risco=(a.risco_provavel||0)?"provavel":(a.risco_possivel||0)?"possivel":"nenhum";
+ const tiles=[tile("Atendimentos em 90 dias",a.d90||0,a.total?`${a.total} no total`:"nenhum registrado"),
+  tile("Nota média (180 dias)",a.nota!=null?String(a.nota).replace(".",","):"—","de 0 a 10",a.nota!=null&&a.nota<6?"ruim":""),
+  tile("Satisfação (180 dias)",`${a.satisfeito||0} / ${a.insatisfeito||0}`,"satisfeitos / insatisfeitos",(a.insatisfeito||0)>(a.satisfeito||0)?"ruim":""),
+  tile("Risco de troca",CRM_RISCO_TXT[risco],risco==="nenhum"?"nos últimos 180 dias":`${(a.risco_provavel||0)+(a.risco_possivel||0)} atendimento(s) com sinal`,risco==="nenhum"?"bom":"ruim")];
+ if(fin){ tiles.push(tile("Mensalidade vigente",brl(fin.mensal_vigente||0),fin.cliente_desde?`cliente desde ${crmDia(fin.cliente_desde)}`:"contrato no Omie"),
+   tile("Em atraso",brl(fin.em_atraso||0),fin.titulos_atraso?`${fin.titulos_atraso} título(s)`:"nada em aberto",(fin.em_atraso||0)>0?"ruim":"bom")); }
+ if(ob&&(ob.abertas||ob.concluidas)) tiles.push(tile("Obrigações G-Click atrasadas",ob.atrasadas||0,`${ob.abertas||0} em aberto`,(ob.atrasadas||0)>0?"ruim":"bom"));
+ const ult=(r.ultimos||[]).map(x=>`<details class="crt-at"><summary><span><b>${esc(x.assunto_principal||"Atendimento")}</b><small>${crmDataHora(x.sessao_inicio)} · ${esc(x.atendente_nome||"")}</small></span>
+   <span class="crt-tags">${x.nota_final!=null?`<em class="${x.nota_final<6?"ruim":""}">${String(x.nota_final).replace(".",",")}</em>`:""}${x.satisfacao_cliente?`<em class="${x.satisfacao_cliente==="negativo"?"ruim":x.satisfacao_cliente==="positivo"?"bom":""}">${CRM_SAT_TXT[x.satisfacao_cliente]||esc(x.satisfacao_cliente)}</em>`:""}${x.risco_troca_contabilidade&&x.risco_troca_contabilidade!=="nenhum"?`<em class="ruim">${CRM_RISCO_TXT[x.risco_troca_contabilidade]||""}</em>`:""}</span></summary>
+   <p>${esc(x.resumo||"")}</p>${x.churn_motivo?`<p class="crt-alerta">${esc(x.churn_motivo)}</p>`:""}</details>`).join("");
+ const ops=(r.oportunidades||[]).map((x,i)=>`<div class="crt-op"><p>${esc(x.oportunidade_comercial)}</p><div class="crt-op-r"><small>${crmDia(x.sessao_inicio)} · ${esc(x.atendente_nome||"")}</small>${r.crm_empresa?`<button type="button" class="txt-btn" data-crt-op="${i}">Criar negócio</button>`:""}</div></div>`).join("");
+ const riscos=(r.riscos||[]).slice(0,2).map(x=>`<div class="crt-risco"><b>${CRM_RISCO_TXT[x.risco_troca_contabilidade]||"Risco"} · ${crmDia(x.sessao_inicio)}</b><p>${esc(x.churn_motivo||((x.sinais_de_risco||[])[0])||"")}</p></div>`).join("");
+ const ctts=(r.contatos||[]).map(c=>`<div class="ce-row"><span>${esc(c.nome||"Contato")}<span class="sub"> · ${esc(crmTelFmt(c.telefone))}</span></span><span class="sub">${c.atend?`${c.atend} atend.`:""}${c.via==="telefone"?` <span title="Ligado pelo telefone cadastrado no G-Click">(pelo telefone)</span>`:""}</span></div>`).join("");
+ const contr=fin&&(fin.contratos||[]).length?`<h5 class="crt-h5">Contratos no Omie</h5>${fin.contratos.map(k=>`<div class="ce-row"><span>${esc(k.numero||"Contrato")}<span class="sub"> · ${esc(k.situacao||"")}${k.inicio?` · desde ${crmDia(k.inicio)}`:""}${k.fim?` até ${crmDia(k.fim)}`:""}</span></span><b class="num">${brl(k.valor_mensal)}</b></div>`).join("")}`:"";
+ const inad=fin&&fin.inadimplencia?`<p class="crt-alerta">Inadimplência: ${brl(fin.inadimplencia.valor)} (${esc(fin.inadimplencia.aba||"")}${fin.inadimplencia.dias?`, ${fin.inadimplencia.dias} dias`:""})</p>`:"";
+ const obAt=ob&&(ob.atrasadas_lista||[]).length?`<h5 class="crt-h5">Obrigações atrasadas no G-Click${ob.snapshot?` <span class="sub">(atualizado em ${crmDia(ob.snapshot)})</span>`:""}</h5>${ob.atrasadas_lista.map(t=>`<div class="ce-row"><span>${esc(t.obrigacao)}<span class="sub"> · ${esc(t.departamento||"")}</span></span><span class="sub">venceu ${crmDia(t.data_vencimento)}</span></div>`).join("")}`:"";
+ return `<div class="panel crt"><h4>Resiltrack Atendimento <span class="sub" style="font-weight:400">· dados do G-Click, do atendimento${fin?" e do Omie":""}</span></h4>
+  <div class="crt-cad"><span><b>${esc(emp.nome||"")}</b>${emp.cnpj?` · CNPJ ${esc(fmtCnpj(emp.cnpj))}`:""}</span>${(emp.telefones||[]).length?`<span class="sub">${emp.telefones.slice(0,3).map(crmTelFmt).map(esc).join(" · ")}</span>`:""}
+   ${cs&&(cs.coluna||(cs.tags||[]).length)?`<span class="sub">Sucesso do cliente: ${esc(cs.coluna||"")}${(cs.tags||[]).length?` · ${cs.tags.map(esc).join(", ")}`:""}</span>`:""}</div>
+  <div class="crt-kpis">${tiles.join("")}</div>${inad}
+  ${riscos?`<h5 class="crt-h5">Alertas de risco</h5>${riscos}`:""}
+  ${ops?`<h5 class="crt-h5">Oportunidades comerciais vistas no atendimento</h5>${ops}`:""}
+  ${ult?`<h5 class="crt-h5">Últimos atendimentos</h5>${ult}`:(a.total?"":`<p class="sub" style="margin:8px 0 0">Nenhum atendimento ligado a este cliente ainda. Os atendimentos entram quando o contato do WhatsApp está ligado à empresa ou usa um telefone cadastrado no G-Click.</p>`)}
+  ${ctts?`<h5 class="crt-h5">Contatos no WhatsApp</h5>${ctts}`:""}
+  ${contr}${obAt}
+  ${r.fin_permitido?"":`<p class="sub" style="margin:10px 0 0">Valores de contrato e cobrança aparecem para quem tem acesso ao financeiro.</p>`}</div>`; }
+function crmLigarResiltrack(m,r,gid){ if(!r) return;
+ m.querySelectorAll("[data-crt-op]").forEach(b=>b.onclick=()=>{ const x=(r.oportunidades||[])[+b.dataset.crtOp]; if(!x||!r.crm_empresa) return;
+  const nome=(r.empresa&&(r.empresa.apelido||r.empresa.nome))||r.crm_empresa.nome;
+  crmFichaNegocio(null,{funil_id:"vendas",etapa:"atracao",titulo:`Expansão: ${nome}`,empresa_id:r.crm_empresa.id,origem:"resiltrack_atendimento",obs:`Oportunidade vista no atendimento de ${crmDia(x.sessao_inicio)} (${x.atendente_nome||""}): ${x.oportunidade_comercial}`}); }); }
+async function crmSincronizarCarteira(btn,depois){ if(btn){ btn.disabled=true; btn.textContent="Atualizando…"; }
+ try{ const r=await crmRpc("crm_sincronizar_carteira",{}); crmToast(`Carteira atualizada: ${r.empresas||0} empresa(s) conferida(s), ${r.novas_no_funil||0} nova(s) no funil, ${r.contatos||0} contato(s) novo(s).`);
+  delete CRMD.empresas; delete CRMD.contatos; delete CRMD.cli; depois&&depois(); }
+ catch(e){ crmToast(crmErro(e)); } if(btn){ btn.disabled=false; btn.textContent="Atualizar carteira do G-Click"; } }
+(function(){ if(document.getElementById("crt-css")) return; const s=document.createElement("style"); s.id="crt-css"; s.textContent=`
+.crt h4{margin-bottom:8px}.crt-cad{display:grid;gap:2px;font-size:13px;margin-bottom:10px}
+.crt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.crt-k{background:var(--surface-2,#fafbff);border:1px solid var(--border,#e7e9f2);border-radius:10px;padding:9px 11px;display:grid;gap:1px}
+.crt-k span{font-size:11px;color:var(--muted,#83879c)}.crt-k b{font-size:17px;font-family:"Urbanist",sans-serif}.crt-k small{font-size:11px;color:var(--ink-2,#4a4d63)}.crt-k.ruim b{color:var(--crit,#cf4257)}.crt-k.bom b{color:var(--good,#128a5b)}
+.crt-h5{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2,#4a4d63);margin:14px 0 6px}
+.crt-at{border:1px solid var(--border,#e7e9f2);border-radius:10px;margin-bottom:6px}.crt-at summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:10px;padding:8px 10px;align-items:center}.crt-at summary::-webkit-details-marker{display:none}
+.crt-at summary>span:first-child{display:grid;font-size:13px}.crt-at summary small{color:var(--muted,#83879c);font-size:11.5px}.crt-at p{margin:0;padding:0 10px 10px;font-size:13px;color:var(--ink-2,#4a4d63)}
+.crt-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.crt-tags em{font-style:normal;font-size:11px;border-radius:999px;padding:2px 8px;background:var(--surface-2,#f1f3f8);white-space:nowrap}.crt-tags em.ruim{background:var(--crit-soft,#fbe6ea);color:var(--crit,#cf4257)}.crt-tags em.bom{background:var(--good-soft,#e3f4ec);color:var(--good,#128a5b)}
+.crt-op{border-left:3px solid var(--accent,#006789);background:var(--accent-soft,#e0eef2);border-radius:8px;padding:8px 10px;margin-bottom:6px}.crt-op p{margin:0;font-size:13px}.crt-op-r{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}.crt-op-r small{color:var(--ink-2,#4a4d63);font-size:11.5px}
+.crt-risco{border-left:3px solid var(--crit,#cf4257);background:var(--crit-soft,#fbe6ea);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px}.crt-risco p{margin:2px 0 0}
+.crt-alerta{color:var(--crit,#cf4257)!important;font-size:12.5px;margin-top:8px}
 `; document.head.appendChild(s); })();
 
 (async function init(){
