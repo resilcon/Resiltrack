@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.5 (contratos da 4C no CRM)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.7 (apresentação com a descrição dos serviços de cada plano)</footer>
   </div>
 </div>
 
@@ -5487,6 +5487,7 @@ function precoPintar(v){
    <div class="crm-pe" style="flex-wrap:wrap;gap:8px"><button class="view-btn ghost" id="prLimpar">Limpar</button><span style="flex:1"></span>
     <button class="view-btn ghost" id="prPdf" ${S.cesta.length?"":"disabled"}>Gerar proposta</button>
     <button class="view-btn ghost" id="prContrato" ${S.cesta.length?"":"disabled"}>Gerar contrato</button>
+    <button class="view-btn ghost" id="prApres" title="PowerPoint da Resilcon com o nome do cliente e os planos deste simulador">Gerar apresentação</button>
     <button class="view-btn ce-pri" id="prSalvar" ${S.cesta.length&&S.negocio?"":"disabled"} title="${S.negocio?"":"Escolha o negócio no topo"}">Salvar no negócio</button></div>
   </div>
  </div>`;
@@ -5570,7 +5571,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
+ box.querySelector("#prApres").onclick=()=>apresAbrir(); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -6421,6 +6422,117 @@ async function crmSincronizarCarteira(btn,depois){ if(btn){ btn.disabled=true; b
 .crt-risco{border-left:3px solid var(--crit,#cf4257);background:var(--crit-soft,#fbe6ea);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px}.crt-risco p{margin:2px 0 0}
 .crt-alerta{color:var(--crit,#cf4257)!important;font-size:12.5px;margin-top:8px}
 `; document.head.appendChild(s); })();
+
+// ================= CRM · APRESENTAÇÃO COMERCIAL: preenche o PowerPoint da Resilcon com os dados do simulador =================
+const APRES_PASTA="apresentacao";
+const APRES_JSZIP="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+function apresCarregaJSZip(){ if(window.JSZip) return Promise.resolve(window.JSZip);
+ return new Promise((ok,erro)=>{ const s=document.createElement("script"); s.src=APRES_JSZIP; s.onload=()=>ok(window.JSZip); s.onerror=()=>erro(new Error("Não consegui carregar o gerador de PowerPoint. Confira a internet e tente de novo.")); document.head.appendChild(s); }); }
+const apresXml=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const apresCap=s=>{ s=String(s||"").trim(); if(!s) return ""; const t=s.toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1).replace(/\b(xml|dp|nf-?e|ti|bpo|ecac|e-cac)\b/gi,m=>m.toUpperCase()).replace(/\bcnds\b/gi,"CNDs").replace(/\bcnd\b/gi,"CND"); };
+// nome do plano "GOLD - Compliance" -> curto GOLD, sub Compliance
+function apresPartesNome(n){ const s=String(n||"").trim(); const i=s.search(/\s[-–]\s/); return i>0?{curto:s.slice(0,i).trim().toUpperCase(),sub:s.slice(i).replace(/^\s*[-–]\s*/,"").trim()}:{curto:s.toUpperCase(),sub:""}; }
+// descrição curta de cada plano a partir do que muda de um para o outro
+function apresDescricoes(planos){ return planos.map((p,i)=>{ const it=p.itens; if(i===0) return it.length?`${it.slice(0,2).join(" e ")}${it.length>2?", entre outros":""}.`:"Plano de entrada.";
+ const ant=planos[i-1]; const novos=it.filter(x=>!ant.itens.includes(x));
+ return novos.length?`Tudo do ${ant.curto} e mais: ${novos.slice(0,3).join(", ").replace(/, ([^,]*)$/," e $1")}${novos.length>3?` e outros ${novos.length-3}`:""}.`:`Tudo do ${ant.curto}, com mais dedicação da equipe.`; }); }
+// descrição de cada serviço (textos da própria apresentação) e o ícone usado no slide
+const APRES_SERVICOS=[
+ [/contabilidade (completa|especializada)/i,"CONTABILIDADE COMPLETA","Fiscal, contábil e folha no seu segmento: obrigações fiscais e trabalhistas, apuração e emissão dos impostos, relatórios e apoio em fiscalizações e auditorias.","image66.png"],
+ [/fator r|enquadramento/i,"ANÁLISE TRIBUTÁRIA","Análise do enquadramento fiscal, incluindo o Fator R, para manter a empresa no regime mais vantajoso.","image15.png"],
+ [/an[aá]lise tribut/i,"ANÁLISE TRIBUTÁRIA","Estudo de mudança de regime (Simples, Presumido ou Real), reestruturação societária, revisão do cadastro de produtos, regimes especiais, benefícios fiscais e créditos.","image15.png"],
+ [/planejamento tribut/i,"PLANEJAMENTO TRIBUTÁRIO","Estudo do regime e das oportunidades legais para reduzir a carga tributária da empresa.","image71.png"],
+ [/suporte tribut|suporte fiscal/i,"SUPORTE TRIBUTÁRIO E FISCAL","Dúvidas fiscais e tributárias do dia a dia respondidas por especialistas.","image15.png"],
+ [/gest[aã]o digital|documentos via plataforma/i,"GESTÃO DIGITAL DE DOCUMENTOS","Solicitações e envio de documentos pelo app, dúvidas pelo WhatsApp corporativo, CRM organizado e portal do cliente com relatórios e gráficos.","image59.png"],
+ [/documentos.*whatsapp/i,"GESTÃO DE DOCUMENTOS","Documentos organizados e entregues pelo WhatsApp, sem precisar procurar em e-mails.","image59.png"],
+ [/acesso aos documentos|gest[aã]o de documentos/i,"GESTÃO DE DOCUMENTOS","Documentos da empresa organizados e disponíveis pelo app, pela plataforma ou por e-mail.","image59.png"],
+ [/xml/i,"ARMAZENAMENTO DE XML","NF-e, CT-e, NFC-e, CF-e e NFS-e guardadas e manifestadas em nuvem, num só lugar, com economia de software e tranquilidade em fiscalizações.","image67.png"],
+ [/cnd/i,"CNDS VIA PLATAFORMA","CNDs, alvarás e certificados organizados para acompanhar a situação fiscal da empresa, com monitoramento em paralelo ao seu.","image42.png"],
+ [/caixa postal/i,"CAIXA POSTAL ELETRÔNICA","Monitoramos, em paralelo com você, as notificações em NFP, DET, DEC e e-CAC para atender fiscalizações e intimações.","image44.png"],
+ [/concilia\S* de cart|conciliador de cart/i,"CONCILIAÇÃO DE CARTÕES","Conferência das vendas no cartão com o que entrou na conta, apontando taxas e diferenças.","image68.png"],
+ [/contas a pagar|concierge/i,"CONCIERGE DE PAGAMENTOS","Lançamos no banco a folha líquida e as guias de impostos para sua aprovação, com acesso secundário. Mais sigilo e menos risco de juros por atraso.","image68.png"],
+ [/contas a receber/i,"CONTAS A RECEBER","Controle dos recebimentos a partir das notas emitidas, para saber quem já pagou e quem está em atraso.","image68.png"],
+ [/concilia\S* banc/i,"CONCILIAÇÃO BANCÁRIA","Extratos conferidos com os lançamentos, para o financeiro mostrar o que de fato entrou e saiu.","image68.png"],
+ [/reuni[aã]o de fechamento/i,"REUNIÃO DE FECHAMENTO","Reunião mensal para apresentar os resultados do mês, com os números explicados de forma simples.","image36.png"],
+ [/relat[oó]rio de fechamento/i,"RELATÓRIO DE FECHAMENTO","Relatório mensal com o resultado do mês, enviado por e-mail.","image36.png"],
+ [/consultoria financeira/i,"CONSULTORIA FINANCEIRA","Encontro trimestral on-line para analisar os números e definir ajustes no financeiro da empresa.","image36.png"],
+ [/jur[ií]dic/i,"ORIENTAÇÃO JURÍDICA","Dúvidas civis, trabalhistas e tributárias respondidas por nossos consultores especializados.","image69.png"],
+ [/regulat|licita/i,"REGULATÓRIO E LICITAÇÕES","Cadastros e licenças em conselhos de classe, vigilância sanitária e ANVISA, responsáveis legal e técnico e documentos para licitações públicas.","image70.png"],
+ [/atendimento exclusivo/i,"ATENDIMENTO EXCLUSIVO","O time de Sucesso do Cliente acompanha seu crescimento e aponta pontos de melhoria.","image69.png"],
+ [/planejamento estrat/i,"PLANEJAMENTO ESTRATÉGICO","Plano financeiro estratégico e metas de longo prazo, com caminhos claros para alcançá-las.","image36.png"],
+ [/consultoria estrat/i,"CONSULTORIA ESTRATÉGICA","Análise estratégica e financeira por empresa ou unidade, com reunião mensal de apresentação de relatórios e gráficos de indicadores.","image36.png"],
+ [/diagn[oó]stico|revis[aã]o tribut/i,"DIAGNÓSTICO E REVISÃO TRIBUTÁRIA","Verificação de regularidade e revisão dos últimos 5 anos fiscais, contábeis, trabalhistas e societários, com planejamento tributário e societário.","image71.png"],
+ [/reforma tribut/i,"MAPA DA REFORMA TRIBUTÁRIA","Estudo do impacto da Reforma Tributária na sua operação, com o que muda e quando.","image72.png"],
+ [/emiss[aã]o de notas/i,"EMISSÃO DE NOTAS","Emissão das notas fiscais pela Resilcon, com a tributação certa para cada produto e estado.","image67.png"]];
+function apresServico(nome){ const n=String(nome||""); const s=APRES_SERVICOS.find(x=>x[0].test(n)); return s?{t:s[1],d:s[2],img:s[3]}:{t:n.toUpperCase(),d:"",img:""}; }
+// d = {empresa, regime, atividade, faturamento, validade, planos:[{nome, valor, de, itens:[...], recomendado}]}
+async function apresMontar(zip,d){
+ const planos=(d.planos||[]).slice(0,3).map(p=>{ const n=apresPartesNome(p.nome); return {...p,...n,itensOrig:(p.itens||[]).filter(Boolean),itens:(p.itens||[]).map(apresCap).filter(Boolean)}; });
+ const ICO={};
+ const desc=apresDescricoes(planos);
+ const V={EMPRESA:d.empresa||"Sua empresa",EMPRESA_MAPA:(d.empresa||"Sua empresa"),ATIVIDADE:d.atividade||"—",REGIME:d.regime||"—",FATURAMENTO:d.faturamento||"—",VALIDADE:String(d.validade||30)};
+ for(let k=1;k<=3;k++){ const p=planos[k-1]; const it=p?p.itens:[];
+  const lista=it.length>12?[...it.slice(0,11),`E mais ${it.length-11} serviços`]:it;
+  Object.assign(V,{[`P${k}_NOME`]:p?p.nome:"",[`P${k}_CURTO`]:p?p.curto:"",[`P${k}_SUB`]:p?p.sub:"",[`P${k}_DESC`]:p?desc[k-1]:"",
+   [`P${k}_VALOR`]:p?precoMoeda(p.valor):"",[`P${k}_DE`]:p&&p.de&&p.de>p.valor?"De "+precoMoeda(p.de):"",
+   [`P${k}_QTD`]:p?`${it.length} serviço${it.length===1?"":"s"} incluso${it.length===1?"":"s"}`:"",[`P${k}_TAG`]:p&&p.recomendado?"RECOMENDADO":""});
+  for(let i=1;i<=12;i++) V[`P${k}_I${i}`]=lista[i-1]||"";
+  // descrição dos serviços do plano (até 12 cards, 6 por página)
+  const sv=(p?p.itensOrig:[]).map(apresServico); const cards=sv.length>12?[...sv.slice(0,11),{t:`E MAIS ${sv.length-11} SERVIÇOS`,d:"Veja a lista completa na proposta.",img:""}]:sv;
+  for(let n=1;n<=12;n++){ const c=cards[n-1]; V[`P${k}_T${n}`]=c?c.t:""; V[`P${k}_D${n}`]=c?c.d:""; ICO[`P${k}_C${n}`]=c?c.img:""; }
+  V[`P${k}_PG1`]=cards.length>6?"1 DE 2  ›":""; V[`P${k}_PG2`]=cards.length>6?"‹  2 DE 2":""; }
+ const L=String(V.EMPRESA).length;
+ const szMapa=L<=12?1600:L<=20?1300:L<=32?1100:900, szTit=L<=18?2800:L<=26?2400:L<=36?2000:1700;
+ const arqs=Object.keys(zip.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f));
+ for(const f of arqs){ let x=await zip.file(f).async("string"); if(!x.includes("{{")) continue;
+  // tira os grupos (cards, itens, marcador de página) cujo primeiro campo ficou vazio
+  x=x.replace(/<p:grpSp>[\s\S]*?<\/p:grpSp>/g,g=>{ const m=g.match(/\{\{([A-Z0-9_]+)\}\}/); return m&&(m[1] in V)&&!V[m[1]]?"":g; });
+  // ícone de cada serviço
+  if(x.includes('descr="ICO:')){ const rels=await zip.file(f.replace("slides/","slides/_rels/")+".rels").async("string"); const rid={};
+   rels.replace(/<Relationship [^>]*>/g,r=>{ const id=(r.match(/Id="([^"]+)"/)||[])[1], tg=(r.match(/Target="[^"]*\/([^"\/]+)"/)||[])[1]; if(id&&tg) rid[tg]=id; return r; });
+   x=x.replace(/<p:pic>[\s\S]*?<\/p:pic>/g,pic=>{ const m=pic.match(/descr="ICO:([^"]+)"/); if(!m) return pic; const img=ICO[m[1]]; return img&&rid[img]?pic.replace(/r:embed="[^"]+"/,`r:embed="${rid[img]}"`):pic; }); }
+  x=x.replace(/sz="1601"/g,`sz="${szMapa}"`).replace(/sz="2801"/g,`sz="${szTit}"`);
+  x=x.replace(/\{\{([A-Z0-9_]+)\}\}/g,(m,k)=>k in V?apresXml(V[k]):"");
+  zip.file(f,x); }
+ return zip; }
+async function apresModelo(){ const {data,error}=await sb.storage.from("crm-arquivos").list(APRES_PASTA,{limit:100,sortBy:{column:"created_at",order:"desc"}});
+ if(error) throw error; const f=(data||[]).find(x=>/\.pptx$/i.test(x.name)); return f?`${APRES_PASTA}/${f.name}`:null; }
+async function apresEnviarModelo(file){ if(!/\.pptx$/i.test(file.name)) throw new Error("Envie o arquivo .pptx da apresentação.");
+ const path=`${APRES_PASTA}/modelo-${new Date().toISOString().replace(/[:.]/g,"-")}.pptx`;
+ const {error}=await sb.storage.from("crm-arquivos").upload(path,file,{contentType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"}); if(error) throw error; return path; }
+// dados do simulador (tabela aberta, com ajustes de valor)
+function apresDadosSimulador(){ const S=PRECO_ST, A=PRECO_DB[S.arq], P=A.P;
+ const ativ=P.atividades.find(a=>a.chave===S.resp.atividade); const fat=precoNum(S.resp.faturamento);
+ const R=precoCalcular(P,{faturamento:fat,tributacao:S.resp.tributacao,atividade:S.resp.atividade,crit:S.resp.crit});
+ const naCesta=new Set(S.cesta.filter(c=>c.arq===S.arq).map(c=>c.planoId));
+ const planos=R.planos.map(p=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
+  return {id:p.id,nome:p.nome,valor:final,de:final<base?base:null,itens:(p.inclusos||[]).map(x=>x.nome),recomendado:naCesta.has(p.id)}; });
+ return {produto:A.nome,atividade:ativ?apresCap(ativ.nome):"",regime:S.resp.tributacao||"",faturamento:fat?precoMoeda(fat):"",validade:S.validade,planos,
+  empresa:S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"",semFat:P.atividades.length&&!fat}; }
+async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
+ if(d.semFat){ crmToast("Informe o faturamento para calcular os planos antes de gerar a apresentação."); return; }
+ let modelo=null; try{ modelo=await apresModelo(); }catch(_){}
+ const rec=d.planos.findIndex(p=>p.recomendado);
+ const m=crmModal("Simulador de planos","Gerar apresentação comercial","",`<p class="sub" style="margin:0">A apresentação da Resilcon sai com o nome do cliente no mapa de desafios, os ${d.planos.length} planos de ${esc(d.produto)} no simulador e o que está incluso em cada um. Na hora de apresentar, clique no plano para abrir o detalhe dele.</p>
+  <div class="crm-form"><label class="crm-f crm-w2"><span>Empresa do cliente</span><input class="inp" id="apEmp" value="${escAttr(d.empresa)}" placeholder="Nome que aparece nos slides"></label>
+   <label class="crm-f"><span>Plano recomendado</span><select class="inp" id="apRec"><option value="-1">Nenhum em destaque</option>${d.planos.map((p,i)=>`<option value="${i}" ${i===rec?"selected":""}>${esc(p.nome)} · ${precoMoeda(p.valor)}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" id="apVal" type="number" min="1" value="${escAttr(d.validade||30)}"></label></div>
+  <div class="ce-note">${modelo?`Modelo usado: ${esc(modelo.split("/").pop())}.`:`Ainda não há modelo da apresentação no CRM. Envie o arquivo .pptx da apresentação comercial (com os campos do simulador) uma vez, e ele fica salvo para todos.`}
+   <label class="txt-btn" style="cursor:pointer;margin-left:6px">${modelo?"Trocar modelo":"Enviar modelo"}<input type="file" id="apArq" accept=".pptx" hidden></label></div>
+  <div class="crm-pe"><span class="sub" id="apMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="apOk">Gerar apresentação</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=t=>{ m.querySelector("#apMsg").textContent=t||""; };
+ m.querySelector("#apArq").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; msg("Enviando o modelo…"); try{ modelo=await apresEnviarModelo(f); msg("Modelo salvo."); m.querySelector(".ce-note").firstChild.textContent=`Modelo usado: ${modelo.split("/").pop()}. `; }catch(err){ msg(""); crmToast(crmErro(err)); } };
+ m.querySelector("#apOk").onclick=async ev=>{ const b=ev.currentTarget; if(!modelo){ crmToast("Envie o modelo da apresentação primeiro."); return; }
+  const empresa=crmVal(m,"#apEmp"); if(!empresa){ crmToast("Informe o nome da empresa do cliente."); return; }
+  const ri=+m.querySelector("#apRec").value; d.planos.forEach((p,i)=>p.recomendado=i===ri); d.empresa=empresa; d.validade=+m.querySelector("#apVal").value||30;
+  b.disabled=true; msg("Montando a apresentação…");
+  try{ const JSZip=await apresCarregaJSZip(); const {data,error}=await sb.storage.from("crm-arquivos").download(modelo); if(error) throw error;
+   const zip=await JSZip.loadAsync(await data.arrayBuffer()); await apresMontar(zip,d);
+   const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation",compression:"DEFLATE"});
+   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Apresentação Resilcon - ${empresa.replace(/[\\/:*?"<>|]+/g,"")}.pptx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),20000);
+   closeModal(); crmToast("Apresentação gerada. Abra no PowerPoint e apresente em tela cheia para usar os cliques dos planos."); }
+  catch(err){ b.disabled=false; msg(""); crmToast(crmErro(err)); } }; }
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
