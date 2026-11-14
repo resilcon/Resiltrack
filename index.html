@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.7 (apresentação com a descrição dos serviços de cada plano)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.9 (dor x solução x produto, diagnóstico com IA e slides de dores)</footer>
   </div>
 </div>
 
@@ -4016,7 +4016,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,modelos:crmVModelos,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,personas:crmVPersonas,modelos:crmVModelos,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -5403,7 +5403,7 @@ function precoVinculadas(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Bo
 // com nicho escolhido, mostra primeiro as tabelas vinculadas a ele; as outras continuam disponíveis
 function precoArqsDoNicho(n){ const todas=PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean); if(!n) return todas; const v=precoVinculadas(n); return [...v,...todas.filter(a=>!v.includes(a))]; }
 
-async function crmVPrecos(v){
+async function crmVPrecos(v){ try{ pzCarregar().catch(()=>{}); }catch(_){}
  v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.","")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
  try{ await precoCarregar(); }catch(e){ v.querySelector("#crmBox").innerHTML=`<div class="card"><div class="empty">${esc(e.message||String(e))}</div></div>`; return; }
  if(!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } }
@@ -5460,6 +5460,7 @@ function precoPintar(v){
   <div class="crm-f"><span>Produto <button type="button" class="txt-btn preco-vbt" id="prVinc">Vincular nichos</button></span><select class="inp" id="prArq">${arqs.map(a=>`<option value="${a.chave}" ${a.chave===S.arq?"selected":""}>${esc(a.nome)}${S.nicho&&vincN.includes(a)?" (vinculada ao nicho)":""}</option>`).join("")}</select>
    <small class="sub">${(PRECO_NICHOS.vinculos[S.arq]||[]).length} nicho(s) vinculado(s) a esta tabela</small></div>
  </div>
+ <div class="prec-diag"><b>Diagnóstico de dores</b><span class="sub" style="flex:1">${S.diag&&(S.diag.dores||[]).length?esc(diagResumo(S.diag)):"Ainda não feito. Marque as dores e os objetivos do cliente para mostrar na apresentação como a Resilcon resolve cada um."}</span><button type="button" class="view-btn ${S.diag&&(S.diag.dores||[]).length?"ghost":"ce-pri"}" id="prDiag">${S.diag&&(S.diag.dores||[]).length?"Editar diagnóstico":"Fazer diagnóstico"}</button></div>
  <div class="preco-grade">
   <div class="card ce-pad preco-perg"><h3>Dados do cliente</h3>
    ${ativs.length?`<label class="crm-f"><span>Faturamento médio mensal (R$)</span><input class="inp" id="prFat" value="${escAttr(S.resp.faturamento)}" placeholder="Digite só os números, ex.: 85000" inputmode="numeric"></label>
@@ -5542,7 +5543,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  let t=null; const reLento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement; const id=f&&f.id, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
    let n=id?box.querySelector("#"+id):null; if(!n&&ds){ const k=Object.keys(ds)[0]; if(k) n=box.querySelector(`[data-${k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase())}="${ds[k]}"]`); }
    if(n&&n.focus){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },350); };
- box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; const nn=S.negocio&&S.negocio.campos&&(S.negocio.campos.nicho||(S.negocio.campos.proposta||{}).nicho); if(nn) precoEscolherNicho(nn); re(); };
+ box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; { const dgs=S.negocio&&S.negocio.campos&&(S.negocio.campos.proposta||{}).diagnostico; if(dgs) S.diag=dgs; else if(S.negocio) delete S.diag; } const nn=S.negocio&&S.negocio.campos&&(S.negocio.campos.nicho||(S.negocio.campos.proposta||{}).nicho); if(nn) precoEscolherNicho(nn); re(); };
  const inN=box.querySelector("#prNicho"); inN.onchange=()=>{ const v=inN.value.trim(); const ach=precoNichos().find(n=>n.toLowerCase()===v.toLowerCase());
   if(v&&!ach){ inN.value=S.nicho; crmToast("Escolha um nicho da lista, ou cadastre um novo em Vincular nichos."); return; } precoEscolherNicho(ach||""); re(); };
  inN.oninput=()=>{ const ach=precoNichos().find(n=>n===inN.value); if(ach){ precoEscolherNicho(ach); re(); } };
@@ -5571,7 +5572,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prApres").onclick=()=>apresAbrir(); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
+ box.querySelector("#prApres").onclick=()=>apresAbrir(); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -5586,7 +5587,7 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
   const itens=[...S.cesta.map(c=>({servico_id:null,nome:`${c.plano} (${c.produto})`,valor:c.valor,qtd:1,desconto:0,recorrencia:"mensal"})),
    ...t.extrasM.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"mensal"})),
    ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"unico"}))];
-  const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso};
+  const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso,diagnostico:S.diag||null};
   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
    tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
   try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
@@ -6481,6 +6482,15 @@ async function apresMontar(zip,d){
   const sv=(p?p.itensOrig:[]).map(apresServico); const cards=sv.length>12?[...sv.slice(0,11),{t:`E MAIS ${sv.length-11} SERVIÇOS`,d:"Veja a lista completa na proposta.",img:""}]:sv;
   for(let n=1;n<=12;n++){ const c=cards[n-1]; V[`P${k}_T${n}`]=c?c.t:""; V[`P${k}_D${n}`]=c?c.d:""; ICO[`P${k}_C${n}`]=c?c.img:""; }
   V[`P${k}_PG1`]=cards.length>6?"1 DE 2  ›":""; V[`P${k}_PG2`]=cards.length>6?"‹  2 DE 2":""; }
+ // diagnóstico: objetivos, dores e como a Resilcon resolve (slides somem quando não há diagnóstico)
+ const dg=d.diag, dd=dg?dg.dores.slice(0,8):[], corta=(t,n)=>{ t=String(t||""); return t.length>n?t.slice(0,n-1).trim()+"…":t; };
+ Object.assign(V,{SE_DIAG:dd.length?"1":"",SE_DIAG2:dd.length>4?"1":"",DG_PERSONA:dg?dg.persona:"",DG_QTD:dd.length?`${dg.dores.length} dor${dg.dores.length===1?"":"es"} identificada${dg.dores.length===1?"":"s"}`:"",
+  DG_PG1:dd.length>4?"1 DE 2":"",DG_PG2:dd.length>4?"2 DE 2":""});
+ for(let i=1;i<=4;i++){ const m=dg&&dg.metas[i-1]; V[`META_${i}`]=m?m.nome:""; V[`METAD_${i}`]=m?(m.det||"Objetivo citado pelo cliente"):""; }
+ for(let i=1;i<=8;i++){ const r=dd[i-1]; V[`DOR_${i}`]=r?corta(r.nome,90):""; V[`DORC_${i}`]=r?(r.cat||"").toUpperCase():""; V[`DORD_${i}`]=r?corta(r.desc,110):"";
+  V[`R${i}_DOR`]=r?corta(r.nome,80):""; V[`R${i}_CAT`]=r?(r.cat||"").toUpperCase():""; V[`R${i}_SOL`]=r?corta(r.sols.join(" · ")||"Análise do caso pela equipe Resilcon",130):"";
+  const ps=r?r.prods.map(p=>p.nome):[]; const pl=ps.length>4?[...ps.slice(0,3),`E mais ${ps.length-3} produtos`]:ps;
+  for(let k=1;k<=4;k++) V[`R${i}_P${k}`]=r?(pl[k-1]||(k===1?"Produto definido na proposta":"")):""; }
  const L=String(V.EMPRESA).length;
  const szMapa=L<=12?1600:L<=20?1300:L<=32?1100:900, szTit=L<=18?2800:L<=26?2400:L<=36?2000:1700;
  const arqs=Object.keys(zip.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f));
@@ -6491,6 +6501,8 @@ async function apresMontar(zip,d){
   if(x.includes('descr="ICO:')){ const rels=await zip.file(f.replace("slides/","slides/_rels/")+".rels").async("string"); const rid={};
    rels.replace(/<Relationship [^>]*>/g,r=>{ const id=(r.match(/Id="([^"]+)"/)||[])[1], tg=(r.match(/Target="[^"]*\/([^"\/]+)"/)||[])[1]; if(id&&tg) rid[tg]=id; return r; });
    x=x.replace(/<p:pic>[\s\S]*?<\/p:pic>/g,pic=>{ const m=pic.match(/descr="ICO:([^"]+)"/); if(!m) return pic; const img=ICO[m[1]]; return img&&rid[img]?pic.replace(/r:embed="[^"]+"/,`r:embed="${rid[img]}"`):pic; }); }
+  // slides condicionais (marcados com o nome !!se:CAMPO)
+  const se=[...x.matchAll(/name="!!se:([A-Z0-9_]+)"/g)].map(m=>m[1]); if(se.some(k=>!V[k])) x=x.replace(/<p:sld\b([^>]*?)(\sshow="[01]")?>/,(t,a)=>`<p:sld${a} show="0">`);
   x=x.replace(/sz="1601"/g,`sz="${szMapa}"`).replace(/sz="2801"/g,`sz="${szTit}"`);
   x=x.replace(/\{\{([A-Z0-9_]+)\}\}/g,(m,k)=>k in V?apresXml(V[k]):"");
   zip.file(f,x); }
@@ -6508,12 +6520,12 @@ function apresDadosSimulador(){ const S=PRECO_ST, A=PRECO_DB[S.arq], P=A.P;
  const planos=R.planos.map(p=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
   return {id:p.id,nome:p.nome,valor:final,de:final<base?base:null,itens:(p.inclusos||[]).map(x=>x.nome),recomendado:naCesta.has(p.id)}; });
  return {produto:A.nome,atividade:ativ?apresCap(ativ.nome):"",regime:S.resp.tributacao||"",faturamento:fat?precoMoeda(fat):"",validade:S.validade,planos,
-  empresa:S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"",semFat:P.atividades.length&&!fat}; }
+  empresa:S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"",semFat:P.atividades.length&&!fat,diag:(typeof diagParaApresentacao==="function"?diagParaApresentacao(S.diag):null)}; }
 async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
  if(d.semFat){ crmToast("Informe o faturamento para calcular os planos antes de gerar a apresentação."); return; }
  let modelo=null; try{ modelo=await apresModelo(); }catch(_){}
  const rec=d.planos.findIndex(p=>p.recomendado);
- const m=crmModal("Simulador de planos","Gerar apresentação comercial","",`<p class="sub" style="margin:0">A apresentação da Resilcon sai com o nome do cliente no mapa de desafios, os ${d.planos.length} planos de ${esc(d.produto)} no simulador e o que está incluso em cada um. Na hora de apresentar, clique no plano para abrir o detalhe dele.</p>
+ const m=crmModal("Simulador de planos","Gerar apresentação comercial","",`${d.diag?`<div class="prec-diag" style="margin:0 0 10px"><b>Diagnóstico</b><span class="sub">${esc(d.diag.persona)} · ${d.diag.dores.length} dor${d.diag.dores.length===1?"":"es"}${d.diag.metas.length?` · ${d.diag.metas.length} objetivo${d.diag.metas.length===1?"":"s"}`:""}. Entra nos slides de diagnóstico e de dores resolvidas.</span></div>`:`<div class="prec-diag" style="margin:0 0 10px"><b>Sem diagnóstico</b><span class="sub" style="flex:1">Os slides de dores do cliente ficam ocultos. Faça o diagnóstico no simulador para personalizar.</span></div>`}<p class="sub" style="margin:0">A apresentação da Resilcon sai com o nome do cliente no mapa de desafios, os ${d.planos.length} planos de ${esc(d.produto)} no simulador e o que está incluso em cada um. Na hora de apresentar, clique no plano para abrir o detalhe dele.</p>
   <div class="crm-form"><label class="crm-f crm-w2"><span>Empresa do cliente</span><input class="inp" id="apEmp" value="${escAttr(d.empresa)}" placeholder="Nome que aparece nos slides"></label>
    <label class="crm-f"><span>Plano recomendado</span><select class="inp" id="apRec"><option value="-1">Nenhum em destaque</option>${d.planos.map((p,i)=>`<option value="${i}" ${i===rec?"selected":""}>${esc(p.nome)} · ${precoMoeda(p.valor)}</option>`).join("")}</select></label>
    <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" id="apVal" type="number" min="1" value="${escAttr(d.validade||30)}"></label></div>
@@ -6533,6 +6545,529 @@ async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Apresentação Resilcon - ${empresa.replace(/[\\/:*?"<>|]+/g,"")}.pptx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),20000);
    closeModal(); crmToast("Apresentação gerada. Abra no PowerPoint e apresente em tela cheia para usar os cliques dos planos."); }
   catch(err){ b.disabled=false; msg(""); crmToast(crmErro(err)); } }; }
+// ================= CRM · PERSONAS: Dor x Solução x Produto (mesma mecânica da construção de personas da 4C) =================
+CRM_ICO.persona='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6h7M7.5 8l8.6 8.2"/></svg>';
+(function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_precos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i+1,0,["crm_personas","Personas","persona"]); })();
+let PZ={raw:null,D:null,carregando:null,f:{q:"",sit:"A"}};
+const PZ_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
+const PZ_CATS_PROD=["CONTÁBIL","BPO","CONTÁBIL E BPO"];
+const pzNorm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const pzUid=()=>"p_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+async function pzCarregar(force){ if(PZ.D&&!force) return PZ.D; if(PZ.carregando&&!force) return PZ.carregando;
+ PZ.carregando=(async()=>{ let raw=null; try{ const {data,error}=await sb.storage.from("crm-arquivos").download("precificacao/personas.json"); if(!error&&data) raw=JSON.parse(await data.text()); }catch(_){}
+  if(!raw){ const tok=(await sb.auth.getSession()).data.session?.access_token||""; const r=await fetch(`${PZ_FN}?arquivo=personas`,{headers:{Authorization:"Bearer "+tok}}); if(r.ok) raw=await r.json(); }
+  if(!raw||!raw.dados) throw new Error("Não encontrei as personas. Peça ao suporte para importar de novo.");
+  const D=raw.dados; D.bibliotecas=D.bibliotecas||{}; ["atividades","dores","solucoes","produtos","categorias_dor"].forEach(k=>D.bibliotecas[k]=D.bibliotecas[k]||[]);
+  D.personas.forEach(pzPrepararPersona); PZ.raw=raw; PZ.D=D; PZ.carregando=null; return D; })();
+ return PZ.carregando; }
+function pzPrepararPersona(p){ p.atividades=p.atividades||[]; p.dores=p.dores||[]; p.ligacoes=p.ligacoes||[]; p.planos=p.planos||[];
+ if(!p.solucoes){ const s=new Map(); p.ligacoes.forEach(l=>s.set(l.dor+"¦"+l.sol,{dor:l.dor,sol:l.sol})); p.solucoes=[...s.values()]; } return p; }
+async function pzSalvar(D){ const tok=(await sb.auth.getSession()).data.session?.access_token||"";
+ const r=await fetch(PZ_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok},body:JSON.stringify({acao:"salvar_personas",dados:D})});
+ const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.erro||"Não foi possível salvar as personas"); PZ.D=D; return j; }
+const pzProd=(D,nome)=>D.bibliotecas.produtos.find(p=>p.nome===nome);
+const pzDorCat=(D,nome)=>{ const d=D.bibliotecas.dores.find(x=>x.nome===nome); return d?d.cat:""; };
+function pzResumo(p){ return {ativ:p.atividades.length,dores:p.dores.length,sol:p.solucoes.length,prod:new Set(p.ligacoes.map(l=>l.prod)).size,lig:p.ligacoes.length}; }
+
+// ---------- lista ----------
+async function crmVPersonas(v){
+ v.innerHTML=crmHead("Personas","Cada persona liga as dores de um nicho às soluções e aos produtos da Resilcon. É a base para conversar com o cliente e montar a proposta.",
+  `<button class="txt-btn" id="pzDsp">Dor x Solução x Produto</button><button class="txt-btn" id="pzBib">Biblioteca de produtos</button>${crmPri('id="pzNova">Nova persona</button>')}`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando personas…</div></div></div>`;
+ let D; try{ D=await pzCarregar(); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="crm_personas") return;
+ v.querySelector("#pzNova").onclick=()=>pzAbrir(null,"passo",()=>crmVPersonas(v));
+ v.querySelector("#pzBib").onclick=()=>pzAbrir(null,"biblioteca",()=>crmVPersonas(v));
+ v.querySelector("#pzDsp").onclick=()=>dspAbrir(()=>crmVPersonas(v));
+ const pinta=()=>{ const q=pzNorm(PZ.f.q); const lista=D.personas.filter(p=>(PZ.f.sit==="T"||(PZ.f.sit==="A")===(p.ativo!==false))&&(!q||pzNorm(p.nome).includes(q)));
+  v.querySelector("#crmBox").innerHTML=`<div class="filters crm-bar2"><div class="search" style="flex:1;min-width:220px"><input id="pzQ" type="search" placeholder="Buscar persona" value="${escAttr(PZ.f.q)}" aria-label="Buscar persona"></div>
+   <div class="seg">${[["A","Ativas"],["I","Inativas"],["T","Todas"]].map(([k,t])=>`<button data-sit="${k}" class="${PZ.f.sit===k?"on":""}">${t}</button>`).join("")}</div></div>
+   <div class="card" style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Persona</th><th class="right">Atividades</th><th class="right">Dores</th><th class="right">Soluções</th><th class="right">Produtos</th><th>Situação</th><th>Atualizada</th><th></th></tr></thead><tbody>
+   ${lista.map(p=>{ const r=pzResumo(p); return `<tr><td><button class="crm-link r-name" data-pz-rap="${p.id}">${esc(p.nome||"Persona sem nome")}</button></td><td class="right num">${r.ativ}</td><td class="right num">${r.dores}</td><td class="right num">${r.sol}</td><td class="right num">${r.prod}</td>
+    <td>${p.status==="concluida"?`<span class="pill good">Concluída</span>`:`<span class="pill warn">Em andamento</span>`}${p.ativo===false?` <span class="pill neutral">Inativa</span>`:""}</td><td class="sub num">${esc(p.atualizado||"")}</td>
+    <td class="right" style="white-space:nowrap"><button class="txt-btn" data-pz-rap="${p.id}">Edição rápida</button><button class="txt-btn" data-pz-passo="${p.id}">Passo a passo</button><button class="txt-btn" data-pz-vg="${p.id}">Visão geral</button><button class="txt-btn" data-pz-dup="${p.id}">Duplicar</button></td></tr>`; }).join("")||`<tr><td colspan="8"><div class="empty">Nenhuma persona encontrada.</div></td></tr>`}
+   </tbody></table></div>`;
+  const qi=v.querySelector("#pzQ"); qi.oninput=()=>{ PZ.f.q=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#pzQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelectorAll("[data-sit]").forEach(b=>b.onclick=()=>{ PZ.f.sit=b.dataset.sit; pinta(); });
+  v.querySelectorAll("[data-pz-rap]").forEach(b=>b.onclick=()=>pzAbrir(b.dataset.pzRap,"mapa",()=>crmVPersonas(v)));
+  v.querySelectorAll("[data-pz-passo]").forEach(b=>b.onclick=()=>pzAbrir(b.dataset.pzPasso,"passo",()=>crmVPersonas(v)));
+  v.querySelectorAll("[data-pz-vg]").forEach(b=>b.onclick=()=>pzAbrir(b.dataset.pzVg,"geral",()=>crmVPersonas(v)));
+  v.querySelectorAll("[data-pz-dup]").forEach(b=>b.onclick=()=>{ const o=D.personas.find(x=>x.id===b.dataset.pzDup); const c=JSON.parse(JSON.stringify(o)); c.id=pzUid(); c.nome=o.nome+" (cópia)"; c.status="em_andamento"; c.criado=c.atualizado=new Date().toLocaleString("pt-BR"); pzAbrir(c,"passo",()=>crmVPersonas(v),true); }); };
+ pinta(); }
+
+// ---------- editor (tela cheia) ----------
+// alvo: id da persona, objeto (persona nova/duplicada) ou null (nova). modo: mapa | passo | geral | biblioteca
+function pzAbrir(alvo,modo,depois,ehNova){
+ const D=JSON.parse(JSON.stringify(PZ.D)); let P=null;
+ if(modo!=="biblioteca"){ if(alvo&&typeof alvo==="object"){ P=pzPrepararPersona(alvo); D.personas.push(P); ehNova=true; }
+  else if(alvo){ P=D.personas.find(x=>x.id===alvo); }
+  else { P=pzPrepararPersona({id:pzUid(),nome:"",status:"em_andamento",ativo:true,criado:new Date().toLocaleString("pt-BR"),atualizado:new Date().toLocaleString("pt-BR")}); D.personas.push(P); ehNova=true; } }
+ const S={modo,passo:0,abertos:{},busca:{},sujo:!!ehNova,fechar:0,foco:null};
+ const tela=document.createElement("div"); tela.className="pz-tela"; tela.setAttribute("role","dialog"); tela.setAttribute("aria-label","Persona");
+ document.body.appendChild(tela); document.body.classList.add("cte-aberto");
+ const marca=()=>{ S.sujo=true; if(P) P.atualizado=new Date().toLocaleString("pt-BR"); const st=tela.querySelector("#pzSt"); if(st){ st.textContent="Alterações não salvas"; st.className="pz-st suj"; } };
+ const fecha=forca=>{ if(!forca&&S.sujo){ if(S.fechar!==1){ S.fechar=1; const st=tela.querySelector("#pzSt"); st.textContent="Clique no X de novo para sair sem salvar"; st.className="pz-st suj"; setTimeout(()=>{ S.fechar=0; if(tela.isConnected) topo(); },3500); return; } }
+  document.removeEventListener("keydown",teclas,true); window.removeEventListener("resize",aoRedim); document.body.classList.remove("cte-aberto"); tela.remove(); };
+ const salvar=async()=>{ const b=tela.querySelector("#pzSalvar"); if(P&&!String(P.nome||"").trim()){ crmToast("Dê um nome para a persona (nicho) antes de salvar."); S.modo="passo"; S.passo=0; render(); return; }
+  b.disabled=true; b.textContent="Salvando…"; try{ await pzSalvar(D); S.sujo=false; crmToast("Personas salvas"); depois&&depois(); topo(); }catch(e){ crmToast(e.message); } finally{ b.disabled=false; b.textContent="Salvar"; } };
+ const teclas=e=>{ if(!tela.isConnected) return; if(e.key==="Escape"){ e.stopImmediatePropagation(); const dl=tela.querySelector(".pz-dlg"); if(dl) dl.remove(); return; } if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); salvar(); } };
+ document.addEventListener("keydown",teclas,true);
+ const PASSOS=[["Nicho/Atividades","nicho"],["Dores","dores"],["Soluções","sol"],["Produtos","prod"],["Visão geral","geral"]];
+ const topo=()=>{ const t=tela.querySelector(".pz-top"); if(!t) return;
+  t.innerHTML=`<div class="pz-top-l"><span class="cte-tag">${CRM_ICO.persona} ${S.modo==="biblioteca"?"Biblioteca de produtos":"Persona"}</span><b class="pz-nome">${S.modo==="biblioteca"?"":esc(P&&P.nome||"Nova persona")}</b></div>
+   <div class="pz-top-c">${P?`<div class="seg"><button data-modo="mapa" class="${S.modo==="mapa"?"on":""}">Edição rápida</button><button data-modo="passo" class="${S.modo==="passo"?"on":""}">Passo a passo</button><button data-modo="geral" class="${S.modo==="geral"?"on":""}">Visão geral</button></div>`:""}
+    <button class="cte-b" data-modo="biblioteca" ${S.modo==="biblioteca"?"disabled":""}>Produtos</button></div>
+   <div class="pz-top-r"><span id="pzSt" class="pz-st ${S.sujo?"suj":""}">${S.sujo?"Alterações não salvas":"Tudo salvo"}</span>
+    ${P?`<button class="cte-b" id="pzAtivo">${P.ativo===false?"Ativar persona":"Inativar"}</button>`:""}<button class="cte-b cte-pri" id="pzSalvar">Salvar</button><button class="cte-ib" id="pzX" aria-label="Fechar">${ctI("fechar")}</button></div>`;
+  t.querySelectorAll("[data-modo]").forEach(b=>b.onclick=()=>{ S.modo=b.dataset.modo; render(); });
+  t.querySelector("#pzSalvar").onclick=salvar; t.querySelector("#pzX").onclick=()=>fecha(false);
+  const at=t.querySelector("#pzAtivo"); if(at) at.onclick=()=>{ P.ativo=P.ativo===false; marca(); topo(); }; };
+ // ---- diálogo simples dentro da tela ----
+ const dialogo=(titulo,corpo,ok,rotOk)=>{ const d=document.createElement("div"); d.className="pz-dlg"; d.innerHTML=`<div class="pz-dlg-c" role="dialog" aria-label="${escAttr(titulo)}"><h3>${esc(titulo)}</h3>${corpo}<div class="crm-pe" style="margin-top:14px"><span style="flex:1"></span><button class="txt-btn" data-x>Cancelar</button><button class="view-btn ce-pri" data-ok>${esc(rotOk||"Salvar")}</button></div></div>`;
+  tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove(); d.onclick=e=>{ if(e.target===d) d.remove(); };
+  d.querySelector("[data-ok]").onclick=()=>{ if(ok(d)!==false) d.remove(); }; const f=d.querySelector("input,select,textarea"); f&&setTimeout(()=>f.focus()); return d; };
+ const opcoesProd=()=>D.bibliotecas.produtos.filter(p=>p.ativo!==false).map(p=>`<option value="${escAttr(p.nome)}">${esc((p.cat||p.tipo||"")+(p.valor?" · R$ "+p.valor:""))}</option>`).join("");
+ const campoNovoProd=(pref)=>`<div class="pz-novo" hidden><p class="sub" style="margin:6px 0">Produto novo. Ele entra na biblioteca e fica disponível para todas as personas.</p>
+   <div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Categoria</span><select class="inp" data-np="cat">${PZ_CATS_PROD.map(c=>`<option>${c}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Valor (R$)</span><input class="inp" data-np="valor" placeholder="0,00" inputmode="decimal"></label>
+   <label class="crm-f crm-w2"><span>Descrição</span><textarea class="inp" data-np="desc" rows="3" placeholder="O que o cliente recebe com este produto"></textarea></label></div></div>`;
+ const ligaNovoProd=(d,campo)=>{ const i=d.querySelector(campo), box=d.querySelector(".pz-novo"); const chk=()=>{ const n=i.value.trim(); box.hidden=!n||!!(pzProd(D,n)||pzProd(D,n.toUpperCase())); }; i.addEventListener("input",chk); chk(); };
+ const garantirProd=(d,nome)=>{ let p=pzProd(D,nome)||pzProd(D,nome.toUpperCase()); if(p) return p.nome; const nn=nome.toUpperCase();
+  p={id:null,nome:nn,tipo:"",cat:d.querySelector('[data-np="cat"]').value,valor:d.querySelector('[data-np="valor"]').value.trim()||null,desc:d.querySelector('[data-np="desc"]').value.trim(),ativo:true,nichos:[]};
+  D.bibliotecas.produtos.push(p); D.bibliotecas.produtos.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")); return nn; };
+ const garantirSol=n=>{ if(!D.bibliotecas.solucoes.includes(n)){ D.bibliotecas.solucoes.push(n); D.bibliotecas.solucoes.sort((a,b)=>a.localeCompare(b,"pt-BR")); } return n; };
+ const garantirDor=(n,cat)=>{ let d=D.bibliotecas.dores.find(x=>x.nome===n); if(!d){ d={nome:n,cat:cat||""}; D.bibliotecas.dores.push(d); D.bibliotecas.dores.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")); if(cat&&!D.bibliotecas.categorias_dor.includes(cat)) D.bibliotecas.categorias_dor.push(cat); } return d; };
+ const addDorPersona=(n)=>{ if(!P.dores.some(x=>x.nome===n)) P.dores.push({nome:n,cat:pzDorCat(D,n)}); };
+ const addSol=(dor,sol)=>{ if(!P.solucoes.some(x=>x.dor===dor&&x.sol===sol)) P.solucoes.push({dor,sol}); };
+ const addLig=(dor,sol,prod)=>{ addDorPersona(dor); addSol(dor,sol); if(!P.ligacoes.some(l=>l.dor===dor&&l.sol===sol&&l.prod===prod)) P.ligacoes.push({dor,sol,prod}); };
+ // ---- diálogos de dor e produto ----
+ const dlgNovaDor=(aposAdd)=>dialogo("Adicionar dor",`<label class="crm-f"><span>Dor</span><input class="inp" id="dDor" list="dDorL" placeholder="Busque na biblioteca ou escreva uma nova"><datalist id="dDorL">${D.bibliotecas.dores.map(d=>`<option value="${escAttr(d.nome)}">${esc(d.cat||"")}</option>`).join("")}</datalist></label>
+  <label class="crm-f" style="margin-top:8px"><span>Categoria (para dor nova)</span><input class="inp" id="dCat" list="dCatL" placeholder="RH, Financeiro, Estratégico…"><datalist id="dCatL">${D.bibliotecas.categorias_dor.map(c=>`<option value="${escAttr(c)}">`).join("")}</datalist></label>`,
+  d=>{ const n=d.querySelector("#dDor").value.trim(); if(!n){ crmToast("Escreva a dor."); return false; } garantirDor(n,d.querySelector("#dCat").value.trim()); addDorPersona(n); marca(); aposAdd&&aposAdd(); },"Adicionar");
+ const dlgProdutoDaDor=(dor)=>{ const solsDor=[...new Set(P.solucoes.filter(s=>s.dor===dor).map(s=>s.sol))];
+  const d=dialogo("Dor x Produto",`<label class="crm-f"><span>Dor selecionada</span><input class="inp" value="${escAttr(dor)}" disabled></label>
+   <label class="crm-f" style="margin-top:8px"><span>Solução (como a Resilcon resolve essa dor)</span><input class="inp" id="dSol" list="dSolL" value="${escAttr(solsDor[0]||"")}" placeholder="Ex.: Realizar análise"><datalist id="dSolL">${[...solsDor,...D.bibliotecas.solucoes.filter(s=>!solsDor.includes(s))].map(s=>`<option value="${escAttr(s)}">`).join("")}</datalist></label>
+   <label class="crm-f" style="margin-top:8px"><span>Produto</span><input class="inp" id="dProd" list="dProdL" placeholder="Busque o produto ou escreva um novo"><datalist id="dProdL">${opcoesProd()}</datalist></label>${campoNovoProd()}`,
+   d=>{ const sol=d.querySelector("#dSol").value.trim(), pn=d.querySelector("#dProd").value.trim(); if(!sol||!pn){ crmToast("Informe a solução e o produto."); return false; }
+    addLig(dor,garantirSol(sol),garantirProd(d,pn)); marca(); render(); },"Adicionar Dor x Produto"); ligaNovoProd(d,"#dProd"); };
+ const dlgEditarProd=(nome)=>{ const p=pzProd(D,nome); if(!p) return;
+  const d=dialogo("Editar produto",`<div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f crm-w2"><span>Nome</span><input class="inp" id="eN" value="${escAttr(p.nome)}"></label>
+   <label class="crm-f"><span>Categoria</span><select class="inp" id="eC">${[...new Set([...PZ_CATS_PROD,p.cat||""])].filter(Boolean).map(c=>`<option ${c===p.cat?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Valor (R$)</span><input class="inp" id="eV" value="${escAttr(p.valor||"")}" inputmode="decimal"></label>
+   <label class="crm-f crm-w2"><span>Descrição</span><textarea class="inp" id="eD" rows="6">${esc(p.desc||"")}</textarea></label>
+   <label class="crm-chk crm-w2"><input type="checkbox" id="eA" ${p.ativo!==false?"checked":""}><span>Produto ativo</span></label></div><p class="sub" style="margin:8px 0 0">A mudança vale para todas as personas que usam este produto.</p>`,
+   d=>{ const nn=d.querySelector("#eN").value.trim().toUpperCase(); if(!nn){ crmToast("O produto precisa de nome."); return false; }
+    if(nn!==p.nome){ if(pzProd(D,nn)){ crmToast("Já existe um produto com esse nome."); return false; } D.personas.forEach(pp=>pp.ligacoes.forEach(l=>{ if(l.prod===p.nome) l.prod=nn; })); p.nome=nn; }
+    p.cat=d.querySelector("#eC").value; p.valor=d.querySelector("#eV").value.trim()||null; p.desc=d.querySelector("#eD").value.trim(); p.ativo=d.querySelector("#eA").checked; marca(); render(); }); };
+ const dlgEditarDor=(nome)=>{ const lib=D.bibliotecas.dores.find(x=>x.nome===nome)||{nome,cat:""};
+  dialogo("Editar dor",`<label class="crm-f"><span>Dor</span><input class="inp" id="eN" value="${escAttr(nome)}"></label><label class="crm-f" style="margin-top:8px"><span>Categoria</span><input class="inp" id="eC" list="eCL" value="${escAttr(lib.cat||"")}"><datalist id="eCL">${D.bibliotecas.categorias_dor.map(c=>`<option value="${escAttr(c)}">`).join("")}</datalist></label><p class="sub" style="margin:8px 0 0">O nome muda em todas as personas que usam esta dor.</p>`,
+   d=>{ const nn=d.querySelector("#eN").value.trim(), cat=d.querySelector("#eC").value.trim(); if(!nn) return false;
+    if(nn!==nome){ D.personas.forEach(pp=>{ pp.dores.forEach(x=>{ if(x.nome===nome) x.nome=nn; }); pp.solucoes.forEach(x=>{ if(x.dor===nome) x.dor=nn; }); pp.ligacoes.forEach(x=>{ if(x.dor===nome) x.dor=nn; }); }); }
+    const ld=garantirDor(nn,cat); ld.cat=cat; if(nn!==nome) D.bibliotecas.dores=D.bibliotecas.dores.filter(x=>x.nome!==nome);
+    D.personas.forEach(pp=>pp.dores.forEach(x=>{ if(x.nome===nn) x.cat=cat; })); if(cat&&!D.bibliotecas.categorias_dor.includes(cat)) D.bibliotecas.categorias_dor.push(cat); marca(); render(); }); };
+ // ---- EDIÇÃO RÁPIDA: mapa de ligações ----
+ let redesenha=()=>{}; const aoRedim=()=>redesenha();
+ const mapa=(el)=>{ const pares=new Map(); P.ligacoes.forEach(l=>{ const k=l.dor+"¦"+l.prod; if(!pares.has(k)) pares.set(k,{dor:l.dor,prod:l.prod,sols:new Set()}); pares.get(k).sols.add(l.sol); });
+  const prods=[...new Set(P.ligacoes.map(l=>l.prod))].map(n=>pzProd(D,n)||{nome:n,cat:""});
+  const grupos={}; prods.forEach(p=>(grupos[p.cat||"OUTROS"]=grupos[p.cat||"OUTROS"]||[]).push(p)); Object.values(grupos).forEach(g=>g.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")));
+  const dorIdx={}; P.dores.forEach((d,i)=>dorIdx[d.nome]=i); const prodIdx={}; prods.forEach((p,i)=>prodIdx[p.nome]=i);
+  el.innerHTML=`<div class="pz-aviso"><b>Como funciona:</b> à esquerda, as dores do nicho. À direita, os produtos que resolvem cada uma. Passe o mouse numa dor para ver as ligações dela. Use <b>+ Produto</b> para ligar um produto (com a solução) e <b>+ Nova dor</b> para incluir uma dor.</div>
+   <div class="pz-mapa-h"><button class="view-btn ghost" id="pzNovaDor">+ Nova dor</button><span class="pz-leg">${CRM_ICO.persona} <b>${P.dores.length}</b> dores · <b>${prods.length}</b> produtos · <b>${pares.size}</b> ligações</span></div>
+   <div class="pz-mapa" id="pzMapa"><svg class="pz-svg" aria-hidden="true"></svg>
+    <div class="pz-col pz-dores">${P.dores.map((d,i)=>`<div class="pz-dor" data-dor="${i}"><div class="pz-dor-t"><span>${esc(d.nome)}</span>${d.cat||pzDorCat(D,d.nome)?`<em>${esc(d.cat||pzDorCat(D,d.nome))}</em>`:""}</div>
+     <div class="pz-dor-a"><button type="button" data-addp="${i}">+ Produto</button><button type="button" data-edd="${i}" title="Editar dor" aria-label="Editar dor">${ctI("livre")}</button><button type="button" data-rmd="${i}" title="Tirar dor da persona" aria-label="Tirar dor da persona">${ctI("lixo")}</button></div></div>`).join("")||`<p class="sub">Nenhuma dor ainda.</p>`}</div>
+    <div class="pz-col pz-prods">${Object.entries(grupos).map(([c,ps])=>`<div class="pz-cat">${esc(c)}</div>${ps.map(p=>`<div class="pz-prod" data-prod="${prodIdx[p.nome]}"><div class="pz-prod-t"><b>${esc(p.nome)}</b>${p.desc?`<button type="button" class="pz-info" data-info="${prodIdx[p.nome]}" title="Ver descrição" aria-label="Ver descrição">i</button>`:""}<span class="pz-prod-a"><button type="button" data-edp="${prodIdx[p.nome]}" title="Editar produto" aria-label="Editar produto">${ctI("livre")}</button><button type="button" data-rmp="${prodIdx[p.nome]}" title="Tirar produto da persona" aria-label="Tirar produto da persona">${ctI("lixo")}</button></span></div><small>Valor: ${p.valor?"R$ "+esc(p.valor):"a combinar"}</small><p class="pz-desc" hidden>${esc(p.desc||"")}</p></div>`).join("")}`).join("")||`<p class="sub">Ligue produtos às dores com + Produto.</p>`}</div></div>`;
+  const box=el.querySelector("#pzMapa"), svg=box.querySelector(".pz-svg");
+  const desenha=()=>{ if(!box.isConnected) return; const br=box.getBoundingClientRect(); svg.setAttribute("width",br.width); svg.setAttribute("height",box.scrollHeight);
+   let h=""; pares.forEach(pr=>{ const de=box.querySelector(`[data-dor="${dorIdx[pr.dor]}"]`), pe=box.querySelector(`[data-prod="${prodIdx[pr.prod]}"]`); if(!de||!pe) return;
+    const a=de.getBoundingClientRect(), b=pe.getBoundingClientRect(); const x1=a.right-br.left, y1=a.top-br.top+a.height/2, x2=b.left-br.left, y2=b.top-br.top+b.height/2, mx=(x1+x2)/2;
+    h+=`<path d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" data-d="${dorIdx[pr.dor]}" data-p="${prodIdx[pr.prod]}"><title>${esc(pr.dor)} → ${esc(pr.prod)} (${esc([...pr.sols].join("; "))})</title></path>`; });
+   svg.innerHTML=h; };
+  redesenha=desenha; requestAnimationFrame(desenha); setTimeout(desenha,250);
+  const realca=(tipo,i)=>{ box.classList.toggle("foco",i!=null); svg.querySelectorAll("path").forEach(p=>p.classList.toggle("on",i!=null&&p.dataset[tipo]===String(i)));
+   const ligD=new Set(), ligP=new Set(); if(i!=null) svg.querySelectorAll("path.on").forEach(p=>{ ligD.add(p.dataset.d); ligP.add(p.dataset.p); });
+   box.querySelectorAll("[data-dor]").forEach(e=>e.classList.toggle("on",ligD.has(e.dataset.dor))); box.querySelectorAll("[data-prod]").forEach(e=>e.classList.toggle("on",ligP.has(e.dataset.prod))); };
+  box.querySelectorAll("[data-dor]").forEach(e=>{ e.onmouseenter=()=>realca("d",e.dataset.dor); e.onmouseleave=()=>realca(null,null); });
+  box.querySelectorAll("[data-prod]").forEach(e=>{ e.onmouseenter=()=>realca("p",e.dataset.prod); e.onmouseleave=()=>realca(null,null); });
+  el.querySelector("#pzNovaDor").onclick=()=>dlgNovaDor(render);
+  box.querySelectorAll("[data-addp]").forEach(b=>b.onclick=()=>dlgProdutoDaDor(P.dores[+b.dataset.addp].nome));
+  box.querySelectorAll("[data-edd]").forEach(b=>b.onclick=()=>dlgEditarDor(P.dores[+b.dataset.edd].nome));
+  box.querySelectorAll("[data-rmd]").forEach(b=>b.onclick=()=>{ const n=P.dores[+b.dataset.rmd].nome; if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.classList.add("perigo"); b.title="Clique de novo para tirar"; return; }
+   P.dores=P.dores.filter(x=>x.nome!==n); P.solucoes=P.solucoes.filter(x=>x.dor!==n); P.ligacoes=P.ligacoes.filter(x=>x.dor!==n); marca(); render(); });
+  box.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{ const p=b.closest(".pz-prod").querySelector(".pz-desc"); p.hidden=!p.hidden; desenha(); });
+  box.querySelectorAll("[data-edp]").forEach(b=>b.onclick=()=>dlgEditarProd(prods[+b.dataset.edp].nome));
+  box.querySelectorAll("[data-rmp]").forEach(b=>b.onclick=()=>{ const n=prods[+b.dataset.rmp].nome; if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.classList.add("perigo"); b.title="Clique de novo para tirar"; return; }
+   P.ligacoes=P.ligacoes.filter(x=>x.prod!==n); marca(); render(); }); };
+ // ---- PASSO A PASSO ----
+ const lista2col=(cfg)=>{ // cfg: {id, titulo, itens:[{v, sub}], sel:Set, add:true, rotAdd, selHTML, filtro}
+  const q=pzNorm(S.busca[cfg.id]||""); const vis=cfg.itens.filter(x=>!q||pzNorm(x.v).includes(q)||pzNorm(x.sub||"").includes(q));
+  return `<div class="pz-2c"><div class="pz-lib"><div class="pz-lib-h"><b>${esc(cfg.titulo)}</b><input class="inp" data-busca="${cfg.id}" value="${escAttr(S.busca[cfg.id]||"")}" placeholder="Pesquisar" aria-label="Pesquisar ${escAttr(cfg.titulo)}"></div>
+   <div class="pz-lib-l">${vis.slice(0,400).map(x=>`<label class="pz-chk ${cfg.sel.has(x.v)?"on":""}"><input type="checkbox" data-chk="${cfg.id}" value="${escAttr(x.v)}" ${cfg.sel.has(x.v)?"checked":""}><span>${esc(x.v)}</span>${x.sub?`<em>${esc(x.sub)}</em>`:""}</label>`).join("")||`<p class="sub" style="padding:8px">Nada encontrado.</p>`}${vis.length>400?`<p class="sub" style="padding:8px">Mostrando 400 de ${vis.length}. Use a pesquisa.</p>`:""}</div>
+   ${cfg.add?`<div class="pz-add"><input class="inp" data-novo="${cfg.id}" placeholder="${escAttr(cfg.rotAdd)}">${cfg.addExtra||""}<button type="button" class="view-btn ghost" data-addn="${cfg.id}">Adicionar</button></div>`:""}</div>
+   <div class="pz-sel"><b>${esc(cfg.tituloSel)} <span class="sub">(${cfg.sel.size})</span></b>${cfg.selHTML}</div></div>`; };
+ const passo=(el)=>{ const k=PASSOS[S.passo][1];
+  const nav=`<div class="pz-passos">${PASSOS.map(([t],i)=>`<button type="button" class="${i===S.passo?"on":""} ${i<S.passo?"feito":""}" data-ps="${i}"><span>${i+1}</span>${esc(t)}</button>`).join("")}</div>`;
+  const rod=`<div class="crm-pe pz-rod">${S.passo>0?`<button class="view-btn ghost" data-ps="${S.passo-1}">‹ Voltar</button>`:""}<span style="flex:1"></span>${S.passo<4?`<button class="view-btn ce-pri" data-ps="${S.passo+1}">Próximo: ${esc(PASSOS[S.passo+1][0])} ›</button>`:`<button class="view-btn ce-pri" id="pzConcluir">${P.status==="concluida"?"Salvar persona":"Concluir persona"}</button>`}</div>`;
+  let corpo="";
+  if(k==="nicho"){ const nichos=[...new Set([...(typeof precoNichos==="function"?precoNichos():[]),...D.personas.map(x=>x.nome)].filter(Boolean))];
+   corpo=`<label class="crm-f" style="max-width:640px"><span>Nicho (nome da persona) *</span><input class="inp" id="pzNicho" list="pzNichoL" value="${escAttr(P.nome||"")}" placeholder="Ex.: FARMÁCIA"><datalist id="pzNichoL">${nichos.map(n=>`<option value="${escAttr(n)}">`).join("")}</datalist></label>
+    ${lista2col({id:"ativ",titulo:"Atividades",tituloSel:"Atividades selecionadas",itens:D.bibliotecas.atividades.map(v=>({v})),sel:new Set(P.atividades),add:true,rotAdd:"Nova atividade",selHTML:P.atividades.map(a=>`<div class="pz-si">${esc(a)}</div>`).join("")||`<p class="sub">Marque as atividades do dia a dia desse cliente.</p>`})}`; }
+  if(k==="dores"){ const porCat={}; P.dores.forEach(d=>{ const c=d.cat||pzDorCat(D,d.nome)||"Sem categoria"; (porCat[c]=porCat[c]||[]).push(d.nome); });
+   corpo=lista2col({id:"dor",titulo:"Biblioteca de dores",tituloSel:"Dores selecionadas",itens:D.bibliotecas.dores.map(d=>({v:d.nome,sub:d.cat})),sel:new Set(P.dores.map(d=>d.nome)),add:true,rotAdd:"Nova dor",
+    addExtra:`<input class="inp" data-novocat="dor" list="pzCatL" placeholder="Categoria" style="max-width:150px"><datalist id="pzCatL">${D.bibliotecas.categorias_dor.map(c=>`<option value="${escAttr(c)}">`).join("")}</datalist>`,
+    selHTML:Object.entries(porCat).map(([c,ds])=>`<div class="pz-grp"><em>${esc(c)}</em>${ds.map(d=>`<div class="pz-si">${esc(d)}</div>`).join("")}</div>`).join("")||`<p class="sub">Marque as dores que esse nicho costuma ter.</p>`}); }
+  if(k==="sol"){ const q=pzNorm(S.busca.sol||"");
+   corpo=`<div class="pz-2c"><div class="pz-lib"><div class="pz-lib-h"><b>Dor › Solução</b><input class="inp" data-busca="sol" value="${escAttr(S.busca.sol||"")}" placeholder="Pesquisar solução" aria-label="Pesquisar solução"></div>
+    ${P.dores.map((d,i)=>{ const sel=new Set(P.solucoes.filter(s=>s.dor===d.nome).map(s=>s.sol)); const ab=S.abertos["s"+i]; const lib=D.bibliotecas.solucoes.filter(s=>sel.has(s)||!q||pzNorm(s).includes(q));
+     return `<details class="pz-acc" data-acc="s${i}" ${ab?"open":""}><summary>${esc(d.nome)} <span class="sub">${sel.size?`(${sel.size})`:""}</span></summary>${ab?`<div class="pz-lib-l">${[...sel,...lib.filter(s=>!sel.has(s))].slice(0,300).map(s=>`<label class="pz-chk ${sel.has(s)?"on":""}"><input type="checkbox" data-sol="${i}" value="${escAttr(s)}" ${sel.has(s)?"checked":""}><span>${esc(s)}</span></label>`).join("")}</div>
+      <div class="pz-add"><input class="inp" data-novasol="${i}" placeholder="Nova solução para esta dor"><button type="button" class="view-btn ghost" data-addsol="${i}">Adicionar</button></div>`:""}</details>`; }).join("")||`<p class="sub">Escolha as dores no passo anterior.</p>`}</div>
+    <div class="pz-sel"><b>Soluções selecionadas <span class="sub">(${P.solucoes.length})</span></b>${P.dores.map(d=>{ const ss=P.solucoes.filter(s=>s.dor===d.nome); return ss.length?`<div class="pz-grp"><em>${esc(d.nome)}</em>${ss.map(s=>`<div class="pz-si">${esc(s.sol)}</div>`).join("")}</div>`:""; }).join("")||`<p class="sub">Abra uma dor e marque as soluções.</p>`}</div></div>`; }
+  if(k==="prod"){ const q=pzNorm(S.busca.prod||"");
+   corpo=`<div class="pz-2c"><div class="pz-lib"><div class="pz-lib-h"><b>Dor › Solução › Produto</b><input class="inp" data-busca="prod" value="${escAttr(S.busca.prod||"")}" placeholder="Pesquisar produto" aria-label="Pesquisar produto"></div>
+    ${P.solucoes.map((s,i)=>{ const sel=new Set(P.ligacoes.filter(l=>l.dor===s.dor&&l.sol===s.sol).map(l=>l.prod)); const ab=S.abertos["p"+i]; const lib=D.bibliotecas.produtos.filter(p=>sel.has(p.nome)||(p.ativo!==false&&(!q||pzNorm(p.nome).includes(q)||pzNorm(p.desc).includes(q))));
+     return `<details class="pz-acc" data-acc="p${i}" ${ab?"open":""}><summary>${esc(s.dor)} <span class="pz-seta">›</span> ${esc(s.sol)} <span class="sub">${sel.size?`(${sel.size})`:""}</span></summary>${ab?`<div class="pz-lib-l">${[...lib.filter(p=>sel.has(p.nome)),...lib.filter(p=>!sel.has(p.nome))].slice(0,350).map(p=>`<label class="pz-chk ${sel.has(p.nome)?"on":""}"><input type="checkbox" data-prd="${i}" value="${escAttr(p.nome)}" ${sel.has(p.nome)?"checked":""}><span>${esc(p.nome)}</span><em>${esc((p.cat||p.tipo||"")+(p.valor?" · R$ "+p.valor:""))}</em></label>`).join("")}</div>
+      <div class="pz-add"><input class="inp" data-novoprod="${i}" placeholder="Produto novo (vai para a biblioteca)"><button type="button" class="view-btn ghost" data-addprod="${i}">Adicionar</button></div>`:""}</details>`; }).join("")||`<p class="sub">Escolha as soluções no passo anterior.</p>`}</div>
+    <div class="pz-sel"><b>Produtos selecionados <span class="sub">(${P.ligacoes.length})</span></b><table class="pz-tab"><thead><tr><th>Dor</th><th>Solução</th><th>Produto</th></tr></thead><tbody>${P.ligacoes.map(l=>`<tr><td>${esc(l.dor)}</td><td>${esc(l.sol)}</td><td>${esc(l.prod)}</td></tr>`).join("")}</tbody></table></div></div>`; }
+  if(k==="geral") corpo=visaoGeralHTML(true);
+  el.innerHTML=nav+`<div class="pz-passo">${corpo}</div>`+rod;
+  el.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{ if(S.passo===0&&!String(P.nome||"").trim()&&+b.dataset.ps>0){ crmToast("Escolha ou escreva o nicho primeiro."); return; } S.passo=+b.dataset.ps; render(); tela.querySelector(".pz-corpo").scrollTop=0; });
+  const ni=el.querySelector("#pzNicho"); if(ni) ni.oninput=()=>{ P.nome=ni.value.trim().toUpperCase(); marca(); tela.querySelector(".pz-nome").textContent=P.nome||"Nova persona"; };
+  el.querySelectorAll("[data-busca]").forEach(i=>{ i.oninput=()=>{ S.busca[i.dataset.busca]=i.value; const pos=i.selectionStart; render(); const n=tela.querySelector(`[data-busca="${i.dataset.busca}"]`); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }; });
+  el.querySelectorAll("[data-chk]").forEach(c=>c.onchange=()=>{ const v=c.value;
+   if(c.dataset.chk==="ativ"){ P.atividades=c.checked?[...P.atividades,v]:P.atividades.filter(x=>x!==v); }
+   if(c.dataset.chk==="dor"){ if(c.checked) addDorPersona(v); else { P.dores=P.dores.filter(x=>x.nome!==v); P.solucoes=P.solucoes.filter(x=>x.dor!==v); P.ligacoes=P.ligacoes.filter(x=>x.dor!==v); } }
+   marca(); render(); });
+  el.querySelectorAll("[data-addn]").forEach(b=>b.onclick=()=>{ const id=b.dataset.addn, i=el.querySelector(`[data-novo="${id}"]`), n=i.value.trim(); if(!n) return;
+   if(id==="ativ"){ if(!D.bibliotecas.atividades.includes(n)) D.bibliotecas.atividades.push(n); if(!P.atividades.includes(n)) P.atividades.push(n); }
+   if(id==="dor"){ garantirDor(n,(el.querySelector('[data-novocat="dor"]')||{}).value||""); addDorPersona(n); }
+   marca(); render(); });
+  el.querySelectorAll("details.pz-acc").forEach(d=>d.ontoggle=()=>{ const was=!!S.abertos[d.dataset.acc]; S.abertos[d.dataset.acc]=d.open; if(d.open&&!was) render(); });
+  el.querySelectorAll("[data-sol]").forEach(c=>c.onchange=()=>{ const dor=P.dores[+c.dataset.sol].nome; if(c.checked) addSol(dor,c.value); else { P.solucoes=P.solucoes.filter(x=>!(x.dor===dor&&x.sol===c.value)); P.ligacoes=P.ligacoes.filter(x=>!(x.dor===dor&&x.sol===c.value)); } marca(); render(); });
+  el.querySelectorAll("[data-addsol]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.addsol, inp=el.querySelector(`[data-novasol="${i}"]`), n=inp.value.trim(); if(!n) return; addSol(P.dores[i].nome,garantirSol(n)); marca(); render(); });
+  el.querySelectorAll("[data-prd]").forEach(c=>c.onchange=()=>{ const s=P.solucoes[+c.dataset.prd]; if(c.checked) addLig(s.dor,s.sol,c.value); else P.ligacoes=P.ligacoes.filter(l=>!(l.dor===s.dor&&l.sol===s.sol&&l.prod===c.value)); marca(); render(); });
+  el.querySelectorAll("[data-addprod]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.addprod, inp=el.querySelector(`[data-novoprod="${i}"]`), n=inp.value.trim(); if(!n) return; const s=P.solucoes[i];
+   if(pzProd(D,n)||pzProd(D,n.toUpperCase())){ addLig(s.dor,s.sol,(pzProd(D,n)||pzProd(D,n.toUpperCase())).nome); marca(); render(); return; }
+   const d=dialogo("Produto novo",`<label class="crm-f"><span>Nome</span><input class="inp" id="npN" value="${escAttr(n.toUpperCase())}"></label>${campoNovoProd()}`,d2=>{ const nn=d2.querySelector("#npN").value.trim(); if(!nn) return false; addLig(s.dor,s.sol,garantirProd(d2,nn)); marca(); render(); },"Criar e ligar");
+   d.querySelector(".pz-novo").hidden=false; });
+  const cc=el.querySelector("#pzConcluir"); if(cc) cc.onclick=async()=>{ if(!P.dores.length||!P.ligacoes.length){ crmToast("A persona precisa ter ao menos uma dor ligada a um produto."); return; } P.status="concluida"; marca(); await salvar(); };
+  ligaGeral(el); };
+ // ---- VISÃO GERAL ----
+ const visaoGeralHTML=(noPasso)=>{ const ord=[...P.ligacoes].sort((a,b)=>a.dor.localeCompare(b.dor,"pt-BR")||a.sol.localeCompare(b.sol,"pt-BR"));
+  const cont=(arr,campo)=>{ const c={}; arr.forEach(x=>c[campo(x)]=(c[campo(x)]||0)+1); return c; };
+  const cd=cont(ord,x=>x.dor), cs=cont(ord,x=>x.dor+"¦"+x.sol); let ud=null, us=null;
+  const linhas=ord.map(l=>{ const p=pzProd(D,l.prod)||{}; let h="<tr>"; if(l.dor!==ud){ h+=`<td rowspan="${cd[l.dor]}"><b>${esc(l.dor)}</b>${pzDorCat(D,l.dor)?`<em class="pz-tag">${esc(pzDorCat(D,l.dor))}</em>`:""}</td>`; ud=l.dor; us=null; }
+   const ks=l.dor+"¦"+l.sol; if(ks!==us){ h+=`<td rowspan="${cs[ks]}">${esc(l.sol)}</td>`; us=ks; }
+   return h+`<td><em class="pz-tag">${esc(p.cat||"")}</em><b>${esc(l.prod)}</b>${p.valor?`<small>R$ ${esc(p.valor)}</small>`:""}</td><td class="pz-desc-c">${esc(p.desc||"")}</td></tr>`; }).join("");
+  return `<div class="pz-geral"><div class="pz-g-h"><div><span class="sub">NICHO</span><h2>${esc(P.nome||"Nova persona")}</h2></div>${noPasso?"":`<button class="view-btn ghost" id="pzImp">Imprimir</button>`}</div>
+   <h4>Atividades selecionadas <span class="sub">(${P.atividades.length})</span></h4><div class="pz-ativs">${P.atividades.map(a=>`<span>${esc(a)}</span>`).join("")||`<p class="sub">Nenhuma atividade.</p>`}</div>
+   <h4>Dor › Solução › Produto <span class="sub">(${ord.length})</span></h4><div style="overflow-x:auto"><table class="pz-tab pz-tab-g"><thead><tr><th>Dor</th><th>Solução</th><th>Produto</th><th>Descrição do produto</th></tr></thead><tbody>${linhas||`<tr><td colspan="4" class="sub">Nenhuma ligação ainda.</td></tr>`}</tbody></table></div>
+   ${P.planos.length?`<h4>Planos vinculados</h4><table class="pz-tab"><thead><tr><th>Plano</th><th>Valor R$</th><th>Produtos</th></tr></thead><tbody>${P.planos.map(x=>`<tr><td><b>${esc(x.nome)}</b></td><td class="num">${esc(x.valor||"")}</td><td class="sub">${esc(x.produtos||"")}</td></tr>`).join("")}</tbody></table>`:""}</div>`; };
+ const ligaGeral=el=>{ const b=el.querySelector("#pzImp"); if(b) b.onclick=()=>{ const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Persona ${esc(P.nome)}</title><style>body{font:13px Arial,sans-serif;color:#1a1b28;margin:24px}h2{margin:2px 0 14px;color:#006789}h4{margin:18px 0 8px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #d6dde2;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eef3f5}.pz-tag{display:inline-block;font-style:normal;font-size:10px;background:#e0eef2;color:#00506a;border-radius:4px;padding:1px 5px;margin:0 6px 2px 0}.pz-ativs span{display:inline-block;border:1px solid #d6dde2;border-radius:999px;padding:2px 9px;margin:0 4px 4px 0}small{display:block;color:#666}.sub{color:#777;font-size:11px}button{display:none}</style></head><body>${visaoGeralHTML(false)}<script>print()<\/script></body></html>`); w.document.close(); }; };
+ // ---- BIBLIOTECA DE PRODUTOS ----
+ const biblioteca=el=>{ const q=pzNorm(S.busca.bib||""); const uso={}; D.personas.forEach(pp=>new Set(pp.ligacoes.map(l=>l.prod)).forEach(n=>uso[n]=(uso[n]||0)+1));
+  const vis=D.bibliotecas.produtos.filter(p=>!q||pzNorm(p.nome).includes(q)||pzNorm(p.desc).includes(q)||pzNorm(p.cat||p.tipo).includes(q));
+  el.innerHTML=`<div class="pz-mapa-h"><input class="inp" data-busca="bib" value="${escAttr(S.busca.bib||"")}" placeholder="Pesquisar produto" style="max-width:360px" aria-label="Pesquisar produto"><span class="pz-leg">${D.bibliotecas.produtos.length} produtos</span><span style="flex:1"></span><button class="view-btn ce-pri" id="pzNovoP">+ Novo produto</button></div>
+   <div class="card" style="overflow-x:auto"><table class="pz-tab"><thead><tr><th>Produto</th><th>Categoria</th><th class="right">Valor R$</th><th class="right">Personas</th><th>Situação</th><th></th></tr></thead><tbody>
+   ${vis.slice(0,500).map(p=>`<tr><td><b>${esc(p.nome)}</b>${p.desc?`<div class="sub" style="max-width:520px">${esc(p.desc.slice(0,140))}${p.desc.length>140?"…":""}</div>`:""}</td><td class="sub">${esc(p.cat||p.tipo||"")}</td><td class="right num">${esc(p.valor||"")}</td><td class="right num">${uso[p.nome]||0}</td><td>${p.ativo===false?`<span class="pill neutral">Inativo</span>`:`<span class="pill good">Ativo</span>`}</td><td class="right"><button class="txt-btn" data-edbib="${escAttr(p.nome)}">Editar</button></td></tr>`).join("")}</tbody></table></div>`;
+  const i=el.querySelector('[data-busca="bib"]'); i.oninput=()=>{ S.busca.bib=i.value; const pos=i.selectionStart; render(); const n=tela.querySelector('[data-busca="bib"]'); n.focus(); n.setSelectionRange(pos,pos); };
+  el.querySelectorAll("[data-edbib]").forEach(b=>b.onclick=()=>dlgEditarProd(b.dataset.edbib));
+  el.querySelector("#pzNovoP").onclick=()=>{ const d=dialogo("Novo produto",`<label class="crm-f"><span>Nome</span><input class="inp" id="npN" placeholder="Ex.: CONSULTORIA FINANCEIRA"></label>${campoNovoProd()}`,d2=>{ const n=d2.querySelector("#npN").value.trim(); if(!n) return false; if(pzProd(D,n.toUpperCase())){ crmToast("Esse produto já existe."); return false; } garantirProd(d2,n); marca(); render(); },"Criar produto"); d.querySelector(".pz-novo").hidden=false; }; };
+ // ---- render ----
+ const render=()=>{ if(!tela.querySelector(".pz-top")) tela.innerHTML=`<div class="pz-top"></div><div class="pz-corpo"></div>`;
+  topo(); const c=tela.querySelector(".pz-corpo"); redesenha=()=>{};
+  if(S.modo==="mapa") mapa(c); else if(S.modo==="passo") passo(c); else if(S.modo==="geral"){ c.innerHTML=visaoGeralHTML(false); ligaGeral(c); } else biblioteca(c); };
+ window.addEventListener("resize",aoRedim); tela.addEventListener("scroll",()=>redesenha(),true);
+ render(); }
+
+(function(){ if(document.getElementById("pz-css")) return; const s=document.createElement("style"); s.id="pz-css"; s.textContent=`
+.pz-tela{position:fixed;inset:10px;z-index:45;background:var(--bg,#f4f5fa);border-radius:16px;box-shadow:0 0 0 100vmax rgba(15,16,23,.55),0 20px 70px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;font-size:13px;color:#1a1b28}
+.pz-top{display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #e7e9f2;background:#fff;flex-wrap:wrap}.pz-top-l{display:flex;align-items:center;gap:10px;flex:1;min-width:200px}.pz-nome{font:700 15px "Urbanist",sans-serif}
+.pz-top-c{display:flex;gap:8px;align-items:center}.pz-top-r{display:flex;gap:8px;align-items:center;flex:1;justify-content:flex-end}.pz-st{font-size:12px;color:#128a5b}.pz-st.suj{color:#b7791f}
+.pz-corpo{flex:1;overflow:auto;padding:18px 22px 40px}
+.pz-aviso{background:#fff7e6;border:1px solid #f3dca6;color:#6b5200;border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.pz-mapa-h{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}.pz-leg{display:inline-flex;gap:6px;align-items:center;color:#4a4d63}.pz-leg svg{width:16px;height:16px}
+.pz-mapa{position:relative;display:grid;grid-template-columns:minmax(220px,340px) 1fr minmax(240px,360px);gap:0;background:#fff;border:1px solid #e7e9f2;border-radius:16px;padding:22px 18px;min-height:300px}
+.pz-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}.pz-svg path{fill:none;stroke:rgba(0,0,0,.16);stroke-width:5;stroke-linecap:round;transition:stroke .15s,opacity .15s;pointer-events:stroke}
+.pz-mapa.foco .pz-svg path{opacity:.18}.pz-mapa.foco .pz-svg path.on{opacity:1;stroke:#006789;stroke-width:6}
+.pz-col{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}.pz-dores{grid-column:1}.pz-prods{grid-column:3}
+.pz-dor,.pz-prod{background:#eef1f4;border-radius:12px;padding:10px 12px;transition:background .15s,box-shadow .15s}.pz-mapa.foco .pz-dor:not(.on),.pz-mapa.foco .pz-prod:not(.on){opacity:.5}.pz-dor.on,.pz-prod.on{background:#e0eef2;box-shadow:inset 0 0 0 2px #006789}
+.pz-dor-t{display:flex;flex-direction:column;gap:3px}.pz-dor-t em,.pz-tag{font-style:normal;font-size:10.5px;color:#00506a;background:#d4e8ee;border-radius:5px;padding:1px 6px;align-self:flex-start}
+.pz-dor-a{display:flex;gap:4px;justify-content:flex-end;margin-top:6px}.pz-dor-a button,.pz-prod-a button{border:0;background:#fff;border-radius:7px;padding:3px 8px;cursor:pointer;font:600 11px inherit;color:#006789;display:inline-flex;align-items:center}.pz-dor-a button:hover,.pz-prod-a button:hover{background:#006789;color:#fff}.pz-dor-a button.perigo,.pz-prod-a button.perigo{background:#cf4257;color:#fff}
+.pz-cat{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#83879c;margin:6px 0 -2px}
+.pz-prod-t{display:flex;align-items:center;gap:6px}.pz-prod-t b{font-size:12px;flex:1}.pz-prod-a{display:flex;gap:3px}.pz-prod small{color:#4a4d63}
+.pz-info{border:1px solid #9fb8c2;background:#fff;color:#006789;border-radius:50%;width:18px;height:18px;font:700 10px/1 serif;cursor:pointer;flex:none}.pz-desc{margin:6px 0 0;font-size:12px;color:#4a4d63;background:#fff;border-radius:8px;padding:8px}
+.pz-passos{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.pz-passos button{flex:1;min-width:130px;border:0;background:#dfe7ec;color:#00506a;border-radius:999px;padding:9px 12px;cursor:pointer;font:600 12.5px inherit;display:flex;align-items:center;gap:8px}
+.pz-passos button span{background:#fff;color:#006789;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:11px}.pz-passos button.feito{background:#9cc9d8;color:#0b1a20}.pz-passos button.on{background:#0b2b3a;color:#fff}
+.pz-passo{background:#fff;border:1px solid #e7e9f2;border-radius:16px;padding:16px}.pz-rod{margin-top:14px}
+.pz-2c{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:12px}.pz-lib,.pz-sel{border:1px solid #e7e9f2;border-radius:12px;padding:12px;background:#fff;min-width:0}
+.pz-lib-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.pz-lib-h .inp{max-width:240px}
+.pz-lib-l{max-height:52vh;overflow:auto;display:grid;gap:2px}.pz-chk{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}.pz-chk:hover{background:#eef6f8}.pz-chk.on{background:#e0eef2;font-weight:600}.pz-chk span{flex:1}.pz-chk em{font-style:normal;font-size:11px;color:#83879c;white-space:nowrap}.pz-chk input{margin-top:2px;accent-color:#006789}
+.pz-add{display:flex;gap:6px;margin-top:8px}.pz-add .inp{flex:1;min-width:0}
+.pz-sel{max-height:64vh;overflow:auto}.pz-sel>b{display:block;margin-bottom:8px}.pz-si{padding:6px 8px;border-bottom:1px solid #eef0f5}.pz-grp{margin-bottom:10px}.pz-grp>em{display:block;font-style:normal;font-weight:700;font-size:11px;color:#006789;margin:6px 0 2px;text-transform:uppercase;letter-spacing:.05em}
+.pz-acc{border:1px solid #e7e9f2;border-radius:10px;margin-bottom:6px}.pz-acc summary{cursor:pointer;padding:9px 12px;font-weight:600}.pz-acc[open] summary{border-bottom:1px solid #eef0f5}.pz-acc .pz-lib-l,.pz-acc .pz-add{padding:6px 10px}.pz-seta{color:#83879c}
+.pz-tab{width:100%;border-collapse:collapse;font-size:12.5px}.pz-tab th,.pz-tab td{border-bottom:1px solid #eef0f5;padding:7px 8px;text-align:left;vertical-align:top}.pz-tab th{font-size:11px;color:#83879c;text-transform:uppercase;letter-spacing:.05em}.pz-tab td small{display:block;color:#4a4d63}
+.pz-tab-g td{border:1px solid #eef0f5}.pz-desc-c{color:#4a4d63;font-size:12px;max-width:520px}
+.pz-geral{background:#fff;border:1px solid #e7e9f2;border-radius:16px;padding:18px}.pz-g-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.pz-g-h h2{margin:2px 0 6px;color:#006789}.pz-geral h4{margin:18px 0 8px}
+.pz-ativs{display:flex;flex-wrap:wrap;gap:6px}.pz-ativs span{border:1px solid #d6dde2;border-radius:999px;padding:3px 10px;background:#fafbff}
+.pz-dlg{position:absolute;inset:0;background:rgba(15,16,23,.35);display:grid;place-items:center;z-index:5;padding:16px}.pz-dlg-c{background:#fff;border-radius:16px;padding:18px 20px;width:min(560px,100%);max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}.pz-dlg-c h3{margin:0 0 12px;font-family:"Urbanist",sans-serif}
+@media(max-width:900px){.pz-tela{inset:0;border-radius:0}.pz-2c{grid-template-columns:1fr}.pz-mapa{grid-template-columns:1fr 24px 1fr;padding:12px 8px}.pz-corpo{padding:12px}}
+`; document.head.appendChild(s); })();
+
+// ================= CRM · DOR x SOLUÇÃO x PRODUTO (ferramenta da 4C) + DIAGNÓSTICO DO CLIENTE (usado na apresentação) =================
+const DSP_METAS_PADRAO=["Aumentar faturamento","Focar em um setor específico","Número de clientes","Organizar processos internos"];
+function dspPrepara(D){ const B=D.bibliotecas; B.metas=Array.isArray(B.metas)&&B.metas.length?B.metas:[...DSP_METAS_PADRAO]; B.dores.forEach(d=>{ if(d.desc==null) d.desc=""; }); return D; }
+const dspDorLib=(D,n)=>D.bibliotecas.dores.find(x=>x.nome===n);
+// todas as ligações únicas de todas as personas: chave dor¦sol¦prod -> {dor,sol,prod,personas:[ids]}
+function dspTriplas(D){ const m=new Map(); D.personas.forEach(p=>p.ligacoes.forEach(l=>{ const k=l.dor+"¦"+l.sol+"¦"+l.prod; if(!m.has(k)) m.set(k,{dor:l.dor,sol:l.sol,prod:l.prod,personas:[]}); const t=m.get(k); if(!t.personas.includes(p.id)) t.personas.push(p.id); })); return [...m.values()]; }
+// tela cheia simples, reaproveita o visual das personas
+function dspTela(titulo,sub){ const tela=document.createElement("div"); tela.className="pz-tela"; tela.setAttribute("role","dialog"); tela.setAttribute("aria-label",titulo);
+ tela.innerHTML=`<div class="pz-top"><div class="pz-top-l"><span class="cte-tag">${CRM_ICO.persona} ${esc(titulo)}</span><b class="pz-nome">${esc(sub||"")}</b></div><div class="pz-top-c"></div><div class="pz-top-r"></div></div><div class="pz-corpo"></div>`;
+ document.body.appendChild(tela); document.body.classList.add("cte-aberto"); return tela; }
+function dspDialogo(tela,titulo,corpo,ok,rotOk){ const d=document.createElement("div"); d.className="pz-dlg"; d.innerHTML=`<div class="pz-dlg-c" role="dialog" aria-label="${escAttr(titulo)}"><h3>${esc(titulo)}</h3>${corpo}<div class="crm-pe" style="margin-top:14px"><span style="flex:1"></span><button class="txt-btn" data-x>Cancelar</button><button class="view-btn ce-pri" data-ok>${esc(rotOk||"Salvar")}</button></div></div>`;
+ tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove(); d.onclick=e=>{ if(e.target===d) d.remove(); }; d.querySelector("[data-ok]").onclick=()=>{ if(ok(d)!==false) d.remove(); };
+ const f=d.querySelector("input:not([disabled]),select,textarea"); f&&setTimeout(()=>f.focus()); return d; }
+
+// ---------------- FERRAMENTA DOR x SOLUÇÃO x PRODUTO ----------------
+async function dspAbrir(depois){ let base; try{ base=await pzCarregar(); }catch(e){ crmToast(e.message); return; }
+ const D=dspPrepara(JSON.parse(JSON.stringify(base))); const B=D.bibliotecas;
+ const S={aba:"cad",sujo:false,fechar:0,f:{dor:"",sol:"",prod:"",sel:new Set(),q:"",letra:""},t:{q:"",persona:"",cat:"",pag:0},dq:"",dcat:""};
+ const tela=dspTela("Dor x Solução x Produto","");
+ const marca=()=>{ S.sujo=true; const st=tela.querySelector("#dsSt"); if(st){ st.textContent="Alterações não salvas"; st.className="pz-st suj"; } };
+ const teclas=e=>{ if(!tela.isConnected) return; if(e.key==="Escape"){ const dl=tela.querySelector(".pz-dlg"); if(dl){ e.stopImmediatePropagation(); dl.remove(); } } if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); salvar(); } };
+ document.addEventListener("keydown",teclas,true);
+ const fecha=()=>{ if(S.sujo&&S.fechar!==1){ S.fechar=1; const st=tela.querySelector("#dsSt"); st.textContent="Clique no X de novo para sair sem salvar"; st.className="pz-st suj"; setTimeout(()=>{ S.fechar=0; },3500); return; }
+  document.removeEventListener("keydown",teclas,true); document.body.classList.remove("cte-aberto"); tela.remove(); };
+ const salvar=async()=>{ const b=tela.querySelector("#dsSalvar"); b.disabled=true; b.textContent="Salvando…"; try{ await pzSalvar(D); S.sujo=false; topo(); crmToast("Dor x Solução x Produto salvo"); depois&&depois(); }catch(e){ crmToast(e.message); } finally{ b.disabled=false; b.textContent="Salvar"; } };
+ const topo=()=>{ tela.querySelector(".pz-top-c").innerHTML=`<div class="seg">${[["cad","Cadastrar ligação"],["lig","Ligações cadastradas"],["dores","Dores"],["metas","Metas e objetivos"]].map(([k,t])=>`<button data-aba="${k}" class="${S.aba===k?"on":""}">${t}</button>`).join("")}</div>`;
+  tela.querySelector(".pz-top-r").innerHTML=`<span id="dsSt" class="pz-st ${S.sujo?"suj":""}">${S.sujo?"Alterações não salvas":"Tudo salvo"}</span><button class="cte-b cte-pri" id="dsSalvar">Salvar</button><button class="cte-ib" id="dsX" aria-label="Fechar">${ctI("fechar")}</button>`;
+  tela.querySelectorAll("[data-aba]").forEach(b=>b.onclick=()=>{ S.aba=b.dataset.aba; render(); }); tela.querySelector("#dsSalvar").onclick=salvar; tela.querySelector("#dsX").onclick=fecha; };
+ const garantirDor=(n,cat,desc)=>{ let d=dspDorLib(D,n); if(!d){ d={nome:n,cat:cat||"",desc:desc||""}; B.dores.push(d); B.dores.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")); if(cat&&!B.categorias_dor.includes(cat)) B.categorias_dor.push(cat); } return d; };
+ const garantirSol=n=>{ if(!B.solucoes.includes(n)){ B.solucoes.push(n); B.solucoes.sort((a,b)=>a.localeCompare(b,"pt-BR")); } return n; };
+ const prodLib=n=>pzProd(D,n)||pzProd(D,String(n).toUpperCase());
+ const ligar=(p,dor,sol,prod)=>{ if(!p.dores.some(x=>x.nome===dor)) p.dores.push({nome:dor,cat:(dspDorLib(D,dor)||{}).cat||""}); if(!p.solucoes.some(x=>x.dor===dor&&x.sol===sol)) p.solucoes.push({dor,sol});
+  if(p.ligacoes.some(l=>l.dor===dor&&l.sol===sol&&l.prod===prod)) return false; p.ligacoes.push({dor,sol,prod}); p.atualizado=new Date().toLocaleString("pt-BR"); return true; };
+ const desligar=(p,dor,sol,prod)=>{ p.ligacoes=p.ligacoes.filter(l=>!(l.dor===dor&&l.sol===sol&&l.prod===prod)); if(!p.ligacoes.some(l=>l.dor===dor&&l.sol===sol)) p.solucoes=p.solucoes.filter(s=>!(s.dor===dor&&s.sol===sol)); p.atualizado=new Date().toLocaleString("pt-BR"); };
+ // ---- aba: cadastrar ----
+ const abaCad=c=>{ const F=S.f, dorOk=!!dspDorLib(D,F.dor), prodOk=!!prodLib(F.prod);
+  const solsDaDor=[...new Set(dspTriplas(D).filter(t=>t.dor===F.dor).map(t=>t.sol))];
+  const temTripla=new Set(D.personas.filter(p=>p.ligacoes.some(l=>l.dor===F.dor&&l.sol===F.sol&&l.prod===(prodLib(F.prod)||{}).nome)).map(p=>p.id));
+  const temDor=new Set(D.personas.filter(p=>p.dores.some(x=>x.nome===F.dor)).map(p=>p.id));
+  const q=pzNorm(F.q); const ps=D.personas.filter(p=>p.ativo!==false||F.sel.has(p.id)).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).filter(p=>(!q||pzNorm(p.nome).includes(q))&&(!F.letra||pzNorm(p.nome).startsWith(F.letra.toLowerCase())));
+  const letras=[...new Set(D.personas.map(p=>pzNorm(p.nome).charAt(0).toUpperCase()).filter(Boolean))].sort();
+  c.innerHTML=`<div class="pz-aviso"><b>Como funciona:</b> escolha a dor, a solução e o produto. Depois marque as personas que devem receber essa ligação e clique em <b>Adicionar</b>. As personas que já têm essa ligação aparecem marcadas. É o que aparece no diagnóstico do cliente e na apresentação.</div>
+  <div class="pz-passo"><div class="crm-form" style="grid-template-columns:1fr">
+   <label class="crm-f"><span>Dor *</span><input class="inp" id="fDor" list="fDorL" value="${escAttr(F.dor)}" placeholder="Busque na biblioteca ou escreva uma dor nova"><datalist id="fDorL">${B.dores.map(d=>`<option value="${escAttr(d.nome)}">${esc(d.cat||"")}</option>`).join("")}</datalist></label>
+   ${F.dor&&!dorOk?`<div class="pz-novo2"><p class="sub" style="margin:0 0 6px">Dor nova. Ela entra na biblioteca.</p><div class="crm-form" style="grid-template-columns:220px 1fr"><label class="crm-f"><span>Categoria</span><input class="inp" id="fDorCat" list="fCatL" placeholder="RH, Financeiro…"><datalist id="fCatL">${B.categorias_dor.map(x=>`<option value="${escAttr(x)}">`).join("")}</datalist></label><label class="crm-f"><span>Descrição (aparece na apresentação)</span><input class="inp" id="fDorDesc" placeholder="Explique a dor em uma frase"></label></div></div>`:""}
+   <label class="crm-f"><span>Solução *</span><input class="inp" id="fSol" list="fSolL" value="${escAttr(F.sol)}" placeholder="Como a Resilcon resolve essa dor"><datalist id="fSolL">${[...solsDaDor,...B.solucoes.filter(s=>!solsDaDor.includes(s))].map(s=>`<option value="${escAttr(s)}">${solsDaDor.includes(s)?"já usada nesta dor":""}</option>`).join("")}</datalist></label>
+   <label class="crm-f"><span>Produto *</span><input class="inp" id="fProd" list="fProdL" value="${escAttr(F.prod)}" placeholder="Busque o produto ou escreva um novo"><datalist id="fProdL">${B.produtos.filter(p=>p.ativo!==false).map(p=>`<option value="${escAttr(p.nome)}">${esc((p.cat||p.tipo||"")+(p.valor?" · R$ "+p.valor:""))}</option>`).join("")}</datalist></label>
+   ${F.prod&&!prodOk?`<div class="pz-novo2"><p class="sub" style="margin:0 0 6px">Produto novo. Ele entra na biblioteca de produtos.</p><div class="crm-form" style="grid-template-columns:200px 160px 1fr"><label class="crm-f"><span>Categoria</span><select class="inp" id="fPCat">${PZ_CATS_PROD.map(x=>`<option>${x}</option>`).join("")}</select></label><label class="crm-f"><span>Valor (R$)</span><input class="inp" id="fPVal" placeholder="0,00" inputmode="decimal"></label><label class="crm-f"><span>Descrição</span><input class="inp" id="fPDesc" placeholder="O que o cliente recebe"></label></div></div>`:""}
+  </div>
+  <div class="ds-ps-h"><b>Personas</b> <span class="sub">${F.sel.size} selecionada${F.sel.size===1?"":"s"}${F.dor?` · ${temDor.size} já têm esta dor`:""}${temTripla.size?` · ${temTripla.size} já têm esta ligação`:""}</span><span style="flex:1"></span>
+   <input class="inp" id="fQ" value="${escAttr(F.q)}" placeholder="Buscar persona" style="max-width:220px" aria-label="Buscar persona"><button class="txt-btn" id="fTodas">Marcar as visíveis</button><button class="txt-btn" id="fLimpa">Limpar</button></div>
+  <div class="ds-letras"><button data-l="" class="${F.letra?"":"on"}">Todas</button>${letras.map(l=>`<button data-l="${l}" class="${F.letra===l?"on":""}">${l}</button>`).join("")}</div>
+  <div class="ds-ps">${ps.map(p=>{ const ja=temTripla.has(p.id); return `<label class="pz-chk ${ja||F.sel.has(p.id)?"on":""}"><input type="checkbox" data-ps="${p.id}" ${ja||F.sel.has(p.id)?"checked":""} ${ja?"disabled":""}><span>${esc(p.nome)}</span>${ja?`<em>já tem</em>`:temDor.has(p.id)?`<em>tem a dor</em>`:""}</label>`; }).join("")||`<p class="sub">Nenhuma persona encontrada.</p>`}</div>
+  <div class="crm-pe pz-rod"><span class="sub">${F.sel.size?`Vai para: ${[...F.sel].map(id=>(D.personas.find(p=>p.id===id)||{}).nome).slice(0,6).map(esc).join(", ")}${F.sel.size>6?` e mais ${F.sel.size-6}`:""}`:""}</span><span style="flex:1"></span><button class="view-btn ghost" id="fNova">Limpar formulário</button><button class="view-btn ce-pri" id="fAdd">Adicionar Dor x Solução x Produto</button></div></div>`;
+  const re=(foco)=>{ const pos=foco?foco.selectionStart:0, id=foco&&foco.id; render(); if(id){ const n=tela.querySelector("#"+id); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } };
+  const fd=c.querySelector("#fDor"); fd.onchange=()=>{ F.dor=fd.value.trim(); re(); };
+  const fs=c.querySelector("#fSol"); fs.onchange=()=>{ F.sol=fs.value.trim(); re(); };
+  const fp=c.querySelector("#fProd"); fp.onchange=()=>{ F.prod=fp.value.trim(); re(); };
+  const fq=c.querySelector("#fQ"); fq.oninput=()=>{ F.q=fq.value; re(fq); };
+  c.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{ F.letra=b.dataset.l; re(); });
+  c.querySelectorAll("[data-ps]").forEach(k=>k.onchange=()=>{ k.checked?F.sel.add(k.dataset.ps):F.sel.delete(k.dataset.ps); re(); });
+  c.querySelector("#fTodas").onclick=()=>{ ps.forEach(p=>{ if(!temTripla.has(p.id)) F.sel.add(p.id); }); re(); };
+  c.querySelector("#fLimpa").onclick=()=>{ F.sel.clear(); re(); };
+  c.querySelector("#fNova").onclick=()=>{ S.f={dor:"",sol:"",prod:"",sel:new Set(),q:"",letra:""}; re(); };
+  c.querySelector("#fAdd").onclick=()=>{ F.dor=fd.value.trim(); F.sol=fs.value.trim(); F.prod=fp.value.trim();
+   if(!F.dor||!F.sol||!F.prod){ crmToast("Preencha a dor, a solução e o produto."); return; } if(!F.sel.size){ crmToast("Marque ao menos uma persona."); return; }
+   const g=id=>(c.querySelector(id)||{}).value||""; garantirDor(F.dor,g("#fDorCat").trim(),g("#fDorDesc").trim()); garantirSol(F.sol);
+   let pr=prodLib(F.prod); if(!pr){ pr={id:null,nome:F.prod.toUpperCase(),tipo:"",cat:g("#fPCat")||"CONTÁBIL",valor:g("#fPVal").trim()||null,desc:g("#fPDesc").trim(),ativo:true,nichos:[]}; B.produtos.push(pr); B.produtos.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")); }
+   let n=0; F.sel.forEach(id=>{ const p=D.personas.find(x=>x.id===id); if(p&&ligar(p,F.dor,F.sol,pr.nome)) n++; });
+   F.prod=pr.nome; F.sel.clear(); marca(); crmToast(n?`Ligação adicionada em ${n} persona${n===1?"":"s"}. Clique em Salvar para gravar.`:"Essas personas já tinham essa ligação."); re(); }; };
+ // ---- aba: ligações cadastradas ----
+ const abaLig=c=>{ const T=S.t, q=pzNorm(T.q); const nomeP=id=>(D.personas.find(p=>p.id===id)||{}).nome||"";
+  let L=dspTriplas(D).filter(t=>(!T.persona||t.personas.includes(T.persona))&&(!T.cat||((dspDorLib(D,t.dor)||{}).cat||"")===T.cat)&&(!q||pzNorm(t.dor+" "+t.sol+" "+t.prod).includes(q)));
+  L.sort((a,b)=>a.dor.localeCompare(b.dor,"pt-BR")||a.sol.localeCompare(b.sol,"pt-BR")||a.prod.localeCompare(b.prod,"pt-BR"));
+  const POR=150, pags=Math.max(1,Math.ceil(L.length/POR)); if(T.pag>=pags) T.pag=0; const vis=L.slice(T.pag*POR,(T.pag+1)*POR);
+  c.innerHTML=`<div class="pz-mapa-h"><input class="inp" id="tQ" value="${escAttr(T.q)}" placeholder="Buscar dor, solução ou produto" style="max-width:320px" aria-label="Buscar">
+   <select class="inp" id="tP" style="max-width:260px" aria-label="Persona"><option value="">Todas as personas</option>${D.personas.slice().sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).map(p=>`<option value="${p.id}" ${T.persona===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select>
+   <select class="inp" id="tC" style="max-width:180px" aria-label="Categoria da dor"><option value="">Todas as categorias</option>${B.categorias_dor.map(x=>`<option ${T.cat===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
+   <span class="pz-leg"><b>${L.length}</b> ligações</span></div>
+  <div class="card" style="overflow-x:auto"><table class="pz-tab"><thead><tr><th>Dor</th><th>Solução</th><th>Produto</th><th class="right">Personas</th><th></th></tr></thead><tbody>
+  ${vis.map((t,i)=>{ const pr=pzProd(D,t.prod)||{}; const k=T.pag*POR+i; return `<tr><td><b>${esc(t.dor)}</b>${(dspDorLib(D,t.dor)||{}).cat?` <em class="pz-tag">${esc(dspDorLib(D,t.dor).cat)}</em>`:""}</td><td>${esc(t.sol)}</td><td>${pr.cat?`<em class="pz-tag">${esc(pr.cat)}</em>`:""}${esc(t.prod)}${pr.valor?`<small>R$ ${esc(pr.valor)}</small>`:""}</td>
+   <td class="right num" title="${escAttr(t.personas.map(nomeP).join(", "))}">${t.personas.length}</td><td class="right" style="white-space:nowrap"><button class="txt-btn" data-usar="${k}">Aplicar em mais personas</button><button class="txt-btn" data-tirar="${k}">Tirar de personas</button></td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Nenhuma ligação encontrada.</div></td></tr>`}</tbody></table></div>
+  ${pags>1?`<div class="crm-pe" style="justify-content:center;margin-top:10px">${Array.from({length:pags},(_,i)=>`<button class="txt-btn ${i===T.pag?"crm-pri":""}" data-pg="${i}">${i+1}</button>`).join("")}</div>`:""}`;
+  const tq=c.querySelector("#tQ"); tq.oninput=()=>{ T.q=tq.value; T.pag=0; const p=tq.selectionStart; render(); const n=tela.querySelector("#tQ"); n.focus(); n.setSelectionRange(p,p); };
+  c.querySelector("#tP").onchange=e=>{ T.persona=e.target.value; T.pag=0; render(); }; c.querySelector("#tC").onchange=e=>{ T.cat=e.target.value; T.pag=0; render(); };
+  c.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{ T.pag=+b.dataset.pg; render(); tela.querySelector(".pz-corpo").scrollTop=0; });
+  c.querySelectorAll("[data-usar]").forEach(b=>b.onclick=()=>{ const t=L[+b.dataset.usar]; S.f={dor:t.dor,sol:t.sol,prod:t.prod,sel:new Set(),q:"",letra:""}; S.aba="cad"; render(); });
+  c.querySelectorAll("[data-tirar]").forEach(b=>b.onclick=()=>{ const t=L[+b.dataset.tirar];
+   dspDialogo(tela,"Tirar ligação de personas",`<p class="sub" style="margin:0 0 8px">${esc(t.dor)} › ${esc(t.sol)} › ${esc(t.prod)}</p><div class="pz-lib-l" style="max-height:46vh">${t.personas.map(id=>`<label class="pz-chk"><input type="checkbox" value="${id}"><span>${esc(nomeP(id))}</span></label>`).join("")}</div><button class="txt-btn" data-all>Marcar todas</button>`,
+    d=>{ const ids=[...d.querySelectorAll("input:checked")].map(i=>i.value); if(!ids.length){ crmToast("Marque as personas."); return false; } ids.forEach(id=>{ const p=D.personas.find(x=>x.id===id); p&&desligar(p,t.dor,t.sol,t.prod); }); marca(); crmToast(`Ligação retirada de ${ids.length} persona${ids.length===1?"":"s"}`); render(); },"Tirar das marcadas");
+   const dl=tela.querySelector(".pz-dlg:last-child"); dl.querySelector("[data-all]").onclick=()=>dl.querySelectorAll("input[type=checkbox]").forEach(i=>i.checked=true); }); };
+ // ---- aba: dores (categoria e descrição usadas na apresentação) ----
+ const abaDores=c=>{ const q=pzNorm(S.dq); const uso={}; D.personas.forEach(p=>p.dores.forEach(d=>uso[d.nome]=(uso[d.nome]||0)+1));
+  const vis=B.dores.filter(d=>(!q||pzNorm(d.nome+" "+d.desc).includes(q))&&(!S.dcat||d.cat===S.dcat));
+  c.innerHTML=`<div class="pz-mapa-h"><input class="inp" id="dQ" value="${escAttr(S.dq)}" placeholder="Buscar dor" style="max-width:320px" aria-label="Buscar dor"><select class="inp" id="dC" style="max-width:200px" aria-label="Categoria"><option value="">Todas as categorias</option>${B.categorias_dor.map(x=>`<option ${S.dcat===x?"selected":""}>${esc(x)}</option>`).join("")}</select><span class="pz-leg">${B.dores.length} dores · a descrição aparece na apresentação do cliente</span><span style="flex:1"></span><button class="view-btn ce-pri" id="dNova">+ Nova dor</button></div>
+  <div class="card" style="overflow-x:auto"><table class="pz-tab"><thead><tr><th>Dor</th><th style="width:170px">Categoria</th><th>Descrição para o cliente</th><th class="right">Personas</th></tr></thead><tbody>
+  ${vis.slice(0,400).map(d=>{ const i=B.dores.indexOf(d); return `<tr><td><b>${esc(d.nome)}</b></td><td><input class="inp" data-dcat="${i}" list="dCL" value="${escAttr(d.cat||"")}" aria-label="Categoria"></td><td><textarea class="inp" data-ddesc="${i}" rows="1" placeholder="Explique em uma frase o que o cliente sente" aria-label="Descrição">${esc(d.desc||"")}</textarea></td><td class="right num">${uso[d.nome]||0}</td></tr>`; }).join("")}</tbody></table><datalist id="dCL">${B.categorias_dor.map(x=>`<option value="${escAttr(x)}">`).join("")}</datalist></div>${vis.length>400?`<p class="sub">Mostrando 400 de ${vis.length}. Use a busca.</p>`:""}`;
+  const dq=c.querySelector("#dQ"); dq.oninput=()=>{ S.dq=dq.value; const p=dq.selectionStart; render(); const n=tela.querySelector("#dQ"); n.focus(); n.setSelectionRange(p,p); };
+  c.querySelector("#dC").onchange=e=>{ S.dcat=e.target.value; render(); };
+  c.querySelectorAll("[data-dcat]").forEach(i=>i.onchange=()=>{ const d=B.dores[+i.dataset.dcat]; d.cat=i.value.trim(); if(d.cat&&!B.categorias_dor.includes(d.cat)) B.categorias_dor.push(d.cat); D.personas.forEach(p=>p.dores.forEach(x=>{ if(x.nome===d.nome) x.cat=d.cat; })); marca(); });
+  c.querySelectorAll("[data-ddesc]").forEach(t=>{ t.oninput=()=>{ B.dores[+t.dataset.ddesc].desc=t.value; marca(); }; });
+  c.querySelector("#dNova").onclick=()=>dspDialogo(tela,"Nova dor",`<label class="crm-f"><span>Dor</span><input class="inp" id="nN"></label><label class="crm-f" style="margin-top:8px"><span>Categoria</span><input class="inp" id="nC" list="dCL"></label><label class="crm-f" style="margin-top:8px"><span>Descrição para o cliente</span><textarea class="inp" id="nD" rows="3"></textarea></label>`,
+   d=>{ const n=d.querySelector("#nN").value.trim(); if(!n) return false; if(dspDorLib(D,n)){ crmToast("Essa dor já existe."); return false; } garantirDor(n,d.querySelector("#nC").value.trim(),d.querySelector("#nD").value.trim()); marca(); render(); },"Criar dor"); };
+ // ---- aba: metas ----
+ const abaMetas=c=>{ c.innerHTML=`<div class="pz-passo" style="max-width:720px"><p class="sub" style="margin-top:0">Metas e objetivos que o vendedor marca no diagnóstico do cliente. Elas aparecem no slide de diagnóstico da apresentação.</p>
+   ${B.metas.map((m,i)=>`<div class="pz-add"><input class="inp" data-meta="${i}" value="${escAttr(m)}" aria-label="Meta"><button class="txt-btn" data-rmm="${i}">Tirar</button></div>`).join("")}
+   <div class="pz-add" style="margin-top:12px"><input class="inp" id="mN" placeholder="Nova meta ou objetivo"><button class="view-btn ghost" id="mAdd">Adicionar</button></div></div>`;
+  c.querySelectorAll("[data-meta]").forEach(i=>i.onchange=()=>{ const v=i.value.trim(); if(v){ B.metas[+i.dataset.meta]=v; marca(); } });
+  c.querySelectorAll("[data-rmm]").forEach(b=>b.onclick=()=>{ B.metas.splice(+b.dataset.rmm,1); marca(); render(); });
+  c.querySelector("#mAdd").onclick=()=>{ const v=c.querySelector("#mN").value.trim(); if(v&&!B.metas.includes(v)){ B.metas.push(v); marca(); render(); } }; };
+ const render=()=>{ topo(); const c=tela.querySelector(".pz-corpo"); ({cad:abaCad,lig:abaLig,dores:abaDores,metas:abaMetas})[S.aba](c); };
+ render(); }
+
+// ---------------- DIAGNÓSTICO DO CLIENTE (simulador -> apresentação) ----------------
+// diag = {persona_id, persona, metas:[{nome,qual,tempo}], atividades:[], dores:[nome], fora:[produto], extras:[produto]}
+function diagPersonaDoNicho(D,nicho){ const n=pzNorm(nicho); if(!n) return null; const at=D.personas.filter(p=>p.ativo!==false);
+ return at.find(p=>pzNorm(p.nome)===n)||at.find(p=>pzNorm(p.nome).includes(n)||n.includes(pzNorm(p.nome)))||null; }
+// dores escolhidas com soluções e produtos (da persona; se a dor não estiver na persona, usa as ligações de todas)
+function diagResolver(D,dg){ if(!dg||!D) return []; const P=D.personas.find(p=>p.id===dg.persona_id); const fora=new Set(dg.fora||[]);
+ return (dg.dores||[]).map(nome=>{ let ls=P?P.ligacoes.filter(l=>l.dor===nome):[]; if(!ls.length) ls=dspTriplas(D).filter(t=>t.dor===nome);
+  const lib=dspDorLib(D,nome)||{}; const sols=[...new Set(ls.map(l=>l.sol))]; const todos=[...new Set(ls.map(l=>l.prod))];
+  return {nome,cat:lib.cat||"",desc:lib.desc||"",sols,todos,prods:todos.filter(n=>!fora.has(n)).map(n=>pzProd(D,n)||{nome:n,cat:"",valor:null,desc:""})}; }); }
+function diagResumo(dg){ if(!dg||!(dg.dores||[]).length) return ""; const D=PZ.D; const r=D?diagResolver(D,dg):[]; const np=new Set(r.flatMap(x=>x.prods.map(p=>p.nome))).size;
+ return `${dg.persona?dg.persona+" · ":""}${dg.dores.length} dor${dg.dores.length===1?"":"es"}${D?` · ${np} produto${np===1?"":"s"}`:""}${(dg.metas||[]).length?` · ${dg.metas.length} objetivo${dg.metas.length===1?"":"s"}`:""}`; }
+async function diagAbrir(depois){ const S=PRECO_ST; let base; try{ base=await pzCarregar(); }catch(e){ crmToast(e.message); return; }
+ const D=dspPrepara(JSON.parse(JSON.stringify(base)));
+ const dg=JSON.parse(JSON.stringify(S.diag||{})); dg.metas=dg.metas||[]; dg.atividades=dg.atividades||[]; dg.dores=dg.dores||[]; dg.fora=dg.fora||[]; dg.extras=dg.extras||[];
+ if(!dg.persona_id){ const p=diagPersonaDoNicho(D,S.nicho); if(p){ dg.persona_id=p.id; dg.persona=p.nome; } }
+ const cliente=S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"";
+ const st={passo:dg.dores.length?1:0}; const tela=dspTela("Diagnóstico do cliente",cliente||"Cliente sem negócio escolhido");
+ const A=PRECO_DB[S.arq]; const extrasTab=(A&&A.P&&A.P.extras)||[]; const extraDe=n=>extrasTab.find(e=>pzNorm(e.nome)===pzNorm(n));
+ const teclas=e=>{ if(tela.isConnected&&e.key==="Escape"){ const dl=tela.querySelector(".pz-dlg"); if(dl){ e.stopImmediatePropagation(); dl.remove(); } } }; document.addEventListener("keydown",teclas,true);
+ let redesenha=()=>{}; const aoRedim=()=>redesenha(); window.addEventListener("resize",aoRedim);
+ const fecha=()=>{ document.removeEventListener("keydown",teclas,true); window.removeEventListener("resize",aoRedim); document.body.classList.remove("cte-aberto"); tela.remove(); };
+ const concluir=()=>{ if(!dg.dores.length){ crmToast("Marque ao menos uma dor do cliente."); return; }
+  // produtos marcados para somar ao simulador viram extras da tabela aberta
+  dg.extras.forEach(n=>{ const e=extraDe(n); if(e){ const k=S.arq+":"+e.id; if(!S.extras[k]) S.extras[k]={nome:e.nome,valor:precoValorTxt(e.valor),cobranca:"avulso",qtd:1,arq:S.arq}; } });
+  S.diag=dg; fecha(); crmToast("Diagnóstico salvo. Ele entra na apresentação e é gravado ao salvar no negócio."); depois&&depois(); };
+ const topo=()=>{ tela.querySelector(".pz-top-c").innerHTML=`<div class="pz-passos" style="margin:0">${["Dores e objetivos","Dores resolvidas"].map((t,i)=>`<button type="button" class="${i===st.passo?"on":""} ${i<st.passo?"feito":""}" data-ps="${i}" style="min-width:170px"><span>${i+1}</span>${t}</button>`).join("")}</div>`;
+  tela.querySelector(".pz-top-r").innerHTML=`${dg.dores.length?`<button class="cte-b" id="dgLimpar">Limpar diagnóstico</button>`:""}<button class="cte-b" id="dgImp">Imprimir</button><button class="cte-b cte-pri" id="dgOk">Concluir</button><button class="cte-ib" id="dgX" aria-label="Fechar sem salvar">${ctI("fechar")}</button>`;
+  tela.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{ if(+b.dataset.ps===1&&!dg.dores.length){ crmToast("Marque ao menos uma dor do cliente."); return; } st.passo=+b.dataset.ps; render(); });
+  tela.querySelector("#dgOk").onclick=concluir; tela.querySelector("#dgX").onclick=fecha; tela.querySelector("#dgImp").onclick=imprimir;
+  const lp=tela.querySelector("#dgLimpar"); if(lp) lp.onclick=()=>{ if(lp.dataset.ok!=="1"){ lp.dataset.ok="1"; lp.textContent="Clique de novo para limpar"; return; } delete S.diag; fecha(); depois&&depois(); crmToast("Diagnóstico removido"); }; };
+ const tg=(on,attr,val)=>`<button type="button" class="ds-tg ${on?"on":""}" ${attr}="${escAttr(val)}" aria-pressed="${on}">${on?"SIM":"NÃO"}</button>`;
+ // ---- estratégia da reunião com IA ----
+ const iaEstado={carregando:false};
+ const iaHTML=P=>{ const E=dg.estrategia; const L=a=>(a||[]).filter(Boolean);
+  return `<details class="pz-passo ds-ia" ${iaEstado.aberto!==false?"open":""}><summary><b>Estratégia da reunião com IA</b><span class="sub">${E?`Gerada em ${new Date(E.gerada_em).toLocaleString("pt-BR")}`:"A IA monta o roteiro, as perguntas por dor e as objeções a partir da persona e do que você já sabe"}</span></summary>
+   <label class="crm-f" style="margin-top:10px"><span>O que você já sabe do cliente (opcional)</span><textarea class="inp" id="iaCtx" rows="3" placeholder="Ex.: tem 3 lojas, sócio cuida do financeiro sozinho, reclamou do contador atual, quer abrir filial em 2027">${esc(dg.contexto||"")}</textarea></label>
+   <div class="crm-pe" style="margin-top:8px"><span class="sub" id="iaMsg" style="flex:1">${iaEstado.carregando?"Montando a estratégia, leva uns 20 segundos…":"Os objetivos e as dores marcadas abaixo também entram na análise."}</span><button type="button" class="view-btn ${E?"ghost":"ce-pri"}" id="iaGo" ${iaEstado.carregando?"disabled":""}>${iaEstado.carregando?"Montando…":E?"Gerar de novo":"Montar estratégia com IA"}</button></div>
+   ${E?`<div class="ds-ia-r">
+    <div class="ds-ia-res"><p>${esc(E.resumo||"")}</p>${E.objetivo_reuniao?`<p><b>Objetivo da reunião:</b> ${esc(E.objetivo_reuniao)}</p>`:""}</div>
+    ${L(E.dores_prioritarias).length?`<h5>Dores para puxar na conversa</h5><ul class="ds-ia-l">${E.dores_prioritarias.map(d=>`<li><b>${esc(d.dor)}</b>${d.porque?`: ${esc(d.porque)}`:""}</li>`).join("")}</ul><button type="button" class="txt-btn" id="iaMarcar">Marcar estas dores no diagnóstico</button>`:""}
+    ${L(E.roteiro).length?`<h5>Roteiro</h5><ol class="ds-ia-rot">${E.roteiro.map(r=>`<li><div><b>${esc(r.etapa)}</b>${r.minutos?` <span class="sub">${esc(r.minutos)} min</span>`:""}${r.objetivo?`<small>${esc(r.objetivo)}</small>`:""}</div>${L(r.falas).map(f=>`<q>${esc(f)}</q>`).join("")}</li>`).join("")}</ol>`:""}
+    ${L(E.perguntas_por_dor).length?`<h5>Perguntas por dor</h5><div class="ds-ia-pd">${E.perguntas_por_dor.map(p=>`<div class="ds-ia-c"><b>${esc(p.dor)}</b>${[["S","situacao"],["P","problema"],["I","implicacao"],["N","necessidade"]].filter(([,k])=>p[k]).map(([l,k])=>`<p><span class="ds-spin">${l}</span>${esc(p[k])}</p>`).join("")}${L(p.produtos).length?`<small>Produtos: ${p.produtos.map(esc).join(", ")}</small>`:""}${p.gancho?`<small><b>Como apresentar:</b> ${esc(p.gancho)}</small>`:""}</div>`).join("")}</div>`:""}
+    ${L(E.objecoes).length?`<h5>Objeções prováveis</h5><ul class="ds-ia-l">${E.objecoes.map(o=>`<li><b>${esc(o.objecao)}</b><br>${esc(o.resposta)}</li>`).join("")}</ul>`:""}
+    ${L(E.a_descobrir).length?`<h5>O que ainda falta descobrir</h5><ul class="ds-ia-l">${E.a_descobrir.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${E.proximo_passo?`<div class="ds-ia-res"><b>Próximo passo para pedir:</b> ${esc(E.proximo_passo)}</div>`:""}
+    <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA. Revise antes da reunião.</p></div>`:""}</details>`; };
+ const ligaIA=(c,P)=>{ const dt=c.querySelector(".ds-ia"); dt.ontoggle=()=>{ iaEstado.aberto=dt.open; }; const ctx=c.querySelector("#iaCtx"); ctx.oninput=()=>{ dg.contexto=ctx.value; };
+  const mk=c.querySelector("#iaMarcar"); if(mk) mk.onclick=()=>{ const ok=new Set(P.dores.map(d=>d.nome)); let n=0; (dg.estrategia.dores_prioritarias||[]).forEach(d=>{ if(ok.has(d.dor)&&!dg.dores.includes(d.dor)){ dg.dores.push(d.dor); n++; } }); crmToast(n?`${n} dor${n===1?"":"es"} marcada${n===1?"":"s"}`:"Essas dores já estavam marcadas"); render(); };
+  c.querySelector("#iaGo").onclick=async()=>{ dg.contexto=ctx.value; iaEstado.carregando=true; render();
+   const R=dspTriplas(D); const sim=PRECO_DB[S.arq]; let ativ="";
+   try{ const at=sim&&sim.P.atividades.find(a=>a.chave===S.resp.atividade); ativ=at?at.nome:""; }catch(_){}
+   const corpo={cliente,nicho:S.nicho||"",persona:P.nome,faturamento:S.resp&&S.resp.faturamento?precoMoeda(precoNum(S.resp.faturamento)):"",regime:(S.resp||{}).tributacao||"",atividade:ativ,
+    atividades:dg.atividades,metas:dg.metas,contexto:dg.contexto||"",historico:S.negocio?[S.negocio.titulo,S.negocio.obs].filter(Boolean).join(". "):"",
+    dores_persona:P.dores.map(d=>{ const ls=P.ligacoes.filter(l=>l.dor===d.nome); const lib=dspDorLib(D,d.nome)||{}; return {nome:d.nome,cat:d.cat||lib.cat||"",desc:lib.desc||"",marcada:dg.dores.includes(d.nome),sols:[...new Set(ls.map(l=>l.sol))],prods:[...new Set(ls.map(l=>l.prod))]}; })};
+   try{ const {data,error}=await sb.functions.invoke("crm-estrategia",{body:corpo});
+    if(error){ let m=""; try{ m=(await error.context.json()).erro; }catch(_){} throw new Error(m||(/404|Failed to send/.test(String(error.message))?"A função crm-estrategia não respondeu. Tente de novo em instantes.":String(error.message))); }
+    if(!data||data.erro) throw new Error((data&&data.erro)||"Sem resposta da IA"); dg.estrategia=data; crmToast("Estratégia pronta"); }
+   catch(e){ crmToast(e.message); } finally{ iaEstado.carregando=false; if(tela.isConnected) render(); } }; };
+ const passo1=c=>{ const P=D.personas.find(p=>p.id===dg.persona_id); const ativas=D.personas.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const doresP=P?P.dores.map(d=>d.nome):[]; const extrasD=dg.dores.filter(n=>!doresP.includes(n)); const porCat={};
+  [...doresP,...extrasD].forEach(n=>{ const cat=(dspDorLib(D,n)||{}).cat||"Outras"; (porCat[cat]=porCat[cat]||[]).push(n); });
+  c.innerHTML=`<div class="ds-par"><div><span class="sub">NICHO DO SIMULADOR</span><b>${esc(S.nicho||"não informado")}</b></div><div><span class="sub">CLIENTE</span><b>${esc(cliente||"—")}</b></div>
+   <label class="crm-f" style="min-width:280px"><span>Persona usada no diagnóstico</span><select class="inp" id="dgP"><option value="">Escolha a persona</option>${ativas.map(p=>`<option value="${p.id}" ${p.id===dg.persona_id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></label></div>
+  ${!P?`<div class="pz-aviso">Escolha a persona do cliente para ver as dores do nicho.${S.nicho?" Não encontrei uma persona com o mesmo nome do nicho.":""}</div>`:`
+  ${iaHTML(P)}
+  <div class="ds-2c"><div class="pz-passo"><h4 class="ds-h">Metas e objetivos</h4>${D.bibliotecas.metas.map(m=>{ const o=dg.metas.find(x=>x.nome===m); return `<div class="ds-meta">${tg(!!o,"data-meta",m)}<span>${esc(m)}</span>${o?`<div class="ds-meta-c"><label>Qual / quanto <input class="inp" data-mq="${escAttr(m)}" value="${escAttr(o.qual||"")}" placeholder="Ex.: R$ 500 mil por mês"></label><label>Em quanto tempo <input class="inp" data-mt="${escAttr(m)}" value="${escAttr(o.tempo||"")}" inputmode="numeric" style="width:70px"> meses</label></div>`:""}</div>`; }).join("")}
+    ${P.atividades.length?`<h4 class="ds-h" style="margin-top:18px">Atividades do cliente</h4><div class="ds-chips">${P.atividades.map(a=>`<button type="button" class="${dg.atividades.includes(a)?"on":""}" data-at="${escAttr(a)}">${esc(a)}</button>`).join("")}</div>`:""}</div>
+   <div class="pz-passo"><h4 class="ds-h">Dores <span class="sub">(${dg.dores.length} marcada${dg.dores.length===1?"":"s"})</span></h4>
+    ${Object.entries(porCat).map(([cat,ns])=>`<div class="pz-grp"><em>${esc(cat)}</em>${ns.map(n=>{ const lib=dspDorLib(D,n)||{}; return `<div class="ds-dor">${tg(dg.dores.includes(n),"data-dor",n)}<span>${esc(n)}${lib.desc?`<small>${esc(lib.desc)}</small>`:""}</span></div>`; }).join("")}</div>`).join("")}
+    <div class="pz-add" style="margin-top:10px"><input class="inp" id="dgOutra" list="dgOutraL" placeholder="Outra dor que o cliente citou (da biblioteca)"><datalist id="dgOutraL">${D.bibliotecas.dores.filter(d=>!doresP.includes(d.nome)).map(d=>`<option value="${escAttr(d.nome)}">`).join("")}</datalist><button type="button" class="view-btn ghost" id="dgOutraB">Adicionar</button></div></div></div>
+  <div class="crm-pe pz-rod"><span style="flex:1"></span><button class="view-btn ce-pri" id="dgNext">Ver dores resolvidas ›</button></div>`}`;
+  c.querySelector("#dgP").onchange=e=>{ const p=D.personas.find(x=>x.id===e.target.value); dg.persona_id=p?p.id:""; dg.persona=p?p.nome:""; dg.dores=dg.dores.filter(n=>!p||p.dores.some(x=>x.nome===n)); dg.atividades=[]; render(); };
+  if(!P) return;
+  c.querySelectorAll("[data-meta]").forEach(b=>b.onclick=()=>{ const m=b.dataset.meta; const i=dg.metas.findIndex(x=>x.nome===m); i<0?dg.metas.push({nome:m,qual:"",tempo:""}):dg.metas.splice(i,1); render(); });
+  c.querySelectorAll("[data-mq]").forEach(i=>i.oninput=()=>{ dg.metas.find(x=>x.nome===i.dataset.mq).qual=i.value; });
+  c.querySelectorAll("[data-mt]").forEach(i=>i.oninput=()=>{ dg.metas.find(x=>x.nome===i.dataset.mt).tempo=i.value.replace(/\D/g,""); });
+  c.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{ const a=b.dataset.at; dg.atividades=dg.atividades.includes(a)?dg.atividades.filter(x=>x!==a):[...dg.atividades,a]; render(); });
+  c.querySelectorAll("[data-dor]").forEach(b=>b.onclick=()=>{ const n=b.dataset.dor; dg.dores=dg.dores.includes(n)?dg.dores.filter(x=>x!==n):[...dg.dores,n]; render(); });
+  c.querySelector("#dgOutraB").onclick=()=>{ const n=c.querySelector("#dgOutra").value.trim(); if(!n) return; if(!dspDorLib(D,n)){ crmToast("Escolha uma dor da biblioteca. Para criar dores novas, use Personas › Dor x Solução x Produto."); return; } if(!dg.dores.includes(n)) dg.dores.push(n); render(); };
+  ligaIA(c,P);
+  c.querySelector("#dgNext").onclick=()=>{ if(!dg.dores.length){ crmToast("Marque ao menos uma dor do cliente."); return; } st.passo=1; render(); }; };
+ const passo2=c=>{ const R=diagResolver(D,dg); const fora=new Set(dg.fora);
+  const prods=[]; const idx={}; R.forEach(r=>r.todos.forEach(n=>{ if(!(n in idx)){ idx[n]=prods.length; prods.push(pzProd(D,n)||{nome:n,cat:"",valor:null,desc:""}); } }));
+  const grupos={}; prods.forEach(p=>(grupos[p.cat||"OUTROS"]=grupos[p.cat||"OUTROS"]||[]).push(p));
+  const incl=prods.filter(p=>!fora.has(p.nome)); const soma=incl.reduce((s,p)=>s+(precoNum(p.valor)||0),0);
+  c.innerHTML=`<div class="ds-par"><div><span class="sub">PERSONA</span><b>${esc(dg.persona||"")}</b></div><div><span class="sub">CLIENTE</span><b>${esc(cliente||"—")}</b></div><div><span class="sub">PRODUTOS INDICADOS</span><b>${incl.length} de ${prods.length}${soma?` · ${precoMoeda(soma)} em valores de referência`:""}</b></div></div>
+  <div class="ds-faixa"><span>DORES RESOLVIDAS</span><span>PRODUTOS</span></div>
+  <div class="pz-mapa ds-mapa" id="dgMapa"><svg class="pz-svg" aria-hidden="true"></svg>
+   <div class="pz-col pz-dores">${R.map((r,i)=>`<div class="pz-dor" data-dor-i="${i}"><div class="pz-dor-t"><span>${esc(r.nome)}</span>${r.cat?`<em>${esc(r.cat)}</em>`:""}</div>${r.sols.length?`<small class="ds-sol">${esc(r.sols.join(" · "))}</small>`:`<small class="ds-sol">Sem produtos ligados a esta dor na persona.</small>`}</div>`).join("")}</div>
+   <div class="pz-col pz-prods">${Object.entries(grupos).map(([cat,ps])=>`<div class="pz-cat">${esc(cat)}</div>${ps.map(p=>{ const i=idx[p.nome], on=!fora.has(p.nome), ex=extraDe(p.nome); return `<div class="pz-prod ${on?"":"ds-off"}" data-prod-i="${i}"><div class="pz-prod-t">${tg(on,"data-inc",p.nome)}<b>${esc(p.nome)}</b>${p.desc?`<button type="button" class="pz-info" data-info="${i}" title="Ver descrição" aria-label="Ver descrição">i</button>`:""}</div><small>Valor: ${p.valor?"R$ "+esc(p.valor):"a combinar"}</small>
+    ${ex&&on?`<label class="ds-ex"><input type="checkbox" data-ex="${escAttr(p.nome)}" ${dg.extras.includes(p.nome)?"checked":""}> Somar como extra no simulador</label>`:""}<p class="pz-desc" hidden>${esc(p.desc||"")}</p></div>`; }).join("")}`).join("")}</div></div>
+  <div class="crm-pe pz-rod"><button class="view-btn ghost" data-ps="0">‹ Voltar</button><span style="flex:1"></span><button class="view-btn ce-pri" id="dgFim">Concluir diagnóstico</button></div>`;
+  const box=c.querySelector("#dgMapa"), svg=box.querySelector(".pz-svg");
+  const desenha=()=>{ if(!box.isConnected) return; const br=box.getBoundingClientRect(); svg.setAttribute("width",br.width); svg.setAttribute("height",box.scrollHeight); let h="";
+   R.forEach((r,di)=>r.todos.forEach(n=>{ const a=box.querySelector(`[data-dor-i="${di}"]`).getBoundingClientRect(), b=box.querySelector(`[data-prod-i="${idx[n]}"]`).getBoundingClientRect();
+    const x1=a.right-br.left, y1=a.top-br.top+a.height/2, x2=b.left-br.left, y2=b.top-br.top+b.height/2, mx=(x1+x2)/2;
+    h+=`<path class="${fora.has(n)?"off":""}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" data-d="${di}" data-p="${idx[n]}"></path>`; })); svg.innerHTML=h; };
+  redesenha=desenha; requestAnimationFrame(desenha); setTimeout(desenha,250);
+  const realca=(tipo,i)=>{ box.classList.toggle("foco",i!=null); svg.querySelectorAll("path").forEach(p=>p.classList.toggle("on",i!=null&&p.dataset[tipo]===String(i)));
+   const lD=new Set(), lP=new Set(); if(i!=null) svg.querySelectorAll("path.on").forEach(p=>{ lD.add(p.dataset.d); lP.add(p.dataset.p); });
+   box.querySelectorAll("[data-dor-i]").forEach(e=>e.classList.toggle("on",lD.has(e.dataset.dorI))); box.querySelectorAll("[data-prod-i]").forEach(e=>e.classList.toggle("on",lP.has(e.dataset.prodI))); };
+  box.querySelectorAll("[data-dor-i]").forEach(e=>{ e.onmouseenter=()=>realca("d",e.dataset.dorI); e.onmouseleave=()=>realca(null,null); });
+  box.querySelectorAll("[data-prod-i]").forEach(e=>{ e.onmouseenter=()=>realca("p",e.dataset.prodI); e.onmouseleave=()=>realca(null,null); });
+  box.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>{ const n=b.dataset.inc; if(fora.has(n)) dg.fora=dg.fora.filter(x=>x!==n); else { dg.fora.push(n); dg.extras=dg.extras.filter(x=>x!==n); } render(); });
+  box.querySelectorAll("[data-ex]").forEach(k=>k.onchange=()=>{ const n=k.dataset.ex; dg.extras=k.checked?[...new Set([...dg.extras,n])]:dg.extras.filter(x=>x!==n); });
+  box.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{ const p=b.closest(".pz-prod").querySelector(".pz-desc"); p.hidden=!p.hidden; desenha(); });
+  c.querySelector("[data-ps]").onclick=()=>{ st.passo=0; render(); }; c.querySelector("#dgFim").onclick=concluir; };
+ const imprimir=()=>{ const R=diagResolver(D,dg); const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
+  const linhas=R.map(r=>`<tr><td><b>${esc(r.nome)}</b>${r.cat?`<span class="t">${esc(r.cat)}</span>`:""}${r.desc?`<small>${esc(r.desc)}</small>`:""}</td><td>${esc(r.sols.join("; "))}</td><td>${r.prods.map(p=>`<div><b>${esc(p.nome)}</b>${p.valor?` <small>R$ ${esc(p.valor)}</small>`:""}${p.desc?`<small>${esc(p.desc)}</small>`:""}</div>`).join("")||"—"}</td></tr>`).join("");
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Diagnóstico ${esc(cliente)}</title><style>body{font:13px Arial,sans-serif;color:#1a1b28;margin:28px}h1{color:#006789;margin:0 0 4px;font-size:22px}.k{font-size:11px;letter-spacing:.15em;color:#006789;font-weight:700}table{border-collapse:collapse;width:100%;margin-top:10px}th,td{border:1px solid #d6dde2;padding:7px 9px;text-align:left;vertical-align:top}th{background:#eef3f5}small{display:block;color:#555;margin-top:2px}.t{display:inline-block;font-size:10px;background:#e0eef2;color:#00506a;border-radius:4px;padding:1px 5px;margin-left:6px}td div{margin-bottom:6px}ul{margin:6px 0 0;padding-left:18px}</style></head><body>
+   <div class="k">DIAGNÓSTICO RESILCON</div><h1>${esc(cliente||"Cliente")}</h1><div>Persona: <b>${esc(dg.persona||"")}</b>${S.nicho?` · Nicho: ${esc(S.nicho)}`:""} · ${new Date().toLocaleDateString("pt-BR")}</div>
+   ${dg.metas.length?`<h3>Metas e objetivos</h3><ul>${dg.metas.map(m=>`<li><b>${esc(m.nome)}</b>${m.qual?`: ${esc(m.qual)}`:""}${m.tempo?` em ${esc(m.tempo)} meses`:""}</li>`).join("")}</ul>`:""}
+   ${dg.estrategia?(()=>{ const E=dg.estrategia; return `<h3>Estratégia da reunião</h3><p>${esc(E.resumo||"")}</p>${E.objetivo_reuniao?`<p><b>Objetivo:</b> ${esc(E.objetivo_reuniao)}</p>`:""}<ol>${(E.roteiro||[]).map(r=>`<li><b>${esc(r.etapa)}</b>${r.minutos?` (${esc(r.minutos)} min)`:""}: ${esc(r.objetivo||"")}<ul>${(r.falas||[]).map(f=>`<li>${esc(f)}</li>`).join("")}</ul></li>`).join("")}</ol>${(E.perguntas_por_dor||[]).map(p=>`<p><b>${esc(p.dor)}</b><br>S: ${esc(p.situacao||"")}<br>P: ${esc(p.problema||"")}<br>I: ${esc(p.implicacao||"")}<br>N: ${esc(p.necessidade||"")}</p>`).join("")}${(E.objecoes||[]).length?`<p><b>Objeções</b></p><ul>${E.objecoes.map(o=>`<li><b>${esc(o.objecao)}</b>: ${esc(o.resposta)}</li>`).join("")}</ul>`:""}${E.proximo_passo?`<p><b>Próximo passo:</b> ${esc(E.proximo_passo)}</p>`:""}`; })():""}
+   <h3>Dores resolvidas</h3><table><thead><tr><th style="width:30%">Dor</th><th style="width:25%">Como resolvemos</th><th>Produtos indicados</th></tr></thead><tbody>${linhas}</tbody></table><script>print()<\/script></body></html>`); w.document.close(); };
+ const render=()=>{ topo(); const c=tela.querySelector(".pz-corpo"); redesenha=()=>{}; (st.passo?passo2:passo1)(c); };
+ render(); }
+
+// dados do diagnóstico para os slides (até 8 dores, 4 metas)
+function diagParaApresentacao(dg){ if(!dg||!(dg.dores||[]).length||!PZ.D) return null; const R=diagResolver(PZ.D,dg);
+ return {persona:dg.persona||"",metas:(dg.metas||[]).map(m=>({nome:m.nome,det:[m.qual,m.tempo?`em ${m.tempo} meses`:""].filter(Boolean).join(" ")})),dores:R}; }
+
+(function(){ if(document.getElementById("ds-css")) return; const s=document.createElement("style"); s.id="ds-css"; s.textContent=`
+.pz-novo2{background:#f6fafb;border:1px dashed #b9d3db;border-radius:10px;padding:10px 12px}
+.ds-ps-h{display:flex;align-items:center;gap:10px;margin:16px 0 8px;flex-wrap:wrap}.ds-letras{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}.ds-letras button{border:1px solid #e1e5ec;background:#fff;border-radius:7px;padding:3px 8px;cursor:pointer;font:600 11.5px inherit;color:#4a4d63}.ds-letras button.on{background:#006789;border-color:#006789;color:#fff}
+.ds-ps{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:42vh;overflow:auto;border:1px solid #e7e9f2;border-radius:12px;padding:8px}.ds-ps .pz-chk em{color:#006789}
+.ds-tg{border:0;border-radius:999px;padding:3px 10px;font:700 10.5px inherit;letter-spacing:.04em;cursor:pointer;background:#e3e6ec;color:#83879c;flex:none;min-width:48px}.ds-tg.on{background:#0b2b3a;color:#fff}
+.ds-par{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;background:#fff;border:1px solid #e7e9f2;border-radius:14px;padding:12px 16px;margin-bottom:14px}.ds-par>div{display:flex;flex-direction:column;gap:2px}.ds-par b{font-size:14px;color:#0b2b3a}
+.ds-2c{display:grid;grid-template-columns:1fr 1.25fr;gap:16px}.ds-h{margin:0 0 10px;font-size:14px}
+.ds-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef0f5}.ds-meta-c{flex-basis:100%;display:flex;gap:12px;flex-wrap:wrap;padding-left:58px}.ds-meta-c label{display:flex;align-items:center;gap:6px;font-size:12px;color:#4a4d63}.ds-meta-c .inp{padding:6px 8px}
+.ds-chips{display:flex;flex-wrap:wrap;gap:6px}.ds-chips button{border:1px solid #d6dde2;background:#fff;border-radius:999px;padding:5px 11px;cursor:pointer;font:500 12px inherit}.ds-chips button.on{background:#e0eef2;border-color:#006789;color:#00506a;font-weight:700}
+.ds-dor{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #f0f2f6}.ds-dor span{flex:1}.ds-dor small{display:block;color:#83879c;font-size:11.5px;margin-top:2px}
+.ds-faixa{display:flex;justify-content:space-between;background:#0b2b3a;color:#fff;border-radius:10px;padding:10px 16px;font:700 11px inherit;letter-spacing:.1em;margin-bottom:10px}
+.ds-mapa .pz-dor{background:#fff;border:1px solid #e1e5ec}.ds-sol{display:block;color:#4a4d63;font-size:11.5px;margin-top:6px}.ds-mapa .pz-prod{background:#fff;border:1px solid #e1e5ec}.ds-mapa .pz-prod.ds-off{opacity:.55}.pz-svg path.off{stroke-dasharray:2 9}
+.ds-ex{display:flex;gap:6px;align-items:center;font-size:11.5px;color:#00506a;margin-top:6px}
+.prec-diag{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f3f8fa;border:1px solid #d4e5eb;border-radius:12px;padding:9px 12px;margin-top:10px}.prec-diag b{color:#0b2b3a}
+.ds-ia{margin-bottom:14px;border-color:#b9d3db;background:linear-gradient(180deg,#f3f9fb,#fff 120px)}.ds-ia>summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}.ds-ia>summary b{color:#00506a}
+.ds-ia-r{margin-top:12px;border-top:1px solid #e1e8ec;padding-top:10px}.ds-ia-r h5{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#006789}.ds-ia-res{background:#fff;border:1px solid #e1e8ec;border-radius:10px;padding:10px 12px}.ds-ia-res p{margin:0 0 6px}
+.ds-ia-l{margin:0;padding-left:18px}.ds-ia-l li{margin-bottom:5px}.ds-ia-rot{margin:0;padding-left:20px}.ds-ia-rot li{margin-bottom:10px}.ds-ia-rot small{display:block;color:#4a4d63}.ds-ia-rot q{display:block;quotes:none;margin-top:4px;padding:6px 10px;background:#fff;border-left:3px solid #006789;border-radius:6px;font-style:italic}
+.ds-ia-pd{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.ds-ia-c{background:#fff;border:1px solid #e1e8ec;border-radius:10px;padding:10px 12px}.ds-ia-c p{margin:6px 0;display:flex;gap:8px}.ds-ia-c small{display:block;color:#4a4d63;margin-top:6px}.ds-spin{flex:none;width:18px;height:18px;border-radius:50%;background:#0b2b3a;color:#fff;font:700 10px/18px inherit;text-align:center}
+@media(max-width:900px){.ds-2c{grid-template-columns:1fr}}
+`; document.head.appendChild(s); })();
+
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
