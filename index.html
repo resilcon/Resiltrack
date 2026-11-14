@@ -809,7 +809,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.9 (dor x solução x produto, diagnóstico com IA e slides de dores)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.9.1 (dores da persona na hora de gerar a apresentação)</footer>
   </div>
 </div>
 
@@ -6521,11 +6521,11 @@ function apresDadosSimulador(){ const S=PRECO_ST, A=PRECO_DB[S.arq], P=A.P;
   return {id:p.id,nome:p.nome,valor:final,de:final<base?base:null,itens:(p.inclusos||[]).map(x=>x.nome),recomendado:naCesta.has(p.id)}; });
  return {produto:A.nome,atividade:ativ?apresCap(ativ.nome):"",regime:S.resp.tributacao||"",faturamento:fat?precoMoeda(fat):"",validade:S.validade,planos,
   empresa:S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"",semFat:P.atividades.length&&!fat,diag:(typeof diagParaApresentacao==="function"?diagParaApresentacao(S.diag):null)}; }
-async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
+async function apresAbrir(){ const S=PRECO_ST; try{ await pzCarregar(); }catch(_){} const d=apresDadosSimulador();
  if(d.semFat){ crmToast("Informe o faturamento para calcular os planos antes de gerar a apresentação."); return; }
  let modelo=null; try{ modelo=await apresModelo(); }catch(_){}
  const rec=d.planos.findIndex(p=>p.recomendado);
- const m=crmModal("Simulador de planos","Gerar apresentação comercial","",`${d.diag?`<div class="prec-diag" style="margin:0 0 10px"><b>Diagnóstico</b><span class="sub">${esc(d.diag.persona)} · ${d.diag.dores.length} dor${d.diag.dores.length===1?"":"es"}${d.diag.metas.length?` · ${d.diag.metas.length} objetivo${d.diag.metas.length===1?"":"s"}`:""}. Entra nos slides de diagnóstico e de dores resolvidas.</span></div>`:`<div class="prec-diag" style="margin:0 0 10px"><b>Sem diagnóstico</b><span class="sub" style="flex:1">Os slides de dores do cliente ficam ocultos. Faça o diagnóstico no simulador para personalizar.</span></div>`}<p class="sub" style="margin:0">A apresentação da Resilcon sai com o nome do cliente no mapa de desafios, os ${d.planos.length} planos de ${esc(d.produto)} no simulador e o que está incluso em cada um. Na hora de apresentar, clique no plano para abrir o detalhe dele.</p>
+ const m=crmModal("Simulador de planos","Gerar apresentação comercial","",`${apresDoresHTML(d)}<p class="sub" style="margin:0">A apresentação da Resilcon sai com o nome do cliente no mapa de desafios, os ${d.planos.length} planos de ${esc(d.produto)} no simulador e o que está incluso em cada um. Na hora de apresentar, clique no plano para abrir o detalhe dele.</p>
   <div class="crm-form"><label class="crm-f crm-w2"><span>Empresa do cliente</span><input class="inp" id="apEmp" value="${escAttr(d.empresa)}" placeholder="Nome que aparece nos slides"></label>
    <label class="crm-f"><span>Plano recomendado</span><select class="inp" id="apRec"><option value="-1">Nenhum em destaque</option>${d.planos.map((p,i)=>`<option value="${i}" ${i===rec?"selected":""}>${esc(p.nome)} · ${precoMoeda(p.valor)}</option>`).join("")}</select></label>
    <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" id="apVal" type="number" min="1" value="${escAttr(d.validade||30)}"></label></div>
@@ -6533,10 +6533,14 @@ async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
    <label class="txt-btn" style="cursor:pointer;margin-left:6px">${modelo?"Trocar modelo":"Enviar modelo"}<input type="file" id="apArq" accept=".pptx" hidden></label></div>
   <div class="crm-pe"><span class="sub" id="apMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="apOk">Gerar apresentação</button>')}</div>`);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const apDg=m.querySelector("#apDiag"); if(apDg) apDg.onclick=()=>{ closeModal(); diagAbrir(()=>{ try{ precoPintar(document.getElementById("view")); }catch(_){} apresAbrir(); }); };
+ const apP=m.querySelector("#apPer"); if(apP) apP.onchange=()=>{ m.querySelector("#apDores").innerHTML=apresDoresLista(apP.value); };
  const msg=t=>{ m.querySelector("#apMsg").textContent=t||""; };
  m.querySelector("#apArq").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; msg("Enviando o modelo…"); try{ modelo=await apresEnviarModelo(f); msg("Modelo salvo."); m.querySelector(".ce-note").firstChild.textContent=`Modelo usado: ${modelo.split("/").pop()}. `; }catch(err){ msg(""); crmToast(crmErro(err)); } };
  m.querySelector("#apOk").onclick=async ev=>{ const b=ev.currentTarget; if(!modelo){ crmToast("Envie o modelo da apresentação primeiro."); return; }
   const empresa=crmVal(m,"#apEmp"); if(!empresa){ crmToast("Informe o nome da empresa do cliente."); return; }
+  if(!d.diag){ const pp=m.querySelector("#apPer"); const ds=[...m.querySelectorAll("[data-apdor]:checked")].map(i=>i.value);
+   if(pp&&pp.value&&ds.length){ const P=PZ.D.personas.find(x=>x.id===pp.value); S.diag={persona_id:P.id,persona:P.nome,dores:ds,metas:[],atividades:[],fora:[],extras:[],rapido:true}; d.diag=diagParaApresentacao(S.diag); } }
   const ri=+m.querySelector("#apRec").value; d.planos.forEach((p,i)=>p.recomendado=i===ri); d.empresa=empresa; d.validade=+m.querySelector("#apVal").value||30;
   b.disabled=true; msg("Montando a apresentação…");
   try{ const JSZip=await apresCarregaJSZip(); const {data,error}=await sb.storage.from("crm-arquivos").download(modelo); if(error) throw error;
@@ -6545,6 +6549,19 @@ async function apresAbrir(){ const S=PRECO_ST; const d=apresDadosSimulador();
    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Apresentação Resilcon - ${empresa.replace(/[\\/:*?"<>|]+/g,"")}.pptx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),20000);
    closeModal(); crmToast("Apresentação gerada. Abra no PowerPoint e apresente em tela cheia para usar os cliques dos planos."); }
   catch(err){ b.disabled=false; msg(""); crmToast(crmErro(err)); } }; }
+
+// dores da persona para escolher na hora de gerar (quando o diagnóstico completo não foi feito)
+function apresDoresLista(pid){ const D=PZ.D; const P=D&&D.personas.find(x=>x.id===pid); if(!P) return `<p class="sub" style="margin:6px 0">Escolha a persona para ver as dores ligadas a ela.</p>`;
+ const cont={}; P.ligacoes.forEach(l=>cont[l.dor]=(cont[l.dor]||0)+1); const ds=P.dores.map(x=>x.nome).sort((a,b)=>(cont[b]||0)-(cont[a]||0));
+ return `<div class="ap-dores">${ds.map((n,i)=>`<label class="crm-chk"><input type="checkbox" data-apdor value="${escAttr(n)}" ${i<6?"checked":""}><span>${esc(n)} <small class="sub">${cont[n]||0} produto${cont[n]===1?"":"s"}</small></span></label>`).join("")}</div><p class="sub" style="margin:6px 0 0">${ds.length} dores ligadas a ${esc(P.nome)}. Marque as que o cliente tem (até 8 entram nos slides).</p>`; }
+function apresDoresHTML(d){ const S=PRECO_ST;
+ if(d.diag) return `<div class="prec-diag" style="margin:0 0 10px"><b>Diagnóstico</b><span class="sub" style="flex:1">${esc(d.diag.persona)} · ${d.diag.dores.length} dor${d.diag.dores.length===1?"":"es"}${d.diag.metas.length?` · ${d.diag.metas.length} objetivo${d.diag.metas.length===1?"":"s"}`:""}. Entra nos slides de diagnóstico e de dores resolvidas.</span><button type="button" class="txt-btn" id="apDiag">Editar diagnóstico</button></div>`;
+ const D=PZ.D; if(!D) return `<div class="prec-diag" style="margin:0 0 10px"><b>Sem diagnóstico</b><span class="sub" style="flex:1">Não consegui carregar as personas. Os slides de dores ficam ocultos.</span></div>`;
+ const P=diagPersonaDoNicho(D,S.nicho||(S.negocio&&S.negocio.campos&&S.negocio.campos.nicho)||"");
+ return `<div class="prec-diag" style="margin:0 0 10px;display:block"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b>Dores do cliente nos slides</b><span style="flex:1"></span><button type="button" class="txt-btn" id="apDiag">Diagnóstico completo e estratégia com IA</button></div>
+  <label class="crm-f" style="margin-top:8px"><span>Persona</span><select class="inp" id="apPer"><option value="">Sem dores na apresentação</option>${D.personas.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).map(p=>`<option value="${p.id}" ${P&&P.id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></label>
+  <div id="apDores">${apresDoresLista(P?P.id:"")}</div></div>`; }
+(function(){ if(document.getElementById("ap-css")) return; const s=document.createElement("style"); s.id="ap-css"; s.textContent=`.ap-dores{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;max-height:230px;overflow:auto;margin-top:8px;background:#fff;border:1px solid #e1e8ec;border-radius:10px;padding:8px}.ap-dores small{font-weight:400}@media(max-width:700px){.ap-dores{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
 // ================= CRM · PERSONAS: Dor x Solução x Produto (mesma mecânica da construção de personas da 4C) =================
 CRM_ICO.persona='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6h7M7.5 8l8.6 8.2"/></svg>';
 (function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_precos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i+1,0,["crm_personas","Personas","persona"]); })();
@@ -6940,7 +6957,7 @@ function diagResumo(dg){ if(!dg||!(dg.dores||[]).length) return ""; const D=PZ.D
 async function diagAbrir(depois){ const S=PRECO_ST; let base; try{ base=await pzCarregar(); }catch(e){ crmToast(e.message); return; }
  const D=dspPrepara(JSON.parse(JSON.stringify(base)));
  const dg=JSON.parse(JSON.stringify(S.diag||{})); dg.metas=dg.metas||[]; dg.atividades=dg.atividades||[]; dg.dores=dg.dores||[]; dg.fora=dg.fora||[]; dg.extras=dg.extras||[];
- if(!dg.persona_id){ const p=diagPersonaDoNicho(D,S.nicho); if(p){ dg.persona_id=p.id; dg.persona=p.nome; } }
+ if(!dg.persona_id){ const p=diagPersonaDoNicho(D,S.nicho||(S.negocio&&S.negocio.campos&&S.negocio.campos.nicho)||""); if(p){ dg.persona_id=p.id; dg.persona=p.nome; } }
  const cliente=S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"";
  const st={passo:dg.dores.length?1:0}; const tela=dspTela("Diagnóstico do cliente",cliente||"Cliente sem negócio escolhido");
  const A=PRECO_DB[S.arq]; const extrasTab=(A&&A.P&&A.P.extras)||[]; const extraDe=n=>extrasTab.find(e=>pzNorm(e.nome)===pzNorm(n));
