@@ -651,6 +651,18 @@
   .crm-seg span{font-size:24px;font-weight:800;line-height:1.1}.crm-seg small{font-size:11px;opacity:.92}
   .crm-bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
   .crm-card{border-left:3px solid var(--c)}.crm-card.drag{opacity:.45}
+  .ccard{position:relative;padding:10px 12px 8px;font-size:11.5px;color:var(--ink-2,#4a4d63)}
+  .ccard-etq{height:5px;width:34px;border-radius:99px;margin:-2px 0 6px}
+  .ccard-al{position:absolute;right:10px;top:42px;width:22px;height:22px;border-radius:50%;background:#f59f00;color:#fff;display:grid;place-items:center}.ccard-al svg{width:12px;height:12px}.ccard-al.atr{background:#e03131}
+  .ccard-tit{font-weight:700;font-size:12.5px;line-height:1.25;text-align:center;text-transform:uppercase;color:var(--ink,#1a1b28);padding:0 6px}
+  .ccard-badges{text-align:center;margin:3px 0 6px;min-height:4px}.ccard-bd{display:inline-block;font:700 9.5px/1.6 inherit;letter-spacing:.06em;background:#1c7ed6;color:#fff;border-radius:999px;padding:0 7px}.ccard-bd.cli{background:#128a5b}
+  .ccard-l{display:flex;align-items:flex-start;gap:6px;line-height:1.35;padding-right:26px}.ccard-l svg{flex:none;margin-top:1px;opacity:.85}.ccard-l span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .ccard-v span{font-weight:700;color:#128a5b}
+  .ccard-sep{border-top:1px solid var(--border,#e7e9f2);margin:6px 0}
+  .ccard-pe{display:flex;align-items:center;gap:6px;margin-top:7px}.ccard-ics{display:flex;align-items:center;gap:7px;flex:1;min-width:0;flex-wrap:wrap}
+  .ccard-ic{display:inline-flex;color:inherit}.ccard-ic svg{width:15px;height:15px}.ccard-div{opacity:.4}
+  .ccard-ct{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:11px}.ccard-ct.ok{color:#128a5b}.ccard-ct.env{color:#b7791f}
+  .ccard-num{font:600 10.5px inherit;color:var(--muted,#83879c);background:var(--surface-2,#f4f5fa);border-radius:6px;padding:1px 6px}
   .crm-ind{font-size:11.5px;font-weight:600;color:#A8325A;background:#FBE3EB;border-radius:999px;padding:2px 9px;display:inline-block;margin-top:5px;align-self:flex-start}
   .crm-parado{color:var(--warn);font-weight:700}
   .crm-col-soma{padding:6px 6px 0;font-size:12px}
@@ -817,7 +829,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.10.3 (submenus do menu lateral abrem e fecham)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12 (Simulações e Nova venda como na 4C)</footer>
   </div>
 </div>
 
@@ -1173,7 +1185,7 @@ function renderSide(){
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
       h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
-      if(noCRM) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="crm"><div>`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div></div>`; } }
+      if(noCRM) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="crm"><div>`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)&&m!=="crm_precos").map(([m,t])=>`<button data-mode="${m}" class="${MODE===m||(m==="crm_simulacoes"&&MODE==="crm_precos")?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div></div>`; } }
   if(podeEmails()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
   s.innerHTML=h;
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
@@ -3973,7 +3985,7 @@ function ceTesteModal(chave){
 const CRM_ETAPA_COR={atracao:"#7B5BA6",nutricao:"#E2557A",conversao:"#EE8A2E",decisao:"#D24F93",retencao:"#D24F93",lealdade:"#EE8A2E",indicacao:"#E2557A",ganha:"#2E8B57",perdida:"#8A9599"};
 const CRM_FASES=[["retencao","Retenção"],["lealdade","Lealdade"],["indicacao","Indicação"]];
 const CRM_FASE_TXT=Object.fromEntries(CRM_FASES);
-const CRM_ORIG={manual:"Cadastro manual",planilha:"Planilha",lista_comprada:"Lista sem consentimento",indicacao:"Indicação",formulario:"Formulário do site",evento:"Evento",site:"Site",whatsapp:"WhatsApp",importacao:"Importação",indicacao_parceiro:"Parceiro"};
+const CRM_ORIG={manual:"Cadastro manual",planilha:"Planilha",lista_comprada:"Lista sem consentimento",indicacao:"Indicação",formulario:"Formulário do site",evento:"Evento",site:"Site",whatsapp:"WhatsApp",importacao:"Importação",indicacao_parceiro:"Parceiro",base_cliente:"Base de cliente"};
 const CRM_TIPOS_CONT={lead:"Lead",prospect:"Prospect",cliente:"Cliente"};
 const CRM_ATIV={nota:"Anotação",ligacao:"Ligação",reuniao:"Reunião",whatsapp:"WhatsApp",email_manual:"E-mail",arquivo:"Arquivo",criacao:"Negócio criado",etapa:"Mudou de etapa",ganho:"Negócio ganho",perda:"Negócio perdido",fase:"Mudou de fase",indicacao:"Indicação",sistema:"Sistema",email:"E-mail da Central",tarefa:"Tarefa concluída",contrato:"Contrato",regua:"Régua de e-mail"};
 const CRM_IND_ST={indicado:["neutral","Indicado"],em_negociacao:["neutral","Em negociação"],virou_cliente:["warn","Cliente, aguardando 1º honorário"],premio_a_pagar:["warn","Prêmio a pagar"],premio_pago:["good","Prêmio pago"],nao_fechou:["neutral","Não fechou"]};
@@ -4033,7 +4045,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,personas:crmVPersonas,modelos:crmVModelos,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,simulacoes:crmVSimulacoes,personas:crmVPersonas,modelos:crmVModelos,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -4142,14 +4154,47 @@ function crmFunilPinta(v){
  if(CRMF.vis==="lista") return crmListaNeg(box,neg,f);
  crmQuadroNeg(box,neg,f,v);
 }
-function crmCardNeg(o){ const d=crmDias(o.etapa_desde);
- return `<div class="kcard crm-card" draggable="true" data-neg="${o.id}" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">
-  <div class="kcard-top"><div class="kcard-nome">${esc(o.titulo)}</div></div>
-  <div class="kcard-sub">${esc([o.empresa_nome,o.contato_nome].filter(Boolean).join(" · ")||o.contato_email||"Sem contato")}</div>
-  ${o.origem==="indicacao"?`<span class="crm-ind">Indicação${o.indicado_por_nome?" de "+esc(o.indicado_por_nome):""}</span>`:""}
-  <div class="kcard-l3">${_av(o.responsavel_email?crmNomeResp(o.responsavel_email):"",o.responsavel_email?"Responsável: "+crmNomeResp(o.responsavel_email):"")}
-   ${o.valor_mensal?`<span class="kval">${brl(o.valor_mensal)}/mês</span>`:o.valor_unico?`<span class="kval">${brl(o.valor_unico)}</span>`:""}
-   <span class="kmini ${d>=15&&!["ganha","perdida"].includes(o.etapa)?"crm-parado":""}">${d===0?"hoje":d+"d"} na etapa</span></div>${crmCardExtra(o)}</div>`; }
+// card do funil no formato da 4C: empresa, contato, valor, nicho, atividade, tributação, SDR, indicação, origem, temperatura, responsável, proposta, contrato e número
+const CRM_CI=(p,c)=>`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${c?` style="color:${c}"`:""}>${p}</svg>`;
+const CRM_CIP={emp:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',pes:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',val:'<path d="M12 2v20M17 6.5c-1-1.5-2.8-2-5-2-3 0-4.5 1.5-4.5 3.5 0 4.5 10 2.5 10 7.5 0 2-1.8 3.5-5 3.5-2.4 0-4.2-.8-5.2-2.3"/>',
+ nicho:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',ativ:'<path d="M4 5h16v14H4zM8 5V3h8v2"/>',trib:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ sdr:'<path d="M3 4h18l-7 8v7l-4 2v-9z"/>',ind:'<path d="M8 13l3 3 5-5"/><path d="M2 12l5-5 5 3 5-3 5 5-10 9z"/>',orig:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+ temp:'<path d="M12 22c4 0 7-3 7-7 0-5-5-7-5-12-3 2-4 5-4 8-1-1-2-2-2-4-2 2-3 5-3 8 0 4 3 7 7 7z"/>',pdf:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 14h8M8 17h5"/>',
+ diag:'<circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><path d="M9 12l2 2 4-4"/>',wa:'<path d="M3 21l1.7-5A9 9 0 1 1 8 19.6z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-2-1-1 .9c-1-.4-1.8-1.2-2.2-2.2l.9-1-1-2z"/>',
+ ok:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',alerta:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',env:'<path d="M3 7l9 6 9-6M3 7h18v12H3z"/>'};
+const CRM_ETQ_COR={"Prioridade":"#3b5bdb","Urgente":"#cf4257","Aguardando cliente":"#b7791f","Retomar contato":"#7048e8","Parceiro":"#128a5b"};
+const CRM_TEMP_COR={"Quente":"#d9480f","Morno":"#e8a317","Frio":"#1c7ed6"};
+function crmCardInfo(o){ const c=o.campos||{}, p=c.proposta||{}, r=((p.cesta||[])[0]||{}).respostas||{};
+ const cap=x=>{ x=String(x||"").trim(); return x?x.charAt(0).toUpperCase()+x.slice(1).toLowerCase():""; };
+ const trib={simples:"Simples Nacional",presumido:"Lucro Presumido",real:"Lucro Real",mei:"MEI"};
+ return {nicho:c.nicho||p.nicho||"",atividade:c.atividade||({comercio:"Comércio",servico:"Serviço",servicos:"Serviço",industria:"Indústria"}[String(r.atividade||"").toLowerCase()])||cap(r.atividade),tributacao:c.tributacao||trib[String(r.tributacao||"").toLowerCase()]||cap(r.tributacao),
+  temperatura:c.temperatura||"",sdr:c.sdr||"",etiqueta:c.etiqueta||"",proposta:p&&(p.cesta||[]).length?p:null,diag:p&&p.diagnostico&&(p.diagnostico.dores||[]).length?p.diagnostico:null}; }
+function crmCardNeg(o){ const d=crmDias(o.etapa_desde), I=crmCardInfo(o), aberto=!["ganha","perdida"].includes(o.etapa);
+ const tp=(CRMD.tarPorNeg||{})[o.id], atr=tp&&crmAtrasada(tp);
+ const ks=(CRMD.contr||[]).filter(k=>k.oportunidade_id===o.id&&k.status!=="cancelado").sort((a,b)=>String(b.criado_em).localeCompare(String(a.criado_em))), k=ks[0];
+ const lin=(ic,t,cor,tit)=>t?`<div class="ccard-l" title="${escAttr(tit)}"${cor?` style="color:${cor}"`:""}>${CRM_CI(CRM_CIP[ic])}<span>${esc(t)}</span></div>`:"";
+ const valor=o.valor_mensal?brl(o.valor_mensal)+"/mês":o.valor_unico?brl(o.valor_unico):"R$ 0,00";
+ const tel=String(o.contato_telefone||"").replace(/\D/g,""), wa=tel?`https://wa.me/${tel.length<=11?"55"+tel:tel}`:"";
+ const bloco1=[lin("nicho",I.nicho&&I.nicho.toUpperCase(),"#8e3fb3","Nicho de mercado"),lin("ativ",I.atividade&&I.atividade.toUpperCase(),"","Atividade principal"),lin("trib",I.tributacao&&I.tributacao.toUpperCase(),"","Tributação")].join("");
+ const bloco2=[lin("sdr",I.sdr&&I.sdr.toUpperCase(),"#1c7ed6","SDR"),lin("ind",o.indicado_por_nome&&o.indicado_por_nome.toUpperCase(),"#a37a00","Quem indicou"),
+  lin("orig",o.origem&&o.origem!=="manual"?(CRM_ORIG[o.origem]||o.origem).toUpperCase():"","#c2255c","Origem"),lin("temp",I.temperatura&&I.temperatura.toUpperCase(),CRM_TEMP_COR[I.temperatura]||"#e8a317","Temperatura")].join("");
+ const icones=[I.proposta?`<span class="ccard-ic" title="Proposta salva: ${escAttr((I.proposta.cesta||[]).map(x=>x.plano+" "+brl(x.valor)+"/mês").join(" + "))}" style="color:#1c7ed6">${CRM_CI(CRM_CIP.pdf)}</span>`:"",
+  I.diag?`<span class="ccard-ic" title="Diagnóstico feito: ${escAttr(I.diag.persona||"")} · ${I.diag.dores.length} dor(es)${I.diag.estrategia?" · com estratégia de IA":""}" style="color:#7048e8">${CRM_CI(CRM_CIP.diag)}</span>`:"",
+  wa?`<a class="ccard-ic" data-nogo href="${wa}" target="_blank" rel="noopener" title="Chamar ${escAttr(o.contato_nome||"")} no WhatsApp" style="color:#128a5b">${CRM_CI(CRM_CIP.wa)}</a>`:""].filter(Boolean).join("");
+ const contrato=k?(k.status==="assinado"?`<span class="ccard-ct ok">${CRM_CI(CRM_CIP.ok)} Contrato assinado por todos</span>`:k.status==="enviado"?`<span class="ccard-ct env">${CRM_CI(CRM_CIP.env)} ${String(k.origem_ref||"").startsWith("d4sign:")?"Aguardando assinaturas":"Contrato enviado"}</span>`:`<span class="ccard-ct">${CRM_CI(CRM_CIP.pdf)} Contrato em rascunho</span>`):"";
+ return `<div class="kcard crm-card ccard" draggable="true" data-neg="${o.id}" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">
+  ${I.etiqueta?`<div class="ccard-etq" style="background:${CRM_ETQ_COR[I.etiqueta]||"#868e96"}" title="Etiqueta: ${escAttr(I.etiqueta)}"></div>`:""}
+  ${aberto&&!tp?`<span class="ccard-al" title="Agende uma atividade">${CRM_CI(CRM_CIP.alerta)}</span>`:aberto&&atr?`<span class="ccard-al atr" title="Tarefa atrasada: ${escAttr(tp.titulo)}">${CRM_CI(CRM_CIP.alerta)}</span>`:""}
+  <div class="ccard-tit">${esc(o.titulo||"Negócio")}</div>
+  <div class="ccard-badges">${o.gclick_empresa_id?`<span class="ccard-bd cli" title="Já é cliente da Resilcon">CLIENTE</span>`:`<span class="ccard-bd" title="É lead">LEAD</span>`}</div>
+  ${lin("emp",(o.empresa_nome||"").toUpperCase()||" ","","Empresa")}${lin("pes",(o.contato_nome||o.contato_email||"").toUpperCase()||" ","","Contato")}
+  <div class="ccard-l ccard-v" title="Total da negociação">${CRM_CI(CRM_CIP.val)}<span>${valor}</span></div>
+  ${bloco1?`<div class="ccard-sep"></div>${bloco1}`:""}${bloco2?`<div class="ccard-sep"></div>${bloco2}`:""}
+  <div class="ccard-sep"></div>${lin("pes",o.responsavel_email?crmNomeResp(o.responsavel_email).toUpperCase():"SEM RESPONSÁVEL","","Responsável")}
+  ${aberto&&tp?`<div class="crm-prox ${atr?"atr":""}">${atr?"Atrasada":"Próximo"}: ${esc(tp.titulo)} · ${crmQuandoTxt(tp.vence_em)}</div>`:""}
+  ${o.etapa==="perdida"&&o.motivo_perda?`<div class="crm-prox">Motivo: ${esc(o.motivo_perda)}</div>`:""}
+  <div class="ccard-pe"><div class="ccard-ics">${icones}${icones&&contrato?`<span class="ccard-div">|</span>`:""}${contrato}</div>
+   <span class="kmini ${d>=15&&aberto?"crm-parado":""}" title="Tempo nesta etapa">${d===0?"hoje":d+"d"}</span>${o.numero?`<span class="ccard-num">#${o.numero}</span>`:""}</div></div>`; }
 function crmCardExtra(o){
  if(o.etapa==="perdida") return "";
  if(o.etapa==="ganha"){ const ks=(CRMD.contr||[]).filter(k=>k.oportunidade_id===o.id||(dig(o.cnpj)&&dig(k.cnpj)===dig(o.cnpj))); const s=crmSituacaoContrato(ks).sit;
@@ -4164,7 +4209,7 @@ function crmQuadroNeg(box,neg,f,v){
    ${soma?`<div class="crm-col-soma sub">${brl(soma)}/mês</div>`:""}
    <div class="kcol-body" data-drop="${id}">${its.slice(0,lim).map(crmCardNeg).join("")||`<div class="crm-vazio sub">${id==="perdida"?"Arraste aqui para marcar como perdido":id==="ganha"?"Arraste aqui quando fechar":"Sem negócios"}</div>`}
    ${its.length>lim?`<button class="view-btn ghost" data-mais="${id}">Mostrar mais ${its.length-lim}</button>`:""}</div></div>`; }).join("")}</div>`;
- box.querySelectorAll("[data-neg]").forEach(c=>{ c.onclick=()=>crmFichaNegocio(c.dataset.neg); c.ondragstart=e=>{ e.dataTransfer.setData("text/plain",c.dataset.neg); c.classList.add("drag"); }; c.ondragend=()=>c.classList.remove("drag"); });
+ box.querySelectorAll("[data-neg]").forEach(c=>{ c.onclick=e=>{ if(e.target.closest("[data-nogo]")) return; crmFichaNegocio(c.dataset.neg); }; c.ondragstart=e=>{ e.dataTransfer.setData("text/plain",c.dataset.neg); c.classList.add("drag"); }; c.ondragend=()=>c.classList.remove("drag"); });
  box.querySelectorAll("[data-mais]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); CRMF.lim[b.dataset.mais]=(CRMF.lim[b.dataset.mais]||60)+120; crmFunilPinta(v); });
  box.querySelectorAll("[data-drop]").forEach(z=>{ z.ondragover=e=>{ e.preventDefault(); z.classList.add("dragover"); }; z.ondragleave=()=>z.classList.remove("dragover");
   z.ondrop=async e=>{ e.preventDefault(); z.classList.remove("dragover"); const id=e.dataTransfer.getData("text/plain"); const o=(CRMD.neg||[]).find(x=>x.id===id); const et=z.dataset.drop; if(!o||o.etapa===et) return;
@@ -5422,7 +5467,8 @@ function precoVinculadas(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Bo
 function precoArqsDoNicho(n){ const todas=PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean); if(!n) return todas; const v=precoVinculadas(n); return [...v,...todas.filter(a=>!v.includes(a))]; }
 
 async function crmVPrecos(v){ try{ pzCarregar().catch(()=>{}); }catch(_){}
- v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.","")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
+ v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.",simNovaBtn())+simAbas("crm_precos")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
+ simLigarTopo(v);
  try{ await precoCarregar(); }catch(e){ v.querySelector("#crmBox").innerHTML=`<div class="card"><div class="empty">${esc(e.message||String(e))}</div></div>`; return; }
  if(!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } }
  if(PRECO_ST.negocio&&!PRECO_ST.negLista.find(x=>x.id===PRECO_ST.negocio.id)) PRECO_ST.negLista.unshift(PRECO_ST.negocio);
@@ -5469,7 +5515,7 @@ function precoPintar(v){
     <label><span class="sub">Cobrança</span><select class="inp" data-exc="${k}"><option value="mensal" ${s.cobranca==="mensal"?"selected":""}>Todo mês</option><option value="avulso" ${s.cobranca==="avulso"?"selected":""}>Uma vez</option><option value="hora" ${s.cobranca==="hora"?"selected":""}>Por hora</option><option value="volume" ${s.cobranca==="volume"?"selected":""}>Por quantidade</option></select></label>
     <label><span class="sub">${s.cobranca==="hora"?"Horas":"Qtd."}</span><input class="inp" type="number" min="1" data-exq="${k}" value="${escAttr(s.qtd)}"></label></div>`:`<span class="sub num">${e.valor?precoMoeda(e.valor):"a combinar"}</span>`}</div>`; };
  const tot=precoTotais();
- box.innerHTML=`
+ box.innerHTML=`${simBanner()}
  <div class="card ce-pad preco-barra">
   <label class="crm-f"><span>Negócio (opcional)</span><select class="inp" id="prNeg"><option value="">Sem negócio vinculado</option>${negOpts}</select></label>
   <div class="crm-f"><span>Nicho do cliente</span><div class="preco-nicho"><input class="inp" id="prNicho" list="prNichoL" value="${escAttr(S.nicho)}" placeholder="Digite para buscar, ex.: farmácia" autocomplete="off">${S.nicho?`<button type="button" class="preco-x" id="prNichoX" title="Limpar nicho" aria-label="Limpar nicho">×</button>`:""}</div>
@@ -5590,7 +5636,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prApres").onclick=()=>apresAbrir(); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
+ box.querySelector("#prApres").onclick=()=>apresAbrir(); simLigarBanner(box,re); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -5609,7 +5655,7 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
    tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
   try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
-  crmToast("Proposta salva no negócio: valores e itens atualizados"); b.textContent="Salvo ✓";
+  crmToast("Proposta salva no negócio: valores e itens atualizados"); b.textContent="Salvo ✓"; if(S.sim){ try{ S.sim.etapa="Planos"; await simSalvarSimulador(true); }catch(_){} }
  }catch(e){ b.disabled=false; b.textContent="Salvar no negócio"; crmToast(crmErro(e)); } }
 
 function precoProposta(){ const S=PRECO_ST, t=precoTotais(); const hoje=new Date(); const val=new Date(hoje.getTime()+S.validade*864e5);
@@ -7178,6 +7224,182 @@ async function asAcompanhar(uuid,depois){ const m=crmModal("Contratos","Assinatu
 .as-box{border:1px solid rgba(0,103,137,.35);background:rgba(0,103,137,.05);border-radius:12px;padding:14px;margin-top:12px}
 .as-sig{display:grid;gap:6px}.as-linha{display:grid;grid-template-columns:170px 1fr 1.2fr 170px 60px;gap:6px;align-items:center}.as-linha b{font-size:12.5px}
 @media(max-width:900px){.as-linha{grid-template-columns:1fr 1fr}.as-linha b{grid-column:1/-1}}`; document.head.appendChild(s); })();
+// ================= CRM · SIMULAÇÕES: listagem e "+ Nova venda" (Com diagnóstico, Direta, Produtos/Serviços avulsos), igual à 4C =================
+(function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_precos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i,0,["crm_simulacoes","Simulação","preco"]); })();
+const SIM_TIPOS={diagnostico:"Com diagnóstico",direta:"Venda direta",avulso:"Produtos/Serviços avulsos"};
+const SIM_ST={andamento:["warn","Em andamento"],concluida:["good","Concluída"],cancelada:["neutral","Cancelada"]};
+let SIMF={q:"",status:"andamento",tipo:""};
+const simNum=s=>"#"+String(s||0).padStart(5,"0");
+// barra com as sub-abas e o botão + Nova venda (usada na listagem e no simulador)
+function simNovaBtn(){ return `<div class="sim-nv"><button type="button" class="txt-btn crm-pri" id="simNv" aria-haspopup="true" aria-expanded="false">+ Nova venda</button>
+ <div class="sim-nv-m" hidden role="menu"><button type="button" role="menuitem" data-simnv="diagnostico"><b>Com diagnóstico</b><small>Nicho, dores do cliente, produtos e planos</small></button><button type="button" role="menuitem" data-simnv="direta"><b>Direta</b><small>Nicho e planos no simulador</small></button><button type="button" role="menuitem" data-simnv="avulso"><b>Produtos/Serviços avulsos</b><small>Escolha produtos soltos com valor e parcelas</small></button></div></div>`; }
+function simAbas(at){ return `<div class="sim-abas"><div class="seg">${[["crm_simulacoes","Simulações"],["crm_precos","Simulador de planos"]].map(([m,t])=>`<button type="button" data-simab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div>${at==="crm_precos"&&PRECO_ST.sim?`<span class="sim-tag">Simulação ${simNum(PRECO_ST.sim.numero)} · ${esc(SIM_TIPOS[PRECO_ST.sim.tipo]||"")}</span>`:""}</div>`; }
+function simLigarTopo(v){ v.querySelectorAll("[data-simab]").forEach(b=>b.onclick=()=>setMode(b.dataset.simab));
+ const bt=v.querySelector("#simNv"), mn=v.querySelector(".sim-nv-m"); if(!bt) return;
+ const fecha=e=>{ if(e&&mn.contains(e.target)) return; mn.hidden=true; bt.setAttribute("aria-expanded","false"); document.removeEventListener("click",fecha,true); };
+ bt.onclick=e=>{ e.stopPropagation(); const ab=mn.hidden; mn.hidden=!ab; bt.setAttribute("aria-expanded",String(ab)); if(ab) setTimeout(()=>document.addEventListener("click",fecha,true)); };
+ mn.querySelectorAll("[data-simnv]").forEach(b=>b.onclick=()=>{ fecha(); simNova(b.dataset.simnv); }); }
+async function simNegocios(force){ if(force||!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } } return PRECO_ST.negLista; }
+
+// ---------- listagem ----------
+async function crmVSimulacoes(v){
+ v.innerHTML=crmHead("Simulações","Todas as simulações de venda. Abra uma para continuar de onde parou ou comece uma nova venda.",simNovaBtn())+simAbas("crm_simulacoes")+`<div id="crmBox"><div class="card"><div class="empty">Carregando simulações…</div></div></div>`;
+ simLigarTopo(v);
+ let L; try{ L=await crmRpc("crm_simulacoes",{p:{}}); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="crm_simulacoes") return;
+ const pinta=()=>{ const q=crmNormTxt(SIMF.q); const vis=(L||[]).filter(s=>(!SIMF.status||s.status===SIMF.status)&&(!SIMF.tipo||s.tipo===SIMF.tipo)&&(!q||crmNormTxt([s.cliente_nome,s.empresa_nome,s.documento,s.nicho,s.persona,s.negocio_titulo,simNum(s.numero)].join(" ")).includes(q)));
+  v.querySelector("#crmBox").innerHTML=`<div class="filters crm-bar2"><div class="search" style="flex:1;min-width:220px"><input id="simQ" type="search" value="${escAttr(SIMF.q)}" placeholder="Cliente, empresa, CNPJ/CPF, nicho ou número" aria-label="Buscar simulação"></div>
+   <select class="fsel" id="simSt" aria-label="Situação"><option value="">Todas as situações</option>${Object.entries(SIM_ST).map(([k,[,t]])=>`<option value="${k}" ${SIMF.status===k?"selected":""}>${t}</option>`).join("")}</select>
+   <select class="fsel" id="simTp" aria-label="Tipo"><option value="">Todos os tipos</option>${Object.entries(SIM_TIPOS).map(([k,t])=>`<option value="${k}" ${SIMF.tipo===k?"selected":""}>${t}</option>`).join("")}</select></div>
+  <div class="card" style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Cliente</th><th>Nicho / persona</th><th>Situação</th><th>Tipo</th><th class="right">Valor</th><th>Criada em</th><th></th></tr></thead><tbody>
+  ${vis.slice(0,400).map(s=>{ const st=SIM_ST[s.status]||["neutral",s.status]; return `<tr><td><button class="crm-link r-name" data-simab2="${s.id}">${esc(s.cliente_nome||s.negocio_titulo||"Cliente")}</button><div class="sub">${esc([s.empresa_nome,s.documento].filter(Boolean).join(" · "))}${s.negocio_titulo?` · negócio: ${esc(s.negocio_titulo)}`:""}</div></td>
+   <td>${esc(s.persona||s.nicho||"")}${s.tem_diag?` <span class="pill neutral" title="Tem diagnóstico de dores">diagnóstico</span>`:""}</td>
+   <td><span class="pill ${st[0]}">${st[1]}</span>${s.etapa?`<div class="sub">Etapa: ${esc(s.etapa)}</div>`:""}</td><td>${esc(SIM_TIPOS[s.tipo]||s.tipo)}</td>
+   <td class="right num">${s.valor_mensal?brl(s.valor_mensal)+"/mês":""}${s.valor_unico?`<div class="sub">${brl(s.valor_unico)} avulso</div>`:""}</td>
+   <td class="num sub">${new Date(s.criado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}<div>por ${esc(crmNomeResp(s.criado_por)||s.criado_por||"")}</div><div>${simNum(s.numero)}</div></td>
+   <td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-simab2="${s.id}">Abrir</button><button class="txt-btn" data-simdup="${s.id}">Duplicar</button>${s.status==="andamento"?`<button class="txt-btn" data-simst="${s.id}:concluida">Concluir</button>`:`<button class="txt-btn" data-simst="${s.id}:andamento">Reabrir</button>`}<button class="txt-btn crm-perigo" data-simdel="${s.id}">Excluir</button></td></tr>`; }).join("")
+  ||`<tr><td colspan="7"><div class="empty">${(L||[]).length?"Nenhuma simulação com esses filtros.":"Nenhuma simulação ainda. Clique em + Nova venda para começar."}</div></td></tr>`}</tbody></table></div>`;
+  const qi=v.querySelector("#simQ"); qi.oninput=()=>{ SIMF.q=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#simQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelector("#simSt").onchange=e=>{ SIMF.status=e.target.value; pinta(); }; v.querySelector("#simTp").onchange=e=>{ SIMF.tipo=e.target.value; pinta(); };
+  v.querySelectorAll("[data-simab2]").forEach(b=>b.onclick=()=>simAbrir(b.dataset.simab2));
+  v.querySelectorAll("[data-simdup]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ const r=await crmRpc("crm_simulacoes",{p:{id:b.dataset.simdup}}); const {id,numero,criado_em,atualizado_em,criado_por,...resto}=r; await crmRpc("crm_salvar_simulacao",{p:{...resto,status:"andamento"}}); crmToast("Simulação duplicada"); crmVSimulacoes(v); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
+  v.querySelectorAll("[data-simst]").forEach(b=>b.onclick=async()=>{ const [id,st]=b.dataset.simst.split(":"); try{ await crmRpc("crm_salvar_simulacao",{p:{id,status:st}}); const s=L.find(x=>x.id===id); if(s) s.status=st; pinta(); crmToast(st==="concluida"?"Simulação concluída":"Simulação reaberta"); }catch(e){ crmToast(crmErro(e)); } });
+  v.querySelectorAll("[data-simdel]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Clique de novo para excluir"; return; } try{ await crmRpc("crm_salvar_simulacao",{p:{id:b.dataset.simdel,acao:"excluir"}}); L=L.filter(x=>x.id!==b.dataset.simdel); pinta(); crmToast("Simulação excluída"); }catch(e){ crmToast(crmErro(e)); } }); };
+ pinta(); }
+function crmNormTxt(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); }
+
+// ---------- + Nova venda ----------
+async function simNova(tipo){ const negs=await simNegocios(true); const fun=crmFunil("vendas")||{etapas:[]};
+ const m=crmModal("Nova venda",`Nova venda · ${SIM_TIPOS[tipo]}`,"",`<div class="sim-passos">${(tipo==="diagnostico"?["Nicho e cliente","Atividades/Dores","Produtos","Planos"]:tipo==="direta"?["Nicho e cliente","Planos"]:["Cliente","Produtos"]).map((t,i)=>`<span class="${i===0?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
+  <div class="crm-form" style="grid-template-columns:1fr 1fr">
+   ${tipo!=="avulso"?`<label class="crm-f crm-w2"><span>Nicho *</span><input class="inp" id="snNicho" list="snNichoL" placeholder="Ex.: farmácia" autocomplete="off"><datalist id="snNichoL">${precoNichos().map(n=>`<option value="${escAttr(n)}">`).join("")}</datalist></label>`:""}
+   <div class="crm-f crm-w2"><span>Cliente</span><div class="seg"><button type="button" class="on" data-sncli="neg">Negócio que já está no funil</button><button type="button" data-sncli="novo">Cliente novo</button></div></div>
+   <div class="crm-w2" id="snNeg"><label class="crm-f"><span>Negócio</span><input class="inp" id="snNegI" list="snNegL" placeholder="Busque pelo título, contato ou empresa" autocomplete="off"><datalist id="snNegL">${negs.map(o=>`<option value="${escAttr(o.titulo+(o.empresa_nome?" · "+o.empresa_nome:o.contato_nome?" · "+o.contato_nome:"")+(o.numero?" #"+o.numero:""))}" data-id="${o.id}"></option>`).join("")}</datalist></label></div>
+   <div class="crm-w2 crm-form" id="snNovo" hidden style="grid-template-columns:1fr 1fr">
+    <label class="crm-f"><span>Nome do cliente *</span><input class="inp" id="snNome"></label><label class="crm-f"><span>Empresa</span><input class="inp" id="snEmp"></label>
+    <label class="crm-f"><span>E-mail</span><input class="inp" id="snMail" type="email"></label><label class="crm-f"><span>Telefone</span><input class="inp" id="snTel" inputmode="tel"></label>
+    <label class="crm-f"><span>CNPJ ou CPF</span><input class="inp" id="snDoc" inputmode="numeric"></label><label class="crm-f"><span>Etapa do funil</span><select class="inp" id="snEt">${crmOpt((fun.etapas||[]).map(e=>[e.id,e.nome]),(fun.etapas[0]||{}).id)}</select></label>
+    <label class="crm-f crm-w2"><span>Título do negócio</span><input class="inp" id="snTit" placeholder="Se ficar vazio, uso o nicho e o nome do cliente"></label></div>
+  </div><div class="crm-pe" style="margin-top:12px"><span class="sub" id="snMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="snOk">Avançar ›</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ let modo="neg"; m.querySelectorAll("[data-sncli]").forEach(b=>b.onclick=()=>{ modo=b.dataset.sncli; m.querySelectorAll("[data-sncli]").forEach(x=>x.classList.toggle("on",x===b)); m.querySelector("#snNeg").hidden=modo!=="neg"; m.querySelector("#snNovo").hidden=modo!=="novo"; });
+ m.querySelector("#snOk").onclick=async ev=>{ const b=ev.currentTarget, msg=t=>{ m.querySelector("#snMsg").textContent=t||""; };
+  let nicho=tipo!=="avulso"?crmVal(m,"#snNicho"):""; if(tipo!=="avulso"){ const ach=precoNichos().find(n=>crmNormTxt(n)===crmNormTxt(nicho)); if(!ach){ crmToast("Escolha o nicho da lista."); return; } nicho=ach; }
+  let neg=null;
+  if(modo==="neg"){ const t=crmVal(m,"#snNegI"); const op=[...m.querySelectorAll("#snNegL option")].find(x=>x.value===t); if(!op){ crmToast("Escolha o negócio da lista ou marque Cliente novo."); return; } neg=negs.find(o=>o.id===op.dataset.id); }
+  else if(!crmVal(m,"#snNome")){ crmToast("Informe o nome do cliente."); return; }
+  b.disabled=true; b.textContent="Criando…";
+  try{
+   if(modo==="novo"){ msg("Cadastrando o cliente e o negócio…");
+    const doc=crmVal(m,"#snDoc").replace(/\D/g,"");
+    const cid=await crmRpc("crm_salvar_contato",{p:{nome:crmVal(m,"#snNome"),email:crmVal(m,"#snMail"),telefone:crmVal(m,"#snTel"),empresa:crmVal(m,"#snEmp"),cnpj:doc.length===14?doc:"",origem:"manual",responsavel:(CRMB.eu||{}).email}});
+    const tit=crmVal(m,"#snTit")||`${nicho?nicho+" · ":""}${crmVal(m,"#snEmp")||crmVal(m,"#snNome")}`;
+    const nid=await crmRpc("crm_salvar_negocio",{p:{id:null,funil_id:"vendas",titulo:tit,contato_id:cid,etapa:crmVal(m,"#snEt"),responsavel:(CRMB.eu||{}).email,origem:"manual",campos:nicho?{nicho}:{},itens:[]}});
+    await simNegocios(true); neg=PRECO_ST.negLista.find(o=>o.id===nid)||{id:nid,titulo:tit,contato_nome:crmVal(m,"#snNome"),empresa_nome:crmVal(m,"#snEmp")};
+    if(doc&&doc.length!==14) neg.documento=doc; }
+   const persona=nicho&&typeof diagPersonaDoNicho==="function"&&PZ.D?((diagPersonaDoNicho(PZ.D,nicho)||{}).nome||""):"";
+   const sim=await crmRpc("crm_salvar_simulacao",{p:{tipo,etapa:tipo==="avulso"?"Produtos":tipo==="diagnostico"?"Atividades/Dores":"Planos",oportunidade_id:neg.id,contato_id:neg.contato_id||null,
+    cliente_nome:neg.contato_nome||neg.titulo,empresa_nome:neg.empresa_nome||"",documento:neg.cnpj||neg.documento||"",nicho,persona:tipo==="avulso"?"Produtos/Serviços avulsos":persona||nicho,dados:{}}});
+   closeModal(); simEntrar(sim,neg,true);
+  }catch(e){ b.disabled=false; b.textContent="Avançar ›"; msg(""); crmToast(crmErro(e)); } }; }
+// abre uma simulação salva
+async function simAbrir(id){ try{ const s=await crmRpc("crm_simulacoes",{p:{id}}); const negs=await simNegocios(true); let neg=negs.find(o=>o.id===s.oportunidade_id)||null;
+  if(!neg&&s.oportunidade_id){ try{ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:s.oportunidade_id}}); const o=(f.negocios||[]).find(x=>x.id===s.oportunidade_id); if(o){ neg={...o,contato_nome:(f.contato||{}).nome,empresa_nome:(f.contato||{}).empresa_nome}; negs.unshift(neg); } }catch(_){} }
+  simEntrar(s,neg,false); }catch(e){ crmToast(crmErro(e)); } }
+function simEntrar(s,neg,nova){
+ if(s.tipo==="avulso") return simAvulso(s,neg);
+ const d=s.dados||{}; const lista=PRECO_ST.negLista;
+ PRECO_ST={arq:d.arq||PRECO_ST.arq,nicho:d.nicho||s.nicho||"",negocio:neg,negLista:lista,resp:d.resp||{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:d.ajuste||{},cesta:d.cesta||[],extras:d.extras||{},
+  parcelas:d.parcelas||1,obs:d.obs||"",busca:"",validade:d.validade||15,...(d.diag?{diag:d.diag}:{}),sim:{id:s.id,numero:s.numero,tipo:s.tipo,etapa:s.etapa}};
+ if(!PRECO_ST.diag&&neg&&neg.campos&&neg.campos.proposta&&neg.campos.proposta.diagnostico) PRECO_ST.diag=neg.campos.proposta.diagnostico;
+ if(PRECO_ST.nicho&&typeof precoEscolherNicho==="function") precoEscolherNicho(PRECO_ST.nicho);
+ if(MODE==="crm_precos") crmVPrecos(document.getElementById("view")); else setMode("crm_precos");
+ if(s.tipo==="diagnostico"&&(nova||!PRECO_ST.diag)) setTimeout(()=>diagAbrir(async()=>{ try{ precoPintar(document.getElementById("view")); }catch(_){} PRECO_ST.sim.etapa="Planos"; await simSalvarSimulador(true); }),400); }
+// grava o que está no simulador na simulação aberta
+async function simSalvarSimulador(quieto){ const S=PRECO_ST; if(!S.sim) return; const t=typeof precoTotais==="function"?precoTotais():{mensal:0,avulso:0};
+ const n=S.negocio||{};
+ const r=await crmRpc("crm_salvar_simulacao",{p:{id:S.sim.id,etapa:S.sim.etapa||(S.cesta.length?"Planos":"Info. contábeis"),oportunidade_id:n.id||"",contato_id:n.contato_id||"",cliente_nome:n.contato_nome||n.titulo||"",empresa_nome:n.empresa_nome||"",
+  nicho:S.nicho||"",persona:(S.diag&&S.diag.persona)||S.nicho||"",valor_mensal:t.mensal||"",valor_unico:t.avulso||"",
+  dados:{arq:S.arq,nicho:S.nicho,resp:S.resp,ajuste:S.ajuste,cesta:S.cesta.map(({linhas,...c})=>c),extras:S.extras,parcelas:S.parcelas,obs:S.obs,validade:S.validade,diag:S.diag||null}}});
+ S.sim.etapa=r.etapa; if(!quieto) crmToast(`Simulação ${simNum(S.sim.numero)} salva`); return r; }
+function simBanner(){ const S=PRECO_ST; if(!S.sim) return "";
+ return `<div class="sim-banner"><div><b>Simulação ${simNum(S.sim.numero)}</b> · ${esc(SIM_TIPOS[S.sim.tipo]||"")}${S.negocio?` · ${esc(S.negocio.titulo)}`:""}<div class="sub">As mudanças ficam salvas quando você clica em Salvar simulação ou em Salvar no negócio.</div></div>
+  <span style="flex:1"></span><button type="button" class="txt-btn" id="simSair">Fechar simulação</button><button type="button" class="view-btn ce-pri" id="simSalvar">Salvar simulação</button></div>`; }
+function simLigarBanner(box,re){ const b=box.querySelector("#simSalvar"); if(!b) return;
+ b.onclick=async()=>{ b.disabled=true; try{ await simSalvarSimulador(false); }catch(e){ crmToast(crmErro(e)); } b.disabled=false; };
+ box.querySelector("#simSair").onclick=()=>{ delete PRECO_ST.sim; re(); const ab=document.querySelector(".sim-tag"); if(ab) ab.remove(); }; }
+
+// ---------- Produtos/Serviços avulsos ----------
+async function simAvulso(s,neg){ let D; try{ D=await pzCarregar(); }catch(e){ crmToast(e.message); return; }
+ const prods=D.bibliotecas.produtos.filter(p=>p.ativo!==false).map(p=>({nome:p.nome,cat:p.cat||p.tipo||"",valor:precoNum(p.valor)||0,desc:p.desc||""}));
+ const dd=JSON.parse(JSON.stringify(s.dados||{})); dd.itens=dd.itens||{}; dd.extra=dd.extra||[]; dd.vig=dd.vig||{ini:new Date().toISOString().slice(0,10),fim:""}; dd.parcelas=dd.parcelas||1; dd.obs=dd.obs||"";
+ (dd.extra||[]).forEach(x=>{ if(!prods.find(p=>p.nome===x.nome)) prods.unshift(x); });
+ const F={q:"",cat:"",so:false}; let sujo=false;
+ const tela=dspTela("Venda de produtos/serviços avulsos",`${simNum(s.numero)} · ${s.cliente_nome||""}${s.empresa_nome?" · "+s.empresa_nome:""}`);
+ const it=n=>dd.itens[n]||(dd.itens[n]={on:false,cob:"mensal",meses:1,qtd:1,valor:(prods.find(p=>p.nome===n)||{}).valor||0,sep:false,parc:1});
+ const tot=()=>{ let m=0,u=0,sel=0; const sep=[]; Object.entries(dd.itens).forEach(([n,x])=>{ if(!x.on) return; sel++; const v=(+x.valor||0)*(+x.qtd||1); const tt=x.cob==="mensal"?v:x.cob==="meses"?v*(+x.meses||1):v;
+   if(x.sep) sep.push({nome:n,total:tt,parc:+x.parc||1,cob:x.cob}); else if(x.cob==="mensal") m+=v; else u+=tt; }); return {m,u,sel,sep}; };
+ const topo=()=>{ tela.querySelector(".pz-top-r").innerHTML=`<span class="pz-st ${sujo?"suj":""}" id="avSt">${sujo?"Alterações não salvas":"Tudo salvo"}</span><button class="cte-b" id="avImp">Imprimir</button>${neg?`<button class="cte-b" id="avNeg">Salvar no negócio</button>`:""}<button class="cte-b cte-pri" id="avSalvar">Salvar</button><button class="cte-ib" id="avX" aria-label="Fechar">${ctI("fechar")}</button>`;
+  tela.querySelector("#avSalvar").onclick=()=>salvar(false); tela.querySelector("#avX").onclick=fechar; tela.querySelector("#avImp").onclick=imprimir; const nb=tela.querySelector("#avNeg"); if(nb) nb.onclick=salvarNegocio; };
+ const marca=()=>{ sujo=true; const st=tela.querySelector("#avSt"); if(st){ st.textContent="Alterações não salvas"; st.className="pz-st suj"; } };
+ const salvar=async quieto=>{ const t=tot(); try{ await crmRpc("crm_salvar_simulacao",{p:{id:s.id,etapa:t.sel?"Resumo":"Produtos",valor_mensal:t.m||"",valor_unico:(t.u+t.sep.reduce((a,x)=>a+x.total,0))||"",dados:dd}}); sujo=false; topo(); if(!quieto) crmToast(`Simulação ${simNum(s.numero)} salva`); return true; }catch(e){ crmToast(crmErro(e)); return false; } };
+ const fechar=async()=>{ if(sujo){ const b=tela.querySelector("#avX"); if(b.dataset.ok!=="1"){ b.dataset.ok="1"; tela.querySelector("#avSt").textContent="Clique no X de novo para sair sem salvar"; return; } } tela.remove(); document.body.classList.remove("cte-aberto"); if(MODE==="crm_simulacoes") crmVSimulacoes(document.getElementById("view")); };
+ const salvarNegocio=async ev=>{ const b=ev.currentTarget; const t=tot(); if(!t.sel){ crmToast("Marque ao menos um produto."); return; } b.disabled=true;
+  try{ await salvar(true); const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:neg.id}}); const o=(f.negocios||[]).find(x=>x.id===neg.id); if(!o) throw new Error("Negócio não encontrado");
+   const itens=Object.entries(dd.itens).filter(([,x])=>x.on).map(([n,x])=>({servico_id:null,nome:n+(x.cob==="meses"?` (${x.meses} meses)`:""),valor:+x.valor||0,qtd:(+x.qtd||1)*(x.cob==="meses"?(+x.meses||1):1),desconto:0,recorrencia:x.cob==="mensal"?"mensal":"unico"}));
+   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,tema:o.tema,obs:o.obs,
+    campos:{...(o.campos||{}),proposta_avulsa:{simulacao:s.id,gerada_em:new Date().toISOString(),itens:dd.itens,vig:dd.vig,parcelas:dd.parcelas,mensal:t.m,avulso:t.u}},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
+   crmToast("Produtos salvos no negócio"); }catch(e){ crmToast(crmErro(e)); } b.disabled=false; };
+ const imprimir=()=>{ const t=tot(); const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; } const linhas=Object.entries(dd.itens).filter(([,x])=>x.on);
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta ${esc(s.cliente_nome||"")}</title><style>body{font:13px Arial,sans-serif;color:#1a1b28;margin:28px}h1{color:#006789;font-size:22px;margin:0}.k{font-size:11px;letter-spacing:.15em;color:#006789;font-weight:700}table{border-collapse:collapse;width:100%;margin-top:14px}th,td{border-bottom:1px solid #d6dde2;padding:8px;text-align:left}th{background:#eef3f5;font-size:11px;text-transform:uppercase}.r{text-align:right}.tot{margin-top:14px;font-size:14px}small{color:#666}</style></head><body>
+   <div class="k">RESILCON · PROPOSTA DE PRODUTOS E SERVIÇOS</div><h1>${esc(s.empresa_nome||s.cliente_nome||"Cliente")}</h1><div>${esc(s.cliente_nome||"")} · ${simNum(s.numero)} · ${new Date().toLocaleDateString("pt-BR")}</div>
+   <table><thead><tr><th>Produto</th><th>Cobrança</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr></thead><tbody>${linhas.map(([n,x])=>{ const v=(+x.valor||0)*(+x.qtd||1); return `<tr><td><b>${esc(n)}</b>${(prods.find(p=>p.nome===n)||{}).desc?`<br><small>${esc(prods.find(p=>p.nome===n).desc)}</small>`:""}</td><td>${x.cob==="mensal"?"Mensal":x.cob==="meses"?`Por ${x.meses} meses`:"Valor único"}${x.sep?`<br><small>Pago à parte em ${x.parc}x</small>`:""}</td><td class="r">${x.qtd}</td><td class="r">${brl(+x.valor||0)}</td><td class="r">${brl(x.cob==="meses"?v*(+x.meses||1):v)}</td></tr>`; }).join("")}</tbody></table>
+   <div class="tot">${t.m?`<div><b>Mensalidade:</b> ${brl(t.m)}</div>`:""}${t.u?`<div><b>Valores únicos:</b> ${brl(t.u)}${dd.parcelas>1?` em ${dd.parcelas}x de ${brl(t.u/dd.parcelas)}`:""}</div>`:""}${t.sep.map(x=>`<div><b>${esc(x.nome)}:</b> ${brl(x.total)} em ${x.parc}x de ${brl(x.total/x.parc)}</div>`).join("")}</div>
+   ${dd.vig.ini||dd.vig.fim?`<p>Vigência: ${dd.vig.ini?new Date(dd.vig.ini+"T12:00").toLocaleDateString("pt-BR"):""}${dd.vig.fim?" até "+new Date(dd.vig.fim+"T12:00").toLocaleDateString("pt-BR"):""}</p>`:""}${dd.obs?`<p><b>Observações:</b> ${esc(dd.obs)}</p>`:""}<script>print()<\/script></body></html>`); w.document.close(); };
+ const render=()=>{ topo(); const c=tela.querySelector(".pz-corpo"); const q=crmNormTxt(F.q); const cats=[...new Set(prods.map(p=>p.cat).filter(Boolean))].sort();
+  const vis=prods.filter(p=>(!F.cat||p.cat===F.cat)&&(!q||crmNormTxt(p.nome+" "+p.desc).includes(q))&&(!F.so||(dd.itens[p.nome]||{}).on)).sort((a,b)=>((dd.itens[b.nome]||{}).on?1:0)-((dd.itens[a.nome]||{}).on?1:0));
+  const t=tot();
+  c.innerHTML=`<div class="av-grade"><div><div class="pz-mapa-h"><select class="inp" id="avCat" style="max-width:200px" aria-label="Categoria"><option value="">Todas as categorias</option>${cats.map(x=>`<option ${F.cat===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
+    <input class="inp" id="avQ" value="${escAttr(F.q)}" placeholder="Filtrar, ex.: abertura de empresa" style="max-width:320px" aria-label="Filtrar produtos"><label class="crm-chk"><input type="checkbox" id="avSo" ${F.so?"checked":""}><span>Só os marcados</span></label><span style="flex:1"></span><button class="view-btn ghost" id="avAdd">+ Add produto</button></div>
+   <div class="av-lista">${vis.slice(0,250).map(p=>{ const x=dd.itens[p.nome]||{on:false,cob:"mensal",meses:1,qtd:1,valor:p.valor,sep:false,parc:1}; const k=escAttr(p.nome);
+    return `<div class="av-it ${x.on?"on":""}"><button type="button" class="ds-tg ${x.on?"on":""}" data-avon="${k}" aria-pressed="${x.on}">${x.on?"SIM":"NÃO"}</button>
+     <div class="av-n"><b>${esc(p.nome)}</b><small>${esc(p.cat)}</small>${p.desc?`<details><summary>Descrição</summary><p>${esc(p.desc)}</p></details>`:""}</div>
+     <div class="av-c"><select class="inp" data-avcob="${k}" ${x.on?"":"disabled"} aria-label="Cobrança"><option value="mensal" ${x.cob==="mensal"?"selected":""}>Mensal</option><option value="unico" ${x.cob==="unico"?"selected":""}>Valor único</option><option value="meses" ${x.cob==="meses"?"selected":""}>Cobrar por meses</option></select>
+      <label>Qtde <input class="inp" data-avqtd="${k}" value="${escAttr(x.qtd)}" inputmode="numeric" ${x.on?"":"disabled"}></label>${x.cob==="meses"?`<label>Por <input class="inp" data-avmes="${k}" value="${escAttr(x.meses)}" inputmode="numeric" ${x.on?"":"disabled"}> meses</label>`:""}</div>
+     <div class="av-v"><label>R$ <input class="inp" data-avval="${k}" value="${escAttr(precoValorTxt(x.valor))}" inputmode="decimal" ${x.on?"":"disabled"} aria-label="Valor"></label><small>${x.cob==="mensal"?"por mês":x.cob==="meses"?"por mês, nos meses informados":"uma vez"}</small>
+      <label class="crm-chk"><input type="checkbox" data-avsep="${k}" ${x.sep?"checked":""} ${x.on?"":"disabled"}><span>Parcelar separado</span></label>${x.sep?`<label>em <input class="inp" data-avparc="${k}" value="${escAttr(x.parc)}" inputmode="numeric" style="width:48px">x</label>`:""}</div></div>`; }).join("")||`<p class="sub">Nenhum produto encontrado.</p>`}${vis.length>250?`<p class="sub">Mostrando 250 de ${vis.length}. Use o filtro.</p>`:""}</div></div>
+   <aside class="av-res"><div class="crm-form" style="grid-template-columns:1fr 1fr"><label class="crm-f"><span>Início da vigência</span><input class="inp" type="date" id="avIni" value="${escAttr(dd.vig.ini||"")}"></label><label class="crm-f"><span>Término</span><input class="inp" type="date" id="avFim" value="${escAttr(dd.vig.fim||"")}"></label></div>
+    <div class="av-l"><span>Produtos selecionados</span><b>${t.sel}</b></div><div class="av-l"><span>Mensalidade</span><b>${brl(t.m)}</b></div><div class="av-l"><span>Valores únicos</span><b>${brl(t.u)}</b></div>
+    <label class="crm-f" style="margin-top:6px"><span>Parcelar os valores únicos</span><select class="inp" id="avParc">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${+dd.parcelas===i+1?"selected":""}>${i?`${i+1}x de ${brl(t.u/(i+1))}`:"Em uma única parcela"}</option>`).join("")}</select></label>
+    <h4 style="margin:14px 0 6px">Produtos com pagamento separado</h4>${t.sep.length?`<table class="pz-tab"><thead><tr><th>Produto</th><th class="right">Total</th><th class="right">Parcelas</th></tr></thead><tbody>${t.sep.map(x=>`<tr><td>${esc(x.nome)}</td><td class="right num">${brl(x.total)}</td><td class="right num">${x.parc}x ${brl(x.total/x.parc)}</td></tr>`).join("")}</tbody></table>`:`<p class="sub" style="margin:0">Nenhum. Marque "Parcelar separado" no produto.</p>`}
+    <label class="crm-f" style="margin-top:12px"><span>Observações gerais</span><textarea class="inp" id="avObs" rows="3">${esc(dd.obs)}</textarea></label></aside></div>`;
+  const keep=(sel,fn)=>{ const e=c.querySelector(sel); if(e) fn(e); };
+  keep("#avCat",e=>e.onchange=()=>{ F.cat=e.value; render(); }); keep("#avSo",e=>e.onchange=()=>{ F.so=e.checked; render(); });
+  keep("#avQ",e=>e.oninput=()=>{ F.q=e.value; const p=e.selectionStart; render(); const n=tela.querySelector("#avQ"); n.focus(); n.setSelectionRange(p,p); });
+  keep("#avIni",e=>e.onchange=()=>{ dd.vig.ini=e.value; marca(); }); keep("#avFim",e=>e.onchange=()=>{ dd.vig.fim=e.value; marca(); }); keep("#avObs",e=>e.oninput=()=>{ dd.obs=e.value; marca(); });
+  keep("#avParc",e=>e.onchange=()=>{ dd.parcelas=+e.value; marca(); render(); });
+  c.querySelectorAll("[data-avon]").forEach(b=>b.onclick=()=>{ const x=it(b.dataset.avon); x.on=!x.on; marca(); render(); });
+  c.querySelectorAll("[data-avcob]").forEach(e=>e.onchange=()=>{ it(e.dataset.avcob).cob=e.value; marca(); render(); });
+  const num=(attr,campo,dec)=>c.querySelectorAll(`[data-${attr}]`).forEach(e=>e.onchange=()=>{ const x=it(e.dataset[attr.replace(/-./g,m=>m[1].toUpperCase())]); x[campo]=dec?precoNum(e.value):Math.max(1,parseInt(e.value,10)||1); marca(); render(); });
+  num("avqtd","qtd"); num("avmes","meses"); num("avval","valor",true); num("avparc","parc");
+  c.querySelectorAll("[data-avsep]").forEach(e=>e.onchange=()=>{ it(e.dataset.avsep).sep=e.checked; marca(); render(); });
+  keep("#avAdd",e=>e.onclick=()=>dspDialogo(tela,"Adicionar produto",`<label class="crm-f"><span>Nome</span><input class="inp" id="apN"></label><label class="crm-f" style="margin-top:8px"><span>Valor (R$)</span><input class="inp" id="apV" inputmode="decimal"></label>`,d=>{ const n=d.querySelector("#apN").value.trim().toUpperCase(); if(!n) return false; const v=precoNum(d.querySelector("#apV").value)||0;
+   if(!prods.find(p=>p.nome===n)){ const p={nome:n,cat:"OUTROS",valor:v,desc:""}; prods.unshift(p); dd.extra.push(p); } Object.assign(it(n),{on:true,valor:v}); marca(); render(); },"Adicionar")); };
+ render(); }
+
+(function(){ if(document.getElementById("sim-css")) return; const s=document.createElement("style"); s.id="sim-css"; s.textContent=`
+.sim-nv{position:relative}.sim-nv-m{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:#fff;border:1px solid var(--border,#e7e9f2);border-radius:12px;box-shadow:0 12px 32px rgba(20,30,50,.16);padding:6px;min-width:270px}
+.sim-nv-m button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit}.sim-nv-m button:hover{background:var(--accent-soft,#e0eef2)}.sim-nv-m small{display:block;color:var(--muted,#83879c);font-size:11.5px}
+.sim-abas{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.sim-tag{font-size:12.5px;font-weight:600;color:var(--accent,#006789);background:var(--accent-soft,#e0eef2);border-radius:999px;padding:4px 10px}
+.sim-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#f3f8fa;border:1px solid #d4e5eb;border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.sim-passos{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.sim-passos span{display:flex;align-items:center;gap:6px;background:#eef1f4;border-radius:999px;padding:5px 11px;font-size:12px;color:#4a4d63}.sim-passos span b{background:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:10.5px}.sim-passos span.on{background:#0b2b3a;color:#fff}.sim-passos span.on b{color:#0b2b3a}
+.av-grade{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}.av-lista{display:grid;gap:6px}
+.av-it{display:grid;grid-template-columns:56px 1fr 230px 200px;gap:12px;align-items:start;background:#fff;border:1px solid #e7e9f2;border-left:3px solid transparent;border-radius:10px;padding:10px 12px}.av-it.on{border-left-color:#006789;background:#f7fbfc}
+.av-n b{display:block;font-size:12.5px}.av-n small{color:#83879c;font-size:11px}.av-n details{font-size:11.5px;color:#4a4d63}.av-n summary{cursor:pointer;color:#006789}
+.av-c,.av-v{display:flex;flex-direction:column;gap:5px;font-size:12px}.av-c label,.av-v label{display:flex;align-items:center;gap:5px}.av-c .inp,.av-v .inp{padding:5px 7px}.av-c label .inp{width:56px}.av-v small{color:#83879c}
+.av-res{position:sticky;top:0;background:#fff;border:1px solid #e7e9f2;border-radius:14px;padding:14px}.av-l{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef0f5}
+@media(max-width:1100px){.av-grade{grid-template-columns:1fr}.av-it{grid-template-columns:56px 1fr}.av-c,.av-v{grid-column:2}}`; document.head.appendChild(s); })();
+
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
