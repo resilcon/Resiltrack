@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.6 (simulador já vem com 3 colaboradores, parcela anual sim e integração baixa)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.13 (RH Assist: colaboradores, organograma, departamentos e cargos)</footer>
   </div>
 </div>
 
@@ -1137,10 +1137,12 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
+  if(MODE.startsWith("rh_") && podePainelGestor()){ tabsEl.classList.add("hidden"); rhView(v); return; }
+  if(MODE.startsWith("rh_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
   if(MODE==="crm" && !podeCRM() && crmMenuPrincipal()){ MODE=crmMenuPrincipal(); return render(); }
   if(MODE.startsWith("crm_") && crmSecaoPode(MODE)){ tabsEl.classList.add("hidden"); crmView(v); return; }
@@ -1187,6 +1189,9 @@ function renderSide(){
       [["wallboard","Wallboard"],["revisao","Revisão diária"],["pessoas","Pessoas"],["clientes","Clientes"],["processos","Processos"]]
       .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div></div>`;
   }
+  if(gestorOK){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
+    h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}RH Assist${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="rh"><div>`+RH_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
@@ -1197,7 +1202,7 @@ function renderSide(){
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.dobra; if(k){ const sub=s.querySelector(`[data-dobra-box="${k}"]`); if(!sub) return; const ab=sub.classList.toggle("fech")===false;
       srlAberto(k,ab); b.setAttribute("aria-expanded",ab); const st=b.querySelector(".srl-seta"); if(st) st.classList.toggle("fech",!ab); return; }
-    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":""),true);
+    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":""),true);
     setMode(b.dataset.mode); });
   s.querySelectorAll("[data-atab]").forEach(b=>b.onclick=()=>{ TAB=b.dataset.atab; window.scrollTo(0,0); render(); });
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -5492,9 +5497,10 @@ function precoPintar(v){
  const tribs=ativ?ativ.tributacoes.map(t=>t.nome):[];
  if(tribs.length&&!tribs.includes(S.resp.tributacao)) S.resp.tributacao=tribs[0];
  const crits=P.criterios.filter(c=>c.ativo);
- // respostas padrão: 3 colaboradores, parcela anual SIM e integração baixa (só quando ainda não foram respondidas)
+ // respostas padrão: 3 colaboradores, 2 estabelecimentos, parcela anual SIM e integração baixa (só quando ainda não foram respondidas)
  crits.forEach(c=>{ if(S.resp.crit[c.id]!==undefined) return; const fx=re=>((c.faixas||[]).find(f=>re.test(String(f.nome||"").trim()))||{}).nome;
   if(/colaborador/i.test(c.nome)&&c.forma==="numero") S.resp.crit[c.id]="3";
+  else if(/estabelecimento/i.test(c.nome)&&c.forma==="numero") S.resp.crit[c.id]="2";
   else if(/parcela\s*anual/i.test(c.nome)){ const v=fx(/^sim$/i); if(v) S.resp.crit[c.id]=v; }
   else if(/integra/i.test(c.nome)){ const v=fx(/baix/i); if(v) S.resp.crit[c.id]=v; } });
  const R=precoCalcular(P,{faturamento:precoNum(S.resp.faturamento),tributacao:S.resp.tributacao,atividade:S.resp.atividade,crit:S.resp.crit});
@@ -7453,6 +7459,200 @@ ${bloco("Pagamento separado",sep,totSep,"Parcelado à parte")}
 function rtJanela(){ let buf=""; const abrir=()=>{ const url=URL.createObjectURL(new Blob([buf],{type:"text/html;charset=utf-8"}));
   const a=document.createElement("a"); a.href=url; a.target="_blank"; a.rel="noopener noreferrer"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),120000); };
  return {document:{open(){ buf=""; },write(h){ buf+=h; },close(){ abrir(); }}}; }
+
+// ================= RH ASSIST · fase 1: colaboradores, organograma, departamentos e cargos =================
+// Dados vêm do Resiltrack (schema rh). CPF, nascimento e salário só aparecem para o RH/admin (o servidor nem envia para gestor).
+const RH_SECOES=[["rh_colab","Colaboradores"],["rh_org","Organograma"],["rh_deps","Departamentos e cargos"]];
+const RH_NIVEL={diretoria:["Diretoria","#044B64"],gestor:["Gestão","#066789"],coordenador:["Coordenação","#269A9E"],colaborador:["Colaborador","#E0A23B"]};
+const RH_STATUS={ativo:["good","Ativo"],afastado:["warn","Afastado"],desligado:["neutral","Desligado"]};
+const RH_MOD={presencial:"Presencial",hibrido:"Híbrido",remoto:"Remoto"};
+const RH_CARGO_NIVEL={diretoria:"Diretoria",gestao:"Gestão",coordenacao:"Coordenação",especialista:"Especialista",analista:"Analista",assistente:"Assistente",estagio:"Estágio",outro:"Outro"};
+const _ICO_RH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15.6 14.4c2.4-.4 4.4 1 4.9 3.6"/></svg>';
+let RHD=null, RHF={q:"",dep:"",status:"ativo",nivel:""}, RH_FECH=new Set();
+async function rhCarregar(force){ if(force||!RHD) RHD=await crmRpc("rh_dados",{p:{}}); return RHD; }
+const rhPor=(lista,id)=>(lista||[]).find(x=>x.id===id);
+const rhIni=n=>String(n||"?").trim().split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]).join("").toUpperCase();
+const rhPodeEditar=()=>!!(RHD&&RHD.eu&&RHD.eu.rh);
+function rhAbas(at){ return `<div class="sim-abas"><div class="seg">${RH_SECOES.map(([m,t])=>`<button type="button" data-rhab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
+function rhNivelPill(n){ const [t,c]=RH_NIVEL[n]||RH_NIVEL.colaborador; return `<span class="rh-niv" style="--c:${c}">${t}</span>`; }
+
+async function rhView(v){
+ const sec=MODE, tit={rh_colab:"Colaboradores",rh_org:"Organograma",rh_deps:"Departamentos e cargos"}[sec]||"RH Assist";
+ const sub={rh_colab:"Base de pessoas do escritório, puxada do Resiltrack. Clique em um nome para abrir a ficha.",rh_org:"Quem responde a quem. Clique em um card para abrir a ficha e em ▾ para recolher a equipe.",rh_deps:"Estrutura usada no organograma, nos filtros e nos próximos módulos do RH."}[sec]||"";
+ const btn=rhPodeEditar()&&sec==="rh_colab"?crmPri('id="rhNovo">+ Novo colaborador</button>'):"";
+ v.innerHTML=crmHead(tit,sub,btn)+rhAbas(sec)+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist. Fale com o RH.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!==sec) return;
+ if(rhPodeEditar()&&!v.querySelector("#rhNovo")&&sec==="rh_colab") v.querySelector(".crm-acoes").innerHTML=crmPri('id="rhNovo">+ Novo colaborador</button>');
+ const nb=v.querySelector("#rhNovo"); if(nb) nb.onclick=()=>rhFicha(null);
+ const box=v.querySelector("#rhBox");
+ if(sec==="rh_org") rhOrganograma(box); else if(sec==="rh_deps") rhDeps(box); else rhLista(box);
+}
+
+// ---------- Colaboradores ----------
+function rhLista(box){
+ const D=RHD, C=D.colaboradores||[], ativos=C.filter(c=>c.status==="ativo");
+ const semDep=ativos.filter(c=>!c.departamento_id).length, semGest=ativos.filter(c=>!c.gestor_id&&c.nivel!=="diretoria").length, semMail=ativos.filter(c=>!c.email).length;
+ const tile=(lbl,val,cor,dica)=>`<div class="tile" ${dica?`title="${escAttr(dica)}"`:""}><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:${cor}"`:""}>${val}</div></div></div>`;
+ const pinta=()=>{ const q=crmNormTxt(RHF.q);
+  const vis=C.filter(c=>(!RHF.status||c.status===RHF.status)&&(!RHF.nivel||c.nivel===RHF.nivel)&&(!RHF.dep||(RHF.dep==="_sem"?!c.departamento_id:c.departamento_id===RHF.dep))
+   &&(!q||crmNormTxt([c.nome,c.email,(rhPor(D.cargos,c.cargo_id)||{}).nome,(rhPor(D.departamentos,c.departamento_id)||{}).nome].join(" ")).includes(q)));
+  box.innerHTML=`<div class="kpis rh-kpis">${tile("Ativos",ativos.length)}${tile("Departamentos",(D.departamentos||[]).filter(d=>d.ativo&&ativos.some(c=>c.departamento_id===d.id)).length)}${tile("Lideranças",ativos.filter(c=>c.nivel!=="colaborador").length)}${tile("Pendências de cadastro",semDep+semGest+semMail,semDep+semGest+semMail?"#b7791f":"",`${semDep} sem departamento, ${semGest} sem gestor, ${semMail} sem e-mail`)}</div>
+  <div class="filters crm-bar2" style="margin-top:14px"><div class="search" style="flex:1;min-width:220px"><input id="rhQ" type="search" value="${escAttr(RHF.q)}" placeholder="Nome, e-mail, cargo ou departamento" aria-label="Buscar colaborador"></div>
+   <select class="fsel" id="rhDep" aria-label="Departamento">${crmOpt([...(D.departamentos||[]).map(d=>[d.id,d.nome]),["_sem","Sem departamento"]],RHF.dep,"Todos os departamentos")}</select>
+   <select class="fsel" id="rhNiv" aria-label="Nível">${crmOpt(Object.entries(RH_NIVEL).map(([k,[t]])=>[k,t]),RHF.nivel,"Todos os níveis")}</select>
+   <select class="fsel" id="rhSt" aria-label="Situação">${crmOpt(Object.entries(RH_STATUS).map(([k,[,t]])=>[k,t]),RHF.status,"Todas as situações")}</select></div>
+  <div class="card" style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Colaborador</th><th>Departamento</th><th>Cargo</th><th>Gestor</th><th>Nível</th><th>Situação</th></tr></thead><tbody>
+  ${vis.map(c=>{ const d=rhPor(D.departamentos,c.departamento_id), g=rhPor(C,c.gestor_id), cg=rhPor(D.cargos,c.cargo_id), st=RH_STATUS[c.status]||["neutral",c.status];
+   return `<tr><td><button class="crm-link rh-nm" data-rhf="${c.id}"><span class="rh-av" style="--c:${(d&&d.cor)||"#066789"}">${esc(rhIni(c.nome))}</span><span><b>${esc(c.nome)}</b><span class="sub">${esc(c.email||"sem e-mail")}</span></span></button></td>
+    <td>${d?`<span class="rh-dep" style="--c:${d.cor||"#066789"}">${esc(d.nome)}</span>`:`<span class="sub">Sem departamento</span>`}</td><td>${esc(cg?cg.nome:"")}</td>
+    <td>${g?esc(g.nome):c.gestor_id?`<span class="sub">fora da sua visão</span>`:`<span class="sub">${c.nivel==="diretoria"?"":"Sem gestor"}</span>`}</td><td>${rhNivelPill(c.nivel)}</td><td><span class="pill ${st[0]}">${st[1]}</span></td></tr>`; }).join("")
+   ||`<tr><td colspan="6"><div class="empty">Ninguém com esses filtros.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">${vis.length} de ${C.length} pessoas${rhPodeEditar()?"":" na sua visão (sua equipe e departamentos que você lidera)"}.</p>`;
+  const qi=box.querySelector("#rhQ"); qi.oninput=()=>{ RHF.q=qi.value; const p=qi.selectionStart; pinta(); const n=box.querySelector("#rhQ"); n.focus(); n.setSelectionRange(p,p); };
+  box.querySelector("#rhDep").onchange=e=>{ RHF.dep=e.target.value; pinta(); }; box.querySelector("#rhNiv").onchange=e=>{ RHF.nivel=e.target.value; pinta(); }; box.querySelector("#rhSt").onchange=e=>{ RHF.status=e.target.value; pinta(); };
+  box.querySelectorAll("[data-rhf]").forEach(b=>b.onclick=()=>rhFicha(b.dataset.rhf)); };
+ pinta();
+}
+
+// ---------- Ficha (ver/editar) ----------
+function rhFicha(id){
+ const D=RHD, C=D.colaboradores||[], c=id?rhPor(C,id):{status:"ativo",nivel:"colaborador"}, ed=rhPodeEditar(), pv=(D.privado||{})[id]||{};
+ if(!c) return;
+ const dis=ed?"":"disabled", d=rhPor(D.departamentos,c.departamento_id);
+ // gestor não pode ser alguém abaixo da própria pessoa
+ const abaixo=new Set(); if(id){ const fila=[id]; while(fila.length){ const x=fila.pop(); C.forEach(z=>{ if(z.gestor_id===x&&!abaixo.has(z.id)){ abaixo.add(z.id); fila.push(z.id); } }); } }
+ const gestores=C.filter(z=>z.id!==id&&!abaixo.has(z.id)&&z.status!=="desligado").map(z=>[z.id,z.nome+((rhPor(D.cargos,z.cargo_id)||{}).nome?" · "+rhPor(D.cargos,z.cargo_id).nome:"")]);
+ const equipe=id?C.filter(z=>z.gestor_id===id&&z.status==="ativo"):[];
+ const chips=id?`<span class="m-chip">${(RH_NIVEL[c.nivel]||RH_NIVEL.colaborador)[0]}</span>${d?`<span class="m-chip">${esc(d.nome)}</span>`:""}${c.status!=="ativo"?`<span class="m-chip">${(RH_STATUS[c.status]||[,""])[1]}</span>`:""}`:"";
+ const m=crmModal("RH Assist",id?c.nome:"Novo colaborador",chips,`<div class="crm-form">
+  <label class="crm-f crm-w2"><span>Nome completo *</span><input class="inp" id="rfNome" value="${escAttr(c.nome||"")}" ${dis}></label>
+  <label class="crm-f"><span>E-mail corporativo</span><input class="inp" id="rfMail" type="email" value="${escAttr(c.email||"")}" ${dis}></label>
+  <label class="crm-f"><span>Telefone</span><input class="inp" id="rfTel" inputmode="tel" value="${escAttr(c.telefone||"")}" ${dis}></label>
+  <label class="crm-f"><span>Departamento</span><select class="inp" id="rfDep" ${dis}>${crmOpt((D.departamentos||[]).filter(x=>x.ativo||x.id===c.departamento_id).map(x=>[x.id,x.nome]),c.departamento_id,"Sem departamento")}</select></label>
+  <label class="crm-f"><span>Cargo</span><select class="inp" id="rfCargo" ${dis}>${crmOpt((D.cargos||[]).filter(x=>x.ativo||x.id===c.cargo_id).map(x=>[x.id,x.nome]),c.cargo_id,"Sem cargo")}</select></label>
+  <label class="crm-f"><span>Gestor direto</span><select class="inp" id="rfGest" ${dis}>${crmOpt(gestores,c.gestor_id,"Ninguém (topo do organograma)")}</select></label>
+  <label class="crm-f"><span>Nível no organograma</span><select class="inp" id="rfNiv" ${dis}>${crmOpt(Object.entries(RH_NIVEL).map(([k,[t]])=>[k,t]),c.nivel)}</select></label>
+  <label class="crm-f"><span>Admissão</span><input class="inp" id="rfAdm" type="date" value="${escAttr(c.admissao||"")}" ${dis}></label>
+  <label class="crm-f"><span>Modalidade</span><select class="inp" id="rfMod" ${dis}>${crmOpt(Object.entries(RH_MOD),c.modalidade,"Não informado")}</select></label>
+  <label class="crm-f"><span>Situação</span><select class="inp" id="rfSt" ${dis}>${crmOpt(Object.entries(RH_STATUS).map(([k,[,t]])=>[k,t]),c.status)}</select></label>
+  <label class="crm-f" id="rfDesW" ${c.status==="desligado"?"":"hidden"}><span>Data do desligamento</span><input class="inp" id="rfDes" type="date" value="${escAttr(c.desligado_em||"")}" ${dis}></label>
+  <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="rfObs" rows="2" ${dis}>${esc(c.obs||"")}</textarea></label>
+  ${ed?`<div class="crm-w2 rh-priv"><div class="rh-priv-h"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Dados restritos ao RH<span class="sub">não aparecem para gestores, IA ou intranet</span></div>
+   <div class="crm-form" style="grid-template-columns:1fr 1fr 1fr"><label class="crm-f"><span>CPF</span><input class="inp" id="rfCpf" inputmode="numeric" value="${escAttr(pv.cpf||"")}"></label>
+   <label class="crm-f"><span>Nascimento</span><input class="inp" id="rfNasc" type="date" value="${escAttr(pv.nascimento||"")}"></label>
+   <label class="crm-f"><span>Salário (R$)</span><input class="inp" id="rfSal" inputmode="decimal" value="${pv.salario!=null?escAttr(String(pv.salario).replace(".",",")):""}"></label></div></div>`:""}
+  ${id?`<div class="crm-w2"><div class="sub" style="font-weight:700;margin-bottom:6px">Equipe direta (${equipe.length})</div>${equipe.length?`<div class="rh-eq">${equipe.map(z=>`<button class="rh-chip" data-rhf2="${z.id}">${esc(z.nome)}</button>`).join("")}</div>`:`<span class="sub">Ninguém responde diretamente a esta pessoa.</span>`}</div>`:""}
+ </div><div class="crm-pe" style="margin-top:14px"><span class="sub" id="rfMsg" style="flex:1">${ed?"":"Só o RH altera cadastros. Fale com o RH para corrigir algo."}</span><button class="txt-btn" data-close2>${ed?"Cancelar":"Fechar"}</button>${ed?crmPri('id="rfOk">Salvar</button>'):""}</div>`);
+ m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelectorAll("[data-rhf2]").forEach(b=>b.onclick=()=>rhFicha(b.dataset.rhf2));
+ const st=m.querySelector("#rfSt"); st.onchange=()=>{ m.querySelector("#rfDesW").hidden=st.value!=="desligado"; };
+ const ok=m.querySelector("#rfOk"); if(!ok) return;
+ ok.onclick=async()=>{ const g=s=>m.querySelector(s).value.trim(), msg=t=>{ m.querySelector("#rfMsg").textContent=t||""; };
+  if(!g("#rfNome")){ msg("Informe o nome."); return; }
+  const sal=g("#rfSal").replace(/\./g,"").replace(",",".");
+  if(sal&&isNaN(Number(sal))){ msg("Salário inválido."); return; }
+  const p={acao:"colaborador",id:id||"",nome:g("#rfNome"),email:g("#rfMail"),telefone:g("#rfTel"),departamento_id:g("#rfDep"),cargo_id:g("#rfCargo"),gestor_id:g("#rfGest"),nivel:g("#rfNiv"),admissao:g("#rfAdm"),modalidade:g("#rfMod"),status:g("#rfSt"),desligado_em:g("#rfSt")==="desligado"?g("#rfDes"):"",obs:g("#rfObs"),
+   privado:{cpf:g("#rfCpf").replace(/\D/g,""),nascimento:g("#rfNasc"),salario:sal}};
+  ok.disabled=true; ok.textContent="Salvando…";
+  try{ await crmRpc("rh_salvar",{p}); await rhCarregar(true); closeModal(); crmToast(id?"Cadastro atualizado":"Colaborador incluído"); rhView(document.getElementById("view")); }
+  catch(e){ ok.disabled=false; ok.textContent="Salvar"; msg(String(e&&e.message||"").includes("duplicate")?"Já existe alguém com esse e-mail.":crmErro(e)); } };
+}
+
+// ---------- Organograma ----------
+function rhOrganograma(box){
+ const D=RHD, C=(D.colaboradores||[]).filter(c=>c.status!=="desligado"), ids=new Set(C.map(c=>c.id));
+ const filhos={}; C.forEach(c=>{ const k=c.gestor_id&&ids.has(c.gestor_id)?c.gestor_id:"_raiz"; (filhos[k]=filhos[k]||[]).push(c); });
+ const ordem=(a,b)=>{ const o=["diretoria","gestor","coordenador","colaborador"]; return o.indexOf(a.nivel)-o.indexOf(b.nivel)||a.nome.localeCompare(b.nome,"pt-BR"); };
+ Object.values(filhos).forEach(l=>l.sort(ordem));
+ const total=id=>(filhos[id]||[]).reduce((s,f)=>s+1+total(f.id),0);
+ const raiz=filhos._raiz||[], lideres=raiz.filter(c=>(filhos[c.id]||[]).length), soltos=raiz.filter(c=>!(filhos[c.id]||[]).length);
+ const no=c=>{ const d=rhPor(D.departamentos,c.departamento_id), cg=rhPor(D.cargos,c.cargo_id), fs=filhos[c.id]||[], fe=RH_FECH.has(c.id), [nt,nc]=RH_NIVEL[c.nivel]||RH_NIVEL.colaborador;
+  return `<li><div class="rh-no" style="--c:${nc};--d:${(d&&d.cor)||"#cbd5e1"}"><button class="rh-no-b" data-rhf="${c.id}"><span class="rh-av" style="--c:${nc}">${esc(rhIni(c.nome))}</span><span class="rh-no-t"><b>${esc(c.nome)}</b><span>${esc(cg?cg.nome:nt)}</span>${d?`<em>${esc(d.nome)}</em>`:""}</span></button>
+   ${fs.length?`<button class="rh-no-x" data-rhx="${c.id}" aria-expanded="${!fe}" title="${fe?"Mostrar":"Recolher"} equipe">${fe?"▸":"▾"} ${total(c.id)}</button>`:""}${c.status==="afastado"?`<span class="pill warn rh-af">afastado</span>`:""}</div>
+   ${fs.length&&!fe?(fs.every(f=>!(filhos[f.id]||[]).length)?`<ul><li class="rh-leafs"><div class="rh-col" style="--n:${fs.length>4?3:fs.length>2?2:1}">${fs.map(f=>no(f).replace(/^<li>|<\/li>$/g,"")).join("")}</div></li></ul>`:`<ul>${fs.map(no).join("")}</ul>`):""}</li>`; };
+ box.innerHTML=`<div class="rh-leg">${Object.values(RH_NIVEL).map(([t,c])=>`<span><i style="background:${c}"></i>${t}</span>`).join("")}<span class="sub">Linha colorida embaixo do card: departamento</span>
+  <span style="margin-left:auto;display:flex;gap:6px"><button class="txt-btn" id="rhAbre">Expandir tudo</button><button class="txt-btn" id="rhFecha">Recolher tudo</button></span></div>
+  <div class="card rh-org-w"><div class="rh-org">${lideres.length?`<ul>${lideres.map(no).join("")}</ul>`:`<div class="empty">Ninguém tem gestor definido ainda.</div>`}</div></div>
+  ${soltos.length?`<div class="card" style="margin-top:14px;padding:16px"><div style="font-weight:700;margin-bottom:4px">Sem gestor definido (${soltos.length})</div><p class="sub" style="margin:0 0 10px">${rhPodeEditar()?"Abra a ficha e escolha o gestor direto para encaixar no organograma.":"Fale com o RH para encaixar essas pessoas."}</p><div class="rh-eq">${soltos.map(c=>`<button class="rh-chip" data-rhf="${c.id}">${esc(c.nome)}</button>`).join("")}</div></div>`:""}`;
+ const ow=box.querySelector(".rh-org-w"); if(ow) ow.scrollLeft=Math.max(0,(ow.scrollWidth-ow.clientWidth)/2);
+box.querySelectorAll("[data-rhf]").forEach(b=>b.onclick=()=>rhFicha(b.dataset.rhf));
+ box.querySelectorAll("[data-rhx]").forEach(b=>b.onclick=()=>{ const k=b.dataset.rhx; RH_FECH.has(k)?RH_FECH.delete(k):RH_FECH.add(k); rhOrganograma(box); });
+ box.querySelector("#rhAbre").onclick=()=>{ RH_FECH.clear(); rhOrganograma(box); };
+ box.querySelector("#rhFecha").onclick=()=>{ lideres.forEach(l=>(filhos[l.id]||[]).forEach(f=>{ if((filhos[f.id]||[]).length) RH_FECH.add(f.id); })); rhOrganograma(box); };
+}
+
+// ---------- Departamentos e cargos ----------
+function rhDeps(box){
+ const D=RHD, C=D.colaboradores||[], ed=rhPodeEditar();
+ const nAt=f=>C.filter(c=>c.status==="ativo"&&f(c)).length;
+ box.innerHTML=`<div class="rh-2col"><div class="card" style="padding:0;overflow-x:auto"><div class="rh-ch"><b>Departamentos</b>${ed?`<button class="txt-btn" id="rhDepN">+ Departamento</button>`:""}</div>
+  <table><thead><tr><th>Departamento</th><th>Responsável</th><th class="right">Ativos</th><th></th></tr></thead><tbody>${(D.departamentos||[]).map(d=>`<tr class="${d.ativo?"":"rh-off"}"><td><span class="rh-dep" style="--c:${d.cor||"#066789"}">${esc(d.nome)}</span>${d.ativo?"":` <span class="sub">inativo</span>`}</td>
+   <td>${esc((rhPor(C,d.responsavel_id)||{}).nome||"")}</td><td class="right num">${nAt(c=>c.departamento_id===d.id)}</td><td class="right">${ed?`<button class="txt-btn" data-rhdep="${d.id}">Editar</button>`:""}</td></tr>`).join("")}</tbody></table></div>
+  <div class="card" style="padding:0;overflow-x:auto"><div class="rh-ch"><b>Cargos</b>${ed?`<button class="txt-btn" id="rhCarN">+ Cargo</button>`:""}</div>
+  <table><thead><tr><th>Cargo</th><th>Nível</th><th class="right">Ativos</th><th></th></tr></thead><tbody>${(D.cargos||[]).map(g=>`<tr class="${g.ativo?"":"rh-off"}"><td><b>${esc(g.nome)}</b>${g.descricao?`<div class="sub">${esc(g.descricao)}</div>`:""}</td><td>${esc(RH_CARGO_NIVEL[g.nivel]||g.nivel)}</td>
+   <td class="right num">${nAt(c=>c.cargo_id===g.id)}</td><td class="right">${ed?`<button class="txt-btn" data-rhcar="${g.id}">Editar</button>`:""}</td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">Nenhum cargo cadastrado. ${ed?"Cadastre os cargos para usar nas fichas.":""}</div></td></tr>`}</tbody></table></div></div>`;
+ if(!ed) return;
+ box.querySelector("#rhDepN").onclick=()=>rhEditDep(null); box.querySelector("#rhCarN").onclick=()=>rhEditCargo(null);
+ box.querySelectorAll("[data-rhdep]").forEach(b=>b.onclick=()=>rhEditDep(b.dataset.rhdep)); box.querySelectorAll("[data-rhcar]").forEach(b=>b.onclick=()=>rhEditCargo(b.dataset.rhcar));
+}
+async function rhSalvarSimples(p,msgEl,okEl,txt){ okEl.disabled=true; try{ await crmRpc("rh_salvar",{p}); await rhCarregar(true); closeModal(); crmToast(txt); rhView(document.getElementById("view")); }
+ catch(e){ okEl.disabled=false; const s=String(e&&e.message||""); msgEl.textContent=s.includes("duplicate")?"Já existe um com esse nome.":s.includes("foreign key")?"Ainda tem gente vinculada. Desative em vez de excluir.":crmErro(e); } }
+function rhEditDep(id){ const D=RHD, d=id?rhPor(D.departamentos,id):{cor:"#066789",ativo:true,ordem:(D.departamentos||[]).length};
+ const m=crmModal("RH Assist",id?d.nome:"Novo departamento","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome *</span><input class="inp" id="rdNome" value="${escAttr(d.nome||"")}"></label>
+  <label class="crm-f"><span>Responsável</span><select class="inp" id="rdResp">${crmOpt((D.colaboradores||[]).filter(c=>c.status==="ativo").map(c=>[c.id,c.nome]),d.responsavel_id,"Ninguém")}</select></label>
+  <label class="crm-f"><span>Cor</span><input class="inp" id="rdCor" type="color" value="${escAttr(d.cor||"#066789")}" style="height:38px;padding:3px"></label>
+  <label class="crm-f"><span>Ordem</span><input class="inp" id="rdOrd" type="number" value="${d.ordem||0}"></label>
+  <label class="crm-f"><span>Situação</span><select class="inp" id="rdAt">${crmOpt([["true","Ativo"],["false","Inativo"]],String(d.ativo!==false))}</select></label></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="rdMsg" style="flex:1"></span>${id?`<button class="txt-btn crm-perigo" id="rdDel">Excluir</button>`:""}<button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rdOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal; const msg=m.querySelector("#rdMsg"), ok=m.querySelector("#rdOk");
+ ok.onclick=()=>{ const nome=m.querySelector("#rdNome").value.trim(); if(!nome){ msg.textContent="Informe o nome."; return; }
+  rhSalvarSimples({acao:"departamento",id:id||"",nome,responsavel_id:m.querySelector("#rdResp").value,cor:m.querySelector("#rdCor").value,ordem:m.querySelector("#rdOrd").value,ativo:m.querySelector("#rdAt").value==="true"},msg,ok,"Departamento salvo"); };
+ const del=m.querySelector("#rdDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; } rhSalvarSimples({acao:"departamento",id,excluir:"sim"},msg,del,"Departamento excluído"); };
+}
+function rhEditCargo(id){ const D=RHD, g=id?rhPor(D.cargos,id):{nivel:"analista",ativo:true};
+ const m=crmModal("RH Assist",id?g.nome:"Novo cargo","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome do cargo *</span><input class="inp" id="rcNome" value="${escAttr(g.nome||"")}" placeholder="Ex.: Analista Fiscal Pleno"></label>
+  <label class="crm-f"><span>Nível</span><select class="inp" id="rcNiv">${crmOpt(Object.entries(RH_CARGO_NIVEL),g.nivel)}</select></label>
+  <label class="crm-f"><span>Situação</span><select class="inp" id="rcAt">${crmOpt([["true","Ativo"],["false","Inativo"]],String(g.ativo!==false))}</select></label>
+  <label class="crm-f crm-w2"><span>Descrição e responsabilidades</span><textarea class="inp" id="rcDesc" rows="3">${esc(g.descricao||"")}</textarea></label></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="rcMsg" style="flex:1"></span>${id?`<button class="txt-btn crm-perigo" id="rcDel">Excluir</button>`:""}<button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rcOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal; const msg=m.querySelector("#rcMsg"), ok=m.querySelector("#rcOk");
+ ok.onclick=()=>{ const nome=m.querySelector("#rcNome").value.trim(); if(!nome){ msg.textContent="Informe o nome."; return; }
+  rhSalvarSimples({acao:"cargo",id:id||"",nome,nivel:m.querySelector("#rcNiv").value,descricao:m.querySelector("#rcDesc").value.trim(),ativo:m.querySelector("#rcAt").value==="true"},msg,ok,"Cargo salvo"); };
+ const del=m.querySelector("#rcDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; } rhSalvarSimples({acao:"cargo",id,excluir:"sim"},msg,del,"Cargo excluído"); };
+}
+
+(function(){ const st=document.createElement("style"); st.textContent=`
+.rh-kpis{grid-template-columns:repeat(4,1fr)}.sim-abas .seg{max-width:100%;overflow-x:auto}@media(max-width:900px){.rh-kpis{grid-template-columns:repeat(2,1fr)}}
+.rh-nm{display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:inherit}.rh-nm b{display:block;color:var(--ink)}.rh-nm .sub{display:block}
+.rh-av{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font:700 12px/1 "Urbanist",sans-serif;color:#fff;background:var(--c,#066789)}
+.rh-dep{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}.rh-dep:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.rh-niv{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.rh-priv{border:1px dashed #b7791f;background:#fffaf0;border-radius:12px;padding:12px}.rh-priv-h{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;color:#8a5a00;margin-bottom:8px;flex-wrap:wrap}.rh-priv-h .sub{font-weight:500;margin-left:4px}
+.rh-eq{display:flex;flex-wrap:wrap;gap:6px}.rh-chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}.rh-chip:hover{border-color:#066789;color:#066789}
+.rh-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:1000px){.rh-2col{grid-template-columns:1fr}}
+.rh-ch{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}.rh-off{opacity:.55}
+.rh-leg{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;margin-bottom:12px}.rh-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rh-org-w{overflow:auto;padding:24px 12px;max-height:calc(100vh - 230px)}
+.rh-org{display:inline-block;min-width:100%}.rh-org ul{display:flex;justify-content:center;padding-top:22px;position:relative;margin:0;padding-left:0}.rh-org>ul{padding-top:0}
+.rh-org li{list-style:none;position:relative;padding:22px 6px 0;display:flex;flex-direction:column;align-items:center}
+.rh-org>ul>li{padding-top:0}
+.rh-org li:before,.rh-org li:after{content:"";position:absolute;top:0;right:50%;width:50%;height:22px;border-top:1.5px solid #c5d3dc}.rh-org li:after{right:auto;left:50%;border-left:1.5px solid #c5d3dc}
+.rh-org li:only-child:before,.rh-org li:only-child:after{display:none}.rh-org li:only-child{padding-top:22px}.rh-org>ul>li:only-child{padding-top:0}
+.rh-org li:first-child:before,.rh-org li:last-child:after{border:0}.rh-org li:last-child:before{border-right:1.5px solid #c5d3dc;border-radius:0 6px 0 0}.rh-org li:first-child:after{border-radius:6px 0 0 0}
+.rh-org ul ul:before{content:"";position:absolute;top:0;left:50%;height:22px;border-left:1.5px solid #c5d3dc}
+.rh-org li:only-child>.rh-no:before{content:"";position:absolute;top:-22px;left:50%;height:22px;border-left:1.5px solid #c5d3dc}.rh-org>ul>li:only-child>.rh-no:before{display:none}
+.rh-no{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--c);border-bottom:3px solid var(--d);border-radius:12px;box-shadow:var(--shadow);width:178px;display:flex;flex-direction:column;align-items:stretch}
+.rh-no-b{display:flex;gap:9px;align-items:center;text-align:left;background:none;border:0;padding:10px 10px 8px;cursor:pointer;color:inherit}.rh-no-b:hover b{color:#066789}
+.rh-no-t{display:flex;flex-direction:column;min-width:0;line-height:1.25}.rh-no-t b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rh-no-t span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rh-no-t em{font-style:normal;font-size:10.5px;color:var(--muted);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rh-no-x{border:0;border-top:1px solid var(--border);background:transparent;font-size:11px;font-weight:700;color:#066789;padding:4px;cursor:pointer;border-radius:0 0 10px 10px}.rh-no-x:hover{background:#eef6f8}
+.rh-af{position:absolute;top:-10px;right:6px;font-size:10px}
+.rh-org li.rh-leafs{padding-top:22px}.rh-org li.rh-leafs:before,.rh-org li.rh-leafs:after{display:none}
+.rh-col{position:relative;display:grid;grid-template-columns:repeat(var(--n),178px);gap:10px;padding:12px;border:1.5px dashed #c5d3dc;border-radius:14px;background:color-mix(in srgb,var(--surface) 70%,#eef4f6)}
+.rh-col:before{content:"";position:absolute;top:-23.5px;left:50%;height:22px;border-left:1.5px solid #c5d3dc}
+.rh-col .rh-no:before{display:none}
+`; document.head.appendChild(st); })();
 
 
 (async function init(){
