@@ -829,7 +829,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.1 (proposta avulsa no padrão Resilcon)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.3 (proposta avulsa com fundo #006789)</footer>
   </div>
 </div>
 
@@ -7396,25 +7396,25 @@ function simPropostaHTML(s,dd,prods,t){ const e=x=>String(x==null?"":x).replace(
  const obs=dd.obs&&dd.obs.trim()?e(dd.obs):"Esta proposta resume os produtos e serviços combinados. Os valores ficam válidos pelo período da vigência e passam a valer a partir da assinatura do contrato, que enviamos por e-mail para assinatura digital.";
  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta ${e(s.empresa_nome||s.cliente_nome||"")} ${e(simNum(s.numero))}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet">
-<style>@page{size:A4;margin:0}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;background:#0b2b3a}
+<style>@page{size:A4;margin:0}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;background:#006789}
 body{font-family:Poppins,Arial,sans-serif;color:#fff;font-size:12.5px}
-.pg{width:210mm;min-height:296mm;margin:0 auto;padding:12mm 14mm 16mm;background:radial-gradient(120% 70% at 85% 0%,rgba(38,154,158,.45),transparent 60%),radial-gradient(90% 60% at 0% 100%,rgba(0,103,137,.55),transparent 65%),linear-gradient(160deg,#0b2b3a 0%,#06384b 45%,#00506a 100%);position:relative;overflow:hidden}
-.pg:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px);pointer-events:none}
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;position:relative;z-index:1}.top img{height:40px}.ct{text-align:right;color:rgba(255,255,255,.62);font-size:11px;line-height:1.55}
-.tit{margin:14px 0 11px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;position:relative;z-index:1}.tit h1{margin:0;font-size:26px;font-weight:800;letter-spacing:.28em}.tit .k{color:#8fe3d0;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase}.tit .n{text-align:right;color:rgba(255,255,255,.7);font-size:11.5px}
-.card{background:rgba(9,32,44,.62);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:13px 18px;position:relative;z-index:1}
-.cli{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px;margin-bottom:12px}.cli small{display:block;color:rgba(255,255,255,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.cli b{font-weight:600;font-size:13px}
+.pg{width:210mm;min-height:296mm;margin:0 auto;padding:12mm 14mm 16mm;background:#006789;position:relative;overflow:hidden}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;position:relative;z-index:1}.top img{height:40px}.ct{text-align:right;color:#a6c8d3;font-size:11px;line-height:1.55}
+.tit{margin:14px 0 11px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;position:relative;z-index:1}.tit h1{margin:0;font-size:26px;font-weight:800;letter-spacing:.28em}.tit .k{color:#8fe3d0;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase}.tit .n{text-align:right;color:#b3d1db;font-size:11.5px}
+.card{background:#00536f;border:1px solid #1a7591;border-radius:16px;padding:13px 18px;position:relative;z-index:1}
+.cli{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px;margin-bottom:12px}.cli small{display:block;color:#99c0cc;font-size:10px;letter-spacing:.12em;text-transform:uppercase}.cli b{font-weight:600;font-size:13px}
 .svc h2{margin:0 0 9px;font-size:16px;font-weight:700}.chk{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px}.chk div{display:flex;gap:8px;align-items:flex-start;line-height:1.35}.chk svg{flex:none;color:#7ee2b8;margin-top:1px}
 section{margin-top:11px;break-inside:avoid;position:relative;z-index:1}section h3{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-size:15px;font-weight:700;font-style:italic}
-.lst{border-top:1.5px dashed rgba(255,255,255,.28);border-bottom:1.5px dashed rgba(255,255,255,.28);padding:6px 0 6px 32px}.li{display:flex;justify-content:space-between;gap:18px;padding:3px 0}.li span{font-weight:500}.li small{display:block;color:rgba(255,255,255,.6);font-size:10.5px}.li em{display:block;font-style:normal;color:rgba(255,255,255,.5);font-size:10px;line-height:1.35;max-width:120mm}.li b{white-space:nowrap;font-weight:600;text-align:right}.li b small{display:block;font-weight:400}
-.tot{text-align:right;font-size:18px;font-weight:800;margin-top:5px}.tot small{display:block;font-size:10.5px;font-weight:500;color:rgba(255,255,255,.6)}
-.pe{display:grid;grid-template-columns:1fr 1.05fr;gap:22px;align-items:end;margin-top:14px;break-inside:avoid;position:relative;z-index:1}.pe h4{margin:0 0 8px;font-size:17px;line-height:1.2}.pe p{margin:0;color:rgba(255,255,255,.7);font-size:10.5px;line-height:1.55}
-.box{background:rgba(9,32,44,.75);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 18px}.box .lab{display:inline-block;background:#7ee2b8;color:#073042;font-weight:700;font-size:11px;border-radius:999px;padding:2px 10px;margin-bottom:6px}.box .v{font-size:29px;font-weight:800;color:#7ee2b8;line-height:1.1}.box .v small{font-size:14px;font-weight:600}.box .s{color:rgba(255,255,255,.72);font-size:11.5px;margin-top:6px;line-height:1.5}
-.rod{position:absolute;left:0;right:0;bottom:6mm;color:rgba(255,255,255,.45);font-size:9.5px;text-align:center;z-index:1}
+.lst{border-top:1.5px dashed #4d94ab;border-bottom:1.5px dashed #4d94ab;padding:6px 0 6px 32px}.li{display:flex;justify-content:space-between;gap:18px;padding:3px 0}.li span{font-weight:500}.li small{display:block;color:#a0c4cf;font-size:10.5px}.li em{display:block;font-style:normal;color:#a6c8d3;font-size:10px;line-height:1.35;max-width:120mm}.li b{white-space:nowrap;font-weight:600;text-align:right}.li b small{display:block;font-weight:400}
+.tot{text-align:right;font-size:18px;font-weight:800;margin-top:5px}.tot small{display:block;font-size:10.5px;font-weight:500;color:#a0c4cf}
+.pe{display:grid;grid-template-columns:1fr 1.05fr;gap:22px;align-items:end;margin-top:14px;break-inside:avoid;position:relative;z-index:1}.pe h4{margin:0 0 8px;font-size:17px;line-height:1.2}.pe p{margin:0;color:#cce0e7;font-size:10.5px;line-height:1.55}
+.box{background:#004760;border:1px solid #1a7591;border-radius:16px;padding:14px 18px}.box .lab{display:inline-block;background:#7ee2b8;color:#073042;font-weight:700;font-size:11px;border-radius:999px;padding:2px 10px;margin-bottom:6px}.box .v{font-size:29px;font-weight:800;color:#7ee2b8;line-height:1.1}.box .v small{font-size:14px;font-weight:600}.box .s{color:#b6d3dc;font-size:11.5px;margin-top:6px;line-height:1.5}
+.rod{position:absolute;left:0;right:0;bottom:6mm;color:#a0c4cf;font-size:9.5px;text-align:center;z-index:1}
 @media screen{body{padding:20px 0}.pg{box-shadow:0 20px 60px rgba(0,0,0,.4)}}</style></head><body><div class="pg">
 <div class="top"><img src="${SIM_LOGO_BRANCO}" alt="Resilcon"><div class="ct">(11) 5661-1555<br>comercial@resilcon.com.br<br>www.resilcon.com.br</div></div>
 <div class="tit"><div><div class="k">Proposta de produtos e serviços</div><h1>ORÇAMENTO</h1></div><div class="n">${e(simNum(s.numero))}<br>${new Date().toLocaleDateString("pt-BR")}</div></div>
-<div class="card cli"><div><small>Cliente</small><b>${e(s.empresa_nome||s.cliente_nome||"Cliente")}</b>${s.empresa_nome&&s.cliente_nome?`<div style="color:rgba(255,255,255,.7);font-size:11.5px">${e(s.cliente_nome)}</div>`:""}</div><div><small>CNPJ/CPF</small><b>${e(s.documento||"—")}</b></div><div><small>Vigência</small><b>${dd.vig.ini?dt(dd.vig.ini):"A partir da assinatura"}${dd.vig.fim?" a "+dt(dd.vig.fim):""}</b></div></div>
+<div class="card cli"><div><small>Cliente</small><b>${e(s.empresa_nome||s.cliente_nome||"Cliente")}</b>${s.empresa_nome&&s.cliente_nome?`<div style="color:#b3d1db;font-size:11.5px">${e(s.cliente_nome)}</div>`:""}</div><div><small>CNPJ/CPF</small><b>${e(s.documento||"—")}</b></div><div><small>Vigência</small><b>${dd.vig.ini?dt(dd.vig.ini):"A partir da assinatura"}${dd.vig.fim?" a "+dt(dd.vig.fim):""}</b></div></div>
 <div class="card svc"><h2>Serviços contratados</h2><div class="chk">${sel.map(i=>`<div>${ck}<span>${e(cap(i.n))}</span></div>`).join("")||"<div>Nenhum serviço marcado.</div>"}</div></div>
 ${bloco(`${mens.length} serviço${mens.length===1?"":"s"} mensa${mens.length===1?"l":"is"}`,mens,t.m,"Mensalidade")}
 ${bloco(`${unic.length} serviço${unic.length===1?"":"s"} com valor único`,unic,t.u,p>1?`Em ${p}x de ${R(t.u/p)}`:"À vista")}
