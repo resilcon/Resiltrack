@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.13 (RH Assist: colaboradores, organograma, departamentos e cargos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.16 (RH Assist: perfil comportamental DISC)</footer>
   </div>
 </div>
 
@@ -7468,7 +7468,7 @@ const RH_STATUS={ativo:["good","Ativo"],afastado:["warn","Afastado"],desligado:[
 const RH_MOD={presencial:"Presencial",hibrido:"Híbrido",remoto:"Remoto"};
 const RH_CARGO_NIVEL={diretoria:"Diretoria",gestao:"Gestão",coordenacao:"Coordenação",especialista:"Especialista",analista:"Analista",assistente:"Assistente",estagio:"Estágio",outro:"Outro"};
 const _ICO_RH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15.6 14.4c2.4-.4 4.4 1 4.9 3.6"/></svg>';
-let RHD=null, RHF={q:"",dep:"",status:"ativo",nivel:""}, RH_FECH=new Set();
+let RH_FECH_INI=false, RHD=null, RHF={q:"",dep:"",status:"ativo",nivel:""}, RH_FECH=new Set();
 async function rhCarregar(force){ if(force||!RHD) RHD=await crmRpc("rh_dados",{p:{}}); return RHD; }
 const rhPor=(lista,id)=>(lista||[]).find(x=>x.id===id);
 const rhIni=n=>String(n||"?").trim().split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]).join("").toUpperCase();
@@ -7476,9 +7476,11 @@ const rhPodeEditar=()=>!!(RHD&&RHD.eu&&RHD.eu.rh);
 function rhAbas(at){ return `<div class="sim-abas"><div class="seg">${RH_SECOES.map(([m,t])=>`<button type="button" data-rhab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
 function rhNivelPill(n){ const [t,c]=RH_NIVEL[n]||RH_NIVEL.colaborador; return `<span class="rh-niv" style="--c:${c}">${t}</span>`; }
 
+const RHV_EXTRA={};
 async function rhView(v){
+ if(RHV_EXTRA[MODE]) return RHV_EXTRA[MODE](v);
  const sec=MODE, tit={rh_colab:"Colaboradores",rh_org:"Organograma",rh_deps:"Departamentos e cargos"}[sec]||"RH Assist";
- const sub={rh_colab:"Base de pessoas do escritório, puxada do Resiltrack. Clique em um nome para abrir a ficha.",rh_org:"Quem responde a quem. Clique em um card para abrir a ficha e em ▾ para recolher a equipe.",rh_deps:"Estrutura usada no organograma, nos filtros e nos próximos módulos do RH."}[sec]||"";
+ const sub={rh_colab:"Base de pessoas do escritório, puxada do Resiltrack. Clique em um nome para abrir a ficha.",rh_org:"Quem responde a quem. Clique em um card para abrir a ficha e em ▸ para ver a equipe de cada diretor.",rh_deps:"Estrutura usada no organograma, nos filtros e nos próximos módulos do RH."}[sec]||"";
  const btn=rhPodeEditar()&&sec==="rh_colab"?crmPri('id="rhNovo">+ Novo colaborador</button>'):"";
  v.innerHTML=crmHead(tit,sub,btn)+rhAbas(sec)+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
@@ -7567,20 +7569,22 @@ function rhOrganograma(box){
  const ordem=(a,b)=>{ const o=["diretoria","gestor","coordenador","colaborador"]; return o.indexOf(a.nivel)-o.indexOf(b.nivel)||a.nome.localeCompare(b.nome,"pt-BR"); };
  Object.values(filhos).forEach(l=>l.sort(ordem));
  const total=id=>(filhos[id]||[]).reduce((s,f)=>s+1+total(f.id),0);
- const raiz=filhos._raiz||[], lideres=raiz.filter(c=>(filhos[c.id]||[]).length), soltos=raiz.filter(c=>!(filhos[c.id]||[]).length);
+ const depOrd=c=>{ const d=rhPor(D.departamentos,c.departamento_id); return d?d.ordem:99; };
+ const raiz=filhos._raiz||[], lideres=raiz.filter(c=>c.nivel==="diretoria"||(filhos[c.id]||[]).length).sort((a,b)=>(a.nivel==="diretoria"?0:1)-(b.nivel==="diretoria"?0:1)||depOrd(a)-depOrd(b)||a.nome.localeCompare(b.nome,"pt-BR")), soltos=raiz.filter(c=>!lideres.includes(c));
  const no=c=>{ const d=rhPor(D.departamentos,c.departamento_id), cg=rhPor(D.cargos,c.cargo_id), fs=filhos[c.id]||[], fe=RH_FECH.has(c.id), [nt,nc]=RH_NIVEL[c.nivel]||RH_NIVEL.colaborador;
   return `<li><div class="rh-no" style="--c:${nc};--d:${(d&&d.cor)||"#cbd5e1"}"><button class="rh-no-b" data-rhf="${c.id}"><span class="rh-av" style="--c:${nc}">${esc(rhIni(c.nome))}</span><span class="rh-no-t"><b>${esc(c.nome)}</b><span>${esc(cg?cg.nome:nt)}</span>${d?`<em>${esc(d.nome)}</em>`:""}</span></button>
    ${fs.length?`<button class="rh-no-x" data-rhx="${c.id}" aria-expanded="${!fe}" title="${fe?"Mostrar":"Recolher"} equipe">${fe?"▸":"▾"} ${total(c.id)}</button>`:""}${c.status==="afastado"?`<span class="pill warn rh-af">afastado</span>`:""}</div>
    ${fs.length&&!fe?(fs.every(f=>!(filhos[f.id]||[]).length)?`<ul><li class="rh-leafs"><div class="rh-col" style="--n:${fs.length>4?3:fs.length>2?2:1}">${fs.map(f=>no(f).replace(/^<li>|<\/li>$/g,"")).join("")}</div></li></ul>`:`<ul>${fs.map(no).join("")}</ul>`):""}</li>`; };
+ if(!RH_FECH_INI){ RH_FECH_INI=true; lideres.forEach(l=>{ if((filhos[l.id]||[]).length) RH_FECH.add(l.id); }); }
  box.innerHTML=`<div class="rh-leg">${Object.values(RH_NIVEL).map(([t,c])=>`<span><i style="background:${c}"></i>${t}</span>`).join("")}<span class="sub">Linha colorida embaixo do card: departamento</span>
   <span style="margin-left:auto;display:flex;gap:6px"><button class="txt-btn" id="rhAbre">Expandir tudo</button><button class="txt-btn" id="rhFecha">Recolher tudo</button></span></div>
-  <div class="card rh-org-w"><div class="rh-org">${lideres.length?`<ul>${lideres.map(no).join("")}</ul>`:`<div class="empty">Ninguém tem gestor definido ainda.</div>`}</div></div>
+  <div class="card rh-org-w"><div class="rh-org">${lideres.some(c=>c.nivel==="diretoria")?`<div class="rh-dir-tit">Diretoria</div>`:""}${lideres.length?`<ul class="rh-raiz">${lideres.map(no).join("")}</ul>`:`<div class="empty">Ninguém tem gestor definido ainda.</div>`}</div></div>
   ${soltos.length?`<div class="card" style="margin-top:14px;padding:16px"><div style="font-weight:700;margin-bottom:4px">Sem gestor definido (${soltos.length})</div><p class="sub" style="margin:0 0 10px">${rhPodeEditar()?"Abra a ficha e escolha o gestor direto para encaixar no organograma.":"Fale com o RH para encaixar essas pessoas."}</p><div class="rh-eq">${soltos.map(c=>`<button class="rh-chip" data-rhf="${c.id}">${esc(c.nome)}</button>`).join("")}</div></div>`:""}`;
  const ow=box.querySelector(".rh-org-w"); if(ow) ow.scrollLeft=Math.max(0,(ow.scrollWidth-ow.clientWidth)/2);
 box.querySelectorAll("[data-rhf]").forEach(b=>b.onclick=()=>rhFicha(b.dataset.rhf));
  box.querySelectorAll("[data-rhx]").forEach(b=>b.onclick=()=>{ const k=b.dataset.rhx; RH_FECH.has(k)?RH_FECH.delete(k):RH_FECH.add(k); rhOrganograma(box); });
  box.querySelector("#rhAbre").onclick=()=>{ RH_FECH.clear(); rhOrganograma(box); };
- box.querySelector("#rhFecha").onclick=()=>{ lideres.forEach(l=>(filhos[l.id]||[]).forEach(f=>{ if((filhos[f.id]||[]).length) RH_FECH.add(f.id); })); rhOrganograma(box); };
+ box.querySelector("#rhFecha").onclick=()=>{ lideres.forEach(l=>{ if((filhos[l.id]||[]).length) RH_FECH.add(l.id); }); rhOrganograma(box); };
 }
 
 // ---------- Departamentos e cargos ----------
@@ -7591,7 +7595,7 @@ function rhDeps(box){
   <table><thead><tr><th>Departamento</th><th>Responsável</th><th class="right">Ativos</th><th></th></tr></thead><tbody>${(D.departamentos||[]).map(d=>`<tr class="${d.ativo?"":"rh-off"}"><td><span class="rh-dep" style="--c:${d.cor||"#066789"}">${esc(d.nome)}</span>${d.ativo?"":` <span class="sub">inativo</span>`}</td>
    <td>${esc((rhPor(C,d.responsavel_id)||{}).nome||"")}</td><td class="right num">${nAt(c=>c.departamento_id===d.id)}</td><td class="right">${ed?`<button class="txt-btn" data-rhdep="${d.id}">Editar</button>`:""}</td></tr>`).join("")}</tbody></table></div>
   <div class="card" style="padding:0;overflow-x:auto"><div class="rh-ch"><b>Cargos</b>${ed?`<button class="txt-btn" id="rhCarN">+ Cargo</button>`:""}</div>
-  <table><thead><tr><th>Cargo</th><th>Nível</th><th class="right">Ativos</th><th></th></tr></thead><tbody>${(D.cargos||[]).map(g=>`<tr class="${g.ativo?"":"rh-off"}"><td><b>${esc(g.nome)}</b>${g.descricao?`<div class="sub">${esc(g.descricao)}</div>`:""}</td><td>${esc(RH_CARGO_NIVEL[g.nivel]||g.nivel)}</td>
+  <table><thead><tr><th>Cargo</th><th>Nível</th><th class="right">Ativos</th><th></th></tr></thead><tbody>${(D.cargos||[]).map(g=>`<tr class="${g.ativo?"":"rh-off"}"><td><b>${esc(g.nome)}</b>${g.missao||g.descricao?`<div class="sub rha-desc" title="${escAttr(g.responsabilidades||"")}">${esc(g.missao||g.descricao)}</div>`:""}</td><td>${esc(g.nivel_estrutura||RH_CARGO_NIVEL[g.nivel]||g.nivel)}</td>
    <td class="right num">${nAt(c=>c.cargo_id===g.id)}</td><td class="right">${ed?`<button class="txt-btn" data-rhcar="${g.id}">Editar</button>`:""}</td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">Nenhum cargo cadastrado. ${ed?"Cadastre os cargos para usar nas fichas.":""}</div></td></tr>`}</tbody></table></div></div>`;
  if(!ed) return;
  box.querySelector("#rhDepN").onclick=()=>rhEditDep(null); box.querySelector("#rhCarN").onclick=()=>rhEditCargo(null);
@@ -7648,12 +7652,538 @@ function rhEditCargo(id){ const D=RHD, g=id?rhPor(D.cargos,id):{nivel:"analista"
 .rh-no-t{display:flex;flex-direction:column;min-width:0;line-height:1.25}.rh-no-t b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rh-no-t span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rh-no-t em{font-style:normal;font-size:10.5px;color:var(--muted);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rh-no-x{border:0;border-top:1px solid var(--border);background:transparent;font-size:11px;font-weight:700;color:#066789;padding:4px;cursor:pointer;border-radius:0 0 10px 10px}.rh-no-x:hover{background:#eef6f8}
 .rh-af{position:absolute;top:-10px;right:6px;font-size:10px}
+.rh-org>ul.rh-raiz{align-items:flex-start;gap:26px}.rh-org>ul.rh-raiz>li{padding:0}.rh-org>ul.rh-raiz>li:before,.rh-org>ul.rh-raiz>li:after,.rh-org>ul.rh-raiz>li>.rh-no:before{display:none}
+.rh-dir-tit{text-align:center;font:700 11px/1 "Urbanist",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#044B64;margin:0 0 12px}
 .rh-org li.rh-leafs{padding-top:22px}.rh-org li.rh-leafs:before,.rh-org li.rh-leafs:after{display:none}
 .rh-col{position:relative;display:grid;grid-template-columns:repeat(var(--n),178px);gap:10px;padding:12px;border:1.5px dashed #c5d3dc;border-radius:14px;background:color-mix(in srgb,var(--surface) 70%,#eef4f6)}
 .rh-col:before{content:"";position:absolute;top:-23.5px;left:50%;height:22px;border-left:1.5px solid #c5d3dc}
 .rh-col .rh-no:before{display:none}
 `; document.head.appendChild(st); })();
 
+// ================= RH ASSIST · ciclo de avaliação de desempenho (modelo do Cohros) =================
+// Igual ao Cohros da Resilcon: tipos GD (gestor direto), AU (autoavaliação) e GI (gestor indireto); pesos 40/35/25; escala 1 a 5;
+// evidência obrigatória quando a nota foge do "Atende"; admitidos há menos de 90 dias ficam de fora; calibração da nota pelo comitê;
+// etapas Parametrização > Avaliação > Calibração > Resultado > Feedback. Colaborador não entra no Resiltrack: AU vem da intranet ou é lançada pelo RH.
+RH_SECOES.push(["rh_ciclos","Avaliação de desempenho"],["rh_comp","Competências"]);
+const RHA_ESC=[{ate:1.9,nome:"Distante do requerido",cor:"#b4532a",desc:"Competência muito abaixo do nível requerido para o cargo, com grande esforço de desenvolvimento. Desempenho muito abaixo do esperado ou da meta."},
+ {ate:2.8,nome:"Próximo do requerido",cor:"#d9a23b",desc:"Competência próxima do nível requerido, com algum esforço de desenvolvimento. Desempenho um pouco abaixo do esperado ou da meta."},
+ {ate:3.2,nome:"Atende o requerido",cor:"#269A9E",desc:"Apresenta plenamente o nível requerido para o cargo. Desempenho 100% dentro do esperado ou meta alcançada."},
+ {ate:4.2,nome:"Supera o requerido",cor:"#066789",desc:"Competência pouco acima do nível requerido. Desempenho um pouco acima do esperado ou meta um pouco ultrapassada."},
+ {ate:5,nome:"Destacado: referência no tema",cor:"#044B64",desc:"Alto domínio, referência no tema, pode atuar como multiplicador interno. Desempenho muito acima do esperado ou meta muito ultrapassada."}];
+const RHA_NOTA=["","Distante","Próximo","Atende","Supera","Destacado"];
+const RHA_GRUPO={des:"Indicadores de desempenho",soft:"Soft skills",hard:"Hard skills"};
+const RHA_ST={rascunho:["neutral","Parametrização"],aberto:["good","Avaliação aberta"],calibracao:["warn","Em calibração"],encerrado:["neutral","Encerrado"]};
+const RHA_TIPO={gestor:["GD","Gestor direto"],auto:["AU","Autoavaliação"],gi:["GI","Gestor indireto"],calibrada:["CAL","Calibrada"]};
+const RHA_POT={promocao:"Promoção",merito:"Mérito ou aumento",lateral:"Movimentação lateral",nao:"Não indicado"};
+const RHA_BOX=["","Insuficiente","Eficaz","Comprometido","Questionável","Mantenedor","Forte desempenho","Enigma","Em crescimento","Alto potencial"];
+const RHA_BOXCOR=["","#f6e3d8","#f3ecd9","#e3eef0","#f3ecd9","#e3eef0","#d6ebe9","#e3eef0","#d6ebe9","#cfe5ea"];
+let RHA={sel:null,aba:"aval",soMinhas:null,q:"",st:"",dados:null};
+const rhaFaixa=v=>{ if(v==null||isNaN(v)) return -1; for(let i=0;i<RHA_ESC.length;i++) if(v<=RHA_ESC[i].ate) return i; return 4; };
+const rhaFmt=v=>v==null||isNaN(v)?"–":Number(v).toFixed(2).replace(".",",");
+const rhaNota=v=>{ const i=rhaFaixa(v); return i<0?`<span class="sub">–</span>`:`<span class="rha-nota" style="--c:${RHA_ESC[i].cor}" title="${escAttr(RHA_ESC[i].nome)}">${rhaFmt(v)}</span>`; };
+const rhaEixo=v=>v==null?null:v<=2.8?1:v<=3.2?2:3;
+const rhaData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+const rhaTipos=c=>Object.assign({gd:true,au:c.autoavaliacao!==false,gi:false},c.tipos||{});
+const rhaImport=c=>c&&c.origem==="cohros";
+async function rhaRpc(fn,p){ return crmRpc(fn,{p:p||{}}); }
+const rhaNorm=s=>crmNormTxt(String(s||"").trim());
+
+// Quais competências valem para a pessoa (como no Cohros):
+// soft skills pelo nível do cargo (graus de exigência); hard skills pelos cargos que usam a skill; sem essa informação, cai na regra antiga (liderança / departamento)
+function rhaCargoDe(pp){ return rhPor(RHD&&RHD.cargos,pp.cargo_id)||null; }
+function rhaGrau(c,cargo){ if(!c.niveis||!c.niveis.length) return null; const nv=cargo&&cargo.nivel_estrutura;
+ if(!nv) return null; return c.niveis.find(l=>(l.cargos||[]).some(x=>rhaNorm(x)===rhaNorm(nv)))||false; }
+function rhaCompsPara(pp,comps){ const lider=pp.nivel&&pp.nivel!=="colaborador", cargo=rhaCargoDe(pp);
+ return (comps||[]).filter(c=>{ if(!c.ativo) return false;
+  if(c.grupo==="soft"){ const gr=rhaGrau(c,cargo); if(gr===false) return false; if(gr) return true; return !c.lideranca||lider; }
+  if(c.grupo==="hard"){ if(c.cargos&&c.cargos.length&&cargo) return c.cargos.some(x=>rhaNorm(x)===rhaNorm(cargo.nome)); if(c.cargos&&c.cargos.length) return false; return !c.departamento_id||c.departamento_id===pp.departamento_id; }
+  return true; }); }
+function rhaMedias(notas,comps){ const r={}; ["des","soft","hard"].forEach(g=>{ const v=comps.filter(c=>c.grupo===g).map(c=>Number(notas&&notas[c.id])).filter(n=>n>=1&&n<=5); r[g]=v.length?v.reduce((a,b)=>a+b,0)/v.length:null; }); return r; }
+function rhaGeral(m,pesos){ let s=0,w=0; ["des","soft","hard"].forEach(g=>{ if(m[g]!=null){ s+=m[g]*Number(pesos[g]||0); w+=Number(pesos[g]||0); } }); return w?s/w:null; }
+// potencial: média de Capacidade de aprendizagem e Adaptabilidade + indicação do gestor + evolução contra o ciclo anterior
+function rhaPotencial(av,comps,geral,prev){ if(!av) return null; const alvo=comps.filter(c=>/aprendizagem|adaptabilidade/i.test(c.nome)).map(c=>Number(av.notas&&av.notas[c.id])).filter(n=>n>=1);
+ let b=alvo.length?alvo.reduce((a,x)=>a+x,0)/alvo.length:geral; if(b==null) return null;
+ b+=({promocao:.5,merito:.25,lateral:.25}[av.potencial]||0); if(prev!=null&&geral!=null){ if(geral-prev>=.2) b+=.25; else if(prev-geral>=.2) b-=.25; }
+ return Math.max(1,Math.min(5,b)); }
+function rhaLinhas(D){ const comps=D.competencias||[], prevN=(D.anterior&&D.anterior.notas)||{};
+ return (D.participantes||[]).map(pp=>{ const cs=rhaCompsPara(pp,comps), achar=t=>(D.avaliacoes||[]).find(a=>a.colaborador_id===pp.colaborador_id&&a.tipo===t);
+  const g=achar("gestor"), au=achar("auto"), gi=achar("gi"), cal=achar("calibrada");
+  const n=(D.notas||{})[pp.colaborador_id]||null, geral=n?Number(n.geral):null, prev=prevN[pp.colaborador_id]!=null?Number(prevN[pp.colaborador_id]):null;
+  const pot=g&&g.status==="enviada"?rhaPotencial(g,cs,geral,prev):null, de=rhaEixo(geral), pe=rhaEixo(pot), boxAuto=de&&pe?(pe-1)*3+de:null;
+  return {pp,cs,g,au,gi,cal,n,geral,prev,pot,boxAuto,box:pp.box_calibrado||boxAuto,hist:pp.historico||null}; }); }
+
+// ---------- lista de ciclos ----------
+RHV_EXTRA.rh_ciclos=async function(v){
+ if(RHA.sel) return rhaCiclo(v,RHA.sel);
+ v.innerHTML=crmHead("Avaliação de desempenho","Ciclos de avaliação, no mesmo modelo do Cohros: gestor direto, autoavaliação e gestor indireto, com calibração e liberação de resultado.","")+rhAbas("rh_ciclos")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>{ RHA.sel=null; setMode(b.dataset.rhab); });
+ let D; try{ await rhCarregar(); D=await rhaRpc("rh_aval_dados"); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_ciclos"||RHA.sel) return;
+ const rh=D.eu&&D.eu.rh; if(rh) v.querySelector(".crm-acoes").innerHTML=crmPri('id="rhaNovo">+ Novo ciclo</button>');
+ const L=D.ciclos||[], barra=(a,t)=>{ const p=t?Math.round(a/t*100):0; return `<div class="rha-bar"><i style="width:${p}%"></i></div><span class="sub">${a} de ${t}</span>`; };
+ const etapas=c=>{ const ord=["rascunho","aberto","calibracao","encerrado"], i=ord.indexOf(c.status);
+  return `<div class="rha-etapas">${[["Parametrização",i>=0],["Avaliação",i>=1],["Calibração",i>=2],["Resultado",c.resultado_liberado||rhaImport(c)],["Feedback",c.feedback_liberado||rhaImport(c)]].map(([t,ok])=>`<span class="${ok?"ok":""}">${t}</span>`).join("")}</div>`; };
+ v.querySelector("#rhBox").innerHTML=L.length?`<div class="rha-ciclos">${L.map(c=>{ const st=RHA_ST[c.status]||["neutral",c.status], tp=rhaTipos(c);
+  return `<div class="card rha-ccard"><div class="rha-cc-h"><div><b>${esc(c.nome)}</b><div class="sub">${c.inicio||c.fim?`${rhaData(c.inicio)} a ${rhaData(c.fim)}`:"Período não definido"}${c.prazo?` · prazo ${rhaData(c.prazo)}`:""}</div></div><span class="pill ${st[0]}">${rhaImport(c)?"Histórico do Cohros":st[1]}</span></div>
+   ${etapas(c)}
+   <div class="rha-cc-b"><div><span class="lbl">${rhaImport(c)?"Avaliados":"Gestor direto (GD)"}</span>${barra(c.gestor_ok,c.total)}</div>${!rhaImport(c)&&tp.au?`<div><span class="lbl">Autoavaliação (AU)</span>${barra(c.auto_ok,c.total)}</div>`:""}${!rhaImport(c)&&tp.gi?`<div><span class="lbl">Gestor indireto (GI)</span>${barra(c.gi_ok||0,c.gi_total||0)}</div>`:""}
+   ${c.minhas?`<div class="rha-minhas"><span class="lbl">Suas avaliações</span><b>${c.minhas_ok} de ${c.minhas}</b>${c.minhas_ok<c.minhas&&c.status==="aberto"?` <span class="pill warn">pendente</span>`:""}</div>`:""}</div>
+   <div class="rha-cc-f"><span class="sub">Pesos ${c.pesos.des}/${c.pesos.soft}/${c.pesos.hard} · atenção ${c.atencao}%</span><button class="view-btn" data-rhaab="${c.id}">Abrir</button></div></div>`; }).join("")}</div>`
+  :`<div class="card"><div class="empty">${rh?"Nenhum ciclo ainda. Clique em + Novo ciclo para começar. Ele nasce em parametrização e só os gestores veem depois que você abrir.":"Nenhum ciclo de avaliação aberto no momento."}</div></div>`;
+ v.querySelectorAll("[data-rhaab]").forEach(b=>b.onclick=()=>{ RHA.sel=b.dataset.rhaab; RHA.aba="aval"; rhaCiclo(v,RHA.sel); });
+ const nb=v.querySelector("#rhaNovo"); if(nb) nb.onclick=()=>rhaEditCiclo(null);
+};
+
+function rhaEditCiclo(c){ const n=c||{pesos:{des:40,soft:35,hard:25},atencao:40,tipos:{gd:true,au:true,gi:true},evidencia_min:30,ignorar_admitidos_dias:90}, tp=rhaTipos(n);
+ const ck=(id,on,txt,dis)=>`<label class="rha-ck"><input type="checkbox" id="${id}" ${on?"checked":""} ${dis?"disabled":""}> ${txt}</label>`;
+ const m=crmModal("Parâmetros do processo",c?c.nome:"Novo ciclo de avaliação","",`<div class="crm-form" style="grid-template-columns:1fr 1fr 1fr">
+  <label class="crm-f" style="grid-column:1/-1"><span>Nome *</span><input class="inp" id="rcNome" value="${escAttr(n.nome||"")}" placeholder="Ex.: Avaliação de Desempenho 2026 · 2º semestre"></label>
+  <label class="crm-f"><span>Período avaliado: início</span><input class="inp" type="date" id="rcIni" value="${escAttr(n.inicio||"")}"></label>
+  <label class="crm-f"><span>Período avaliado: fim</span><input class="inp" type="date" id="rcFim" value="${escAttr(n.fim||"")}"></label>
+  <label class="crm-f"><span>Desconsiderar admitidos (dias)</span><input class="inp" type="number" min="0" id="rcAdm" value="${n.ignorar_admitidos_dias??90}"></label>
+  <label class="crm-f"><span>Prazo de avaliação: início</span><input class="inp" type="date" id="rcPi" value="${escAttr(n.prazo_inicio||"")}"></label>
+  <label class="crm-f"><span>Prazo de avaliação: fim</span><input class="inp" type="date" id="rcPrazo" value="${escAttr(n.prazo||"")}"></label>
+  <label class="crm-f"><span>Bloqueio de alterações</span><input class="inp" type="date" id="rcBloq" value="${escAttr(n.bloqueio||"")}"></label>
+  <div class="crm-f" style="grid-column:1/-1"><span>Tipos de avaliação</span><div class="rha-cks">${ck("rcGd",true,"GD · gestor direto (com indicação de potencial)",true)}${ck("rcAu",tp.au,"AU · autoavaliação")}${ck("rcGi",tp.gi,"GI · gestor indireto (gestor do gestor)")}</div></div>
+  <label class="crm-f"><span>Peso indicadores de desempenho (%)</span><input class="inp" type="number" min="0" max="100" step="5" id="rcPd" value="${n.pesos.des}"></label>
+  <label class="crm-f"><span>Peso soft skills (%)</span><input class="inp" type="number" min="0" max="100" step="5" id="rcPs" value="${n.pesos.soft}"></label>
+  <label class="crm-f"><span>Peso hard skills (%)</span><input class="inp" type="number" min="0" max="100" step="5" id="rcPh" value="${n.pesos.hard}"></label>
+  <label class="crm-f"><span>Evidência mínima (caracteres)</span><input class="inp" type="number" min="0" id="rcEv" value="${n.evidencia_min??30}"></label>
+  <label class="crm-f"><span>Linha de atenção dos gaps (%)</span><input class="inp" type="number" min="0" max="100" id="rcAt" value="${n.atencao}"></label>
+  <p class="sub" style="grid-column:1/-1;margin:0">Evidência obrigatória para notas "abaixo" ou "acima" do Atende (1, 2, 4 e 5), em GD, AU e GI. A calibração libera depois que GD e AU estiverem finalizadas.</p>
+ </div><div class="crm-pe" style="margin-top:14px"><span class="sub" id="rcMsg" style="flex:1">Os pesos precisam somar 100%.</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rcOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const ok=m.querySelector("#rcOk"), msg=m.querySelector("#rcMsg"), g=s=>m.querySelector(s).value.trim();
+ ok.onclick=async()=>{ const pesos={des:+g("#rcPd")||0,soft:+g("#rcPs")||0,hard:+g("#rcPh")||0};
+  if(!g("#rcNome")){ msg.textContent="Informe o nome do ciclo."; return; } if(pesos.des+pesos.soft+pesos.hard!==100){ msg.textContent=`Os pesos somam ${pesos.des+pesos.soft+pesos.hard}%. Ajuste para 100%.`; return; }
+  ok.disabled=true; try{ const r=await rhaRpc("rh_aval_salvar",{acao:"ciclo",id:c?c.id:"",nome:g("#rcNome"),inicio:g("#rcIni"),fim:g("#rcFim"),prazo_inicio:g("#rcPi"),prazo:g("#rcPrazo"),bloqueio:g("#rcBloq"),pesos,atencao:g("#rcAt"),
+    tipos:{gd:true,au:m.querySelector("#rcAu").checked,gi:m.querySelector("#rcGi").checked},evidencia_min:g("#rcEv"),ignorar_admitidos_dias:g("#rcAdm")});
+   closeModal(); crmToast(c?"Parâmetros atualizados":"Ciclo criado em parametrização"); RHA.sel=r.id; rhView(document.getElementById("view")); }catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
+}
+
+// ---------- um ciclo ----------
+async function rhaCiclo(v,id){
+ v.innerHTML=`<div class="rha-voltar"><button class="txt-btn" id="rhaVolta">‹ Todos os ciclos</button></div><div id="rhBox"><div class="card"><div class="empty">Carregando ciclo…</div></div></div>`;
+ v.querySelector("#rhaVolta").onclick=()=>{ RHA.sel=null; rhView(v); };
+ let D; try{ await rhCarregar(); D=await rhaRpc("rh_aval_dados",{ciclo:id}); }catch(e){ v.querySelector("#rhBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="rh_ciclos"||RHA.sel!==id) return; RHA.dados=D;
+ const c=D.ciclo, rh=D.eu&&D.eu.rh, st=RHA_ST[c.status]||["neutral",c.status], L=rhaLinhas(D), imp=rhaImport(c);
+ if(RHA.soMinhas==null) RHA.soMinhas=!rh;
+ const lib=c.status==="encerrado"?`<button class="txt-btn" data-rhalib="resultado">${c.resultado_liberado?"Recolher resultado":"Liberar resultado"}</button><button class="txt-btn" data-rhalib="feedback">${c.feedback_liberado?"Recolher feedback":"Liberar feedback de calibração"}</button>`:"";
+ const acoes=!rh||imp?"":({rascunho:`<button class="txt-btn" data-rhac="editar">Parâmetros</button><button class="txt-btn crm-perigo" data-rhac="excluir">Excluir</button>${crmPri('data-rhac="abrir">Liberar avaliações</button>')}`,
+  aberto:`<button class="txt-btn" data-rhac="editar">Parâmetros</button><button class="txt-btn" data-rhac="incluir">+ Incluir pessoa</button>${crmPri('data-rhac="calibracao">Ir para calibração</button>')}`,
+  calibracao:`<button class="txt-btn" data-rhac="aberto">Reabrir avaliações</button>${crmPri('data-rhac="encerrar">Encerrar e gerar resultado</button>')}`,
+  encerrado:`<button class="txt-btn" data-rhac="calibracao">Reabrir calibração</button>${lib}`})[c.status]||"";
+ const enviadas=L.filter(l=>(l.g&&l.g.status==="enviada")||(l.hist&&l.hist.geral)).length;
+ const sub=imp?`Histórico importado do Cohros · ${L.length} avaliados · pesos ${c.pesos.des}/${c.pesos.soft}/${c.pesos.hard}`
+  :`${c.inicio||c.fim?`Período ${rhaData(c.inicio)} a ${rhaData(c.fim)} · `:""}${c.prazo?`prazo ${rhaData(c.prazo_inicio)||""}${c.prazo_inicio?" a ":""}${rhaData(c.prazo)} · `:""}${c.bloqueio?`bloqueio ${rhaData(c.bloqueio)} · `:""}pesos ${c.pesos.des}/${c.pesos.soft}/${c.pesos.hard} · <span class="pill ${st[0]}">${st[1]}</span>${c.resultado_liberado?` <span class="pill good">resultado liberado</span>`:""}`;
+ const abas=imp?[["res","Ranking"],["box","9Box"]]:[["aval",`Avaliações (${enviadas}/${L.length})`],["res","Ranking"],["box","9Box"],["gaps","Gaps por competência"]];
+ if(!abas.some(a=>a[0]===RHA.aba)) RHA.aba=abas[0][0];
+ v.innerHTML=`<div class="rha-voltar"><button class="txt-btn" id="rhaVolta">‹ Todos os ciclos</button></div>`+crmHead(esc(c.nome),sub,acoes)
+  +`<div class="sim-abas"><div class="seg">${abas.map(([k,t])=>`<button type="button" data-rhaaba="${k}" class="${RHA.aba===k?"on":""}">${t}</button>`).join("")}</div></div><div id="rhBox" style="margin-top:14px"></div>`;
+ v.querySelector("#rhaVolta").onclick=()=>{ RHA.sel=null; rhView(v); };
+ v.querySelectorAll("[data-rhaaba]").forEach(b=>b.onclick=()=>{ RHA.aba=b.dataset.rhaaba; rhaCiclo(v,id); });
+ v.querySelectorAll("[data-rhac]").forEach(b=>b.onclick=()=>rhaAcao(b,c,v,L));
+ v.querySelectorAll("[data-rhalib]").forEach(b=>b.onclick=async()=>{ const k=b.dataset.rhalib, novo=!c[k==="resultado"?"resultado_liberado":"feedback_liberado"]; b.disabled=true;
+  try{ await rhaRpc("rh_aval_salvar",{acao:"liberar",ciclo:c.id,[k]:novo}); crmToast(novo?(k==="resultado"?"Resultado liberado (vai para o perfil na intranet quando a integração estiver ligada)":"Feedback de calibração liberado"):"Liberação recolhida"); rhaCiclo(v,c.id); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
+ const box=v.querySelector("#rhBox");
+ if(RHA.aba==="res") rhaResultados(box,D,L); else if(RHA.aba==="box") rhaNoveBox(box,D,L,v); else if(RHA.aba==="gaps") rhaGaps(box,D,L); else rhaAvaliacoes(box,D,L,v);
+}
+async function rhaAcao(b,c,v,L){ const a=b.dataset.rhac, recarrega=()=>rhaCiclo(v,c.id);
+ if(a==="editar") return rhaEditCiclo(c);
+ if(a==="incluir") return rhaIncluir(c,L);
+ const lim=c.fim?new Date(new Date(c.fim).getTime()-(c.ignorar_admitidos_dias||0)*864e5):null;
+ const entram=(RHD.colaboradores||[]).filter(x=>x.status==="ativo"&&x.gestor_id&&(!lim||!x.admissao||new Date(x.admissao)<=lim)).length;
+ if(b.dataset.ok!=="1"){ const t={excluir:"Clique de novo para excluir",abrir:`Liberar? Entram ${entram} ativos com gestor`,calibracao:"Clique de novo: gestores param de editar",encerrar:"Clique de novo para encerrar",aberto:"Clique de novo para reabrir"}[a];
+  if(t){ b.dataset.ok="1"; b.dataset.txt=b.textContent; b.textContent=t; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=""; b.textContent=b.dataset.txt; } },4500); return; } }
+ if(a==="calibracao"&&c.status==="aberto"){ const falta=L.filter(l=>!(l.g&&l.g.status==="enviada")||(rhaTipos(c).au&&!(l.au&&l.au.status==="enviada"))).length;
+  if(falta&&b.dataset.ok2!=="1"){ b.dataset.ok2="1"; b.textContent=`${falta} sem GD/AU finalizadas. Clique para seguir assim`; return; } }
+ b.disabled=true;
+ try{ if(a==="excluir"){ await rhaRpc("rh_aval_salvar",{acao:"excluir_ciclo",ciclo:c.id}); RHA.sel=null; crmToast("Ciclo excluído"); return rhView(v); }
+  const status={abrir:"aberto",aberto:"aberto",calibracao:"calibracao",encerrar:"encerrado"}[a];
+  const r=await rhaRpc("rh_aval_salvar",{acao:"ciclo_status",ciclo:c.id,status});
+  crmToast(status==="aberto"?`Avaliações liberadas para ${r.participantes} pessoas`:status==="calibracao"?"Ciclo em calibração":"Ciclo encerrado"); recarrega(); }
+ catch(e){ b.disabled=false; crmToast(crmErro(e)); } }
+function rhaIncluir(c,L){ const dentro=new Set(L.map(l=>l.pp.colaborador_id)), fora=(RHD.colaboradores||[]).filter(x=>x.status==="ativo"&&!dentro.has(x.id)), ativos=(RHD.colaboradores||[]).filter(x=>x.status==="ativo").map(x=>[x.id,x.nome]);
+ const m=crmModal("Mapa de avaliação","Incluir pessoa no ciclo","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Colaborador</span><select class="inp" id="riCol">${crmOpt(fora.map(x=>[x.id,x.nome]),"","Escolha")}</select></label>
+  <label class="crm-f"><span>Gestor direto (GD)</span><select class="inp" id="riAv">${crmOpt(ativos,"","Escolha")}</select></label>
+  <label class="crm-f"><span>Gestor indireto (GI)</span><select class="inp" id="riGi">${crmOpt(ativos,"","Nenhum")}</select></label></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="riMsg" style="flex:1">${fora.length?"":"Todos os ativos já estão no ciclo."}</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="riOk">Incluir</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#riCol").onchange=e=>{ const x=(RHD.colaboradores||[]).find(z=>z.id===e.target.value); if(x&&x.gestor_id){ m.querySelector("#riAv").value=x.gestor_id; const g=(RHD.colaboradores||[]).find(z=>z.id===x.gestor_id); if(g&&g.gestor_id&&rhaTipos(c).gi) m.querySelector("#riGi").value=g.gestor_id; } };
+ const ok=m.querySelector("#riOk"); ok.onclick=async()=>{ const col=m.querySelector("#riCol").value, av=m.querySelector("#riAv").value; if(!col||!av){ m.querySelector("#riMsg").textContent="Escolha a pessoa e o gestor direto."; return; }
+  ok.disabled=true; try{ await rhaRpc("rh_aval_salvar",{acao:"participante",ciclo:c.id,colaborador:col,avaliador:av,avaliador_gi:m.querySelector("#riGi").value}); closeModal(); crmToast("Pessoa incluída"); rhaCiclo(document.getElementById("view"),c.id); }catch(e){ ok.disabled=false; m.querySelector("#riMsg").textContent=crmErro(e); } }; }
+
+// ---------- aba Avaliações (status do ciclo, como no Cohros) ----------
+function rhaAvaliacoes(box,D,L,v){ const c=D.ciclo, rh=D.eu&&D.eu.rh, eu=D.eu&&D.eu.id, tp=rhaTipos(c), nomeDe=id=>((RHD.colaboradores||[]).find(x=>x.id===id)||{}).nome||"";
+ if(c.status==="rascunho"){ box.innerHTML=`<div class="card"><div class="empty">Ciclo em parametrização. Confira período, prazos, tipos e pesos em <b>Parâmetros</b> e clique em <b>Liberar avaliações</b>. Entram os ativos com gestor no organograma, menos quem foi admitido nos últimos ${c.ignorar_admitidos_dias||0} dias do período. O gestor direto vira o GD${tp.gi?" e o gestor dele vira o GI":""}.</div></div>`; return; }
+ const pill=(a,falta)=>!a?`<span class="pill neutral">${falta||"Pendente"}</span>`:a.status==="enviada"?`<span class="pill good">Finalizada</span>`:`<span class="pill warn">Rascunho</span>`;
+ const meu=l=>l.pp.avaliador_id===eu||l.pp.avaliador_gi===eu;
+ const pinta=()=>{ const q=crmNormTxt(RHA.q);
+  const vis=L.filter(l=>(!RHA.soMinhas||meu(l))&&(!q||crmNormTxt(l.pp.nome+" "+nomeDe(l.pp.avaliador_id)+" "+nomeDe(l.pp.avaliador_gi)).includes(q))&&(!RHA.st||(RHA.st==="pendente"?!(l.g&&l.g.status==="enviada"):RHA.st===(l.g&&l.g.status))))
+   .sort((a,b)=>(meu(a)?0:1)-(meu(b)?0:1)||a.pp.nome.localeCompare(b.pp.nome,"pt-BR"));
+  const minhas=L.filter(meu), pend=minhas.filter(l=>(l.pp.avaliador_id===eu&&!(l.g&&l.g.status==="enviada"))||(l.pp.avaliador_gi===eu&&tp.gi&&!(l.gi&&l.gi.status==="enviada"))).length;
+  const bloqueado=c.bloqueio&&new Date()>new Date(c.bloqueio+"T23:59:59");
+  box.innerHTML=`${minhas.length?`<div class="rha-aviso ${pend&&c.status==="aberto"?"":"ok"}">${pend&&c.status==="aberto"?`Você tem <b>${pend}</b> ${pend>1?"avaliações pendentes":"avaliação pendente"}${c.prazo?`. Prazo: ${rhaData(c.prazo)}`:""}${bloqueado?". O bloqueio de alterações já passou: só o RH altera.":"."}`:`Suas avaliações deste ciclo estão finalizadas.`}</div>`:""}
+  ${c.status==="calibracao"&&rh?`<div class="rha-aviso">Calibração: abra <b>Calibrar</b> em cada pessoa para definir a nota final com o comitê. As notas de GD, AU e GI aparecem lado a lado. Quem não for calibrado fica com a nota do gestor direto.</div>`:""}
+  <div class="filters crm-bar2"><div class="search" style="flex:1;min-width:220px"><input id="rhaQ" type="search" value="${escAttr(RHA.q)}" placeholder="Avaliado ou avaliador" aria-label="Buscar"></div>
+   <select class="fsel" id="rhaSt" aria-label="Situação">${crmOpt([["pendente","GD pendente"],["rascunho","GD em rascunho"],["enviada","GD finalizada"]],RHA.st,"Todas as situações")}</select>
+   ${minhas.length||rh?`<label class="rha-chk"><input type="checkbox" id="rhaMin" ${RHA.soMinhas?"checked":""}> Só as que eu avalio</label>`:""}</div>
+  <div class="card" style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Avaliado</th><th>GD · gestor direto</th>${tp.au?"<th>AU</th>":""}${tp.gi?"<th>GI · gestor indireto</th>":""}${c.status!=="aberto"?"<th>Calibração</th>":""}<th class="right">Nota</th><th></th></tr></thead><tbody>
+  ${vis.map(l=>{ const d=rhPor(RHD.departamentos,l.pp.departamento_id), cg=rhaCargoDe(l.pp), souGD=l.pp.avaliador_id===eu, souGI=l.pp.avaliador_gi===eu, aberto=c.status==="aberto"&&!bloqueado;
+   const bGD=(souGD&&aberto)||(rh&&c.status!=="encerrado")?`<button class="view-btn ${l.g&&l.g.status==="enviada"?"ghost":""}" data-rhaav="gestor:${l.pp.colaborador_id}">${!l.g?"Avaliar":l.g.status==="enviada"?"Ver":"Continuar"}</button>`:(l.g?`<button class="view-btn ghost" data-rhaav="gestor:${l.pp.colaborador_id}">Ver</button>`:"");
+   const bGI=tp.gi&&l.pp.avaliador_gi&&((souGI&&aberto)||(rh&&c.status!=="encerrado")||l.gi)?`<button class="txt-btn" data-rhaav="gi:${l.pp.colaborador_id}">${souGI&&!(l.gi&&l.gi.status==="enviada")&&aberto?"Avaliar GI":"Ver GI"}</button>`:"";
+   return `<tr class="${meu(l)?"rha-meu":""}"><td><b>${esc(l.pp.nome)}</b><div class="sub">${esc([cg&&cg.nome,d&&d.nome].filter(Boolean).join(" · "))}</div></td>
+    <td>${esc(nomeDe(l.pp.avaliador_id))||`<span class="sub">sem GD</span>`}${souGD?` <span class="pill neutral">você</span>`:""}<div>${pill(l.g)}</div></td>
+    ${tp.au?`<td>${l.au&&l.au.status==="enviada"?`<span class="pill good">Finalizada</span>`:`<span class="sub">${l.au?"em rascunho":"aguardando intranet"}</span>`}</td>`:""}
+    ${tp.gi?`<td>${l.pp.avaliador_gi?`${esc(nomeDe(l.pp.avaliador_gi))}${souGI?` <span class="pill neutral">você</span>`:""}<div>${pill(l.gi)}</div>`:`<span class="sub">não se aplica</span>`}</td>`:""}
+    ${c.status!=="aberto"?`<td>${l.cal&&l.cal.status==="enviada"?`<span class="pill good">Calibrada</span>`:l.cal?`<span class="pill warn">Rascunho</span>`:`<span class="sub">nota do GD</span>`}</td>`:""}
+    <td class="right">${rhaNota(l.geral)}</td><td class="right" style="white-space:nowrap">${bGD}${bGI}
+    ${rh&&c.status==="calibracao"?`<button class="txt-btn crm-pri" data-rhaav="calibrada:${l.pp.colaborador_id}">Calibrar</button>`:""}
+    ${rh&&c.status!=="encerrado"?`<button class="txt-btn" data-rhamais="${l.pp.colaborador_id}" title="Reabrir, lançar autoavaliação, trocar avaliadores">⋯</button>`:""}</td></tr>`; }).join("")||`<tr><td colspan="7"><div class="empty">Ninguém com esses filtros.</div></td></tr>`}</tbody></table></div>`;
+  const qi=box.querySelector("#rhaQ"); qi.oninput=()=>{ RHA.q=qi.value; const p=qi.selectionStart; pinta(); const n=box.querySelector("#rhaQ"); n.focus(); n.setSelectionRange(p,p); };
+  box.querySelector("#rhaSt").onchange=e=>{ RHA.st=e.target.value; pinta(); }; const mc=box.querySelector("#rhaMin"); if(mc) mc.onchange=()=>{ RHA.soMinhas=mc.checked; pinta(); };
+  box.querySelectorAll("[data-rhaav]").forEach(b=>b.onclick=()=>{ const [t,id]=b.dataset.rhaav.split(":"); rhaAvaliar(D,L.find(l=>l.pp.colaborador_id===id),t); });
+  box.querySelectorAll("[data-rhamais]").forEach(b=>b.onclick=()=>rhaMais(D,L.find(x=>x.pp.colaborador_id===b.dataset.rhamais),v)); };
+ pinta();
+}
+function rhaMais(D,l,v){ const c=D.ciclo, tp=rhaTipos(c), ativos=(RHD.colaboradores||[]).filter(x=>x.status==="ativo"&&x.id!==l.pp.colaborador_id).map(x=>[x.id,x.nome]);
+ const reab=[["gestor",l.g],["auto",l.au],["gi",l.gi],["calibrada",l.cal]].filter(([,a])=>a&&a.status==="enviada");
+ const m=crmModal("Mapa de avaliação",l.pp.nome,"",`<div class="crm-form">
+  <label class="crm-f"><span>Gestor direto (GD)</span><select class="inp" id="rtAv">${crmOpt(ativos,l.pp.avaliador_id,"Sem GD")}</select></label>
+  <label class="crm-f"><span>Gestor indireto (GI)</span><select class="inp" id="rtGi" ${tp.gi?"":"disabled"}>${crmOpt(ativos,l.pp.avaliador_gi,"Nenhum")}</select></label>
+  ${reab.length?`<div class="crm-f crm-w2"><span>Reabrir avaliação finalizada</span><div class="rha-cks">${reab.map(([t])=>`<button type="button" class="txt-btn" data-reab="${t}">Reabrir ${RHA_TIPO[t][0]}</button>`).join("")}</div></div>`:""}
+  ${tp.au?`<div class="crm-f crm-w2"><span>Autoavaliação recebida por outro canal</span><div><button type="button" class="txt-btn" id="rtAu">Lançar autoavaliação</button></div></div>`:""}</div>
+  <div class="crm-pe" style="margin-top:14px"><button class="txt-btn crm-perigo" id="rtRem">Tirar do ciclo</button><span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rtOk">Salvar avaliadores</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const vai=t=>{ closeModal(); crmToast(t); rhaCiclo(v,c.id); };
+ m.querySelector("#rtOk").onclick=async()=>{ try{ await rhaRpc("rh_aval_salvar",{acao:"participante",ciclo:c.id,colaborador:l.pp.colaborador_id,avaliador:m.querySelector("#rtAv").value,avaliador_gi:m.querySelector("#rtGi").value}); vai("Avaliadores atualizados"); }catch(e){ crmToast(crmErro(e)); } };
+ m.querySelectorAll("[data-reab]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar"; return; } try{ await rhaRpc("rh_aval_salvar",{acao:"reabrir",ciclo:c.id,colaborador:l.pp.colaborador_id,tipo:b.dataset.reab}); vai("Avaliação reaberta"); }catch(e){ crmToast(crmErro(e)); } });
+ const au=m.querySelector("#rtAu"); if(au) au.onclick=()=>{ closeModal(); rhaAvaliar(D,l,"auto"); };
+ const rem=m.querySelector("#rtRem"); rem.onclick=async()=>{ if(rem.dataset.ok!=="1"){ rem.dataset.ok="1"; rem.textContent="Clique de novo: apaga as avaliações dele neste ciclo"; return; } try{ await rhaRpc("rh_aval_salvar",{acao:"participante",ciclo:c.id,colaborador:l.pp.colaborador_id,remover:"sim"}); vai("Pessoa retirada do ciclo"); }catch(e){ crmToast(crmErro(e)); } };
+}
+
+// ---------- formulário (GD, AU, GI e calibração) ----------
+function rhaAvaliar(D,l,tipo){ const c=D.ciclo, rh=D.eu&&D.eu.rh, eu=D.eu&&D.eu.id, tp=rhaTipos(c), evMin=Number(c.evidencia_min||0);
+ const av={gestor:l.g,auto:l.au,gi:l.gi,calibrada:l.cal}[tipo];
+ const bloqueado=c.bloqueio&&new Date()>new Date(c.bloqueio+"T23:59:59");
+ const pode=rh?(c.status!=="encerrado"&&(tipo!=="calibrada"||c.status==="calibracao")):(c.status==="aberto"&&!bloqueado&&!(av&&av.status==="enviada")&&((tipo==="gestor"&&l.pp.avaliador_id===eu)||(tipo==="gi"&&l.pp.avaliador_gi===eu)));
+ // outras avaliações mostradas ao lado (como no Cohros)
+ const outras=(tipo==="calibrada"?[["gestor",l.g],["auto",l.au],["gi",l.gi]]:tipo==="gestor"?[["auto",l.au],["gi",l.gi]]:tipo==="gi"?[["gestor",l.g],["auto",l.au]]:[["gestor",l.g]]).filter(([,a])=>a&&a.status==="enviada");
+ const base=av||(tipo==="calibrada"&&l.g)||null;
+ const notas={...(base&&base.notas||{})}, coments={...(av&&av.comentarios||{})}, dis=pode?"":"disabled", d=rhPor(RHD.departamentos,l.pp.departamento_id), cargo=rhaCargoDe(l.pp);
+ const exigeEv=tipo!=="calibrada"&&evMin>0;
+ const grupo=g=>{ const cs=l.cs.filter(x=>x.grupo===g); if(!cs.length) return "";
+  return `<section class="rha-g"><div class="rha-g-h"><b>${RHA_GRUPO[g]}</b><span class="sub">peso ${c.pesos[g]}%</span><span class="rha-g-m" id="rhaM-${g}">–</span></div>
+  ${cs.map(x=>{ const gr=rhaGrau(x,cargo), desc=(gr&&gr.descricao)||x.descricao||"";
+   return `<div class="rha-l" data-linha="${x.id}"><div class="rha-l-t"><span>${esc(x.nome)}${gr&&x.niveis.length>1?` <span class="pill neutral" title="Grau de exigência para ${escAttr(cargo.nivel_estrutura)}">grau ${gr.ordem}</span>`:""}${x.lideranca?` <span class="pill neutral">liderança</span>`:""}</span>${desc?`<small>${esc(desc)}</small>`:""}
+    ${outras.map(([t,a])=>{ const o=Number(a.notas&&a.notas[x.id]); return o?`<small class="rha-outra">${RHA_TIPO[t][0]}: ${o} · ${RHA_NOTA[o]}${a.comentarios&&a.comentarios[x.id]?` · “${esc(String(a.comentarios[x.id]).slice(0,140))}”`:""}</small>`:""; }).join("")}</div>
+    <div class="rha-esc" role="radiogroup" aria-label="${escAttr(x.nome)}">${[1,2,3,4,5].map(n=>`<button type="button" role="radio" aria-checked="${notas[x.id]==n}" class="${notas[x.id]==n?"on":""}" style="--c:${RHA_ESC[n-1].cor}" data-cp="${x.id}" data-n="${n}" title="${escAttr(RHA_ESC[n-1].nome+": "+RHA_ESC[n-1].desc)}" ${dis}>${n}</button>`).join("")}</div>
+    <button type="button" class="rha-cm ${coments[x.id]?"tem":""}" data-cm="${x.id}" title="Evidência">${coments[x.id]?"Evidência ✓":"Evidência"}</button>
+    <textarea class="inp rha-cmt" data-cmt="${x.id}" rows="2" ${coments[x.id]||(exigeEv&&notas[x.id]&&notas[x.id]!=3)?"":"hidden"} ${dis} placeholder="Fato concreto que justifica a nota${exigeEv?` (obrigatório fora do Atende, mínimo ${evMin} caracteres)`:""}">${esc(coments[x.id]||"")}</textarea></div>`; }).join("")}</section>`; };
+ const titulo={gestor:"Avaliação do gestor direto (GD)",auto:"Autoavaliação (AU) lançada pelo RH",gi:"Avaliação do gestor indireto (GI)",calibrada:"Calibração da nota (comitê)"}[tipo];
+ const m=crmModal(titulo,l.pp.nome,`<span class="m-chip">${esc(c.nome)}</span>${cargo?`<span class="m-chip">${esc(cargo.nome)}</span>`:""}${d?`<span class="m-chip">${esc(d.nome)}</span>`:""}${av&&av.status==="enviada"?`<span class="m-chip">Finalizada ${rhaData(av.enviada_em)}</span>`:""}`,
+ `<div class="rha-leg">${RHA_ESC.map((e,i)=>`<span title="${escAttr(e.desc)}"><i style="background:${e.cor}">${i+1}</i>${e.nome}</span>`).join("")}</div>
+  ${tipo==="calibrada"?`<div class="rha-aviso">As notas começam iguais às do gestor direto. Ajuste o que o comitê decidir; a nota calibrada passa a valer no resultado.</div>`:""}
+  ${["des","soft","hard"].map(grupo).join("")}
+  ${tipo==="gestor"?`<section class="rha-g"><div class="rha-g-h"><b>Indicação de potencial</b></div><div class="crm-form">
+   <label class="crm-f"><span>Indicação *</span><select class="inp" id="rhaPot" ${dis}>${crmOpt(Object.entries(RHA_POT),av&&av.potencial,"Escolha")}</select></label>
+   <label class="crm-f" id="rhaPcW" ${av&&av.potencial==="promocao"?"":"hidden"}><span>Cargo indicado *</span><input class="inp" id="rhaPc" list="rhaPcL" value="${escAttr(av&&av.potencial_cargo||"")}" ${dis}><datalist id="rhaPcL">${(RHD.cargos||[]).map(x=>`<option value="${escAttr(x.nome)}">`).join("")}</datalist></label></div></section>`:""}
+  <section class="rha-g"><div class="rha-g-h"><b>${tipo==="auto"?"Comentário do colaborador":tipo==="calibrada"?"Registro do comitê":"Comentário geral"}</b></div><textarea class="inp" id="rhaCom" rows="3" ${dis} placeholder="${tipo==="gestor"?"Pontos fortes, o que desenvolver e combinados para o próximo ciclo":""}">${esc(av&&av.comentario||"")}</textarea></section>
+  <div class="rha-pe"><div class="rha-total"><span class="lbl">Nota geral</span><span id="rhaTot">–</span><span class="sub" id="rhaTotF"></span></div>
+   <span class="sub" id="rhaMsg" style="flex:1;text-align:right">${pode?"":(av&&av.status==="enviada"?"Avaliação finalizada. Só o RH reabre.":"Somente leitura.")}</span>
+   <button class="txt-btn" data-close2>${pode?"Cancelar":"Fechar"}</button>${pode?`<button class="txt-btn" id="rhaRasc">Salvar rascunho</button>${crmPri(`id="rhaEnv">${tipo==="calibrada"?"Salvar calibração":"Finalizar avaliação"}</button>`)}`:""}</div>`);
+ m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ const atualiza=()=>{ const md=rhaMedias(notas,l.cs); ["des","soft","hard"].forEach(g=>{ const e=m.querySelector("#rhaM-"+g); if(e) e.innerHTML=rhaNota(md[g]); });
+  const gg=rhaGeral(md,c.pesos); m.querySelector("#rhaTot").innerHTML=rhaNota(gg); const f=rhaFaixa(gg); m.querySelector("#rhaTotF").textContent=f<0?"":RHA_ESC[f].nome; };
+ atualiza();
+ m.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{ const k=b.dataset.cp; notas[k]=+b.dataset.n; m.querySelectorAll(`[data-cp="${k}"]`).forEach(x=>{ const on=x===b; x.classList.toggle("on",on); x.setAttribute("aria-checked",on); });
+  const ln=b.closest(".rha-l"); ln.classList.remove("falta"); if(exigeEv&&notas[k]!==3){ const t=m.querySelector(`[data-cmt="${k}"]`); if(t.hidden){ t.hidden=false; } } atualiza(); });
+ m.querySelectorAll("[data-cm]").forEach(b=>b.onclick=()=>{ const t=m.querySelector(`[data-cmt="${b.dataset.cm}"]`); t.hidden=!t.hidden; if(!t.hidden) t.focus(); });
+ m.querySelectorAll("[data-cmt]").forEach(t=>t.oninput=()=>{ coments[t.dataset.cmt]=t.value; t.closest(".rha-l").classList.remove("falta"); });
+ const pot=m.querySelector("#rhaPot"); if(pot) pot.onchange=()=>{ m.querySelector("#rhaPcW").hidden=pot.value!=="promocao"; };
+ const salvar=async(enviar,btn)=>{ const msg=t=>{ m.querySelector("#rhaMsg").textContent=t||""; };
+  if(enviar){ const falta=l.cs.filter(x=>!notas[x.id]);
+   const semEv=exigeEv?l.cs.filter(x=>notas[x.id]&&notas[x.id]!=3&&String(coments[x.id]||"").trim().length<evMin):[];
+   const marcar=xs=>{ xs.forEach(x=>{ const r=m.querySelector(`[data-linha="${x.id}"]`); if(r){ r.classList.add("falta"); const t=r.querySelector("[data-cmt]"); if(t&&semEv.includes(x)) t.hidden=false; } }); const r=m.querySelector(".rha-l.falta"); if(r) r.scrollIntoView({behavior:"smooth",block:"center"}); };
+   if(falta.length){ marcar(falta); msg(`Faltam ${falta.length} ${falta.length>1?"notas":"nota"}.`); return; }
+   if(semEv.length){ marcar(semEv); msg(`${semEv.length} ${semEv.length>1?"notas fora do Atende precisam":"nota fora do Atende precisa"} de evidência com pelo menos ${evMin} caracteres.`); return; }
+   if(tipo==="gestor"&&!pot.value){ msg("Escolha a indicação de potencial."); pot.focus(); return; }
+   if(tipo==="gestor"&&pot.value==="promocao"&&!m.querySelector("#rhaPc").value.trim()){ msg("Promoção exige o cargo indicado."); return; } }
+  const cm={}; Object.entries(coments).forEach(([k,t])=>{ if(String(t||"").trim()) cm[k]=String(t).trim(); });
+  btn.disabled=true; try{ await rhaRpc("rh_aval_salvar",{acao:"avaliacao",tipo,ciclo:c.id,colaborador:l.pp.colaborador_id,notas,comentarios:cm,comentario:m.querySelector("#rhaCom").value.trim(),
+    potencial:pot?pot.value:"",potencial_cargo:pot&&pot.value==="promocao"?m.querySelector("#rhaPc").value.trim():"",enviar:enviar?"sim":""});
+   closeModal(); crmToast(enviar?(tipo==="calibrada"?"Calibração salva":"Avaliação finalizada"):"Rascunho salvo"); rhaCiclo(document.getElementById("view"),c.id); }
+  catch(e){ btn.disabled=false; msg(crmErro(e)); } };
+ const r1=m.querySelector("#rhaRasc"), r2=m.querySelector("#rhaEnv"); if(r1) r1.onclick=()=>salvar(false,r1); if(r2) r2.onclick=()=>salvar(true,r2);
+}
+
+function rhaResultados(box,D,L){ const c=D.ciclo, ant=D.anterior, rows=L.filter(l=>l.geral!=null).sort((a,b)=>b.geral-a.geral);
+ if(!rows.length){ box.innerHTML=`<div class="card"><div class="empty">Os resultados aparecem conforme os gestores enviam as avaliações.</div></div>`; return; }
+ const med=rows.reduce((s,l)=>s+l.geral,0)/rows.length, dist=[0,0,0,0,0]; rows.forEach(l=>dist[rhaFaixa(l.geral)]++);
+ box.innerHTML=`<div class="rha-res-top"><div class="tile"><div><div class="lbl">Nota geral média</div><div class="val">${rhaFmt(med)}</div><div class="sub">${RHA_ESC[rhaFaixa(med)].nome}</div></div></div>
+  <div class="card rha-dist"><div class="lbl">Distribuição nas faixas (${rows.length} avaliados)</div><div class="rha-stack">${dist.map((n,i)=>n?`<i style="flex:${n};background:${RHA_ESC[i].cor}" title="${escAttr(RHA_ESC[i].nome)}: ${n}">${n}</i>`:"").join("")}</div>
+  <div class="rha-leg sm">${RHA_ESC.map((e,i)=>`<span><i style="background:${e.cor}"></i>${e.nome} (${dist[i]})</span>`).join("")}</div></div></div>
+  <div class="card" style="overflow-x:auto;margin-top:14px"><div class="rh-ch"><b>Ranking</b><button class="txt-btn" id="rhaCsv">Baixar planilha (CSV)</button></div><table><thead><tr><th>#</th><th>Colaborador</th><th class="right">Desempenho ${c.pesos.des}%</th><th class="right">Soft ${c.pesos.soft}%</th><th class="right">Hard ${c.pesos.hard}%</th><th class="right">Geral</th><th>Faixa</th>${ant?`<th class="right" title="Contra ${escAttr(ant.nome)}">Evolução</th>`:""}<th>9Box</th><th>Potencial</th></tr></thead><tbody>
+  ${rows.map((l,i)=>{ const d=rhPor(RHD.departamentos,l.pp.departamento_id), dl=l.prev!=null?l.geral-l.prev:null;
+   return `<tr><td class="num sub">${i+1}</td><td><b>${esc(l.pp.nome)}</b><div class="sub">${esc(d?d.nome:"")}</div></td><td class="right">${rhaNota(l.n&&l.n.des)}</td><td class="right">${rhaNota(l.n&&l.n.soft)}</td><td class="right">${rhaNota(l.n&&l.n.hard)}</td>
+    <td class="right">${rhaNota(l.geral)}</td><td class="sub">${RHA_ESC[rhaFaixa(l.geral)].nome}</td>${ant?`<td class="right num">${dl==null?`<span class="sub">–</span>`:`<span class="${dl>=0?"rha-up":"rha-down"}">${dl>=0?"▲":"▼"} ${rhaFmt(Math.abs(dl))}</span>`}</td>`:""}
+    <td>${l.box?`${RHA_BOX[l.box]}${l.pp.box_calibrado?` <span class="pill neutral" title="${escAttr(l.pp.calibracao_just||"")}">${l.hist?"Cohros":"calibrado"}</span>`:""}`:"–"}</td><td class="sub">${l.g&&l.g.potencial?esc(RHA_POT[l.g.potencial]+(l.g.potencial==="promocao"&&l.g.potencial_cargo?": "+l.g.potencial_cargo:"")):l.hist&&l.hist.potencial?`<span title="${escAttr(l.hist.potencial_just||"")}">${esc(l.hist.potencial)}</span>`:"–"}</td></tr>`; }).join("")}</tbody></table></div>`;
+ box.querySelector("#rhaCsv").onclick=()=>{ const lin=[["Posição","Colaborador","Departamento","Desempenho","Soft skills","Hard skills","Geral","Faixa","Ciclo anterior","9Box","Calibrado","Indicação","Cargo indicado"]]
+  .concat(rows.map((l,i)=>[i+1,l.pp.nome,(rhPor(RHD.departamentos,l.pp.departamento_id)||{}).nome||"",rhaFmt(l.n&&l.n.des),rhaFmt(l.n&&l.n.soft),rhaFmt(l.n&&l.n.hard),rhaFmt(l.geral),RHA_ESC[rhaFaixa(l.geral)].nome,l.prev==null?"":rhaFmt(l.prev),RHA_BOX[l.box]||"",l.pp.box_calibrado?"sim":"",l.g&&l.g.potencial?RHA_POT[l.g.potencial]:"",l.g&&l.g.potencial_cargo||""]));
+  const csv="﻿"+lin.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\r\n"), a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})); a.download=`avaliacao-${crmNormTxt(c.nome).replace(/[^a-z0-9]+/g,"-")}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); };
+}
+
+// ---------- 9Box ----------
+function rhaNoveBox(box,D,L,v){ const c=D.ciclo, rh=D.eu&&D.eu.rh, calib=rh&&!rhaImport(c)&&(c.status==="calibracao"||c.status==="aberto"), por={}; L.filter(l=>l.box).forEach(l=>(por[l.box]=por[l.box]||[]).push(l));
+ const sem=L.filter(l=>!l.box).length, cel=b=>{ const ls=por[b]||[];
+  return `<div class="rha-cel" style="background:${RHA_BOXCOR[b]}"><div class="rha-cel-h"><b>${RHA_BOX[b]}</b><span>${ls.length}</span></div><div class="rha-cel-p">${ls.map(l=>`<button class="rh-chip ${l.pp.box_calibrado?"rha-cal":""}" ${calib?`data-rhacal="${l.pp.colaborador_id}"`:"disabled"} title="${l.pp.box_calibrado?escAttr("Calibrado: "+(l.pp.calibracao_just||"")):"Geral "+rhaFmt(l.geral)+" · potencial "+rhaFmt(l.pot)}">${esc(l.pp.nome.split(" ").slice(0,2).join(" "))}</button>`).join("")}</div></div>`; };
+ box.innerHTML=`<div class="rha-9"><div class="rha-9-y"><span>Potencial</span></div><div class="rha-9-g">${[7,8,9,4,5,6,1,2,3].map(cel).join("")}</div><div></div><div class="rha-9-x"><span>Baixo</span><span>Desempenho (nota geral)</span><span>Alto</span></div></div>
+  <div class="card" style="margin-top:14px;padding:14px 16px"><p class="sub" style="margin:0">Desempenho: nota geral até 2,80 é baixo, de 2,81 a 3,20 é médio e acima de 3,20 é alto. Potencial: média de Capacidade de aprendizagem e Adaptabilidade, mais a indicação do gestor (Promoção +0,5; Mérito ou Movimentação +0,25) e a evolução contra o ciclo anterior (±0,25), na mesma régua.
+  ${sem?` ${sem} ${sem>1?"pessoas ainda não aparecem":"pessoa ainda não aparece"} porque a avaliação não foi enviada.`:""}${calib?" Clique em um nome para calibrar (mover de quadrante com justificativa).":""}</p></div>`;
+ box.querySelectorAll("[data-rhacal]").forEach(b=>b.onclick=()=>{ const l=L.find(x=>x.pp.colaborador_id===b.dataset.rhacal);
+  const m=crmModal("Calibração",l.pp.nome,`<span class="m-chip">Automático: ${RHA_BOX[l.boxAuto]||"–"}</span><span class="m-chip">Geral ${rhaFmt(l.geral)}</span><span class="m-chip">Potencial ${rhaFmt(l.pot)}</span>`,`<div class="crm-form">
+   <label class="crm-f crm-w2"><span>Quadrante após calibração</span><select class="inp" id="rkB">${crmOpt([1,2,3,4,5,6,7,8,9].map(n=>[n,RHA_BOX[n]]),l.pp.box_calibrado||"","Automático (sem calibração)")}</select></label>
+   <label class="crm-f crm-w2"><span>Justificativa do comitê *</span><textarea class="inp" id="rkJ" rows="3">${esc(l.pp.calibracao_just||"")}</textarea></label></div>
+   <div class="crm-pe" style="margin-top:14px"><span class="sub" id="rkMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rkOk">Salvar</button>')}</div>`);
+  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+  m.querySelector("#rkOk").onclick=async()=>{ const bx=m.querySelector("#rkB").value, j=m.querySelector("#rkJ").value.trim(); if(bx&&!j){ m.querySelector("#rkMsg").textContent="Escreva a justificativa."; return; }
+   try{ await rhaRpc("rh_aval_salvar",{acao:"calibrar",ciclo:c.id,colaborador:l.pp.colaborador_id,box:bx,justificativa:j}); closeModal(); crmToast("Calibração salva"); rhaCiclo(v,c.id); }catch(e){ m.querySelector("#rkMsg").textContent=crmErro(e); } }; });
+}
+
+// ---------- Gaps ----------
+function rhaGaps(box,D,L){ const c=D.ciclo, env=L.filter(l=>l.g&&l.g.status==="enviada").map(l=>Object.assign({},l,{g:l.cal&&l.cal.status==="enviada"?l.cal:l.g})), comps=(D.competencias||[]).filter(x=>x.ativo);
+ if(!env.length){ box.innerHTML=`<div class="card"><div class="empty">Os gaps aparecem conforme os gestores enviam as avaliações.</div></div>`; return; }
+ const gr=g=>{ const linhas=comps.filter(x=>x.grupo===g).map(x=>{ const ns=env.map(l=>Number(l.g.notas&&l.g.notas[x.id])).filter(n=>n>=1&&n<=5), dist=[0,0,0,0,0]; ns.forEach(n=>dist[n-1]++);
+   const abaixo=ns.length?Math.round((dist[0]+dist[1])/ns.length*100):0; return {x,ns,dist,abaixo}; }).filter(r=>r.ns.length).sort((a,b)=>b.abaixo-a.abaixo);
+  if(!linhas.length) return "";
+  return `<div class="card" style="margin-top:14px;overflow-x:auto"><div class="rh-ch"><b>${RHA_GRUPO[g]}</b><span class="sub">linha de atenção: ${c.atencao}% abaixo do "Atende"</span></div><table><thead><tr><th>Competência</th><th style="min-width:240px">Distribuição das notas</th><th class="right">Avaliados</th><th class="right">Abaixo do Atende</th></tr></thead><tbody>
+   ${linhas.map(r=>`<tr class="${r.abaixo>=c.atencao?"rha-alerta":""}"><td><b>${esc(r.x.nome)}</b>${r.x.departamento_id?`<div class="sub">${esc((rhPor(RHD.departamentos,r.x.departamento_id)||{}).nome||"")}</div>`:""}</td>
+    <td><div class="rha-stack sm">${r.dist.map((n,i)=>n?`<i style="flex:${n};background:${RHA_ESC[i].cor}" title="${RHA_NOTA[i+1]}: ${n}">${n}</i>`:"").join("")}</div></td><td class="right num">${r.ns.length}</td>
+    <td class="right"><b class="${r.abaixo>=c.atencao?"rha-down":""}">${r.abaixo}%</b>${r.abaixo>=c.atencao?` <span class="pill warn">atenção</span>`:""}</td></tr>`).join("")}</tbody></table></div>`; };
+ box.innerHTML=`<div class="rha-leg sm">${RHA_ESC.map((e,i)=>`<span><i style="background:${e.cor}"></i>${i+1} · ${RHA_NOTA[i+1]}</span>`).join("")}</div>`+["des","soft","hard"].map(gr).join("");
+}
+
+// ---------- Competências ----------
+let RHA_CQ="", RHA_CBIB=false;
+RHV_EXTRA.rh_comp=async function(v){
+ v.innerHTML=crmHead("Competências","Bibliotecas usadas nas avaliações, no modelo do Cohros: soft skills com grau de exigência por nível de cargo e hard skills ligadas aos cargos que as usam.","")+rhAbas("rh_comp")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>{ RHA.sel=null; setMode(b.dataset.rhab); });
+ let D; try{ await rhCarregar(); D=await rhaRpc("rh_aval_dados"); }catch(e){ v.querySelector("#rhBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="rh_comp") return; const rh=D.eu&&D.eu.rh, C=D.competencias||[];
+ const info=x=>{ if(x.grupo==="soft"&&x.niveis&&x.niveis.length){ const n=x.niveis.filter(l=>(l.cargos||[]).length);
+   return n.length?`<div class="rha-niv">${n.map(l=>`<span title="${escAttr(l.descricao||"")}"><b>${x.niveis.length>1?"Grau "+l.ordem:"Exigida"}</b> ${esc(l.cargos.join(", "))}</span>`).join("")}</div>`:""; }
+  if(x.grupo==="hard") return `<div class="sub">${x.cargos&&x.cargos.length?`<span title="${escAttr(x.cargos.join("\n"))}">${x.cargos.length} ${x.cargos.length>1?"cargos":"cargo"}: ${esc(x.cargos.slice(0,3).join(", "))}${x.cargos.length>3?"…":""}</span>`:esc(x.departamento_id?(rhPor(RHD.departamentos,x.departamento_id)||{}).nome||"":"Todos os cargos")}</div>`;
+  return ""; };
+ const pinta=()=>{ const q=crmNormTxt(RHA_CQ);
+  v.querySelector("#rhBox").innerHTML=`<div class="filters crm-bar2" style="margin-bottom:12px"><div class="search" style="flex:1;min-width:220px"><input id="rcQ" type="search" value="${escAttr(RHA_CQ)}" placeholder="Buscar competência ou cargo" aria-label="Buscar competência"></div>
+   <label class="rha-chk"><input type="checkbox" id="rcBib" ${RHA_CBIB?"checked":""}> Mostrar também as da biblioteca que não estão em uso</label></div>
+  <div class="rha-comp">${["des","soft","hard"].map(g=>{ const ls=C.filter(x=>x.grupo===g&&(RHA_CBIB||x.ativo)&&(!q||crmNormTxt(x.nome+" "+(x.cargos||[]).join(" ")+" "+(x.descricao||"")).includes(q)));
+  return `<div class="card" style="padding:0;overflow-x:auto"><div class="rh-ch"><b>${RHA_GRUPO[g]} <span class="sub">(${C.filter(x=>x.grupo===g&&x.ativo).length} em uso)</span></b>${rh?`<button class="txt-btn" data-rhcn="${g}">+ Adicionar</button>`:""}</div>
+   <div class="rha-comp-l"><table><tbody>${ls.slice(0,300).map(x=>`<tr class="${x.ativo?"":"rh-off"}"><td><b>${esc(x.nome)}</b>${x.lideranca?` <span class="pill neutral">liderança</span>`:""}${x.ativo?"":` <span class="sub">biblioteca</span>`}${x.descricao&&!(x.niveis&&x.niveis.length>1)?`<div class="sub rha-desc">${esc(x.descricao)}</div>`:""}${info(x)}</td>
+    <td class="right">${rh?`<button class="txt-btn" data-rhce="${x.id}">Editar</button>`:""}</td></tr>`).join("")||`<tr><td><div class="empty">Nenhuma.</div></td></tr>`}</tbody></table></div></div>`; }).join("")}</div>`;
+  const qi=v.querySelector("#rcQ"); qi.oninput=()=>{ RHA_CQ=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#rcQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelector("#rcBib").onchange=e=>{ RHA_CBIB=e.target.checked; pinta(); };
+  v.querySelectorAll("[data-rhcn]").forEach(b=>b.onclick=()=>rhaEditComp({grupo:b.dataset.rhcn,ativo:true,ordem:C.filter(x=>x.grupo===b.dataset.rhcn).length+1},v));
+  v.querySelectorAll("[data-rhce]").forEach(b=>b.onclick=()=>rhaEditComp(C.find(x=>x.id===b.dataset.rhce),v)); };
+ pinta();
+};
+function rhaEditComp(x,v){ const m=crmModal("Competências",x.id?x.nome:"Nova competência","",`<div class="crm-form">
+  <label class="crm-f"><span>Grupo</span><select class="inp" id="rqG">${crmOpt(Object.entries(RHA_GRUPO),x.grupo)}</select></label>
+  <label class="crm-f"><span>Ordem</span><input class="inp" type="number" id="rqO" value="${x.ordem||0}"></label>
+  <label class="crm-f crm-w2"><span>Nome *</span><input class="inp" id="rqN" value="${escAttr(x.nome||"")}"></label>
+  <label class="crm-f crm-w2"><span>O que se espera (aparece para o avaliador)</span><textarea class="inp" id="rqD" rows="2">${esc(x.descricao||"")}</textarea></label>
+  <label class="crm-f" id="rqLw"><span>Só para lideranças</span><select class="inp" id="rqL">${crmOpt([["false","Não"],["true","Sim"]],String(!!x.lideranca))}</select></label>
+  <label class="crm-f" id="rqDw"><span>Departamento</span><select class="inp" id="rqDp">${crmOpt((RHD.departamentos||[]).map(d=>[d.id,d.nome]),x.departamento_id,"Todos os departamentos")}</select></label>
+  <label class="crm-f"><span>Situação</span><select class="inp" id="rqA">${crmOpt([["true","Ativa"],["false","Inativa"]],String(x.ativo!==false))}</select></label></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="rqMsg" style="flex:1"></span>${x.id?`<button class="txt-btn crm-perigo" id="rqDel">Excluir</button>`:""}<button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rqOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const vis=()=>{ const g=m.querySelector("#rqG").value; m.querySelector("#rqLw").hidden=g!=="soft"; m.querySelector("#rqDw").hidden=g!=="hard"; }; vis(); m.querySelector("#rqG").onchange=vis;
+ const msg=m.querySelector("#rqMsg"), ok=m.querySelector("#rqOk"), fim=t=>{ closeModal(); crmToast(t); RHV_EXTRA.rh_comp(v); };
+ ok.onclick=async()=>{ const g=m.querySelector("#rqG").value, n=m.querySelector("#rqN").value.trim(); if(!n){ msg.textContent="Informe o nome."; return; } ok.disabled=true;
+  try{ await rhaRpc("rh_aval_salvar",{acao:"competencia",id:x.id||"",grupo:g,nome:n,descricao:m.querySelector("#rqD").value.trim(),lideranca:g==="soft"&&m.querySelector("#rqL").value==="true",departamento_id:g==="hard"?m.querySelector("#rqDp").value:"",ordem:m.querySelector("#rqO").value,ativo:m.querySelector("#rqA").value==="true"}); fim("Competência salva"); }
+  catch(e){ ok.disabled=false; msg.textContent=String(e&&e.message||"").includes("duplicate")?"Já existe uma competência com esse nome nesse grupo.":crmErro(e); } };
+ const del=m.querySelector("#rqDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ const r=await rhaRpc("rh_aval_salvar",{acao:"competencia",id:x.id,excluir:"sim"}); fim(r&&r.desativada?"Já usada em avaliações: ficou inativa":"Competência excluída"); }catch(e){ msg.textContent=crmErro(e); } };
+}
+
+(function(){ const st=document.createElement("style"); st.textContent=`
+.rha-etapas{display:flex;gap:4px;flex-wrap:wrap}.rha-etapas span{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#eef2f4;color:var(--muted)}.rha-etapas span.ok{background:#dff1ee;color:#0f6b5c}
+.rha-ck{display:inline-flex;align-items:center;gap:6px;font-weight:500;color:var(--ink-2);font-size:13px}.rha-cks{display:flex;flex-wrap:wrap;gap:8px 18px;padding-top:4px}
+.rha-niv{display:grid;gap:3px;margin-top:4px}.rha-niv span{font-size:11.5px;color:var(--muted)}.rha-niv b{color:#066789;font-weight:700;margin-right:4px}
+.rha-comp-l{max-height:70vh;overflow:auto}.rha-desc{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.rha-voltar{margin-bottom:6px}
+.rha-ciclos{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.rha-ccard{padding:16px;display:flex;flex-direction:column;gap:12px}.rha-cc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.rha-cc-h b{font:700 16px/1.3 "Urbanist",sans-serif}
+.rha-cc-b{display:grid;gap:8px}.rha-cc-b>div{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center}.rha-cc-b .lbl,.rha-total .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rha-minhas{grid-template-columns:150px auto 1fr!important}
+.rha-bar{height:8px;border-radius:99px;background:#e6eef1;overflow:hidden}.rha-bar i{display:block;height:100%;background:linear-gradient(90deg,#006789,#269A9E);border-radius:99px}
+.rha-cc-f{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:10px}
+.rha-nota{display:inline-block;min-width:44px;text-align:center;padding:3px 8px;border-radius:8px;font:700 13px/1.2 "Urbanist",sans-serif;color:#fff;background:var(--c)}
+.rha-aviso{padding:10px 14px;border-radius:12px;background:#fdf3e0;border:1px solid #f0d9a8;color:#7a4f00;margin-bottom:12px;font-size:13.5px}.rha-aviso.ok{background:#e6f4f1;border-color:#bfe2da;color:#0f5c4e}
+.rha-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+tr.rha-meu td:first-child{box-shadow:inset 3px 0 0 #066789}
+.rha-modal{max-width:880px!important;width:calc(100% - 32px)}
+.rha-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2);margin:0 0 12px}.rha-leg span{display:inline-flex;align-items:center;gap:6px}
+.rha-leg i{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:5px;color:#fff;font:700 11px/1 "Urbanist",sans-serif;font-style:normal}.rha-leg.sm i{width:10px;min-width:10px;height:10px;border-radius:3px}
+.rha-g{border:1px solid var(--border);border-radius:14px;padding:4px 14px 10px;margin:0!important}.rha-modal .modal-body{gap:12px}.rha-cmt[hidden]{display:none!important}
+.rha-g-h{display:flex;align-items:center;gap:8px;padding:10px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px}.rha-g-h b{font:700 15px/1.2 "Urbanist",sans-serif}.rha-g-m{margin-left:auto}
+.rha-l{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;align-items:center;padding:8px 0;border-bottom:1px dashed #e3e9ec}.rha-l:last-child{border-bottom:0}
+.rha-l.falta .rha-l-t span{color:#b4532a}.rha-l.falta .rha-esc{outline:2px solid #e8b48f;border-radius:10px}
+.rha-l-t{display:flex;flex-direction:column;min-width:0}.rha-l-t>span{font-weight:600;font-size:13.5px}.rha-l-t small{color:var(--muted);font-size:12px}.rha-outra{color:#066789!important;font-weight:600}
+.rha-esc{display:flex;gap:4px}.rha-esc button{width:34px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font:700 13px/1 "Urbanist",sans-serif;color:var(--ink-2);cursor:pointer}
+.rha-esc button:hover:not(:disabled){border-color:var(--c);color:var(--c)}.rha-esc button.on{background:var(--c);border-color:var(--c);color:#fff}.rha-esc button:disabled{cursor:default;opacity:.85}
+.rha-cm{border:0;background:none;color:#066789;font-size:12px;font-weight:600;cursor:pointer;padding:4px}.rha-cm.tem{color:#269A9E}
+.rha-cmt{grid-column:1/-1;width:100%}
+.rha-pe{position:sticky;bottom:-1px;background:var(--surface);display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0 2px;border-top:1px solid var(--border)}
+.rha-total{display:flex;align-items:center;gap:8px}
+@media(max-width:640px){.rha-l{grid-template-columns:1fr}.rha-esc button{width:40px}.rha-cc-b>div{grid-template-columns:1fr auto}.rha-cc-b>div .rha-bar{grid-column:1/-1}}
+.rha-res-top{display:grid;grid-template-columns:260px 1fr;gap:14px}@media(max-width:800px){.rha-res-top{grid-template-columns:1fr}}
+.rha-dist{padding:16px}.rha-dist .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px}
+.rha-stack{display:flex;height:26px;border-radius:8px;overflow:hidden;margin-bottom:10px}.rha-stack i{display:grid;place-items:center;color:#fff;font:700 12px/1 "Urbanist",sans-serif;font-style:normal;min-width:18px}
+.rha-stack.sm{height:20px;margin:0}
+.rha-up{color:#0f7a5c;font-weight:700}.rha-down{color:#b4532a;font-weight:700}
+tr.rha-alerta td{background:#fdf1ea}
+.rha-9{display:grid;grid-template-columns:28px 1fr;grid-template-rows:auto auto;gap:8px}
+.rha-9-y{display:flex;align-items:center;justify-content:center}.rha-9-y span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rha-9-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rha-9-x{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 4px}
+.rha-cel{border-radius:14px;padding:10px 12px;min-height:130px;border:1px solid rgba(4,75,100,.08)}.rha-cel-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.rha-cel-h b{font:700 13px/1.2 "Urbanist",sans-serif;color:#044B64}
+.rha-cel-h span{font:700 18px/1 "Urbanist",sans-serif;color:#044B64}.rha-cel-p{display:flex;flex-wrap:wrap;gap:5px}.rha-cel .rh-chip{font-size:11.5px;padding:3px 9px}.rha-cel .rh-chip:disabled{cursor:default}
+.rh-chip.rha-cal{border-color:#066789;border-style:dashed}
+.rha-comp{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}@media(max-width:1100px){.rha-comp{grid-template-columns:1fr}}
+`; document.head.appendChild(st); })();
+
+
+// ================= RH ASSIST · perfil comportamental (DISC) =================
+// Questionário de 24 blocos com escolha forçada: em cada bloco a pessoa marca a palavra que MAIS e a que MENOS a descreve.
+// As letras D/I/S/C nunca vão para a tela (só o servidor sabe o fator de cada palavra). O cálculo é feito no banco (rh.disc_calcular).
+// Relatório no formato do Recrutei, sem a parte de áreas de atuação.
+RH_SECOES.push(["rh_disc","Perfil comportamental"]);
+const DISC_F={D:["Dominância","#b4532a"],I:["Influência","#d9a23b"],S:["Estabilidade","#269A9E"],C:["Conformidade","#066789"]};
+const DISC_TRACOS=["Focado","Competitivo","Empreendedor","Sociável","Conciliador","Paciente","Reservado","Analítico"];
+let RHDISC={sel:null,teste:0,q:"",f:"",dados:null};
+const discData=d=>d?new Date(d).toLocaleDateString("pt-BR"):"";
+const discCod=cod=>`<span class="disc-cod">${String(cod||"").split("").map(l=>`<i style="--c:${(DISC_F[l]||["","#888"])[1]}">${l}</i>`).join("")}</span>`;
+const discMini=sg=>sg?`<span class="disc-mini" title="Segmentos D ${sg.D} · I ${sg.I} · S ${sg.S} · C ${sg.C}">${["D","I","S","C"].map(f=>`<i style="height:${sg[f]/7*100}%;background:${DISC_F[f][1]}"></i>`).join("")}</span>`:"";
+
+RHV_EXTRA.rh_disc=async function(v){
+ if(RHDISC.sel) return discRelatorio(v,RHDISC.sel);
+ v.innerHTML=crmHead("Perfil comportamental","Teste DISC de 24 blocos. Cada pessoa escolhe, em cada bloco, a palavra que mais e a que menos a descreve. O relatório mostra o perfil, os traços e o gráfico do momento atual.","")+rhAbas("rh_disc")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>{ RHDISC.sel=null; setMode(b.dataset.rhab); });
+ let D; try{ await rhCarregar(); D=await crmRpc("rh_disc_dados",{p:{}}); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_disc"||RHDISC.sel) return; RHDISC.dados=D;
+ const rh=D.eu&&D.eu.rh, U=D.ultimos||{}, C=(RHD.colaboradores||[]).filter(c=>c.status==="ativo");
+ const com=C.filter(c=>U[c.id]), dom={D:0,I:0,S:0,C:0}; com.forEach(c=>{ const l=String(U[c.id].codigo||"")[0]; if(dom[l]!=null) dom[l]++; });
+ const tile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:${cor}"`:""}>${val}</div></div></div>`;
+ const pinta=()=>{ const q=crmNormTxt(RHDISC.q);
+  const ls=C.filter(c=>(!q||crmNormTxt(c.nome+" "+((rhPor(RHD.departamentos,c.departamento_id)||{}).nome||"")+" "+((U[c.id]||{}).nome||"")).includes(q))
+    &&(!RHDISC.f||(RHDISC.f==="_sem"?!U[c.id]:String((U[c.id]||{}).codigo||"")[0]===RHDISC.f)))
+   .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  v.querySelector("#rhBox").innerHTML=`<div class="tiles disc-tiles">${tile("Com perfil",`${com.length} <span class="sub">de ${C.length}</span>`)}${["D","I","S","C"].map(f=>tile(`Predomínio ${DISC_F[f][0].toLowerCase()}`,dom[f],DISC_F[f][1])).join("")}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="dsQ" type="search" value="${escAttr(RHDISC.q)}" placeholder="Buscar pessoa, departamento ou perfil" aria-label="Buscar"></div>
+   <select class="inp" id="dsF" style="max-width:240px">${crmOpt([["D","Predomínio D · Dominância"],["I","Predomínio I · Influência"],["S","Predomínio S · Estabilidade"],["C","Predomínio C · Conformidade"],["_sem","Ainda sem teste"]],RHDISC.f,"Todos os perfis")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Perfil</th><th>DISC</th><th>Último teste</th><th></th></tr></thead><tbody>
+  ${ls.map(c=>{ const u=U[c.id], dep=(rhPor(RHD.departamentos,c.departamento_id)||{}).nome;
+   return `<tr><td><b>${esc(c.nome)}</b>${dep?`<div class="sub">${esc(dep)}</div>`:""}</td><td>${u?`${discCod(u.codigo)} <b>${esc(u.nome||"")}</b>`:`<span class="sub">Sem teste</span>`}</td><td>${u?discMini(u.segmentos):""}</td><td>${u?discData(u.feito_em):""}</td>
+    <td class="right" style="white-space:nowrap">${u?`<button class="view-btn" data-dsv="${c.id}">Ver relatório</button>`:""}${rh?` <button class="txt-btn" data-dsa="${c.id}">${u?"Refazer":"Aplicar teste"}</button>`:""}</td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">O colaborador também pode responder pela intranet, em Meu desempenho. ${rh?"Você pode aplicar aqui quando a pessoa responder no papel ou com você.":""}</p>`;
+  const qi=v.querySelector("#dsQ"); qi.oninput=()=>{ RHDISC.q=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#dsQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelector("#dsF").onchange=e=>{ RHDISC.f=e.target.value; pinta(); };
+  v.querySelectorAll("[data-dsv]").forEach(b=>b.onclick=()=>{ RHDISC.sel=b.dataset.dsv; RHDISC.teste=0; discRelatorio(v,RHDISC.sel); });
+  v.querySelectorAll("[data-dsa]").forEach(b=>b.onclick=()=>discAplicar(rhPor(RHD.colaboradores,b.dataset.dsa),D.blocos||[],v)); };
+ pinta();
+};
+
+// ---------- Aplicar o teste (RH) ----------
+function discAplicar(c,B,v){ const R={};
+ const m=crmModal("Perfil comportamental",`Teste DISC · ${c.nome}`,"",`<p class="sub" style="margin:0">Em cada bloco, marque a palavra que <b>mais</b> descreve a pessoa e a que <b>menos</b> descreve. Não existe resposta certa: vale o jeito natural dela, não o ideal.</p>
+  <div class="disc-blocos">${B.map(b=>`<div class="disc-b" data-b="${b.bloco}"><div class="disc-b-h">Bloco ${b.bloco}</div><div class="disc-b-g"><span></span><span class="disc-mm">Mais</span><span class="disc-mm">Menos</span>
+   ${b.palavras.map(w=>`<span class="disc-w">${esc(w.palavra)}</span><label class="disc-r mais"><input type="radio" name="m${b.bloco}" value="${w.ordem}" aria-label="Mais: ${escAttr(w.palavra)}"></label><label class="disc-r menos"><input type="radio" name="n${b.bloco}" value="${w.ordem}" aria-label="Menos: ${escAttr(w.palavra)}"></label>`).join("")}</div></div>`).join("")}</div>
+  <div class="rha-pe"><span class="sub" id="dsMsg" style="flex:1">0 de ${B.length} blocos respondidos</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="dsOk">Calcular perfil</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=m.querySelector("#dsMsg"), ok=m.querySelector("#dsOk");
+ const conta=()=>Object.values(R).filter(x=>x.mais&&x.menos).length;
+ m.querySelectorAll(".disc-b input").forEach(i=>i.onchange=()=>{ const b=i.closest(".disc-b"), n=b.dataset.b, tipo=i.name[0]==="m"?"mais":"menos", outro=tipo==="mais"?"menos":"mais";
+  R[n]=R[n]||{}; R[n][tipo]=+i.value;
+  if(R[n][outro]===+i.value){ const o=b.querySelector(`input[name="${outro==="mais"?"m":"n"}${n}"][value="${i.value}"]`); if(o) o.checked=false; delete R[n][outro]; }
+  b.classList.toggle("ok",!!(R[n].mais&&R[n].menos)); b.classList.remove("falta"); msg.textContent=`${conta()} de ${B.length} blocos respondidos`; });
+ ok.onclick=async()=>{ const falta=B.filter(b=>!(R[b.bloco]&&R[b.bloco].mais&&R[b.bloco].menos));
+  if(falta.length){ falta.forEach(b=>m.querySelector(`.disc-b[data-b="${b.bloco}"]`).classList.add("falta")); m.querySelector(".disc-b.falta").scrollIntoView({behavior:"smooth",block:"center"}); msg.textContent=`Faltam ${falta.length} ${falta.length>1?"blocos":"bloco"}: marque uma palavra em Mais e outra em Menos.`; return; }
+  ok.disabled=true; msg.textContent="Calculando…";
+  try{ await crmRpc("rh_disc_salvar",{p:{colaborador:c.id,respostas:R}}); closeModal(); crmToast("Perfil calculado"); RHDISC.sel=c.id; RHDISC.teste=0; discRelatorio(v,c.id); }
+  catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
+}
+
+// ---------- Relatório ----------
+async function discRelatorio(v,id){ const c=rhPor(RHD&&RHD.colaboradores,id)||{nome:""};
+ v.innerHTML=`<button class="txt-btn rha-voltar" id="dsVolta">‹ Perfil comportamental</button>`+crmHead(esc(c.nome),"Relatório de perfil comportamental (DISC).","")+`<div id="rhBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#dsVolta").onclick=()=>{ RHDISC.sel=null; RHV_EXTRA.rh_disc(v); };
+ let D; try{ await rhCarregar(); D=await crmRpc("rh_disc_dados",{p:{colaborador:id}}); }catch(e){ v.querySelector("#rhBox").innerHTML=crmCaixaErro(e); return; }
+ if(MODE!=="rh_disc"||RHDISC.sel!==id) return;
+ const T=D.testes||[], rh=RHD.eu&&RHD.eu.rh; if(!T.length){ v.querySelector("#rhBox").innerHTML=`<div class="card"><div class="empty">Essa pessoa ainda não fez o teste.</div></div>`; return; }
+ const t=T[Math.min(RHDISC.teste,T.length-1)];
+ v.querySelector(".crm-acoes").innerHTML=`${T.length>1?`<select class="inp" id="dsT" aria-label="Teste">${crmOpt(T.map((x,i)=>[i,`Teste de ${discData(x.feito_em)}`]),RHDISC.teste)}</select>`:""}<button class="txt-btn" id="dsPrint">Imprimir ou salvar PDF</button>${rh?`<button class="txt-btn crm-perigo" id="dsDel">Excluir teste</button>`:""}`;
+ v.querySelector("#rhBox").innerHTML=`<div class="disc-rel">${discRelHTML(c,t)}</div>`;
+ const st=v.querySelector("#dsT"); if(st) st.onchange=()=>{ RHDISC.teste=+st.value; discRelatorio(v,id); };
+ v.querySelector("#dsPrint").onclick=()=>discImprimir(c,t);
+ const del=v.querySelector("#dsDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ await crmRpc("rh_disc_salvar",{p:{excluir:t.id}}); crmToast("Teste excluído"); RHDISC.teste=0; if(T.length>1) discRelatorio(v,id); else { RHDISC.sel=null; RHV_EXTRA.rh_disc(v); } }catch(e){ crmToast(crmErro(e)); } };
+}
+
+function discAnel(p,txt,cor){ const r=34, L=2*Math.PI*r, v=Math.max(0,Math.min(100,p||0));
+ return `<div class="disc-anel"><svg viewBox="0 0 84 84" width="96" height="96" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="#e6eef1" stroke-width="9"/><circle cx="42" cy="42" r="${r}" fill="none" stroke="${cor}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(L*v/100).toFixed(1)} ${L.toFixed(1)}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" font-size="17" font-weight="700" fill="#044B64" font-family="Urbanist,sans-serif">${v}%</text></svg><span>${txt}</span></div>`; }
+
+function discGrafico(R){ const W=420,H=330,x0=58,x1=W-24,y0=22,y1=H-46, F=["D","I","S","C"], xs=F.map((f,i)=>x0+(x1-x0)*(i+.5)/4), y=n=>y1-(n-1)/27*(y1-y0);
+ const I=R.intensidade||{}, S=R.segmentos||{}, pts=F.map((f,i)=>[xs[i],y(I[f]||1)]);
+ let g=`<rect x="${x0}" y="${y(16)}" width="${x1-x0}" height="${y(13)-y(16)}" fill="#eef4f6"/>`;
+ for(let s=1;s<=7;s++){ const yy=y(s*4); g+=`<line x1="${x0}" x2="${x1}" y1="${yy}" y2="${yy}" stroke="#dbe5e9" stroke-dasharray="3 4"/><text x="${x0-10}" y="${y(s*4-1.5)+4}" text-anchor="end" font-size="11" fill="#7a8d96">${s}</text>`; }
+ g+=`<line x1="${x0}" x2="${x1}" y1="${y(14.5)}" y2="${y(14.5)}" stroke="#9fb4bd" stroke-width="1.2"/><text x="${x1}" y="${y(16)-5}" text-anchor="end" font-size="10" fill="#7a8d96">linha média</text>`;
+ g+=`<text x="16" y="${(y0+y1)/2}" transform="rotate(-90 16 ${(y0+y1)/2})" text-anchor="middle" font-size="10" letter-spacing="1" fill="#7a8d96">SEGMENTO</text>`;
+ g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#044B64" stroke-width="2.5" stroke-linejoin="round"/>`;
+ F.forEach((f,i)=>{ g+=`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="7" fill="${DISC_F[f][1]}" stroke="#fff" stroke-width="2.5"/><text x="${pts[i][0]}" y="${pts[i][1]-13}" text-anchor="middle" font-size="12" font-weight="700" fill="#044B64">${S[f]||""}</text>
+  <text x="${xs[i]}" y="${y1+22}" text-anchor="middle" font-size="16" font-weight="800" fill="${DISC_F[f][1]}" font-family="Urbanist,sans-serif">${f}</text><text x="${xs[i]}" y="${y1+37}" text-anchor="middle" font-size="10" fill="#7a8d96">${DISC_F[f][0]}</text>`; });
+ return `<svg viewBox="0 0 ${W} ${H}" class="disc-svg" role="img" aria-label="Gráfico DISC: D ${S.D}, I ${S.I}, S ${S.S}, C ${S.C}">${g}</svg>`; }
+
+function discRelHTML(c,t){ const R=t.resultado||{}, P=R.perfil||{}, Tr=R.tracos||{}, Ix=R.indices||{}, S=R.segmentos||{};
+ const det=[["Objetivo",P.objetivo],["Reação sob pressão",P.pressao],["Valor para a organização",P.valor],["Medos e pontos de atenção",P.medos],["Comportamentos recorrentes",P.comportamentos],["Como influencia outras pessoas",P.influencia]];
+ return `<div class="card disc-hero"><div><div class="lbl">Seu perfil é</div><h3>${esc(P.nome||"")}</h3><div class="sub">${esc(c.nome)} · teste de ${discData(t.feito_em)}${t.origem==="rh"?" · aplicado pelo RH":" · respondido na intranet"}</div></div>${discCod(P.codigo)}</div>
+ <div class="disc-grid">
+  <div class="card disc-sec"><h4>Percentual de comportamento</h4><div class="disc-tr">${DISC_TRACOS.map(k=>`<div><span>${k}</span><div class="rha-bar"><i style="width:${Tr[k]||0}%"></i></div><b>${Tr[k]||0}%</b></div>`).join("")}</div>
+   <div class="disc-aneis">${discAnel(Ix.extrovertido,"Extrovertido","#d9a23b")}${discAnel(Ix.estavel,"Seguro e estável","#269A9E")}${discAnel(Ix.pessoas,"Orientado a pessoas","#066789")}</div></div>
+  <div class="card disc-sec"><h4>Gráfico de momento atual</h4>${discGrafico(R)}<div class="sub" style="text-align:center">Padrão ${esc(P.codigo||"")} · ${esc(P.nome||"")} · segmentos ${["D","I","S","C"].map(f=>S[f]).join("-")}</div></div>
+ </div>
+ <div class="card disc-sec"><h4>Descrição detalhada</h4><p class="disc-p">${esc(P.descricao||"")}</p></div>
+ <div class="card disc-sec"><h4>Detalhes adicionais</h4><div class="disc-det">${det.map(([k,x])=>`<div><b>${k}</b><p>${esc(x||"")}</p></div>`).join("")}</div></div>`; }
+
+function discImprimir(c,t){ const css=[...document.querySelectorAll("style")].map(s=>s.textContent).filter(x=>x.includes(".disc-")).join("\n");
+ const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir"); return; }
+ w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Perfil comportamental · ${esc(c.nome)}</title><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@600;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+ <style>:root{--ink:#16313b;--ink-2:#34505a;--muted:#6b7f88;--border:#e1e8eb;--surface:#fff}body{font:14px/1.5 Inter,sans-serif;color:var(--ink);margin:24px;background:#fff}.card{border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;break-inside:avoid}.sub{color:var(--muted);font-size:12.5px}
+ .rha-bar{height:8px;border-radius:99px;background:#e6eef1;overflow:hidden}.rha-bar i{display:block;height:100%;background:linear-gradient(90deg,#006789,#269A9E)}.disc-print-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font:700 13px Urbanist,sans-serif;color:#044B64;letter-spacing:.08em;text-transform:uppercase}
+ ${css}@media print{body{margin:10mm}.disc-grid{grid-template-columns:1fr 1fr!important}}</style></head><body><div class="disc-print-top"><span>Resilcon · RH Assist</span><span>Perfil comportamental</span></div>${discRelHTML(c,t)}<script>setTimeout(()=>print(),600)<\/script></body></html>`);
+ w.document.close(); }
+
+(function(){ const st=document.createElement("style"); st.textContent=`
+.disc-cod{display:inline-flex;gap:2px;vertical-align:middle}.disc-cod i{font:800 12px/1 "Urbanist",sans-serif;font-style:normal;color:#fff;background:var(--c);border-radius:6px;padding:4px 6px}
+.disc-mini{display:inline-flex;align-items:flex-end;gap:3px;height:24px;width:46px;vertical-align:middle}.disc-mini i{flex:1;border-radius:3px 3px 0 0;min-height:3px}
+.disc-tiles{display:grid!important;grid-template-columns:repeat(5,1fr);gap:12px}.disc-tiles .tile{margin:0}@media(max-width:900px){.disc-tiles{grid-template-columns:repeat(2,1fr)}}
+.disc-blocos{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.disc-b{border:1px solid var(--border);border-radius:12px;padding:8px 12px 10px}.disc-b.ok{border-color:#bfe2da;background:#f5fbfa}.disc-b.falta{border-color:#e8b48f;background:#fdf6f1}
+.disc-b-h{font:700 12px/1 "Urbanist",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#066789;padding:4px 0 8px}
+.disc-b-g{display:grid;grid-template-columns:1fr 48px 48px;align-items:center;row-gap:2px}.disc-mm{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:center}
+.disc-w{font-size:13.5px;color:var(--ink-2)}.disc-r{display:flex;justify-content:center;padding:4px 0;cursor:pointer}.disc-r input{width:17px;height:17px;cursor:pointer}.disc-r.mais input{accent-color:#0f7a5c}.disc-r.menos input{accent-color:#b4532a}
+.disc-hero{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;background:linear-gradient(120deg,#044B64,#066789);color:#fff;border:0}
+.disc-hero .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;font-weight:600}.disc-hero h3{font:800 30px/1.1 "Urbanist",sans-serif;margin:4px 0 6px;color:#fff}.disc-hero .sub{color:rgba(255,255,255,.8)}.disc-hero .disc-cod i{font-size:18px;padding:7px 10px;border:2px solid rgba(255,255,255,.6)}
+.disc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}@media(max-width:900px){.disc-grid{grid-template-columns:1fr}}
+.disc-rel .card{margin-bottom:14px}.disc-grid .card{margin:0}.disc-sec{padding:18px 20px!important}.disc-sec h4{font:700 16px/1.2 "Urbanist",sans-serif;color:#044B64;margin:0 0 14px}
+.disc-tr{display:grid;gap:9px}.disc-tr>div{display:grid;grid-template-columns:110px 1fr 44px;gap:10px;align-items:center;font-size:13px}.disc-tr b{text-align:right;color:#044B64}
+.disc-aneis{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}.disc-anel{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.disc-svg{width:100%;max-width:440px;display:block;margin:0 auto}
+.disc-p{margin:0;line-height:1.65;color:var(--ink-2)}
+.disc-det{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}@media(max-width:700px){.disc-det{grid-template-columns:1fr}}.disc-det b{font:700 13px/1.3 "Urbanist",sans-serif;color:#066789;text-transform:uppercase;letter-spacing:.04em}.disc-det p{margin:4px 0 0;color:var(--ink-2);line-height:1.55}
+`; document.head.appendChild(st); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
