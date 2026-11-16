@@ -829,7 +829,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.3 (proposta avulsa com fundo #006789)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.4 (impressão abre em aba separada e não trava a tela)</footer>
   </div>
 </div>
 
@@ -5684,7 +5684,7 @@ ${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais<
 ${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</div></div>`:""}
 <div class="rod">Proposta válida até ${val.toLocaleDateString("pt-BR")}. Valores sujeitos a revisão se houver mudança no faturamento, no regime tributário ou no volume de operações informado.<br>Resilcon Contabilidade Consultiva · WhatsApp (11) 97414-4223 · resilcon.com.br</div>
 </div></body></html>`;
- const w=window.open("","_blank"); if(!w){ crmToast("O navegador bloqueou a janela da proposta. Libere pop-ups para o Resiltrack."); return; } w.document.open(); w.document.write(html); w.document.close(); }
+ const w=rtJanela(); if(!w){ crmToast("O navegador bloqueou a janela da proposta. Libere pop-ups para o Resiltrack."); return; } w.document.open(); w.document.write(html); w.document.close(); }
 
 // abre o simulador já com o negócio escolhido (usado pela ficha do negócio)
 function precoAbrirNegocio(o){ PRECO_ST.negocio=o?{id:o.id,titulo:o.titulo,contato_nome:o.contato_nome,empresa_nome:o.empresa_nome}:null;
@@ -5805,7 +5805,7 @@ async function crmVModelos(v){
  box.querySelectorAll("[data-ct-dup]").forEach(b=>b.onclick=async()=>{ try{ const m=JSON.parse(JSON.stringify(await ctModelo(b.dataset.ctDup))); m.nome=m.nome+" (cópia)"; m.origem="resiltrack"; delete m.id;
    ctEditor("contrato_"+Date.now().toString(36),m,()=>crmVModelos(v)); }catch(e){ crmToast(crmErro(e)); } });
 }
-function ctAbrirJanela(html){ const w=window.open("","_blank"); if(!w){ crmToast("O navegador bloqueou a janela. Libere pop-ups para o Resiltrack."); return null; } w.document.open(); w.document.write(html); w.document.close(); return w; }
+function ctAbrirJanela(html){ const w=rtJanela(); if(!w){ crmToast("O navegador bloqueou a janela. Libere pop-ups para o Resiltrack."); return null; } w.document.open(); w.document.write(html); w.document.close(); return w; }
 
 async function ctEditarConfig(){ const cfg=await ctConfig(); const ks=CT_PALAVRAS[2][1];
  const m=crmModal("Modelos de contrato","Dados da Resilcon nos contratos","",`<p class="sub" style="margin:0 0 12px">Esses dados preenchem as palavras-chave [CONTABILIDADE_...] de todos os contratos.</p>
@@ -6843,7 +6843,7 @@ function pzAbrir(alvo,modo,depois,ehNova){
    <h4>Atividades selecionadas <span class="sub">(${P.atividades.length})</span></h4><div class="pz-ativs">${P.atividades.map(a=>`<span>${esc(a)}</span>`).join("")||`<p class="sub">Nenhuma atividade.</p>`}</div>
    <h4>Dor › Solução › Produto <span class="sub">(${ord.length})</span></h4><div style="overflow-x:auto"><table class="pz-tab pz-tab-g"><thead><tr><th>Dor</th><th>Solução</th><th>Produto</th><th>Descrição do produto</th></tr></thead><tbody>${linhas||`<tr><td colspan="4" class="sub">Nenhuma ligação ainda.</td></tr>`}</tbody></table></div>
    ${P.planos.length?`<h4>Planos vinculados</h4><table class="pz-tab"><thead><tr><th>Plano</th><th>Valor R$</th><th>Produtos</th></tr></thead><tbody>${P.planos.map(x=>`<tr><td><b>${esc(x.nome)}</b></td><td class="num">${esc(x.valor||"")}</td><td class="sub">${esc(x.produtos||"")}</td></tr>`).join("")}</tbody></table>`:""}</div>`; };
- const ligaGeral=el=>{ const b=el.querySelector("#pzImp"); if(b) b.onclick=()=>{ const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
+ const ligaGeral=el=>{ const b=el.querySelector("#pzImp"); if(b) b.onclick=()=>{ const w=rtJanela(); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
   w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Persona ${esc(P.nome)}</title><style>body{font:13px Arial,sans-serif;color:#1a1b28;margin:24px}h2{margin:2px 0 14px;color:#006789}h4{margin:18px 0 8px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #d6dde2;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eef3f5}.pz-tag{display:inline-block;font-style:normal;font-size:10px;background:#e0eef2;color:#00506a;border-radius:4px;padding:1px 5px;margin:0 6px 2px 0}.pz-ativs span{display:inline-block;border:1px solid #d6dde2;border-radius:999px;padding:2px 9px;margin:0 4px 4px 0}small{display:block;color:#666}.sub{color:#777;font-size:11px}button{display:none}</style></head><body>${visaoGeralHTML(false)}<script>print()<\/script></body></html>`); w.document.close(); }; };
  // ---- BIBLIOTECA DE PRODUTOS ----
  const biblioteca=el=>{ const q=pzNorm(S.busca.bib||""); const uso={}; D.personas.forEach(pp=>new Set(pp.ligacoes.map(l=>l.prod)).forEach(n=>uso[n]=(uso[n]||0)+1));
@@ -7115,7 +7115,7 @@ async function diagAbrir(depois){ const S=PRECO_ST; let base; try{ base=await pz
   box.querySelectorAll("[data-ex]").forEach(k=>k.onchange=()=>{ const n=k.dataset.ex; dg.extras=k.checked?[...new Set([...dg.extras,n])]:dg.extras.filter(x=>x!==n); });
   box.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>{ const p=b.closest(".pz-prod").querySelector(".pz-desc"); p.hidden=!p.hidden; desenha(); });
   c.querySelector("[data-ps]").onclick=()=>{ st.passo=0; render(); }; c.querySelector("#dgFim").onclick=concluir; };
- const imprimir=()=>{ const R=diagResolver(D,dg); const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
+ const imprimir=()=>{ const R=diagResolver(D,dg); const w=rtJanela(); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
   const linhas=R.map(r=>`<tr><td><b>${esc(r.nome)}</b>${r.cat?`<span class="t">${esc(r.cat)}</span>`:""}${r.desc?`<small>${esc(r.desc)}</small>`:""}</td><td>${esc(r.sols.join("; "))}</td><td>${r.prods.map(p=>`<div><b>${esc(p.nome)}</b>${p.valor?` <small>R$ ${esc(p.valor)}</small>`:""}${p.desc?`<small>${esc(p.desc)}</small>`:""}</div>`).join("")||"—"}</td></tr>`).join("");
   w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Diagnóstico ${esc(cliente)}</title><style>body{font:13px Arial,sans-serif;color:#1a1b28;margin:28px}h1{color:#006789;margin:0 0 4px;font-size:22px}.k{font-size:11px;letter-spacing:.15em;color:#006789;font-weight:700}table{border-collapse:collapse;width:100%;margin-top:10px}th,td{border:1px solid #d6dde2;padding:7px 9px;text-align:left;vertical-align:top}th{background:#eef3f5}small{display:block;color:#555;margin-top:2px}.t{display:inline-block;font-size:10px;background:#e0eef2;color:#00506a;border-radius:4px;padding:1px 5px;margin-left:6px}td div{margin-bottom:6px}ul{margin:6px 0 0;padding-left:18px}</style></head><body>
    <div class="k">DIAGNÓSTICO RESILCON</div><h1>${esc(cliente||"Cliente")}</h1><div>Persona: <b>${esc(dg.persona||"")}</b>${S.nicho?` · Nicho: ${esc(S.nicho)}`:""} · ${new Date().toLocaleDateString("pt-BR")}</div>
@@ -7350,7 +7350,7 @@ async function simAvulso(s,neg){ let D; try{ D=await pzCarregar(); }catch(e){ cr
    await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,tema:o.tema,obs:o.obs,
     campos:{...(o.campos||{}),proposta_avulsa:{simulacao:s.id,gerada_em:new Date().toISOString(),itens:dd.itens,vig:dd.vig,parcelas:dd.parcelas,mensal:t.m,avulso:t.u}},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
    crmToast("Produtos salvos no negócio"); }catch(e){ crmToast(crmErro(e)); } b.disabled=false; };
- const imprimir=()=>{ const w=window.open("","_blank"); if(!w){ crmToast("Libere pop-ups para imprimir."); return; } w.document.write(simPropostaHTML(s,dd,prods,tot())); w.document.close(); };
+ const imprimir=()=>{ const w=rtJanela(); if(!w){ crmToast("Libere pop-ups para imprimir."); return; } w.document.write(simPropostaHTML(s,dd,prods,tot())); w.document.close(); };
  const render=()=>{ topo(); const c=tela.querySelector(".pz-corpo"); const q=crmNormTxt(F.q); const cats=[...new Set(prods.map(p=>p.cat).filter(Boolean))].sort();
   const vis=prods.filter(p=>(!F.cat||p.cat===F.cat)&&(!q||crmNormTxt(p.nome+" "+p.desc).includes(q))&&(!F.so||(dd.itens[p.nome]||{}).on)).sort((a,b)=>((dd.itens[b.nome]||{}).on?1:0)-((dd.itens[a.nome]||{}).on?1:0));
   const t=tot();
@@ -7437,6 +7437,12 @@ ${bloco("Pagamento separado",sep,totSep,"Parcelado à parte")}
 .av-c,.av-v{display:flex;flex-direction:column;gap:5px;font-size:12px}.av-c label,.av-v label{display:flex;align-items:center;gap:5px}.av-c .inp,.av-v .inp{padding:5px 7px}.av-c label .inp{width:56px}.av-v small{color:#83879c}
 .av-res{position:sticky;top:0;background:#fff;border:1px solid #e7e9f2;border-radius:14px;padding:14px}.av-l{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef0f5}
 @media(max-width:1100px){.av-grade{grid-template-columns:1fr}.av-it{grid-template-columns:56px 1fr}.av-c,.av-v{grid-column:2}}`; document.head.appendChild(s); })();
+
+// abre um documento gerado (proposta, contrato, relatório) numa aba separada, sem prender a tela do Resiltrack enquanto a impressão estiver aberta
+function rtJanela(){ let buf=""; const abrir=()=>{ const url=URL.createObjectURL(new Blob([buf],{type:"text/html;charset=utf-8"}));
+  const a=document.createElement("a"); a.href=url; a.target="_blank"; a.rel="noopener noreferrer"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),120000); };
+ return {document:{open(){ buf=""; },write(h){ buf+=h; },close(){ abrir(); }}}; }
+
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
