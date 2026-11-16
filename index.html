@@ -667,6 +667,12 @@
   .crm-parado{color:var(--warn);font-weight:700}
   .crm-col-soma{padding:6px 6px 0;font-size:12px}
   .crm-vazio{padding:16px 8px;text-align:center;font-size:12.5px}
+  .crm-kanban{align-items:stretch}
+  .crm-kanban .kcol{max-height:calc(100vh - 150px);min-height:240px;display:flex;flex-direction:column}
+  .crm-kanban .kcol-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:8px 6px 10px 2px;scrollbar-width:thin;scrollbar-color:var(--border-strong,#c9cfdb) transparent}
+  .crm-kanban .kcol-body::-webkit-scrollbar{width:7px}.crm-kanban .kcol-body::-webkit-scrollbar-thumb{background:var(--border-strong,#c9cfdb);border-radius:99px}.crm-kanban .kcol-body::-webkit-scrollbar-track{background:transparent}
+  .crm-kanban .kcol-body:hover::-webkit-scrollbar-thumb{background:var(--muted,#9aa0b4)}
+  @media (max-width:900px){ .crm-kanban .kcol{max-height:75vh} }
   .crm-fim .kcol-body{min-height:96px;border:1px dashed var(--border-strong);border-radius:12px;padding:8px}
   .crm-etq{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
   .crm-tr{cursor:pointer}.crm-tr:hover td{background:var(--surface-2)}
@@ -829,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.4 (impressão abre em aba separada e não trava a tela)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.12.6 (simulador já vem com 3 colaboradores, parcela anual sim e integração baixa)</footer>
   </div>
 </div>
 
@@ -5486,6 +5492,11 @@ function precoPintar(v){
  const tribs=ativ?ativ.tributacoes.map(t=>t.nome):[];
  if(tribs.length&&!tribs.includes(S.resp.tributacao)) S.resp.tributacao=tribs[0];
  const crits=P.criterios.filter(c=>c.ativo);
+ // respostas padrão: 3 colaboradores, parcela anual SIM e integração baixa (só quando ainda não foram respondidas)
+ crits.forEach(c=>{ if(S.resp.crit[c.id]!==undefined) return; const fx=re=>((c.faixas||[]).find(f=>re.test(String(f.nome||"").trim()))||{}).nome;
+  if(/colaborador/i.test(c.nome)&&c.forma==="numero") S.resp.crit[c.id]="3";
+  else if(/parcela\s*anual/i.test(c.nome)){ const v=fx(/^sim$/i); if(v) S.resp.crit[c.id]=v; }
+  else if(/integra/i.test(c.nome)){ const v=fx(/baix/i); if(v) S.resp.crit[c.id]=v; } });
  const R=precoCalcular(P,{faturamento:precoNum(S.resp.faturamento),tributacao:S.resp.tributacao,atividade:S.resp.atividade,crit:S.resp.crit});
  const neg=S.negocio;
  const negOpts=(S.negLista||[]).map(o=>`<option value="${o.id}" ${neg&&neg.id===o.id?"selected":""}>${esc(o.titulo)}${o.contato_nome?" · "+esc(o.contato_nome):""}</option>`).join("");
