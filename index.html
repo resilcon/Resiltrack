@@ -388,11 +388,19 @@
   .srl-sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 8px;padding-left:8px;border-left:1px solid var(--border)}
   .srl-sub button{background:none;border:none;font:inherit;font-size:12.5px;color:var(--muted);font-weight:600;text-align:left;padding:7px 10px;border-radius:8px;cursor:pointer}
   .srl-sub button:hover{color:var(--ink);background:var(--surface-2)}
+  @media (min-width:901px){ #tabs.tabs-lateral{display:none} }
+  .srl-dobra{display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease,opacity .2s ease,margin .25s ease}
+  .srl-dobra>div{overflow:hidden;display:flex;flex-direction:column;gap:1px;min-height:0}
+  .srl-dobra.fech{grid-template-rows:0fr;opacity:0;margin-top:0;margin-bottom:0}
+  .srl-seta{margin-left:auto;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .25s ease;opacity:.6;flex:none}
+  .srl-seta.fech{transform:rotate(-45deg)}
+  @media (prefers-reduced-motion:reduce){ .srl-dobra,.srl-seta{transition:none} }
   @media (max-width:900px){
     #siderail{position:static;width:auto;inset:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;border-right:none;border-bottom:1px solid var(--border);padding:8px 12px;gap:6px;scrollbar-width:none}
     #siderail::-webkit-scrollbar{display:none}
     #app.appwrap{padding-left:0}
     #siderail .srl-brand,.srl-title,.srl-sub{display:none}
+    #tabs.tabs-lateral{display:flex}
     .srl-item{width:auto;white-space:nowrap}
   }
 
@@ -809,7 +817,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.9.1 (dores da persona na hora de gerar a apresentação)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.10.3 (submenus do menu lateral abrem e fecham)</footer>
   </div>
 </div>
 
@@ -1125,7 +1133,7 @@ function render(){ renderSide(); const v=document.getElementById("view"); const 
   if(MODE==="crm" && !podeCRM()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="financeiro" && !podeModulo("financeiro")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="gestor" && !podePainelGestor()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
-  tabsEl.classList.remove("hidden"); renderTabs();
+  tabsEl.classList.remove("hidden"); tabsEl.classList.add("tabs-lateral"); renderTabs();
   const keys=allowedTabKeys();
   if(!keys.length){ v.innerHTML=`<div class="soon" style="margin-top:40px"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><h2 style="font-size:18px;margin-bottom:6px">Acesso não configurado</h2><p>Seu e-mail ainda não tem acesso liberado aqui. Fale com a gestão para definir seu departamento.</p></div>`; return; }
   if(TAB==="dashboard") viewDashboard(v);
@@ -1152,22 +1160,31 @@ function renderSide(){
   const gestorOK=podePainelGestor();
   let h=`<div class="srl-brand"><div class="logo-img" role="img" aria-label="Resiltrack"></div></div>`;
   h+=`<div class="srl-title">Visão</div>`;
-  h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos">${_ICO_ATEND}Atendimentos</button>`;
-  if(gestorOK) h+=`<button class="srl-item ${MODE==='gestor'?'on':''}" data-mode="gestor">${_ICO_GESTOR}Painel do Gestor</button>`;
-  if(gestorOK && MODE==='gestor'){
-    h+=`<div class="srl-sub">`+
+  { const ks=MODE==='atendimentos'?allowedTabKeys():[], temSub=ks.length>1, ab=srlAberto("atend");
+    h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos" ${temSub?`data-dobra="atend" aria-expanded="${ab}"`:""}>${_ICO_ATEND}Atendimentos${temSub?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    if(temSub) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="atend"><div>`+ks.map(k=>`<button data-atab="${k}" class="${k===TAB?'on':''}">${TABS_ALL[k]||k}</button>`).join("")+`</div></div>`; }
+  if(gestorOK){ const no=MODE==='gestor', ab=srlAberto("gestor");
+    h+=`<button class="srl-item ${no?'on':''}" data-mode="gestor" ${no?`data-dobra="gestor" aria-expanded="${ab}"`:""}>${_ICO_GESTOR}Painel do Gestor${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="gestor"><div>`+
       [["wallboard","Wallboard"],["revisao","Revisão diária"],["pessoas","Pessoas"],["clientes","Clientes"],["processos","Processos"]]
-      .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div>`;
+      .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div></div>`;
   }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
-    if(mp){ h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}">${_ICO_CRM}CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}</button>`;
-      if(noCRM) h+=`<div class="srl-sub">`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div>`; } }
+    if(mp){ const ab=srlAberto("crm");
+      h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+      if(noCRM) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="crm"><div>`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div></div>`; } }
   if(podeEmails()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
   s.innerHTML=h;
-  s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+  s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.dobra; if(k){ const sub=s.querySelector(`[data-dobra-box="${k}"]`); if(!sub) return; const ab=sub.classList.toggle("fech")===false;
+      srlAberto(k,ab); b.setAttribute("aria-expanded",ab); const st=b.querySelector(".srl-seta"); if(st) st.classList.toggle("fech",!ab); return; }
+    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":""),true);
+    setMode(b.dataset.mode); });
+  s.querySelectorAll("[data-atab]").forEach(b=>b.onclick=()=>{ TAB=b.dataset.atab; window.scrollTo(0,0); render(); });
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
 }
+function srlAberto(k,v){ if(!k) return true; const c="resiltrack_sub_"+k; try{ if(v===undefined) return localStorage.getItem(c)!=="0"; localStorage.setItem(c,v?"1":"0"); }catch(e){} return v===undefined?true:v; }
 function setMode(m){ if(m===MODE) return; MODE=m; try{localStorage.setItem("resiltrack_mode",m);}catch(e){} window.scrollTo(0,0); render(); }
 
 // ---------- PAINEL DO GESTOR ----------
@@ -4842,12 +4859,13 @@ function crmContrPinta(v){
  ${vis.slice(0,500).map(x=>{ const c=x.c, s=CRM_CT_SIT[x.sit]; return `<tr><td><button class="crm-link r-name" ${x.tipo==="gclick"?`data-cli="${escAttr(x.id)}"`:x.tipo==="novo"?`data-neg="${x.id}"`:`data-ctx="${escAttr(x.tipo+":"+x.id)}"`}>${esc(x.nome)}</button>${x.tipo==="novo"?`<div class="sub">Ganho no CRM, ainda fora do G-Click</div>`:x.tipo==="avulso"?`<div class="sub">${x.ks.length>1?x.ks.length+" contratos · ":""}cliente ainda fora do G-Click</div>`:""}</td>
   <td class="num sub">${x.cnpj?esc(fmtCnpj(x.cnpj)):""}</td><td><span class="pill ${s[0]}">${s[1]}</span></td><td class="num sub">${c&&c.assinado_em?crmData(c.assinado_em+"T12:00"):""}</td>
   <td class="num sub">${c?(c.fim?"até "+crmData(c.fim+"T12:00"):(c.status==="assinado"?"indeterminado":"")):""}</td><td class="right num">${c&&c.valor_mensal?brl(c.valor_mensal):""}</td>
-  <td class="right" style="white-space:nowrap">${c&&c.arquivo_path?`<button class="view-btn ghost" data-arq="${escAttr(c.arquivo_path)}">Abrir</button>`:""}<button class="view-btn ${x.sit==="sem"?"ce-pri":""}" data-ctx="${escAttr(x.tipo+":"+x.id)}">${c?"Atualizar":"Adicionar contrato"}</button></td></tr>`; }).join("")
+  <td class="right" style="white-space:nowrap">${c&&c.status==="enviado"&&String(c.origem_ref||"").startsWith("d4sign:")?`<button class="view-btn ghost" data-assin="${escAttr(String(c.origem_ref).slice(7))}">Assinatura</button>`:""}${c&&c.arquivo_path?`<button class="view-btn ghost" data-arq="${escAttr(c.arquivo_path)}">Abrir</button>`:""}<button class="view-btn ${x.sit==="sem"?"ce-pri":""}" data-ctx="${escAttr(x.tipo+":"+x.id)}">${c?"Atualizar":"Adicionar contrato"}</button></td></tr>`; }).join("")
   ||`<tr><td colspan="7"><div class="empty">${tot?"Nada nesta lista.":"Os clientes do G-Click ainda não carregaram."}</div></td></tr>`}
  </tbody></table>${vis.length>500?`<p class="sub" style="padding:10px 16px;margin:0">Mostrando 500 de ${vis.length}. Use a busca.</p>`:""}</div>`;
  box.querySelectorAll("[data-ab]").forEach(b=>b.onclick=()=>{ CRMK.aba=b.dataset.ab; crmContrPinta(v); });
  const qi=box.querySelector("#crmQk"); qi.oninput=()=>{ CRMK.q=qi.value; const p=qi.selectionStart; crmContrPinta(v); const nq=v.querySelector("#crmQk"); nq.focus(); nq.setSelectionRange(p,p); };
  box.querySelectorAll("[data-cli]").forEach(b=>b.onclick=()=>crmFichaCliente(b.dataset.cli));
+ box.querySelectorAll("[data-assin]").forEach(b=>b.onclick=()=>asAcompanhar(b.dataset.assin,()=>crmVContratos(v)));
  box.querySelectorAll("[data-neg]").forEach(b=>b.onclick=()=>podeVendas()&&crmFichaNegocio(b.dataset.neg));
  box.querySelectorAll("[data-arq]").forEach(b=>b.onclick=async()=>{ const {data,error}=await sb.storage.from("crm-arquivos").createSignedUrl(b.dataset.arq,120); if(error){ crmToast("Não consegui abrir o arquivo."); return; } window.open(data.signedUrl,"_blank","noopener"); });
  box.querySelectorAll("[data-ctx]").forEach(b=>b.onclick=()=>{ const [tipo,id]=b.dataset.ctx.split(/:(.*)/); const x=l.find(y=>y.tipo===tipo&&y.id===id);
@@ -5780,7 +5798,7 @@ async function ctGerar(opts){
     <p class="sub" style="margin:0">Dica: só de digitar o CNPJ ou o CEP nos campos abaixo, o endereço e a razão social vêm da Receita.</p></div>
    <h4 class="crm-h4">Dados do cliente</h4><div class="crm-form" id="gCli" style="grid-template-columns:1fr 1fr"></div></div>
   <div class="ct-ed-r ct-ger-r"><p class="sub" style="margin:0 0 6px">Prévia. O que estiver em amarelo ainda falta preencher.</p><iframe id="gPrev" title="Prévia do contrato"></iframe></div></div>
-  <div class="crm-pe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ce-pri" id="gSalvar">Salvar no CRM</button></div>`);
+  <div class="crm-pe" id="gPe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ghost" id="gSalvar">Salvar no CRM</button><button class="view-btn ce-pri" id="gAss">Enviar para assinatura</button></div>`);
  modal.classList.add("ct-modal");
  const camposCli=CT_PALAVRAS[0][1].filter(([k])=>k!=="CONTRATANTE");
  const pintaCli=()=>{ m.querySelector("#gCli").innerHTML=camposCli.map(([k,r])=>`<label class="crm-f"><span>${esc(r)}</span><input class="inp" data-cli="${k}" value="${escAttr(st.cli[k]||"")}"></label>`).join("");
@@ -5827,6 +5845,7 @@ async function ctGerar(opts){
  m.querySelector("#gMod").onchange=e=>{ st.modelo=e.target.value; prevLento(); };
  m.querySelector("#gIni").oninput=e=>{ st.inicio=e.target.value; prevLento(); }; m.querySelector("#gFim").oninput=e=>{ st.fim=e.target.value; prevLento(); };
  m.querySelector("#gPdf").onclick=async()=>{ const d=await doc(true,false); ctAbrirJanela(d.html); };
+ m.querySelector("#gAss").onclick=()=>asPainel(m,{st,cfg,doc:()=>doc(false,false)});
  m.querySelector("#gSalvar").onclick=async ev=>{ const b=ev.currentTarget; if(!st.negocio){ crmToast("Escolha o negócio para salvar o contrato no CRM. Sem negócio, use Imprimir ou salvar PDF."); return; }
   b.disabled=true; b.textContent="Salvando…";
   try{ const d=await doc(true,false); const nomeArq=`Contrato ${(st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||"cliente")} ${st.inicio}.html`;
@@ -7085,6 +7104,80 @@ function diagParaApresentacao(dg){ if(!dg||!(dg.dores||[]).length||!PZ.D) return
 @media(max-width:900px){.ds-2c{grid-template-columns:1fr}}
 `; document.head.appendChild(s); })();
 
+// ================= CRM · ASSINATURA DIGITAL (D4Sign): envia o contrato para o e-mail de quem assina e acompanha =================
+const AS_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/crm-assinatura";
+async function asChamar(body){ const r=await fetch(AS_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await ctTok()},body:JSON.stringify(body)});
+ const j=await r.json().catch(()=>({})); if(!r.ok||j.erro) throw new Error(j.erro||("Falha na assinatura ("+r.status+")")); return j; }
+// HTML do contrato -> PDF A4 (base64) e número de páginas. O CSS do contrato fica restrito ao bloco .as-doc para não mexer na tela do CRM.
+function asEscopo(css){ let st; try{ st=new CSSStyleSheet(); st.replaceSync(css); }catch(_){ return ""; }
+ const pref=sel=>sel.split(",").map(x=>{ x=x.trim(); if(!x) return x; if(/^(html|body|:root)$/i.test(x)) return ".as-doc"; return ".as-doc "+x.replace(/^(html|body)\s+/i,""); }).join(", ");
+ const regras=lst=>[...lst].map(r=>{ if(r instanceof CSSStyleRule) return `${pref(r.selectorText)}{${r.style.cssText}}`; if(r instanceof CSSMediaRule){ if(/print/i.test(r.conditionText)&&!/screen/i.test(r.conditionText)) return ""; return `@media ${r.conditionText}{${regras(r.cssRules)}}`; } if(r instanceof CSSFontFaceRule||r instanceof CSSImportRule) return r.cssText; return ""; }).join("\n");
+ return regras(st.cssRules); }
+async function asPdfDoHtml(html){ if(typeof html2pdf==="undefined") throw new Error("Gerador de PDF ainda carregando. Tente de novo em instantes.");
+ const d=new DOMParser().parseFromString(html,"text/html"); d.querySelectorAll(".bar,script").forEach(e=>e.remove());
+ const css=[...d.querySelectorAll("style")].map(x=>asEscopo(x.textContent)).join("\n"); const links=[...d.querySelectorAll('link[rel="stylesheet"]')].map(l=>l.outerHTML).join("");
+ const box=document.createElement("div"); box.style.cssText="position:fixed;left:0;top:0;width:760px;opacity:0;pointer-events:none;z-index:-1";
+ box.innerHTML=`${links}<style>${css}</style><div class="as-doc" style="background:#fff;color:#111;width:760px">${d.body.innerHTML}</div>`; document.body.appendChild(box);
+ try{ try{ await document.fonts.ready; }catch(_){} await Promise.all([...box.querySelectorAll("img")].map(im=>im.complete?0:new Promise(ok=>{ im.onload=im.onerror=ok; })));
+  const w=html2pdf().set({margin:[10,10,12,10],image:{type:"jpeg",quality:.92},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".ct-ass-g"]}}).from(box.querySelector(".as-doc")).toPdf();
+  const pdf=await w.get("pdf"); const paginas=pdf.internal.getNumberOfPages(); const uri=pdf.output("datauristring");
+  return {base64:uri.slice(uri.indexOf(",")+1),paginas}; }
+ finally{ box.remove(); } }
+// painel de envio dentro da tela "Gerar contrato"
+function asPainel(m,ctxt){ // ctxt: {st, cfg, doc:async()=>({mod,v,html})}
+ const {st,cfg}=ctxt; let box=m.querySelector("#asBox"); if(box){ box.remove(); return; }
+ box=document.createElement("div"); box.id="asBox"; box.className="as-box";
+ const nomeCli=st.cli.CLIENTE_NOME||"", mailCli=st.cli["CLIENTE_E-MAIL"]||"", telCli=st.cli.CLIENTE_TELEFONE||"";
+ const sig=[{papel:"cliente",rot:"Cliente (contratante)",nome:nomeCli,email:mailCli,whatsapp:telCli},{papel:"resilcon",rot:"Resilcon (contratada)",nome:cfg.CONTABILIDADE_RESPONSAVEL_NOME||"",email:cfg["CONTABILIDADE_RESPONSAVEL_E-MAIL"]||"",whatsapp:""}];
+ const pinta=()=>{ box.innerHTML=`<h4 class="crm-h4" style="margin:0">Enviar para assinatura digital (D4Sign)</h4>
+  <p class="sub" style="margin:4px 0 10px">Cada pessoa recebe um e-mail da D4Sign com o link para assinar. Quando todos assinarem, o PDF assinado volta sozinho para Contratos e o negócio recebe o registro.</p>
+  <div class="as-sig">${sig.map((s,i)=>`<div class="as-linha"><b>${esc(s.rot)}</b><input class="inp" data-as="nome" data-i="${i}" value="${escAttr(s.nome)}" placeholder="Nome" aria-label="Nome"><input class="inp" data-as="email" data-i="${i}" value="${escAttr(s.email)}" placeholder="E-mail" type="email" aria-label="E-mail"><input class="inp" data-as="whatsapp" data-i="${i}" value="${escAttr(s.whatsapp)}" placeholder="WhatsApp (opcional)" aria-label="WhatsApp">${i>1?`<button type="button" class="txt-btn" data-asrm="${i}">Tirar</button>`:`<span></span>`}</div>`).join("")}</div>
+  <div class="crm-pe" style="justify-content:flex-start;gap:8px;margin:6px 0 10px"><button type="button" class="txt-btn" id="asTest">+ Testemunha</button><button type="button" class="txt-btn" id="asOutro">+ Outro signatário</button></div>
+  <div class="crm-form" style="grid-template-columns:1fr 200px"><label class="crm-f"><span>Mensagem no e-mail</span><textarea class="inp" id="asMsg" rows="2">Olá! Segue o contrato de prestação de serviços da Resilcon para assinatura digital. Qualquer dúvida, é só chamar.</textarea></label>
+   <label class="crm-f"><span>Prazo para assinar (opcional)</span><input class="inp" type="date" id="asPrazo"></label></div>
+  <label class="crm-chk" style="margin-top:6px"><input type="checkbox" id="asPins" checked><span>Colocar as assinaturas lado a lado no fim do contrato, como nos contratos atuais</span></label>
+  <div class="crm-pe" style="margin-top:10px"><span class="sub" id="asSt" style="flex:1"></span><button type="button" class="txt-btn" id="asFechar">Cancelar</button><button type="button" class="view-btn ce-pri" id="asEnviar">Enviar para assinatura</button></div>`;
+  box.querySelectorAll("[data-as]").forEach(i=>i.oninput=()=>{ sig[+i.dataset.i][i.dataset.as]=i.value; });
+  box.querySelectorAll("[data-asrm]").forEach(b=>b.onclick=()=>{ sig.splice(+b.dataset.asrm,1); pinta(); });
+  box.querySelector("#asTest").onclick=()=>{ sig.push({papel:"testemunha",rot:"Testemunha",nome:"",email:"",whatsapp:""}); pinta(); };
+  box.querySelector("#asOutro").onclick=()=>{ sig.push({papel:"parte",rot:"Outro signatário",nome:"",email:"",whatsapp:""}); pinta(); };
+  box.querySelector("#asFechar").onclick=()=>box.remove();
+  box.querySelector("#asEnviar").onclick=async ev=>{ const b=ev.currentTarget, msg=t=>{ box.querySelector("#asSt").textContent=t||""; };
+   if(!st.negocio){ crmToast("Escolha o negócio do contrato antes de enviar."); return; }
+   const falta=sig.find(s=>!/\S+@\S+\.\S+/.test(s.email||"")||!String(s.nome||"").trim()); if(falta){ crmToast(`Preencha nome e e-mail de: ${falta.rot}.`); return; }
+   const mails=sig.map(s=>s.email.trim().toLowerCase()); if(new Set(mails).size!==mails.length){ crmToast("Cada signatário precisa de um e-mail diferente."); return; }
+   b.disabled=true; b.textContent="Enviando…";
+   try{ msg("Gerando o PDF do contrato…"); const d=await ctxt.doc(); const pdf=await asPdfDoHtml(d.html);
+    const empresa=st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||"cliente";
+    msg("Enviando para a D4Sign…");
+    const r=await asChamar({acao:"enviar",nome:`Contrato ${empresa} ${st.inicio}`,pdf_base64:pdf.base64,paginas:pdf.paginas,pins:box.querySelector("#asPins").checked,
+     mensagem:box.querySelector("#asMsg").value,prazo:box.querySelector("#asPrazo").value,
+     signatarios:sig.map(s=>({papel:s.papel,nome:s.nome.trim(),email:s.email.trim(),whatsapp:String(s.whatsapp||"").replace(/\D/g,"")})),
+     contrato:{oportunidade_id:st.negocio,contato_id:st.oNeg&&st.oNeg.contato_id,cliente_nome:empresa,cnpj:st.cli.CLIENTE_EMPRESA_DOCUMENTO||null,titulo:d.mod.nome,
+      servicos:d.v.NOME_PLANO?`${d.v.NOME_PLANO}: ${d.v.SERVICOS_INCLUSOS}`:null,valor_mensal:precoNum(d.v.VALOR_PROPOSTA)||null,inicio:st.inicio,fim:st.fim,obs:"Gerado no Resiltrack com o modelo "+d.mod.nome}});
+    closeModal(); crmToast(`Contrato enviado para assinatura: ${sig.map(s=>s.email).join(", ")}.${r.pins?"":" As assinaturas vão para a página final da D4Sign."}`);
+    if(MODE==="crm_contratos") try{ crmVContratos(document.getElementById("view")); }catch(_){}
+   }catch(e){ b.disabled=false; b.textContent="Enviar para assinatura"; msg(""); crmToast(crmErro(e)); } }; };
+ pinta(); m.querySelector("#gPe").before(box); box.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+// acompanhamento de um contrato enviado
+async function asAcompanhar(uuid,depois){ const m=crmModal("Contratos","Assinatura do contrato","",`<div id="asSt2"><div class="empty">Consultando a D4Sign…</div></div>`);
+ m.classList.remove("prodm");
+ const pinta=async()=>{ const box=m.querySelector("#asSt2"); let r; try{ r=await asChamar({acao:"status",uuid}); }catch(e){ box.innerHTML=`<div class="ce-note">${esc(crmErro(e))}</div>`; return; }
+  const reg=r.registro||{}; const todos=r.signatarios.length&&r.signatarios.every(s=>s.assinou);
+  box.innerHTML=`<p style="margin:0 0 8px"><b>Situação na D4Sign:</b> ${esc(String(r.status||""))}${reg.enviado_em?` · enviado em ${new Date(reg.enviado_em).toLocaleString("pt-BR")}${reg.enviado_por?" por "+esc(reg.enviado_por):""}`:""}</p>
+   <table><thead><tr><th>Quem assina</th><th>Situação</th><th></th></tr></thead><tbody>${r.signatarios.map((s,i)=>`<tr><td><b>${esc(s.nome||"")}</b><div class="sub">${esc(s.email)}</div></td><td>${s.assinou?`<span class="pill good">Assinou${s.quando?" em "+esc(s.quando):""}</span>`:`<span class="pill warn">Aguardando</span>`}</td><td class="right">${s.assinou?"":`<button class="txt-btn" data-re="${i}">Reenviar e-mail</button>`}</td></tr>`).join("")}</tbody></table>
+   ${(reg.eventos||[]).length?`<details style="margin-top:10px"><summary class="sub">Histórico</summary><ul class="sub">${reg.eventos.map(e=>`<li>${new Date(e.em).toLocaleString("pt-BR")}: ${esc(e.msg||e.tipo)}</li>`).join("")}</ul></details>`:""}
+   <div class="crm-pe" style="margin-top:12px">${todos?"":`<button class="txt-btn" id="asCanc">Cancelar envio</button>`}<span style="flex:1"></span><button class="txt-btn" id="asAtu">Atualizar</button><button class="view-btn ghost" id="asPdf">${todos?"Baixar PDF assinado":"Ver PDF na D4Sign"}</button><button class="view-btn ce-pri" data-close2>Fechar</button></div>`;
+  box.querySelector("[data-close2]").onclick=()=>{ closeModal(); depois&&depois(); };
+  box.querySelector("#asAtu").onclick=()=>{ box.innerHTML=`<div class="empty">Consultando a D4Sign…</div>`; pinta(); };
+  box.querySelector("#asPdf").onclick=async()=>{ try{ const d=await asChamar({acao:"baixar",uuid}); window.open(d.url,"_blank","noopener"); }catch(e){ crmToast(crmErro(e)); } };
+  box.querySelectorAll("[data-re]").forEach(b=>b.onclick=async()=>{ const s=r.signatarios[+b.dataset.re]; b.disabled=true; try{ await asChamar({acao:"reenviar",uuid,email:s.email,chave:s.chave}); crmToast("E-mail reenviado para "+s.email); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
+  const cc=box.querySelector("#asCanc"); if(cc) cc.onclick=async()=>{ if(cc.dataset.ok!=="1"){ cc.dataset.ok="1"; cc.textContent="Clique de novo para cancelar"; return; } cc.disabled=true; try{ await asChamar({acao:"cancelar",uuid}); crmToast("Envio cancelado na D4Sign"); closeModal(); depois&&depois(); }catch(e){ cc.disabled=false; crmToast(crmErro(e)); } }; };
+ pinta(); }
+(function(){ if(document.getElementById("as-css")) return; const s=document.createElement("style"); s.id="as-css"; s.textContent=`
+.as-box{border:1px solid rgba(0,103,137,.35);background:rgba(0,103,137,.05);border-radius:12px;padding:14px;margin-top:12px}
+.as-sig{display:grid;gap:6px}.as-linha{display:grid;grid-template-columns:170px 1fr 1.2fr 170px 60px;gap:6px;align-items:center}.as-linha b{font-size:12.5px}
+@media(max-width:900px){.as-linha{grid-template-columns:1fr 1fr}.as-linha b{grid-column:1/-1}}`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
