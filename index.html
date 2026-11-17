@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.18.0 (Kronos: painel do dia, espelho e pendências · RH Assist: feedbacks e PDI · CRM: nichos na venda direta e janelas fecham só no X)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.19 (CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -1137,14 +1137,12 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
   if(MODE.startsWith("rh_") && podePainelGestor()){ tabsEl.classList.add("hidden"); rhView(v); return; }
   if(MODE.startsWith("rh_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
-  if(MODE.startsWith("kr_") && podePainelGestor()){ tabsEl.classList.add("hidden"); krView(v); return; }
-  if(MODE.startsWith("kr_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
   if(MODE==="crm" && !podeCRM() && crmMenuPrincipal()){ MODE=crmMenuPrincipal(); return render(); }
   if(MODE.startsWith("crm_") && crmSecaoPode(MODE)){ tabsEl.classList.add("hidden"); crmView(v); return; }
@@ -1194,9 +1192,6 @@ function renderSide(){
   if(gestorOK){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}RH Assist${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="rh"><div>`+RH_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
-  if(gestorOK){ const no=MODE.startsWith('kr_'), ab=srlAberto("kr");
-    h+=`<button class="srl-item ${no?'on':''}" data-mode="kr_painel" ${no?`data-dobra="kr" aria-expanded="${ab}"`:""}>${_ICO_KR}Kronos${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
-    if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="kr"><div>`+KR_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
@@ -1207,7 +1202,7 @@ function renderSide(){
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.dobra; if(k){ const sub=s.querySelector(`[data-dobra-box="${k}"]`); if(!sub) return; const ab=sub.classList.toggle("fech")===false;
       srlAberto(k,ab); b.setAttribute("aria-expanded",ab); const st=b.querySelector(".srl-seta"); if(st) st.classList.toggle("fech",!ab); return; }
-    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":String(b.dataset.mode).startsWith("kr_")?"kr":""),true);
+    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":""),true);
     setMode(b.dataset.mode); });
   s.querySelectorAll("[data-atab]").forEach(b=>b.onclick=()=>{ TAB=b.dataset.atab; window.scrollTo(0,0); render(); });
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -4326,6 +4321,7 @@ async function crmFichaNegocio(id,preset){
     <label class="crm-f"><span>Tema</span><input class="inp" id="nTema" value="${escAttr(o.tema||"")}" placeholder="Ex.: reforma_tributaria"></label>
     <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="nObs" style="min-height:64px">${esc(o.obs||"")}</textarea></label>
    </div>${crmCamposHTML("negocio",o.campos)}</div>
+   ${o.id&&cont?crmClientePainelHTML(cont,ficha.empresa):""}
    <div class="panel"><h4>Serviços e valores</h4>${serv.length?"":`<p class="sub" style="margin:4px 0 8px">Cadastre os serviços em Configurações para montar a proposta. Enquanto isso, informe os valores abaixo.</p>`}
     <div style="overflow-x:auto"><table class="crm-itens"><thead><tr><th>Serviço</th><th>Valor</th><th>Cobrança</th><th>Qtd</th><th>Desc. %</th><th></th></tr></thead><tbody id="nItens"></tbody></table></div>
     ${serv.length?`<button class="view-btn ghost" id="nAddIt" style="margin-top:8px">Adicionar serviço</button>`:""}
@@ -4345,7 +4341,7 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
- if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); const nc=m.querySelector("#nContr"); if(nc) nc.onclick=()=>ctGerar({negocio:o}); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
+ if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); const nc=m.querySelector("#nContr"); if(nc) nc.onclick=()=>cliGarantir({negocio:o},()=>ctGerar({negocio:o})); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
   crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
  const dl=m.querySelector("#nDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
@@ -4359,6 +4355,7 @@ async function crmFichaNegocio(id,preset){
   if(ct&&!contato_id){ crmToast("Escolha um contato da lista ou cadastre um novo abaixo."); return; }
   b.disabled=true; b.textContent="Salvando…";
   try{
+   if(o.id&&cont&&m.querySelector("#nCliP")) await crmClienteSalvarPainel(m,cont,ficha.empresa);
    if(!contato_id&&!o.id&&(crmVal(m,"#ncNome")||crmVal(m,"#ncEmail")||crmVal(m,"#ncEmp")))
     contato_id=await crmRpc("crm_salvar_contato",{p:{nome:crmVal(m,"#ncNome"),email:crmVal(m,"#ncEmail"),telefone:crmVal(m,"#ncTel"),empresa:crmVal(m,"#ncEmp"),cnpj:crmVal(m,"#ncCnpj"),origem:crmVal(m,"#nOrig")||"manual",responsavel:crmVal(m,"#nResp")}});
    const nid=await crmRpc("crm_salvar_negocio",{p:{id:o.id||null,funil_id:o.funil_id,titulo,contato_id,etapa:o.id?undefined:crmVal(m,"#nEt"),responsavel:crmVal(m,"#nResp"),origem:crmVal(m,"#nOrig"),
@@ -4395,8 +4392,8 @@ async function crmFichaContato(id){
   ${id?`<div class="panel"><h4>Negócios</h4>${(f.negocios||[]).map(o=>`<div class="ce-row crm-click" data-neg="${o.id}"><span>${esc(o.titulo)}</span><span class="crm-etq" style="--c:${CRM_ETAPA_COR[o.etapa]||"var(--accent)"}">${esc(crmEtapaNome(o.funil_id,o.etapa))}</span></div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhum negócio.</p>`}
    <button class="view-btn ghost" id="cNovoNeg" style="margin-top:8px">Novo negócio para este contato</button></div>`:""}
   <div class="crm-pe">${id&&isAdmin()?`<button class="txt-btn crm-perigo" id="cDel">Excluir contato</button>`:""}<span style="flex:1"></span>${crmPri('id="cSalvar">Salvar</button>')}</div>
- </div><div class="crm-colline">${id?`<div class="crm-acoes-ficha">${crmAcoesContatoHTML({...c,id})}</div>`+crmTarefasPainel(tars,{contato_id:id,empresa_id:c.empresa_id})+crmReguasPainel(rg,c)+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
- if(id){ crmLigarAcoesContato(m,{...c,id},null,()=>crmFichaContato(id)); crmLigarLinha(m,()=>crmFichaContato(id)); crmLigarTarefas(m,tars,()=>crmFichaContato(id));
+ </div><div class="crm-colline">${id?`<div class="crm-acoes-ficha"><button class="txt-btn crm-ia-btn" id="cIA">${CRM_ICO.ia}Analisar com IA</button>${crmAcoesContatoHTML({...c,id})}</div><div id="iaBoxC"></div>`+crmTarefasPainel(tars,{contato_id:id,empresa_id:c.empresa_id})+crmReguasPainel(rg,c)+`<h4 class="crm-h4">Linha do tempo</h4>`+crmLinhaHTML(f.linha,{contato_id:id,empresa_id:c.empresa_id}):`<div class="panel sub">Depois de salvar, registre aqui ligações, reuniões, conversas de WhatsApp e arquivos.</div>`}</div></div>`);
+ if(id){ crmLigarAcoesContato(m,{...c,id},null,()=>crmFichaContato(id)); const cia=m.querySelector("#cIA"); if(cia) cia.onclick=()=>crmCopilotoContato(m,{...c,id},()=>crmFichaContato(id)); crmLigarLinha(m,()=>crmFichaContato(id)); crmLigarTarefas(m,tars,()=>crmFichaContato(id));
   const ri=m.querySelector("#rgIncl"); if(ri) ri.onclick=async()=>{ const ch=crmVal(m,"#rgSel"); if(!ch){ crmToast("Escolha a régua."); return; }
    try{ const r=await crmRpc("crm_inscrever_regua",{p_contatos:[id],p_chave:ch}); crmToast(r.inscritos?"Contato incluído na régua":"Não entrou: sem e-mail, sem consentimento ou já está nessa régua."); crmFichaContato(id); }catch(e){ crmToast(crmErro(e)); } };
   m.querySelectorAll("[data-rg-sair]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar"; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=""; b.textContent="Tirar"; } },4000); return; }
@@ -5557,12 +5554,12 @@ function precoPintar(v){
   </div>
   ${R.planos.length?`<div class="pt-area">${precoTabela(R,S,ativs,fat)}</div>`:`<div class="card"><div class="empty">Nenhum plano ativo neste produto.</div></div>`}
  </div>
- <div class="preco-grade2">
+ <div class="preco-grade2"><div class="preco-col">${precoAdicionaisHTML()}
   <div class="card ce-pad"><h3>Serviços extras</h3><p class="sub" style="margin:0 0 10px">Busque e marque o que entra na proposta. Os valores sugeridos vêm da tabela e podem ser ajustados.</p>
    <input class="inp" id="prBusca" placeholder="Buscar serviço (ex.: abertura, holding, certificado, parcelamento)" value="${escAttr(S.busca)}">
    <div class="preco-exs">${visEx.map(linhaEx).join("")||`<p class="sub" style="margin:10px 0 0">${busca?"Nada encontrado com essa busca.":`Digite para buscar entre os ${todosEx.length} serviços da tabela.`}</p>`}</div>
-   ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")).length?`<p class="sub" style="margin-top:8px">Há ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")).length} extra(s) marcado(s) em outros produtos e eles continuam na proposta.</p>`:""}
-  </div>
+   ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")&&!k.startsWith("livre:")).length?`<p class="sub" style="margin-top:8px">Há ${Object.keys(exSel).filter(k=>!k.startsWith(S.arq+":")&&!k.startsWith("livre:")).length} extra(s) marcado(s) em outros produtos e eles continuam na proposta.</p>`:""}
+  </div></div>
   <div class="card ce-pad preco-resumo"><h3>Proposta</h3>
    ${S.cesta.length?S.cesta.map((c,i)=>`<div class="ce-row"><span><b>${esc(c.plano)}</b><br><span class="sub">${esc(c.produto)}</span></span><span style="display:flex;gap:8px;align-items:center"><b class="num">${precoMoeda(c.valor)}/mês</b><button class="txt-btn crm-perigo" data-tirar="${i}">Tirar</button></span></div>`).join(""):`<p class="sub">Escolha um plano ao lado. Se o cliente precisar de mais de um produto (por exemplo, Contábil e BPO), troque o produto no topo e escolha o plano dele também.</p>`}
    ${tot.extrasM.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">extra mensal</span></span><b class="num">${precoMoeda(e.total)}/mês</b></div>`).join("")}
@@ -5658,7 +5655,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prApres").onclick=()=>apresAbrir(); simLigarBanner(box,re); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(S.extras)}});
+ box.querySelector("#prApres").onclick=()=>apresAbrir(); simLigarBanner(box,re); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>cliGarantir({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},()=>{ re(); ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(precoTotais().extrasM.concat(precoTotais().extrasU))}}); }); precoLigarAdicionais(box,re);
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -5675,7 +5672,7 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
    ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"unico"}))];
   const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso,diagnostico:S.diag||null};
   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
-   tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
+   tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...simCamposDoSimulador(o.campos),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
   try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
   crmToast("Proposta salva no negócio: valores e itens atualizados"); b.textContent="Salvo ✓"; if(S.sim){ try{ S.sim.etapa="Planos"; await simSalvarSimulador(true); }catch(_){} }
  }catch(e){ b.disabled=false; b.textContent="Salvar no negócio"; crmToast(crmErro(e)); } }
@@ -7299,7 +7296,7 @@ async function simNova(tipo){ const [negs,nichos]=await Promise.all([simNegocios
  const m=crmModal("Nova venda",`Nova venda · ${SIM_TIPOS[tipo]}`,"",`<div class="sim-passos">${(tipo==="diagnostico"?["Nicho e cliente","Atividades/Dores","Produtos","Planos"]:tipo==="direta"?["Nicho e cliente","Planos"]:["Cliente","Produtos"]).map((t,i)=>`<span class="${i===0?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   <div class="crm-form" style="grid-template-columns:1fr 1fr">
    ${tipo!=="avulso"?`<label class="crm-f crm-w2"><span>Nicho *</span><input class="inp" id="snNicho" list="snNichoL" placeholder="Ex.: farmácia" autocomplete="off"><datalist id="snNichoL">${nichos.map(n=>`<option value="${escAttr(n)}">`).join("")}</datalist><small class="sub" id="snNichoInfo">${nichos.length?`${nichos.length} nichos cadastrados. Digite para filtrar.`:"Não encontrei nichos cadastrados. Confira a tabela de preços e as personas."}</small></label>`:""}
-   <div class="crm-f crm-w2"><span>Cliente</span><div class="seg"><button type="button" class="on" data-sncli="neg">Negócio que já está no funil</button><button type="button" data-sncli="novo">Cliente novo</button></div></div>
+   <div class="crm-f crm-w2"><span>Cliente</span><div class="seg"><button type="button" class="on" data-sncli="neg">Negócio que já está no funil</button><button type="button" data-sncli="novo">Cliente novo</button><button type="button" data-sncli="sem">Só simular, sem cliente</button></div><small class="sub" id="snSemInfo" hidden>Você simula à vontade. Na hora de gerar a proposta ou o contrato, o Resiltrack pede os dados do cliente e cria o negócio no funil.</small></div>
    <div class="crm-w2" id="snNeg"><label class="crm-f"><span>Negócio</span><input class="inp" id="snNegI" list="snNegL" placeholder="Busque pelo título, contato ou empresa" autocomplete="off"><datalist id="snNegL">${negs.map(o=>`<option value="${escAttr(o.titulo+(o.empresa_nome?" · "+o.empresa_nome:o.contato_nome?" · "+o.contato_nome:"")+(o.numero?" #"+o.numero:""))}" data-id="${o.id}"></option>`).join("")}</datalist></label></div>
    <div class="crm-w2 crm-form" id="snNovo" hidden style="grid-template-columns:1fr 1fr">
     <label class="crm-f"><span>Nome do cliente *</span><input class="inp" id="snNome"></label><label class="crm-f"><span>Empresa</span><input class="inp" id="snEmp"></label>
@@ -7308,11 +7305,12 @@ async function simNova(tipo){ const [negs,nichos]=await Promise.all([simNegocios
     <label class="crm-f crm-w2"><span>Título do negócio</span><input class="inp" id="snTit" placeholder="Se ficar vazio, uso o nicho e o nome do cliente"></label></div>
   </div><div class="crm-pe" style="margin-top:12px"><span class="sub" id="snMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="snOk">Avançar ›</button>')}</div>`);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
- let modo="neg"; m.querySelectorAll("[data-sncli]").forEach(b=>b.onclick=()=>{ modo=b.dataset.sncli; m.querySelectorAll("[data-sncli]").forEach(x=>x.classList.toggle("on",x===b)); m.querySelector("#snNeg").hidden=modo!=="neg"; m.querySelector("#snNovo").hidden=modo!=="novo"; });
+ let modo="neg"; m.querySelectorAll("[data-sncli]").forEach(b=>b.onclick=()=>{ modo=b.dataset.sncli; m.querySelectorAll("[data-sncli]").forEach(x=>x.classList.toggle("on",x===b)); m.querySelector("#snNeg").hidden=modo!=="neg"; m.querySelector("#snNovo").hidden=modo!=="novo"; m.querySelector("#snSemInfo").hidden=modo!=="sem"; });
  m.querySelector("#snOk").onclick=async ev=>{ const b=ev.currentTarget, msg=t=>{ m.querySelector("#snMsg").textContent=t||""; };
   let nicho=tipo!=="avulso"?crmVal(m,"#snNicho"):""; if(tipo!=="avulso"){ if(!nicho){ msg("Informe o nicho."); m.querySelector("#snNicho").focus(); return; } const ach=nichos.find(n=>crmNormTxt(n)===crmNormTxt(nicho)); if(!ach){ msg(`O nicho "${nicho}" não está cadastrado. Escolha um da lista.`); m.querySelector("#snNicho").focus(); return; } nicho=ach; msg(""); }
   let neg=null;
-  if(modo==="neg"){ const t=crmVal(m,"#snNegI"); const op=[...m.querySelectorAll("#snNegL option")].find(x=>x.value===t); if(!op){ crmToast("Escolha o negócio da lista ou marque Cliente novo."); return; } neg=negs.find(o=>o.id===op.dataset.id); }
+  if(modo==="sem"){ neg=null; }
+  else if(modo==="neg"){ const t=crmVal(m,"#snNegI"); const op=[...m.querySelectorAll("#snNegL option")].find(x=>x.value===t); if(!op){ crmToast("Escolha o negócio da lista ou marque Cliente novo."); return; } neg=negs.find(o=>o.id===op.dataset.id); }
   else if(!crmVal(m,"#snNome")){ crmToast("Informe o nome do cliente."); return; }
   b.disabled=true; b.textContent="Criando…";
   try{
@@ -7324,8 +7322,8 @@ async function simNova(tipo){ const [negs,nichos]=await Promise.all([simNegocios
     await simNegocios(true); neg=PRECO_ST.negLista.find(o=>o.id===nid)||{id:nid,titulo:tit,contato_nome:crmVal(m,"#snNome"),empresa_nome:crmVal(m,"#snEmp")};
     if(doc&&doc.length!==14) neg.documento=doc; }
    const persona=nicho&&typeof diagPersonaDoNicho==="function"&&PZ.D?((diagPersonaDoNicho(PZ.D,nicho)||{}).nome||""):"";
-   const sim=await crmRpc("crm_salvar_simulacao",{p:{tipo,etapa:tipo==="avulso"?"Produtos":tipo==="diagnostico"?"Atividades/Dores":"Planos",oportunidade_id:neg.id,contato_id:neg.contato_id||null,
-    cliente_nome:neg.contato_nome||neg.titulo,empresa_nome:neg.empresa_nome||"",documento:neg.cnpj||neg.documento||"",nicho,persona:tipo==="avulso"?"Produtos/Serviços avulsos":persona||nicho,dados:{}}});
+   const ng=neg||{}; const sim=await crmRpc("crm_salvar_simulacao",{p:{tipo,etapa:tipo==="avulso"?"Produtos":tipo==="diagnostico"?"Atividades/Dores":"Planos",oportunidade_id:ng.id||"",contato_id:ng.contato_id||"",
+    cliente_nome:ng.contato_nome||ng.titulo||"",empresa_nome:ng.empresa_nome||"",documento:ng.cnpj||ng.documento||"",nicho,persona:tipo==="avulso"?"Produtos/Serviços avulsos":persona||nicho,dados:{}}});
    closeModal(); simEntrar(sim,neg,true);
   }catch(e){ b.disabled=false; b.textContent="Avançar ›"; msg(""); crmToast(crmErro(e)); } }; }
 // abre uma simulação salva
@@ -7376,7 +7374,8 @@ async function simAvulso(s,neg){ let D; try{ D=await pzCarregar(); }catch(e){ cr
    await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,tema:o.tema,obs:o.obs,
     campos:{...(o.campos||{}),proposta_avulsa:{simulacao:s.id,gerada_em:new Date().toISOString(),itens:dd.itens,vig:dd.vig,parcelas:dd.parcelas,mensal:t.m,avulso:t.u}},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
    crmToast("Produtos salvos no negócio"); }catch(e){ crmToast(crmErro(e)); } b.disabled=false; };
- const imprimir=()=>{ const w=rtJanela(); if(!w){ crmToast("Libere pop-ups para imprimir."); return; } w.document.write(simPropostaHTML(s,dd,prods,tot())); w.document.close(); };
+ const imprimir=async()=>{ try{ await ctConfig(); }catch(_){} cliGarantir({negocio:neg,simId:s.id,aoTrocarNegocio:n=>{ neg=n; }},cl=>{ const w=rtJanela(); if(!w){ crmToast("Libere pop-ups para imprimir."); return; }
+   const s2={...s,cliente_nome:cl.nome,empresa_nome:cl.razao,documento:cliFmtDoc(cl.doc)}; w.document.write(simPropostaComAssinatura(simPropostaHTML(s2,dd,prods,tot()),cl)); w.document.close(); topo(); }); };
  const render=()=>{ topo(); const c=tela.querySelector(".pz-corpo"); const q=crmNormTxt(F.q); const cats=[...new Set(prods.map(p=>p.cat).filter(Boolean))].sort();
   const vis=prods.filter(p=>(!F.cat||p.cat===F.cat)&&(!q||crmNormTxt(p.nome+" "+p.desc).includes(q))&&(!F.so||(dd.itens[p.nome]||{}).on)).sort((a,b)=>((dd.itens[b.nome]||{}).on?1:0)-((dd.itens[a.nome]||{}).on?1:0));
   const t=tot();
@@ -8406,126 +8405,314 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 .pill.info{background:#e3eef3;color:#066789}
 `; document.head.appendChild(st); })();
 
-// ================= KRONOS · controle de ponto (fase 1: painel do dia, espelho e pendências) =================
-// Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
-// com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
-const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"]];
-const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
-const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"]};
-const KR_DOW=["","Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-let KR={data:"",q:"",f:"",dep:"",col:"",mes:"",pessoas:null,timer:null};
-const krHM=m=>{ m=Math.max(0,Math.round(+m||0)); return Math.floor(m/60)+"h"+String(m%60).padStart(2,"0"); };
-const krDataBR=d=>{ const p=String(d||"").slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:""; };
-const krPill=s=>{ const [t,c]=KR_SIT[s]||[s,"neutro"]; return `<span class="kr-pill kr-${c}">${t}</span>`; };
-const krBatidas=b=>(b||[]).length?(b||[]).map((h,i)=>`<span class="kr-bat ${i%2?"sai":"ent"}" title="${i%2?"Saída":"Entrada"}">${esc(h)}</span>`).join(""):`<span class="sub">Nenhuma</span>`;
-const krTile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:var(--${cor})"`:""}>${val}</div></div></div>`;
-const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos. Fale com o RH.</div></div>`:crmCaixaErro(e);
-function krAbas(at){ return `<div class="sim-abas"><div class="seg">${KR_SECOES.map(([m,t])=>`<button type="button" data-krab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
-function krMoldura(v,sec,tit,sub,btns){
- v.innerHTML=crmHead(tit,sub,btns||"")+krAbas(sec)+`<div id="krBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
- v.querySelectorAll("[data-krab]").forEach(b=>b.onclick=()=>setMode(b.dataset.krab));
- return v.querySelector("#krBox");
-}
-async function krView(v){
- if(KR.timer){ clearTimeout(KR.timer); KR.timer=null; }
- if(MODE==="kr_espelho") return krEspelho(v);
- if(MODE==="kr_pend") return krPendencias(v);
- return krPainel(v);
+// ================= RH ASSIST · Assistente de RH com IA =================
+// Para gestores, diretores e RH. Escolhe uma pessoa da equipe e a IA lê avaliações, feedbacks, PDI e DISC para sugerir
+// pontos fortes, pontos de atenção, ações de PDI e um roteiro de conversa. As sugestões vão direto ao gestor; o RH vê o histórico.
+// A IA nunca recebe CPF, salário, nascimento, e-mail ou telefone.
+RH_SECOES.push(["rh_ia","Assistente de RH"]);
+let RHIA={sel:null,q:"",res:null,hist:[],carregando:false};
+const RHIA_TEND={subindo:["good","Em evolução"],estavel:["neutral","Estável"],caindo:["crit","Em queda"],sem_dados:["neutral","Poucos dados"]};
+const iaData=d=>d?new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+
+RHV_EXTRA.rh_ia=async function(v){
+ v.innerHTML=crmHead("Assistente de RH","Escolha uma pessoa da sua equipe. A IA lê avaliações, feedbacks, PDI e perfil comportamental e sugere como apoiar o desenvolvimento dela. São sugestões: a decisão é sua.","")+rhAbas("rh_ia")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_ia") return;
+ const rh=RHD.eu&&RHD.eu.rh, eu=RHD.eu&&RHD.eu.id;
+ const P=(RHD.colaboradores||[]).filter(c=>c.status==="ativo"&&(rh||c.id!==eu)).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+ v.querySelector("#rhBox").innerHTML=`<div class="ia-lay"><div class="card ia-pes"><div class="search"><input id="iaQ" type="search" placeholder="Buscar pessoa" value="${escAttr(RHIA.q)}" aria-label="Buscar pessoa"></div><div id="iaL" class="ia-l"></div></div><div id="iaP"></div></div>`;
+ const lista=()=>{ const q=crmNormTxt(RHIA.q);
+  v.querySelector("#iaL").innerHTML=P.filter(c=>!q||crmNormTxt(c.nome+" "+((rhPor(RHD.departamentos,c.departamento_id)||{}).nome||"")).includes(q)).map(c=>`<button class="ia-pi ${RHIA.sel===c.id?"on":""}" data-iap="${c.id}"><span class="rh-av">${esc(rhIni(c.nome))}</span><span><b>${esc(c.nome)}</b><small>${esc((rhPor(RHD.cargos,c.cargo_id)||{}).nome||(rhPor(RHD.departamentos,c.departamento_id)||{}).nome||"")}</small></span></button>`).join("")||`<div class="empty">Ninguém encontrado.</div>`;
+  v.querySelectorAll("[data-iap]").forEach(b=>b.onclick=()=>{ RHIA.sel=b.dataset.iap; RHIA.res=null; lista(); iaPainel(v); }); };
+ const qi=v.querySelector("#iaQ"); qi.oninput=()=>{ RHIA.q=qi.value; lista(); };
+ lista(); iaPainel(v);
+};
+
+async function iaPainel(v){ const box=v.querySelector("#iaP"); if(!box) return;
+ if(!RHIA.sel){ box.innerHTML=`<div class="card ia-vazio"><b>Escolha uma pessoa na lista</b><p class="sub">O assistente monta um resumo do momento dela, sugere ações de PDI e prepara as perguntas para a próxima conversa individual. Você também pode fazer uma pergunta específica.</p></div>`; return; }
+ const c=rhPor(RHD.colaboradores,RHIA.sel)||{}, id=RHIA.sel;
+ box.innerHTML=`<div class="card ia-top"><div><b>${esc(c.nome)}</b><div class="sub">${esc([(rhPor(RHD.cargos,c.cargo_id)||{}).nome,(rhPor(RHD.departamentos,c.departamento_id)||{}).nome].filter(Boolean).join(" · "))}</div></div>
+  <div class="ia-ask"><textarea class="inp" id="iaPerg" rows="2" maxlength="1000" placeholder="Pergunta opcional. Ex.: como preparo uma conversa sobre prazos com essa pessoa?"></textarea>${crmPri('id="iaGo">Analisar com IA</button>')}</div>
+  <p class="sub ia-nota">A IA lê avaliações, feedbacks, PDI e perfil comportamental. Não recebe CPF, salário, nascimento nem contatos. Toda análise fica registrada.</p></div>
+  <div id="iaRes"></div><div id="iaHist"></div>`;
+ box.querySelector("#iaGo").onclick=()=>iaAnalisar(v,id);
+ if(RHIA.res&&RHIA.res.colaborador===id) iaMostrar(v,RHIA.res.r,RHIA.res.quando,RHIA.res.pergunta);
+ try{ const h=await crmRpc("rh_ia_historico",{p:{colaborador:id}}); if(RHIA.sel!==id) return; RHIA.hist=h||[]; iaHistorico(v); }catch(_){ }
 }
 
-// ---------- Painel do dia ----------
-async function krPainel(v,silencioso){
- let box=v.querySelector("#krBox");
- if(!silencioso||!box){
-  box=krMoldura(v,"kr_painel","Painel do dia","Batidas do relógio de ponto, por colaborador. No dia de hoje a tela se atualiza sozinha a cada 30 segundos.",
-   `<input type="date" class="inp" id="krData" value="${escAttr(KR.data)}" aria-label="Dia" style="max-width:170px"> <button class="txt-btn" id="krHoje">Hoje</button>`);
-  v.querySelector("#krData").onchange=e=>{ KR.data=e.target.value; krPainel(v); };
-  v.querySelector("#krHoje").onclick=()=>{ KR.data=""; krPainel(v); };
- }
- let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"painel",data:KR.data}}); }catch(e){ if(MODE==="kr_painel"&&!silencioso) box.innerHTML=krSemAcesso(e); return; }
- if(MODE!=="kr_painel") return;
- const P=D.pessoas||[], hoje=D.data===D.hoje; KR.pessoas=P.map(p=>({id:p.id,nome:p.nome}));
- const di=v.querySelector("#krData"); if(di&&!di.value) di.value=D.data;
- const n=s=>P.filter(p=>p.situacao===s).length, deps=[...new Set(P.map(p=>p.departamento).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
- const minTot=P.reduce((a,p)=>a+(+p.minutos||0),0), comReg=P.filter(p=>p.qtd>0).length;
- const R=D.relogio||{}, col=R.ultima_coleta_em?new Date(R.ultima_coleta_em):null, parado=hoje&&(!col||(Date.now()-col.getTime())>10*60000);
- const pinta=()=>{ const q=crmNormTxt(KR.q);
-  const ls=P.filter(p=>(!q||crmNormTxt(p.nome+" "+(p.departamento||"")).includes(q))&&(!KR.f||p.situacao===KR.f)&&(!KR.dep||p.departamento===KR.dep));
-  const sits=hoje?["trabalhando","intervalo","saiu","sem_registro"]:["completo","pendente","sem_registro"];
-  box.innerHTML=`<div class="tiles kr-tiles">${hoje
-    ?krTile("Trabalhando agora",n("trabalhando"),"good")+krTile("Em intervalo",n("intervalo"),"warn")+krTile("Já saíram",n("saiu"))+krTile("Sem registro",n("sem_registro"))
-    :krTile("Dia completo",n("completo"),"good")+krTile("Batida faltando",n("pendente"),"crit")+krTile("Sem registro",n("sem_registro"))+krTile("Com registro",`${comReg} <span class="sub">de ${P.length}</span>`)}
-    ${krTile("Horas no dia",krHM(minTot))}</div>
-  ${parado?`<div class="kr-aviso">O coletor do relógio ainda não está enviando as batidas sozinho. ${col?`Última carga em ${col.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""} Os dados abaixo vão até o registro ${esc(R.ultimo_nsr??"")} do relógio.</div>`:""}
-  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="krQ" type="search" value="${escAttr(KR.q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
-   <select class="inp" id="krF" style="max-width:200px">${crmOpt(sits.map(s=>[s,KR_SIT[s][0]]),KR.f,"Todas as situações")}</select>
-   <select class="inp" id="krDep" style="max-width:230px">${crmOpt(deps.map(d=>[d,d]),KR.dep,"Todos os departamentos")}</select></div>
-  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Situação</th><th>Batidas</th><th class="right">Horas</th><th></th></tr></thead><tbody>
-  ${ls.map(p=>`<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.usa_relogio?"":" · não cadastrado no relógio"}</div></td><td>${krPill(p.situacao)}</td><td>${krBatidas(p.batidas)}</td>
-    <td class="right num">${p.qtd?krHM(p.minutos):""}</td><td class="right"><button class="view-btn" data-krv="${p.id}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">${hoje?`Atualizado às ${esc(D.agora)}. `:""}Entradas em verde e saídas em cinza. As horas somam os pares de entrada e saída${hoje?" e, para quem está trabalhando, contam até agora":""}. Quem registra o ponto fora do relógio aparece como "Sem registro" por enquanto.</p>`;
-  const qi=box.querySelector("#krQ"); qi.oninput=()=>{ KR.q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#krQ"); x.focus(); x.setSelectionRange(p,p); };
-  box.querySelector("#krF").onchange=e=>{ KR.f=e.target.value; pinta(); };
-  box.querySelector("#krDep").onchange=e=>{ KR.dep=e.target.value; pinta(); };
-  box.querySelectorAll("[data-krv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.krv; KR.mes=String(D.data).slice(0,7); setMode("kr_espelho"); }); };
- if(silencioso&&box.contains(document.activeElement)&&document.activeElement.id==="krQ"){ /* não redesenha enquanto a pessoa digita */ } else pinta();
- if(hoje) KR.timer=setTimeout(()=>{ if(MODE==="kr_painel"&&document.getElementById("krBox")) krPainel(v,true); },30000);
+async function iaAnalisar(v,id){ const bt=v.querySelector("#iaGo"), out=v.querySelector("#iaRes"), perg=v.querySelector("#iaPerg").value.trim();
+ bt.disabled=true; bt.textContent="Analisando…"; out.innerHTML=`<div class="card ia-load"><span class="ia-dot"></span>Lendo o histórico e montando as sugestões. Leva uns 20 segundos.</div>`;
+ try{ const {data,error}=await sb.functions.invoke("rh-assistente",{body:{colaborador:id,pergunta:perg}});
+  if(error){ let msg=""; try{ const j=await error.context.json(); msg=j.erro||""; }catch(_){} throw new Error(msg||(String(error.message||"").includes("404")?"A função rh-assistente ainda não foi publicada no Supabase.":String(error.message||error))); }
+  if(!data||data.erro) throw new Error((data&&data.erro)||"Sem resposta.");
+  if(RHIA.sel!==id) return;
+  RHIA.res={colaborador:id,r:data.resultado,quando:new Date().toISOString(),pergunta:perg};
+  iaMostrar(v,data.resultado,RHIA.res.quando,perg);
+  try{ RHIA.hist=await crmRpc("rh_ia_historico",{p:{colaborador:id}})||[]; iaHistorico(v); }catch(_){ }
+ }catch(e){ out.innerHTML=`<div class="card"><div class="empty">${esc(e.message||String(e))}</div></div>`; }
+ finally{ const b=v.querySelector("#iaGo"); if(b){ b.disabled=false; b.textContent="Analisar com IA"; } }
 }
 
-// ---------- Espelho de ponto ----------
-async function krEspelho(v){
- const box=krMoldura(v,"kr_espelho","Espelho de ponto","As batidas de um colaborador, dia a dia, com o total de horas de cada dia.","");
- if(!KR.pessoas){ try{ const D=await crmRpc("kronos_dados",{p:{acao:"painel"}}); KR.pessoas=(D.pessoas||[]).map(p=>({id:p.id,nome:p.nome})); if(!KR.mes) KR.mes=String(D.hoje).slice(0,7); }catch(e){ box.innerHTML=krSemAcesso(e); return; } }
- if(MODE!=="kr_espelho") return;
- if(!KR.mes){ const d=new Date(); KR.mes=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
- const pes=[...KR.pessoas].sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
- box.innerHTML=`<div class="filters crm-bar2" style="margin:0 0 12px"><select class="inp" id="keCol" style="flex:1;min-width:240px;max-width:420px">${crmOpt(pes.map(p=>[p.id,p.nome]),KR.col,"Escolha o colaborador")}</select>
-  <input type="month" class="inp" id="keMes" value="${escAttr(KR.mes)}" aria-label="Mês" style="max-width:190px"></div><div id="keRes"><div class="card"><div class="empty">Escolha um colaborador para ver o espelho.</div></div></div>`;
- const res=box.querySelector("#keRes");
- const carrega=async()=>{ if(!KR.col){ res.innerHTML=`<div class="card"><div class="empty">Escolha um colaborador para ver o espelho.</div></div>`; return; }
-  res.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
-  let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"espelho",colaborador:KR.col,mes:KR.mes}}); }catch(e){ res.innerHTML=krSemAcesso(e); return; }
-  if(MODE!=="kr_espelho") return;
-  const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
-  res.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Dias com registro",com.length)}${krTile("Horas no mês",krHM(tot))}${krTile("Média por dia",com.length?krHM(tot/com.length):"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}</div>
-  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Horas</th><th>Situação</th></tr></thead><tbody>
-  ${dias.map(d=>{ const fds=d.dia_semana>=6; return `<tr class="${fds&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidas(d.batidas):`<span class="sub">${fds?"Fim de semana":"Sem registro no relógio"}</span>`}</td>
-    <td class="right num">${d.qtd?krHM(d.minutos):""}</td><td>${d.pendente?krPill("pendente"):d.qtd?(d.qtd%2?krPill("trabalhando"):krPill("completo")):""}</td></tr>`; }).join("")||`<tr><td colspan="4"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">Nesta etapa o espelho mostra só o que veio do relógio. Escalas, feriados, atrasos, banco de horas e ajustes entram na próxima etapa.</p>`; };
- box.querySelector("#keCol").onchange=e=>{ KR.col=e.target.value; carrega(); };
- box.querySelector("#keMes").onchange=e=>{ KR.mes=e.target.value; carrega(); };
- carrega();
+function iaMostrar(v,r,quando,pergunta){ const out=v.querySelector("#iaRes"); if(!out||!r) return; const t=RHIA_TEND[r.tendencia]||RHIA_TEND.sem_dados, cv=r.conversa||{};
+ const lst=(tit,L,cls)=>(L||[]).length?`<div class="card ia-sec ${cls||""}"><h4>${tit}</h4><ul>${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
+ out.innerHTML=`${r.alerta?`<div class="rha-aviso"><b>Atenção:</b> ${esc(r.alerta)}</div>`:""}
+  ${pergunta&&r.resposta?`<div class="card ia-sec ia-resp"><h4>Sua pergunta</h4><p class="sub" style="margin:0 0 6px">${esc(pergunta)}</p><p>${esc(r.resposta)}</p></div>`:""}
+  <div class="card ia-sec"><div class="ia-h"><h4>Resumo</h4><span class="pill ${t[0]}">${t[1]}</span><span class="sub" style="margin-left:auto">${iaData(quando)}</span></div><p>${esc(r.resumo||"")}</p></div>
+  <div class="ia-g2">${lst("Pontos fortes",r.pontos_fortes,"ia-f")}${lst("Pontos de atenção",r.pontos_atencao,"ia-a")}</div>
+  ${(r.sugestoes_pdi||[]).length?`<div class="card ia-sec"><h4>Ações de PDI sugeridas</h4><div class="ia-pdis">${r.sugestoes_pdi.map((s,i)=>`<div class="ia-pdi"><b>${esc(s.nome||"")}</b><p>${esc(s.descricao||"")}</p>
+    <div class="sub">${s.carga_horas?`${s.carga_horas}h`:""}${s.prazo_dias?` · prazo sugerido de ${s.prazo_dias} dias`:""}${(s.itens||[]).length?` · desenvolve ${esc(s.itens.join(", "))}`:""}</div><button class="txt-btn" data-iapdi="${i}">Criar ação de PDI</button></div>`).join("")}</div></div>`:""}
+  ${cv.objetivo||(cv.perguntas||[]).length?`<div class="card ia-sec"><h4>Próxima conversa individual</h4>${cv.objetivo?`<p><b>Objetivo:</b> ${esc(cv.objetivo)}</p>`:""}${cv.como_abordar?`<p><b>Como abordar:</b> ${esc(cv.como_abordar)}</p>`:""}
+    ${(cv.perguntas||[]).length?`<ol class="ia-pq">${cv.perguntas.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}<button class="txt-btn" data-iacp>Copiar roteiro</button></div>`:""}
+  ${(r.faltam_dados||[]).length?`<p class="sub ia-falta">Para uma análise melhor faltam: ${esc(r.faltam_dados.join("; "))}.</p>`:""}
+  <p class="sub ia-nota">Sugestão gerada por IA com base no que está registrado no RH Assist. Confira antes de usar.</p>`;
+ out.querySelectorAll("[data-iapdi]").forEach(b=>b.onclick=async()=>{ const s=r.sugestoes_pdi[+b.dataset.iapdi], col=RHIA.sel;
+  let ids=[]; try{ const comps=await fpComps(col); ids=(s.itens||[]).map(n=>(comps.find(k=>crmNormTxt(k.nome)===crmNormTxt(n))||{}).id).filter(Boolean); }catch(_){}
+  const pz=new Date(Date.now()+(+s.prazo_dias||30)*864e5).toISOString().slice(0,10), cm=Math.max(30,Math.round((+s.carga_horas||1)*60));
+  if(!FP.dados){ try{ await fpCarregar(); }catch(_){} }
+  pdiEditar({colaborador_id:col,nome:String(s.nome||"").slice(0,200),descricao:s.descricao||"",carga_minutos:cm,prazo:pz,itens:ids},v); });
+ const cp=out.querySelector("[data-iacp]"); if(cp) cp.onclick=async()=>{ const txt=[cv.objetivo?"Objetivo: "+cv.objetivo:"",cv.como_abordar?"Como abordar: "+cv.como_abordar:"",...(cv.perguntas||[]).map((x,i)=>`${i+1}. ${x}`)].filter(Boolean).join("\n");
+  try{ await navigator.clipboard.writeText(txt); crmToast("Roteiro copiado"); }catch(_){ crmToast("Não consegui copiar"); } };
 }
 
-// ---------- Pendências (dias com batida faltando) ----------
-async function krPendencias(v){
- const box=krMoldura(v,"kr_pend","Pendências","Dias em que a pessoa ficou com número ímpar de batidas nos últimos 30 dias. Quase sempre é a volta do almoço ou a saída que faltou.","");
- let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"pendencias"}}); }catch(e){ box.innerHTML=krSemAcesso(e); return; }
- if(MODE!=="kr_pend") return;
- const L=D.pendencias||[], porPes={}; L.forEach(x=>{ porPes[x.nome]=(porPes[x.nome]||0)+1; });
- const top=Object.entries(porPes).sort((a,b)=>b[1]-a[1])[0];
- let q="";
- const pinta=()=>{ const nq=crmNormTxt(q), ls=L.filter(x=>!nq||crmNormTxt(x.nome+" "+(x.departamento||"")).includes(nq));
-  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Dias com batida faltando",L.length,L.length?"crit":"")}${krTile("Pessoas",Object.keys(porPes).length)}${krTile("Quem mais esquece",top?`${esc(top[0].split(" ")[0])} <span class="sub">${top[1]} dia(s)</span>`:"Ninguém")}${krTile("Período",`<span style="font-size:15px">${krDataBR(D.inicio)} a ${krDataBR(D.fim)}</span>`)}</div>
-  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="kpQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div></div>
-  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Dia</th><th>Colaborador</th><th>Batidas registradas</th><th></th></tr></thead><tbody>
-  ${ls.map(x=>`<tr><td style="white-space:nowrap"><b>${krDataBR(x.data)}</b></td><td><b>${esc(x.nome)}</b><div class="sub">${esc(x.departamento||"Sem departamento")}</div></td><td>${krBatidas(x.batidas)} <span class="sub">${x.qtd} de ${x.qtd+1}</span></td>
-    <td class="right"><button class="view-btn" data-kpv="${x.colaborador_id}" data-kpm="${String(x.data).slice(0,7)}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">${L.length?"Ninguém encontrado.":"Nenhuma batida faltando no período."}</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">O ajuste com justificativa e aprovação entra na próxima etapa. Por enquanto esta lista serve para conferir com o que está no Tangerino.</p>`;
-  const qi=box.querySelector("#kpQ"); qi.oninput=()=>{ q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#kpQ"); x.focus(); x.setSelectionRange(p,p); };
-  box.querySelectorAll("[data-kpv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.kpv; KR.mes=b.dataset.kpm; setMode("kr_espelho"); }); };
- pinta();
+function iaHistorico(v){ const box=v.querySelector("#iaHist"); if(!box) return; const H=RHIA.hist||[];
+ box.innerHTML=H.length?`<div class="card ia-sec"><h4>Análises anteriores</h4><div class="ia-hl">${H.map((h,i)=>`<button class="ia-hi" data-iah="${i}"><span>${iaData(h.quando)}</span><span class="sub">${esc(h.pergunta?"Pergunta: "+h.pergunta:"Análise geral")}${RHD.eu&&RHD.eu.rh&&h.pedido_por?` · ${esc(h.pedido_por)}`:""}</span></button>`).join("")}</div></div>`:"";
+ box.querySelectorAll("[data-iah]").forEach(b=>b.onclick=()=>{ const h=H[+b.dataset.iah]; RHIA.res={colaborador:RHIA.sel,r:h.resposta,quando:h.quando,pergunta:h.pergunta}; iaMostrar(v,h.resposta,h.quando,h.pergunta); v.querySelector("#iaRes").scrollIntoView({behavior:"smooth",block:"start"}); });
 }
 
 (function(){ const st=document.createElement("style"); st.textContent=`
-.kr-tiles{display:grid!important;grid-template-columns:repeat(5,1fr);gap:12px}.kr-tiles.kr-t4{grid-template-columns:repeat(4,1fr)}.kr-tiles .tile{margin:0}@media(max-width:900px){.kr-tiles,.kr-tiles.kr-t4{grid-template-columns:repeat(2,1fr)}}
-.kr-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
-.kr-pill.kr-good{background:var(--good-soft);color:var(--good)}.kr-pill.kr-warn{background:var(--warn-soft);color:var(--warn)}.kr-pill.kr-crit{background:var(--crit-soft);color:var(--crit)}.kr-pill.kr-neutro{background:var(--surface-2,#f3f6f7);color:var(--muted)}
-.kr-bat{display:inline-block;font:600 12.5px/1 "DM Sans",sans-serif;font-variant-numeric:tabular-nums;padding:5px 8px;border-radius:8px;margin:2px 4px 2px 0;border:1px solid var(--border)}
-.kr-bat.ent{background:var(--good-soft);color:var(--good);border-color:transparent}.kr-bat.sai{background:var(--surface-2,#f3f6f7);color:var(--ink-2)}
-.kr-aviso{margin-top:12px;padding:11px 14px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:500}
-tr.kr-fds td{opacity:.55}
+.ia-lay{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}@media(max-width:900px){.ia-lay{grid-template-columns:1fr}}
+.ia-pes{padding:12px!important;position:sticky;top:12px}.ia-l{display:grid;gap:2px;margin-top:10px;max-height:66vh;overflow:auto}
+.ia-pi{display:flex;gap:10px;align-items:center;text-align:left;border:0;background:none;padding:8px;border-radius:10px;cursor:pointer;font:inherit;color:inherit}.ia-pi:hover{background:var(--surface-2,#f3f6f7)}.ia-pi.on{background:#e3eef3}
+.ia-pi b{display:block;font-size:13.5px}.ia-pi small{display:block;color:var(--muted);font-size:12px}.ia-pi .rh-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#006789,#269A9E);color:#fff;font:700 12px/1 "Urbanist",sans-serif;flex-shrink:0}
+.ia-vazio{padding:28px!important;text-align:center}.ia-vazio p{max-width:520px;margin:8px auto 0}
+.ia-top{padding:16px 18px!important;display:grid;gap:10px}.ia-top>div>b{font:700 18px/1.2 "Urbanist",sans-serif}
+.ia-ask{display:flex;gap:10px;align-items:flex-end}.ia-ask textarea{flex:1;min-height:44px}@media(max-width:640px){.ia-ask{flex-direction:column;align-items:stretch}}
+.ia-nota{margin:0;font-size:12px}
+#iaRes{display:grid;gap:12px;margin-top:12px}#iaRes:empty{display:none}#iaHist{margin-top:12px}
+.ia-sec{padding:16px 18px!important}.ia-sec h4{font:700 15px/1.2 "Urbanist",sans-serif;color:#044B64;margin:0 0 8px}.ia-sec p{margin:0 0 6px;line-height:1.55;color:var(--ink-2)}.ia-sec ul{margin:0;padding-left:18px;display:grid;gap:5px;color:var(--ink-2);line-height:1.5}
+.ia-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ia-h h4{margin:0}
+.ia-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.ia-g2{grid-template-columns:1fr}}
+.ia-f{border-left:4px solid #0f7a5c!important}.ia-a{border-left:4px solid #d9a23b!important}.ia-resp{border-left:4px solid #066789!important}
+.ia-pdis{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.ia-pdi{border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}.ia-pdi p{margin:0;font-size:13.5px}.ia-pdi .txt-btn{align-self:flex-start;margin-top:auto}
+.ia-pq{margin:6px 0 10px;padding-left:20px;display:grid;gap:5px;color:var(--ink-2)}
+.ia-falta{margin:0}.ia-load{padding:18px!important;display:flex;align-items:center;gap:10px;color:var(--ink-2)}
+.ia-dot{width:10px;height:10px;border-radius:50%;background:#269A9E;animation:iaP 1s ease-in-out infinite}@keyframes iaP{50%{opacity:.25;transform:scale(.7)}}
+.ia-hl{display:grid;gap:4px}.ia-hi{display:flex;gap:12px;align-items:baseline;border:0;background:none;text-align:left;padding:6px 4px;border-radius:8px;cursor:pointer;font:inherit;color:var(--ink)}.ia-hi:hover{background:var(--surface-2,#f3f6f7)}
 `; document.head.appendChild(st); })();
+
+// ================= CRM · dados do cliente na simulação, proposta com assinaturas e IA no contato =================
+// Simular não exige cliente. Para gerar proposta ou contrato, os dados do cliente precisam estar completos: se faltar algo, abre a janela para completar
+// (e cria o contato e o negócio quando a simulação começou sem cliente).
+const CLI_CACHE={};
+const cliDig=s=>String(s||"").replace(/\D/g,"");
+const cliFmtDoc=d=>{ d=cliDig(d); if(d.length===14) return fmtCnpj(d); if(d.length===11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4"); return d; };
+const cliFmtTel=t=>{ const d=cliDig(t); if(d.length===11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/,"($1) $2-$3"); if(d.length===10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/,"($1) $2-$3"); return t||""; };
+const CLI_ATIV={servicos:"Serviço",comercios:"Comércio",industrias:"Indústria",comercio:"Comércio",servico:"Serviço",industria:"Indústria"};
+
+// lê contato e empresa do negócio e monta o objeto do cliente
+async function cliCarregar(neg,force){ if(!neg||!neg.id) return null; if(CLI_CACHE[neg.id]&&!force) return CLI_CACHE[neg.id];
+ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:neg.id}}); const c=f.contato||null, e=f.empresa||null, o=(f.negocios||[]).find(x=>x.id===neg.id)||null;
+ const cl={negId:neg.id,negocio:o,contato:c,empresa:e,nome:(c&&c.nome)||"",cargo:(c&&c.cargo)||"",email:(c&&c.email)||"",telefone:(c&&c.telefone)||"",
+  razao:(e&&e.nome)||(c&&c.empresa)||"",doc:cliDig((e&&e.cnpj)||(c&&c.cnpj)||(c&&c.campos&&c.campos.cpf)||""),cidade:(c&&c.cidade)||"",uf:(c&&c.uf)||""};
+ CLI_CACHE[neg.id]=cl; return cl; }
+// o que falta para gerar proposta e contrato
+function cliFaltando(cl){ if(!cl) return ["cadastro do cliente"]; const f=[]; const d=cliDig(cl.doc);
+ if(!cl.nome) f.push("nome do responsável"); if(!cl.email) f.push("e-mail"); if(!cl.telefone) f.push("telefone");
+ if(d.length!==14&&d.length!==11) f.push("CNPJ ou CPF"); if(d.length===14&&!cl.razao) f.push("razão social"); if(!cl.cidade) f.push("cidade"); if(!cl.uf) f.push("UF"); return f; }
+
+// janela para cadastrar ou completar o cliente; ctx = {negocio, simId, nicho, aoTrocarNegocio(neg)}
+function cliCompletar(ctx,cl,depois){ const v=cl||{}; const novo=!ctx.negocio;
+ const m=crmModal("Dados do cliente",novo?"Cadastrar o cliente":"Completar os dados do cliente","",`<p class="sub" style="margin:0 0 4px">${novo?"A simulação começou sem cliente. Para gerar a proposta ou o contrato, cadastre o cliente: o contato e o negócio entram no funil de vendas.":"Para gerar a proposta ou o contrato, todos os dados abaixo precisam estar preenchidos."}</p>
+  <div class="crm-form" style="grid-template-columns:1fr 1fr">
+   <label class="crm-f"><span>Nome do responsável *</span><input class="inp" id="clNome" value="${escAttr(v.nome||"")}"></label>
+   <label class="crm-f"><span>Cargo</span><input class="inp" id="clCargo" value="${escAttr(v.cargo||"")}" placeholder="Ex.: Sócio"></label>
+   <label class="crm-f"><span>E-mail *</span><input class="inp" id="clEmail" type="email" value="${escAttr(v.email||"")}"></label>
+   <label class="crm-f"><span>Telefone / WhatsApp *</span><input class="inp" id="clTel" inputmode="tel" value="${escAttr(v.telefone||"")}"></label>
+   <label class="crm-f"><span>CNPJ ou CPF *</span><input class="inp" id="clDoc" inputmode="numeric" value="${escAttr(cliFmtDoc(v.doc||""))}"></label>
+   <label class="crm-f"><span>Razão social ${"(obrigatória com CNPJ)"}</span><input class="inp" id="clRaz" value="${escAttr(v.razao||"")}"></label>
+   <label class="crm-f"><span>Cidade *</span><input class="inp" id="clCid" value="${escAttr(v.cidade||"")}"></label>
+   <label class="crm-f"><span>UF *</span><input class="inp" id="clUf" maxlength="2" value="${escAttr(v.uf||"")}" style="text-transform:uppercase"></label>
+  </div><div class="crm-pe" style="margin-top:12px"><span class="sub" id="clMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="clOk">Salvar e continuar</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=t=>{ m.querySelector("#clMsg").textContent=t||""; }, ok=m.querySelector("#clOk");
+ ok.onclick=async()=>{ const val={nome:crmVal(m,"#clNome"),cargo:crmVal(m,"#clCargo"),email:crmVal(m,"#clEmail"),telefone:crmVal(m,"#clTel"),doc:cliDig(crmVal(m,"#clDoc")),razao:crmVal(m,"#clRaz"),cidade:crmVal(m,"#clCid"),uf:crmVal(m,"#clUf").toUpperCase()};
+  const falta=cliFaltando(val); if(falta.length){ msg("Falta preencher: "+falta.join(", ")+"."); return; }
+  if(!/^\S+@\S+\.\S+$/.test(val.email)){ msg("Confira o e-mail."); return; }
+  ok.disabled=true; ok.textContent="Salvando…";
+  try{ const r=await cliSalvar(ctx,v,val); closeModal(); crmToast(novo?"Cliente cadastrado e negócio criado no funil":"Dados do cliente salvos"); depois&&depois(r.cl,r.negocio); }
+  catch(e){ ok.disabled=false; ok.textContent="Salvar e continuar"; const t=String(e.message||""); msg(t.startsWith("email_existente")?"Esse e-mail já é de outro contato no CRM. Use o negócio dele em Nova venda, ou outro e-mail.":crmErro(e)); } };
+}
+async function cliSalvar(ctx,antes,val){ const c=(antes&&antes.contato)||null, cnpj=val.doc.length===14?val.doc:"", cpf=val.doc.length===11?val.doc:"";
+ const base={nome:val.nome,cargo:val.cargo,email:val.email,telefone:val.telefone,empresa:val.razao,cnpj,cidade:val.cidade,uf:val.uf};
+ let contatoId;
+ if(c) contatoId=await crmRpc("crm_salvar_contato",{p:{id:c.id,...base,segmento:c.segmento||"",tipo:c.tipo,origem:c.origem,responsavel:c.responsavel_comercial||"",campos:{...(c.campos||{}),...(cpf?{cpf}:{})}}});
+ else contatoId=await crmRpc("crm_salvar_contato",{p:{...base,origem:"manual",responsavel:((typeof CRMB!=="undefined"&&CRMB&&CRMB.eu)||{}).email,campos:cpf?{cpf}:{}}});
+ let neg=ctx.negocio;
+ if(!neg){ let fun={etapas:[]}; try{ fun=crmFunil("vendas")||fun; }catch(_){}
+  const nid=await crmRpc("crm_salvar_negocio",{p:{id:null,funil_id:"vendas",titulo:`${ctx.nicho?ctx.nicho+" · ":""}${val.razao||val.nome}`,contato_id:contatoId,etapa:(fun.etapas[0]||{}).id,responsavel:((typeof CRMB!=="undefined"&&CRMB&&CRMB.eu)||{}).email,origem:"manual",campos:{...(ctx.nicho?{nicho:ctx.nicho}:{}),...simCamposDoSimulador({})},itens:[]}});
+  try{ await simNegocios(true); }catch(_){} neg=(PRECO_ST.negLista||[]).find(o=>o.id===nid)||{id:nid,titulo:`${ctx.nicho?ctx.nicho+" · ":""}${val.razao||val.nome}`,contato_id:contatoId,contato_nome:val.nome,empresa_nome:val.razao};
+ } else if(!c){ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:neg.id}}); const o=(f.negocios||[]).find(x=>x.id===neg.id);
+  if(o) await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:contatoId,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,tema:o.tema,obs:o.obs,campos:o.campos||{},itens:o.itens||[],indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
+  neg={...neg,contato_id:contatoId,contato_nome:val.nome,empresa_nome:val.razao}; }
+ else neg={...neg,contato_nome:val.nome,empresa_nome:val.razao||neg.empresa_nome};
+ if(ctx.simId){ try{ await crmRpc("crm_salvar_simulacao",{p:{id:ctx.simId,oportunidade_id:neg.id,contato_id:contatoId,cliente_nome:val.nome,empresa_nome:val.razao,documento:val.doc}}); }catch(_){} }
+ delete CRMD.contatos; delete CRMD.empresas; delete CLI_CACHE[neg.id]; if(ctx.aoTrocarNegocio) ctx.aoTrocarNegocio(neg);
+ const cl=await cliCarregar(neg,true); return {cl,negocio:neg}; }
+// garante o cadastro completo e só então segue; depois(cl, negocio)
+async function cliGarantir(ctx,depois){ let cl=null;
+ if(ctx.negocio){ try{ cl=await cliCarregar(ctx.negocio); }catch(e){ crmToast(crmErro(e)); return; } }
+ if(cl&&!cliFaltando(cl).length) return depois(cl,ctx.negocio);
+ cliCompletar(ctx,cl,depois); }
+
+// campos do negócio que vêm das respostas do simulador (só preenche o que está vazio)
+function simCamposDoSimulador(atual){ const S=PRECO_ST, a=atual||{}, r=(S.cesta[0]&&S.cesta[0].respostas)||S.resp||{}, out={};
+ if(!a.tributacao&&r.tributacao) out.tributacao=r.tributacao;
+ if(!a.atividade&&r.atividade){ const k=crmNormTxt(r.atividade).replace(/\s+/g,""); if(CLI_ATIV[k]) out.atividade=CLI_ATIV[k]; }
+ if(!a.nicho&&S.nicho) out.nicho=S.nicho; return out; }
+
+// ---------- cabeçalho da simulação com os dados do cliente ----------
+function simBanner(){ const S=PRECO_ST; if(!S.sim) return "";
+ const cl=S.negocio&&CLI_CACHE[S.negocio.id];
+ if(S.negocio&&!cl) setTimeout(()=>cliCarregar(S.negocio).then(()=>{ const el=document.getElementById("simCli"); if(el) el.outerHTML=simClienteHTML(); simLigarCliente(); }).catch(()=>{}),0);
+ return `<div class="sim-banner"><div style="flex:1;min-width:0"><b>Simulação ${simNum(S.sim.numero)}</b> · ${esc(SIM_TIPOS[S.sim.tipo]||"")}${S.negocio?` · ${esc(S.negocio.titulo)}`:" · sem cliente"}
+  ${simClienteHTML()}<div class="sub">As mudanças ficam salvas quando você clica em Salvar simulação ou em Salvar no negócio.</div></div>
+  <button type="button" class="txt-btn" id="simSair">Fechar simulação</button><button type="button" class="view-btn ce-pri" id="simSalvar">Salvar simulação</button></div>`; }
+function simClienteHTML(){ const S=PRECO_ST;
+ if(!S.negocio) return `<div class="sim-cli" id="simCli"><span class="sim-cli-av">Simulação sem cliente cadastrado. Para gerar proposta ou contrato, cadastre o cliente.</span><button type="button" class="txt-btn" data-cli-ed>Cadastrar cliente</button></div>`;
+ const cl=CLI_CACHE[S.negocio.id]; if(!cl) return `<div class="sim-cli" id="simCli"><span class="sub">Carregando dados do cliente…</span></div>`;
+ const it=(rot,val)=>val?`<span><small>${rot}</small>${esc(val)}</span>`:"";
+ const d=cliDig(cl.doc), falta=cliFaltando(cl);
+ return `<div class="sim-cli" id="simCli">${it("Empresa",cl.razao)}${it(d.length===11?"CPF":"CNPJ",d?cliFmtDoc(d):"")}${it("Responsável",cl.nome+(cl.cargo?" · "+cl.cargo:""))}${it("E-mail",cl.email)}${it("Telefone",cliFmtTel(cl.telefone))}${it("Cidade",cl.cidade?cl.cidade+(cl.uf?"/"+cl.uf:""):"")}
+  ${falta.length?`<span class="sim-cli-av">Falta: ${esc(falta.join(", "))}</span>`:""}<button type="button" class="txt-btn" data-cli-ed>${falta.length?"Completar dados":"Editar dados"}</button></div>`; }
+function simLigarCliente(){ const S=PRECO_ST; document.querySelectorAll("[data-cli-ed]").forEach(b=>b.onclick=()=>{
+  cliCompletar({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},S.negocio&&CLI_CACHE[S.negocio.id],()=>{ precoPintar(document.getElementById("view")); }); }); }
+function simLigarBanner(box,re){ const b=box.querySelector("#simSalvar"); if(!b) return;
+ b.onclick=async()=>{ b.disabled=true; try{ await simSalvarSimulador(false); }catch(e){ crmToast(crmErro(e)); } b.disabled=false; };
+ box.querySelector("#simSair").onclick=()=>{ delete PRECO_ST.sim; re(); const ab=document.querySelector(".sim-tag"); if(ab) ab.remove(); };
+ simLigarCliente(); }
+
+// ---------- valores adicionais livres (entram como extras: mensal ou uma vez) ----------
+function precoAdicionaisHTML(){ const S=PRECO_ST; const L=Object.entries(S.extras).filter(([k])=>k.startsWith("livre:"));
+ return `<div class="card ce-pad"><h3>Valores adicionais</h3><p class="sub" style="margin:0 0 10px">Inclua qualquer valor que não está na tabela, com a descrição que vai aparecer na proposta.</p>
+  ${L.map(([k,x])=>`<div class="preco-ad"><input class="inp" data-adn="${k}" value="${escAttr(x.nome)}" placeholder="Descrição, ex.: Regularização de pendências" aria-label="Descrição"><input class="inp" data-adv="${k}" value="${escAttr(x.valor)}" placeholder="0,00" inputmode="decimal" aria-label="Valor">
+   <select class="inp" data-adc="${k}" aria-label="Cobrança"><option value="mensal" ${x.cobranca==="mensal"?"selected":""}>Todo mês</option><option value="avulso" ${x.cobranca!=="mensal"?"selected":""}>Uma vez</option></select><button type="button" class="crm-x" data-adr="${k}" aria-label="Remover valor">✕</button></div>`).join("")}
+  <button type="button" class="view-btn ghost" id="prAdAdd">+ Adicionar valor</button></div>`; }
+function precoLigarAdicionais(box,re){ const S=PRECO_ST; let t=null; const lento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
+   if(ds){ const k=Object.keys(ds)[0]; const n=k&&box.querySelector(`[data-${k}="${ds[k]}"]`); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } },450); };
+ const add=box.querySelector("#prAdAdd"); if(add) add.onclick=()=>{ const k="livre:"+Date.now().toString(36); S.extras[k]={nome:"",valor:"",cobranca:"avulso",qtd:1,arq:"livre",livre:true}; re(); setTimeout(()=>{ const n=box.querySelector(`[data-adn="${k}"]`); if(n) n.focus(); },0); };
+ box.querySelectorAll("[data-adn]").forEach(i=>i.oninput=()=>{ if(S.extras[i.dataset.adn]){ S.extras[i.dataset.adn].nome=i.value; lento(); } });
+ box.querySelectorAll("[data-adv]").forEach(i=>precoLigarMascara(i,v=>{ if(S.extras[i.dataset.adv]){ S.extras[i.dataset.adv].valor=v; lento(); } }));
+ box.querySelectorAll("[data-adc]").forEach(i=>i.onchange=()=>{ if(S.extras[i.dataset.adc]){ S.extras[i.dataset.adc].cobranca=i.value; re(); } });
+ box.querySelectorAll("[data-adr]").forEach(b=>b.onclick=()=>{ delete S.extras[b.dataset.adr]; re(); }); }
+// valores adicionais sem descrição ou zerados não entram na conta
+function precoTotais(){ const S=PRECO_ST; const ex=Object.entries(S.extras).filter(([k,s])=>!k.startsWith("livre:")||(String(s.nome||"").trim()&&precoNum(s.valor)>0)).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
+ const extrasM=ex.filter(e=>e.cobranca==="mensal"), extrasU=ex.filter(e=>e.cobranca!=="mensal");
+ const mensal=S.cesta.reduce((s,c)=>s+c.valor,0)+extrasM.reduce((s,e)=>s+e.total,0);
+ return {extrasM,extrasU,mensal,avulso:extrasU.reduce((s,e)=>s+e.total,0)}; }
+
+// ---------- proposta: dados do cliente e assinaturas ----------
+function cliPropostaBlocos(cl){ const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ const cfg=CT.config||CT_CONFIG_PADRAO, d=cliDig(cl.doc), docRot=d.length===11?"CPF":"CNPJ";
+ const dados=[["Razão social",cl.razao||cl.nome],[docRot,cliFmtDoc(d)],["Responsável",cl.nome+(cl.cargo?" · "+cl.cargo:"")],["E-mail",cl.email],["Telefone",cliFmtTel(cl.telefone)],["Cidade",cl.cidade+(cl.uf?"/"+cl.uf:"")]].filter(x=>x[1]);
+ return {dados,docRot,cfg,e,
+  ass:`<div class="ass"><div class="ass-c"><div class="ass-l"></div><b>${e(cfg.CONTABILIDADE_NOME)}</b><span>CNPJ ${e(cfg.CONTABILIDADE_CNPJ)}</span><span>${e(cfg.CONTABILIDADE_RESPONSAVEL_NOME)} · Diretor</span><small>Contratada</small></div>
+   <div class="ass-c"><div class="ass-l"></div><b>${e(cl.razao||cl.nome)}</b><span>${docRot} ${e(cliFmtDoc(d))}</span><span>${e(cl.nome)}${cl.cargo?" · "+e(cl.cargo):""}</span><small>Contratante · assinatura digital</small></div></div>`}; }
+
+async function precoProposta(){ const S=PRECO_ST; try{ await ctConfig(); }catch(_){}
+ cliGarantir({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},(cl)=>{ precoPropostaGerar(cl); precoPintar(document.getElementById("view")); }); }
+function precoPropostaGerar(cl){ const S=PRECO_ST, t=precoTotais(); const hoje=new Date(); const val=new Date(hoje.getTime()+S.validade*864e5);
+ const B=cliPropostaBlocos(cl), e=B.e, cli=cl.razao||cl.nome;
+ const cap=s=>{ s=String(s||""); return s.charAt(0)+s.slice(1).toLowerCase(); };
+ const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta Resilcon · ${e(cli)}</title>
+<style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#f3f6f8}.pg{max-width:820px;margin:0 auto;background:#fff;min-height:100vh}
+.hero{background:#0b1a20;background-image:radial-gradient(120% 120% at 0% 0%,#006789 0%,rgba(0,103,137,.3) 45%,rgba(11,26,32,0) 75%);color:#fff;padding:36px 44px}
+.hero img{height:40px}.hero h1{font-size:30px;margin:26px 0 6px}.hero p{margin:0;color:#cfdde3}
+.sec{padding:26px 44px;border-bottom:1px solid #e6edf0}.sec h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#006789;margin:0 0 14px}
+.cli{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}.cli div{border-bottom:1px solid #eef2f4;padding-bottom:7px}.cli small{display:block;font-size:11px;color:#5b6770;text-transform:uppercase;letter-spacing:.06em}.cli b{font-size:14px}
+.plano{border:1px solid #d5dde2;border-left:6px solid var(--c,#006789);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.plano .t{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.plano b{font-size:18px}.plano .v{font-size:22px;font-weight:800;color:#006789}
+.plano ul{margin:10px 0 0;padding-left:18px;columns:2;column-gap:28px;font-size:13px;color:#33414a}.plano li{margin:0 0 5px;break-inside:avoid}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:9px 0;border-bottom:1px solid #eef2f4}td.r{text-align:right;white-space:nowrap}
+.tot{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tot div{background:#f3f8fa;border-radius:12px;padding:16px 18px}.tot span{display:block;font-size:12px;color:#5b6770;text-transform:uppercase;letter-spacing:.08em}.tot b{font-size:24px;color:#0b1a20}
+.obs{white-space:pre-wrap;font-size:14px;color:#33414a}.rod{padding:22px 44px;font-size:12px;color:#5b6770}
+.ass{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:46px}.ass-c{text-align:center;font-size:12.5px;color:#33414a}.ass-l{border-top:1.5px solid #0b1a20;margin-bottom:8px}.ass-c b{display:block;font-size:13px;color:#0b1a20}.ass-c span{display:block}.ass-c small{display:block;margin-top:4px;font-size:11px;color:#006789;text-transform:uppercase;letter-spacing:.08em}
+.bar{position:sticky;top:0;background:#006789;color:#fff;padding:10px 16px;text-align:center;font-size:14px}.bar button{margin-left:10px;padding:8px 16px;border-radius:999px;border:0;font-weight:700;cursor:pointer}
+@media print{.bar{display:none}body{background:#fff}.sec{break-inside:avoid}}
+</style></head><body><div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div><div class="pg">
+<div class="hero"><img src="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/montar-email?logo=branco" alt="Resilcon"><h1>Proposta comercial</h1><p>Preparada para ${e(cli)} · ${hoje.toLocaleDateString("pt-BR")}</p></div>
+<div class="sec"><h2>Dados do cliente</h2><div class="cli">${B.dados.map(([k,v])=>`<div><small>${e(k)}</small><b>${e(v)}</b></div>`).join("")}</div></div>
+<div class="sec"><h2>Plano escolhido</h2>${S.cesta.map(c=>`<div class="plano" style="--c:${e((PRECO_DB[c.arq]&&(PRECO_DB[c.arq].P.planos.find(p=>p.id===c.planoId)||{}).cor)||"#006789")}"><div class="t"><div><b>${e(c.plano)}</b><div style="font-size:13px;color:#5b6770">${e(c.produto)}</div></div><div class="v">${precoMoeda(c.valor)}<span style="font-size:13px;color:#5b6770;font-weight:400">/mês</span></div></div>
+ ${c.inclusos.length?`<ul>${c.inclusos.map(x=>`<li>${e(cap(x))}</li>`).join("")}</ul>`:""}</div>`).join("")}</div>
+${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais</h2><table>${t.extrasM.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">${x.qtd>1?x.qtd+" × "+precoMoeda(precoNum(x.valor)):"cobrança única"}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
+<div class="sec"><h2>Investimento</h2><div class="tot"><div><span>Mensalidade</span><b>${precoMoeda(t.mensal)}</b></div><div><span>Serviços avulsos</span><b>${precoMoeda(t.avulso)}</b>${t.avulso&&S.parcelas>1?`<div style="font-size:13px;color:#5b6770;margin-top:4px">em ${S.parcelas}x de ${precoMoeda(t.avulso/S.parcelas)}</div>`:""}</div></div></div>
+${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</div></div>`:""}
+<div class="sec"><h2>De acordo</h2><p style="margin:0;font-size:13.5px;color:#33414a">As partes concordam com as condições desta proposta. A assinatura do cliente é feita de forma digital.</p>${B.ass}</div>
+<div class="rod">Proposta válida até ${val.toLocaleDateString("pt-BR")}. Valores sujeitos a revisão se houver mudança no faturamento, no regime tributário ou no volume de operações informado.<br>${e(B.cfg.CONTABILIDADE_NOME)} · CNPJ ${e(B.cfg.CONTABILIDADE_CNPJ)} · WhatsApp (11) 97414-4223 · resilcon.com.br</div>
+</div></body></html>`;
+ const w=rtJanela(); if(!w){ crmToast("O navegador bloqueou a janela da proposta. Libere pop-ups para o Resiltrack."); return; } w.document.open(); w.document.write(html); w.document.close(); }
+
+// proposta de produtos avulsos: mesma exigência de cadastro + dados e assinaturas no fim
+function simPropostaComAssinatura(html,cl){ const B=cliPropostaBlocos(cl);
+ const css=`<style>.ass-wrap{position:relative;z-index:1;margin-top:18px;background:#fff;color:#0b1a20;border-radius:14px;padding:16px 20px}.ass-wrap h4{margin:0 0 4px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#006789}
+ .ass-wrap .dc{font-size:11.5px;color:#33414a}.ass{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:34px}.ass-c{text-align:center;font-size:11px;color:#33414a}.ass-l{border-top:1.5px solid #0b1a20;margin-bottom:6px}.ass-c b{display:block;font-size:11.5px;color:#0b1a20}.ass-c span{display:block}.ass-c small{display:block;margin-top:3px;font-size:9.5px;color:#006789;text-transform:uppercase;letter-spacing:.08em}
+ .pg{padding-bottom:22mm!important}</style>`;
+ const bloco=`<div class="ass-wrap"><h4>Dados do cliente e de acordo</h4><div class="dc">${B.dados.map(([k,v])=>`<b>${B.e(k)}:</b> ${B.e(v)}`).join(" · ")}</div>${B.ass}</div>`;
+ return html.replace("</head>",css+"</head>").replace('<div class="rod">',bloco+'<div class="rod">'); }
+
+// ---------- painel do cliente dentro do card do negócio (funil) ----------
+function crmClientePainelHTML(c,e){ const doc=cliDig((e&&e.cnpj)||c.cnpj||(c.campos&&c.campos.cpf)||"");
+ return `<div class="panel" id="nCliP"><h4>Dados do cliente</h4><p class="sub" style="margin:-4px 0 8px">Alterações aqui atualizam o contato e valem para propostas e contratos.</p><div class="crm-form">
+  <label class="crm-f"><span>Responsável</span><input class="inp" id="nkNome" value="${escAttr(c.nome||"")}"></label>
+  <label class="crm-f"><span>Cargo</span><input class="inp" id="nkCargo" value="${escAttr(c.cargo||"")}"></label>
+  <label class="crm-f"><span>E-mail</span><input class="inp" id="nkEmail" type="email" value="${escAttr(c.email||"")}"></label>
+  <label class="crm-f"><span>Telefone / WhatsApp</span><input class="inp" id="nkTel" inputmode="tel" value="${escAttr(c.telefone||"")}"></label>
+  <label class="crm-f"><span>Razão social</span><input class="inp" id="nkRaz" value="${escAttr((e&&e.nome)||c.empresa||"")}"></label>
+  <label class="crm-f"><span>CNPJ ou CPF</span><input class="inp" id="nkDoc" inputmode="numeric" value="${escAttr(cliFmtDoc(doc))}"></label>
+  <label class="crm-f"><span>Cidade / UF</span><span class="crm-par"><input class="inp" id="nkCid" value="${escAttr(c.cidade||"")}"><input class="inp" id="nkUf" maxlength="2" value="${escAttr(c.uf||"")}" style="width:60px"></span></label>
+ </div></div>`; }
+async function crmClienteSalvarPainel(m,c,e){ const doc=cliDig(crmVal(m,"#nkDoc")), cnpj=doc.length===14?doc:"", cpf=doc.length===11?doc:"";
+ const novo={nome:crmVal(m,"#nkNome"),cargo:crmVal(m,"#nkCargo"),email:crmVal(m,"#nkEmail"),telefone:crmVal(m,"#nkTel"),empresa:crmVal(m,"#nkRaz"),cnpj,cidade:crmVal(m,"#nkCid"),uf:crmVal(m,"#nkUf")};
+ const docAntes=cliDig((e&&e.cnpj)||c.cnpj||(c.campos&&c.campos.cpf)||"");
+ const mudou=novo.nome!==(c.nome||"")||novo.cargo!==(c.cargo||"")||novo.email!==(c.email||"")||novo.telefone!==(c.telefone||"")||novo.empresa!==((e&&e.nome)||c.empresa||"")||doc!==docAntes||novo.cidade!==(c.cidade||"")||novo.uf.toUpperCase()!==(c.uf||"").toUpperCase();
+ if(!mudou) return;
+ if(doc&&doc.length!==14&&doc.length!==11) throw new Error("CNPJ ou CPF incompleto no painel Dados do cliente.");
+ const campos={...(c.campos||{})}; if(cpf) campos.cpf=cpf; else if(cnpj) delete campos.cpf;
+ await crmRpc("crm_salvar_contato",{p:{id:c.id,...novo,segmento:c.segmento||"",tipo:c.tipo,origem:c.origem,responsavel:c.responsavel_comercial||"",campos}});
+ Object.keys(CLI_CACHE).forEach(k=>delete CLI_CACHE[k]); }
+
+// ---------- copiloto de IA no card do contato ----------
+async function crmCopilotoContato(m,c,depois){ const box=m.querySelector("#iaBoxC"); if(!box) return;
+ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Análise do cliente</b></div><p class="sub" style="margin:6px 0 0">Lendo o histórico do contato, negócios e tarefas…</p></div>`;
+ let r;
+ try{ const {data,error}=await sb.functions.invoke("crm-copiloto",{body:{contato:c.id}});
+  if(error){ let msg=""; try{ const j=await error.context.json(); msg=j.erro||""; }catch(_){} throw new Error(msg||String(error.message||error)); }
+  r=data; if(r&&r.erro) throw new Error(r.erro);
+ }catch(e){ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Análise do cliente</b></div><p class="sub" style="margin:6px 0 0">${esc(e.message||String(e))}</p></div>`; return; }
+ const ch={alta:["good","Potencial alto"],media:["warn","Potencial médio"],baixa:["crit","Potencial baixo"]}[r.chance]||["neutral","Potencial não avaliado"];
+ const wa=crmWaLink(c.telefone);
+ box.innerHTML=`<div class="panel crm-ia"><div class="crm-ia-h">${CRM_ICO.ia}<b>Análise do cliente</b><span class="pill ${ch[0]}" title="${escAttr(r.motivo_chance||"")}">${ch[1]}</span><span style="flex:1"></span><button class="crm-x" data-ia-fechar aria-label="Fechar análise">✕</button></div>
+  <p class="crm-ia-t">${esc(r.resumo||"")}</p>${r.motivo_chance?`<p class="sub" style="margin:0 0 8px">${esc(r.motivo_chance)}</p>`:""}
+  <div class="crm-ia-passo"><span class="sub">Próxima ação</span><b>${esc(r.proximo_passo||"")}</b></div>
+  ${(r.riscos||[]).length?`<ul class="crm-ia-r">${r.riscos.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  ${r.tarefa&&r.tarefa.titulo?`<button class="view-btn ce-pri" data-ia-tar>Criar tarefa: ${esc(r.tarefa.titulo)}</button>`:""}
+  ${r.mensagem_whatsapp?`<label class="crm-f" style="margin-top:12px"><span>Mensagem sugerida</span><textarea class="inp" id="iaMsgC" style="min-height:96px">${esc(r.mensagem_whatsapp)}</textarea></label>
+   <div class="crm-pe" style="margin-top:6px"><button class="view-btn ghost" data-ia-copiar>Copiar</button>${wa?`<button class="view-btn" data-ia-wa>Abrir no WhatsApp</button>`:""}</div>`:""}
+  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no CRM. Confira antes de usar.</p></div>`;
+ box.querySelector("[data-ia-fechar]").onclick=()=>box.innerHTML="";
+ const bt=box.querySelector("[data-ia-tar]"); if(bt) bt.onclick=async()=>{ const t=r.tarefa; const d=new Date(); d.setDate(d.getDate()+(+t.prazo_dias||0));
+  try{ await crmRpc("crm_salvar_tarefa",{p:{titulo:t.titulo,tipo:CRM_TAR_TIPOS[t.tipo]?t.tipo:"outro",vence_em:new Date(d.toLocaleDateString("sv-SE")+"T18:00:00").toISOString(),oportunidade_id:r.negocio_id||null,contato_id:c.id}});
+   crmToast("Tarefa criada"); crmResumoTarefas(true); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
+ const cp=box.querySelector("[data-ia-copiar]"); if(cp) cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(crmVal(box,"#iaMsgC")); crmToast("Mensagem copiada"); }catch(_){ crmToast("Não consegui copiar. Selecione o texto e copie."); } };
+ const bw=box.querySelector("[data-ia-wa]"); if(bw) bw.onclick=()=>window.open(crmWaLink(c.telefone,crmVal(box,"#iaMsgC")),"_blank","noopener");
+}
+
+(function(){ const s=document.createElement("style"); s.textContent=`
+.sim-cli{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin:8px 0 4px;font-size:13px;color:var(--ink,#1c1c1c)}.sim-cli span{display:flex;flex-direction:column;line-height:1.25}.sim-cli small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#83879c);font-weight:600}
+.sim-cli .sim-cli-av{display:inline-block;color:var(--warn,#b7791f);font-weight:600;font-size:12.5px}.sim-cli .txt-btn{padding:4px 10px}
+.preco-col{display:grid;gap:14px;align-content:start;min-width:0}
+.preco-ad{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px auto;gap:8px;align-items:center;margin-bottom:8px}@media(max-width:640px){.preco-ad{grid-template-columns:1fr 1fr}.preco-ad .inp:first-child{grid-column:1/-1}}
+`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
