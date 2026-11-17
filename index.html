@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.17.1 (RH Assist: feedbacks e PDI · CRM: nichos na venda direta e janelas fecham só no X)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.18.0 (Kronos: painel do dia, espelho e pendências · RH Assist: feedbacks e PDI · CRM: nichos na venda direta e janelas fecham só no X)</footer>
   </div>
 </div>
 
@@ -1137,12 +1137,14 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
   if(MODE.startsWith("rh_") && podePainelGestor()){ tabsEl.classList.add("hidden"); rhView(v); return; }
   if(MODE.startsWith("rh_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  if(MODE.startsWith("kr_") && podePainelGestor()){ tabsEl.classList.add("hidden"); krView(v); return; }
+  if(MODE.startsWith("kr_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
   if(MODE==="crm" && !podeCRM() && crmMenuPrincipal()){ MODE=crmMenuPrincipal(); return render(); }
   if(MODE.startsWith("crm_") && crmSecaoPode(MODE)){ tabsEl.classList.add("hidden"); crmView(v); return; }
@@ -1192,6 +1194,9 @@ function renderSide(){
   if(gestorOK){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}RH Assist${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="rh"><div>`+RH_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
+  if(gestorOK){ const no=MODE.startsWith('kr_'), ab=srlAberto("kr");
+    h+=`<button class="srl-item ${no?'on':''}" data-mode="kr_painel" ${no?`data-dobra="kr" aria-expanded="${ab}"`:""}>${_ICO_KR}Kronos${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="kr"><div>`+KR_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Financeiro</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
@@ -1202,7 +1207,7 @@ function renderSide(){
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.dobra; if(k){ const sub=s.querySelector(`[data-dobra-box="${k}"]`); if(!sub) return; const ab=sub.classList.toggle("fech")===false;
       srlAberto(k,ab); b.setAttribute("aria-expanded",ab); const st=b.querySelector(".srl-seta"); if(st) st.classList.toggle("fech",!ab); return; }
-    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":""),true);
+    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":String(b.dataset.mode).startsWith("kr_")?"kr":""),true);
     setMode(b.dataset.mode); });
   s.querySelectorAll("[data-atab]").forEach(b=>b.onclick=()=>{ TAB=b.dataset.atab; window.scrollTo(0,0); render(); });
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -8399,6 +8404,127 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 .fp-vh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}.fp-dg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 14px}@media(max-width:700px){.fp-dg{grid-template-columns:1fr 1fr}}
 .fp-dl{padding:6px 0}.fp-dl>span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.fp-dl>div{font-size:13.5px;color:var(--ink-2)}.fp-pre{white-space:pre-line;margin:2px 0 0;line-height:1.5}
 .pill.info{background:#e3eef3;color:#066789}
+`; document.head.appendChild(st); })();
+
+// ================= KRONOS · controle de ponto (fase 1: painel do dia, espelho e pendências) =================
+// Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
+// com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
+const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"]];
+const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
+const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"]};
+const KR_DOW=["","Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+let KR={data:"",q:"",f:"",dep:"",col:"",mes:"",pessoas:null,timer:null};
+const krHM=m=>{ m=Math.max(0,Math.round(+m||0)); return Math.floor(m/60)+"h"+String(m%60).padStart(2,"0"); };
+const krDataBR=d=>{ const p=String(d||"").slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:""; };
+const krPill=s=>{ const [t,c]=KR_SIT[s]||[s,"neutro"]; return `<span class="kr-pill kr-${c}">${t}</span>`; };
+const krBatidas=b=>(b||[]).length?(b||[]).map((h,i)=>`<span class="kr-bat ${i%2?"sai":"ent"}" title="${i%2?"Saída":"Entrada"}">${esc(h)}</span>`).join(""):`<span class="sub">Nenhuma</span>`;
+const krTile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:var(--${cor})"`:""}>${val}</div></div></div>`;
+const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos. Fale com o RH.</div></div>`:crmCaixaErro(e);
+function krAbas(at){ return `<div class="sim-abas"><div class="seg">${KR_SECOES.map(([m,t])=>`<button type="button" data-krab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
+function krMoldura(v,sec,tit,sub,btns){
+ v.innerHTML=crmHead(tit,sub,btns||"")+krAbas(sec)+`<div id="krBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-krab]").forEach(b=>b.onclick=()=>setMode(b.dataset.krab));
+ return v.querySelector("#krBox");
+}
+async function krView(v){
+ if(KR.timer){ clearTimeout(KR.timer); KR.timer=null; }
+ if(MODE==="kr_espelho") return krEspelho(v);
+ if(MODE==="kr_pend") return krPendencias(v);
+ return krPainel(v);
+}
+
+// ---------- Painel do dia ----------
+async function krPainel(v,silencioso){
+ let box=v.querySelector("#krBox");
+ if(!silencioso||!box){
+  box=krMoldura(v,"kr_painel","Painel do dia","Batidas do relógio de ponto, por colaborador. No dia de hoje a tela se atualiza sozinha a cada 30 segundos.",
+   `<input type="date" class="inp" id="krData" value="${escAttr(KR.data)}" aria-label="Dia" style="max-width:170px"> <button class="txt-btn" id="krHoje">Hoje</button>`);
+  v.querySelector("#krData").onchange=e=>{ KR.data=e.target.value; krPainel(v); };
+  v.querySelector("#krHoje").onclick=()=>{ KR.data=""; krPainel(v); };
+ }
+ let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"painel",data:KR.data}}); }catch(e){ if(MODE==="kr_painel"&&!silencioso) box.innerHTML=krSemAcesso(e); return; }
+ if(MODE!=="kr_painel") return;
+ const P=D.pessoas||[], hoje=D.data===D.hoje; KR.pessoas=P.map(p=>({id:p.id,nome:p.nome}));
+ const di=v.querySelector("#krData"); if(di&&!di.value) di.value=D.data;
+ const n=s=>P.filter(p=>p.situacao===s).length, deps=[...new Set(P.map(p=>p.departamento).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+ const minTot=P.reduce((a,p)=>a+(+p.minutos||0),0), comReg=P.filter(p=>p.qtd>0).length;
+ const R=D.relogio||{}, col=R.ultima_coleta_em?new Date(R.ultima_coleta_em):null, parado=hoje&&(!col||(Date.now()-col.getTime())>10*60000);
+ const pinta=()=>{ const q=crmNormTxt(KR.q);
+  const ls=P.filter(p=>(!q||crmNormTxt(p.nome+" "+(p.departamento||"")).includes(q))&&(!KR.f||p.situacao===KR.f)&&(!KR.dep||p.departamento===KR.dep));
+  const sits=hoje?["trabalhando","intervalo","saiu","sem_registro"]:["completo","pendente","sem_registro"];
+  box.innerHTML=`<div class="tiles kr-tiles">${hoje
+    ?krTile("Trabalhando agora",n("trabalhando"),"good")+krTile("Em intervalo",n("intervalo"),"warn")+krTile("Já saíram",n("saiu"))+krTile("Sem registro",n("sem_registro"))
+    :krTile("Dia completo",n("completo"),"good")+krTile("Batida faltando",n("pendente"),"crit")+krTile("Sem registro",n("sem_registro"))+krTile("Com registro",`${comReg} <span class="sub">de ${P.length}</span>`)}
+    ${krTile("Horas no dia",krHM(minTot))}</div>
+  ${parado?`<div class="kr-aviso">O coletor do relógio ainda não está enviando as batidas sozinho. ${col?`Última carga em ${col.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""} Os dados abaixo vão até o registro ${esc(R.ultimo_nsr??"")} do relógio.</div>`:""}
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="krQ" type="search" value="${escAttr(KR.q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
+   <select class="inp" id="krF" style="max-width:200px">${crmOpt(sits.map(s=>[s,KR_SIT[s][0]]),KR.f,"Todas as situações")}</select>
+   <select class="inp" id="krDep" style="max-width:230px">${crmOpt(deps.map(d=>[d,d]),KR.dep,"Todos os departamentos")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Situação</th><th>Batidas</th><th class="right">Horas</th><th></th></tr></thead><tbody>
+  ${ls.map(p=>`<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.usa_relogio?"":" · não cadastrado no relógio"}</div></td><td>${krPill(p.situacao)}</td><td>${krBatidas(p.batidas)}</td>
+    <td class="right num">${p.qtd?krHM(p.minutos):""}</td><td class="right"><button class="view-btn" data-krv="${p.id}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">${hoje?`Atualizado às ${esc(D.agora)}. `:""}Entradas em verde e saídas em cinza. As horas somam os pares de entrada e saída${hoje?" e, para quem está trabalhando, contam até agora":""}. Quem registra o ponto fora do relógio aparece como "Sem registro" por enquanto.</p>`;
+  const qi=box.querySelector("#krQ"); qi.oninput=()=>{ KR.q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#krQ"); x.focus(); x.setSelectionRange(p,p); };
+  box.querySelector("#krF").onchange=e=>{ KR.f=e.target.value; pinta(); };
+  box.querySelector("#krDep").onchange=e=>{ KR.dep=e.target.value; pinta(); };
+  box.querySelectorAll("[data-krv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.krv; KR.mes=String(D.data).slice(0,7); setMode("kr_espelho"); }); };
+ if(silencioso&&box.contains(document.activeElement)&&document.activeElement.id==="krQ"){ /* não redesenha enquanto a pessoa digita */ } else pinta();
+ if(hoje) KR.timer=setTimeout(()=>{ if(MODE==="kr_painel"&&document.getElementById("krBox")) krPainel(v,true); },30000);
+}
+
+// ---------- Espelho de ponto ----------
+async function krEspelho(v){
+ const box=krMoldura(v,"kr_espelho","Espelho de ponto","As batidas de um colaborador, dia a dia, com o total de horas de cada dia.","");
+ if(!KR.pessoas){ try{ const D=await crmRpc("kronos_dados",{p:{acao:"painel"}}); KR.pessoas=(D.pessoas||[]).map(p=>({id:p.id,nome:p.nome})); if(!KR.mes) KR.mes=String(D.hoje).slice(0,7); }catch(e){ box.innerHTML=krSemAcesso(e); return; } }
+ if(MODE!=="kr_espelho") return;
+ if(!KR.mes){ const d=new Date(); KR.mes=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+ const pes=[...KR.pessoas].sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+ box.innerHTML=`<div class="filters crm-bar2" style="margin:0 0 12px"><select class="inp" id="keCol" style="flex:1;min-width:240px;max-width:420px">${crmOpt(pes.map(p=>[p.id,p.nome]),KR.col,"Escolha o colaborador")}</select>
+  <input type="month" class="inp" id="keMes" value="${escAttr(KR.mes)}" aria-label="Mês" style="max-width:190px"></div><div id="keRes"><div class="card"><div class="empty">Escolha um colaborador para ver o espelho.</div></div></div>`;
+ const res=box.querySelector("#keRes");
+ const carrega=async()=>{ if(!KR.col){ res.innerHTML=`<div class="card"><div class="empty">Escolha um colaborador para ver o espelho.</div></div>`; return; }
+  res.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
+  let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"espelho",colaborador:KR.col,mes:KR.mes}}); }catch(e){ res.innerHTML=krSemAcesso(e); return; }
+  if(MODE!=="kr_espelho") return;
+  const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
+  res.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Dias com registro",com.length)}${krTile("Horas no mês",krHM(tot))}${krTile("Média por dia",com.length?krHM(tot/com.length):"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}</div>
+  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Horas</th><th>Situação</th></tr></thead><tbody>
+  ${dias.map(d=>{ const fds=d.dia_semana>=6; return `<tr class="${fds&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidas(d.batidas):`<span class="sub">${fds?"Fim de semana":"Sem registro no relógio"}</span>`}</td>
+    <td class="right num">${d.qtd?krHM(d.minutos):""}</td><td>${d.pendente?krPill("pendente"):d.qtd?(d.qtd%2?krPill("trabalhando"):krPill("completo")):""}</td></tr>`; }).join("")||`<tr><td colspan="4"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Nesta etapa o espelho mostra só o que veio do relógio. Escalas, feriados, atrasos, banco de horas e ajustes entram na próxima etapa.</p>`; };
+ box.querySelector("#keCol").onchange=e=>{ KR.col=e.target.value; carrega(); };
+ box.querySelector("#keMes").onchange=e=>{ KR.mes=e.target.value; carrega(); };
+ carrega();
+}
+
+// ---------- Pendências (dias com batida faltando) ----------
+async function krPendencias(v){
+ const box=krMoldura(v,"kr_pend","Pendências","Dias em que a pessoa ficou com número ímpar de batidas nos últimos 30 dias. Quase sempre é a volta do almoço ou a saída que faltou.","");
+ let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"pendencias"}}); }catch(e){ box.innerHTML=krSemAcesso(e); return; }
+ if(MODE!=="kr_pend") return;
+ const L=D.pendencias||[], porPes={}; L.forEach(x=>{ porPes[x.nome]=(porPes[x.nome]||0)+1; });
+ const top=Object.entries(porPes).sort((a,b)=>b[1]-a[1])[0];
+ let q="";
+ const pinta=()=>{ const nq=crmNormTxt(q), ls=L.filter(x=>!nq||crmNormTxt(x.nome+" "+(x.departamento||"")).includes(nq));
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Dias com batida faltando",L.length,L.length?"crit":"")}${krTile("Pessoas",Object.keys(porPes).length)}${krTile("Quem mais esquece",top?`${esc(top[0].split(" ")[0])} <span class="sub">${top[1]} dia(s)</span>`:"Ninguém")}${krTile("Período",`<span style="font-size:15px">${krDataBR(D.inicio)} a ${krDataBR(D.fim)}</span>`)}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="kpQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Dia</th><th>Colaborador</th><th>Batidas registradas</th><th></th></tr></thead><tbody>
+  ${ls.map(x=>`<tr><td style="white-space:nowrap"><b>${krDataBR(x.data)}</b></td><td><b>${esc(x.nome)}</b><div class="sub">${esc(x.departamento||"Sem departamento")}</div></td><td>${krBatidas(x.batidas)} <span class="sub">${x.qtd} de ${x.qtd+1}</span></td>
+    <td class="right"><button class="view-btn" data-kpv="${x.colaborador_id}" data-kpm="${String(x.data).slice(0,7)}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">${L.length?"Ninguém encontrado.":"Nenhuma batida faltando no período."}</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">O ajuste com justificativa e aprovação entra na próxima etapa. Por enquanto esta lista serve para conferir com o que está no Tangerino.</p>`;
+  const qi=box.querySelector("#kpQ"); qi.oninput=()=>{ q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#kpQ"); x.focus(); x.setSelectionRange(p,p); };
+  box.querySelectorAll("[data-kpv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.kpv; KR.mes=b.dataset.kpm; setMode("kr_espelho"); }); };
+ pinta();
+}
+
+(function(){ const st=document.createElement("style"); st.textContent=`
+.kr-tiles{display:grid!important;grid-template-columns:repeat(5,1fr);gap:12px}.kr-tiles.kr-t4{grid-template-columns:repeat(4,1fr)}.kr-tiles .tile{margin:0}@media(max-width:900px){.kr-tiles,.kr-tiles.kr-t4{grid-template-columns:repeat(2,1fr)}}
+.kr-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.kr-pill.kr-good{background:var(--good-soft);color:var(--good)}.kr-pill.kr-warn{background:var(--warn-soft);color:var(--warn)}.kr-pill.kr-crit{background:var(--crit-soft);color:var(--crit)}.kr-pill.kr-neutro{background:var(--surface-2,#f3f6f7);color:var(--muted)}
+.kr-bat{display:inline-block;font:600 12.5px/1 "DM Sans",sans-serif;font-variant-numeric:tabular-nums;padding:5px 8px;border-radius:8px;margin:2px 4px 2px 0;border:1px solid var(--border)}
+.kr-bat.ent{background:var(--good-soft);color:var(--good);border-color:transparent}.kr-bat.sai{background:var(--surface-2,#f3f6f7);color:var(--ink-2)}
+.kr-aviso{margin-top:12px;padding:11px 14px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:500}
+tr.kr-fds td{opacity:.55}
 `; document.head.appendChild(st); })();
 
 (async function init(){
