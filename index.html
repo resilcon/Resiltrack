@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.16 (RH Assist: perfil comportamental DISC)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.17.1 (RH Assist: feedbacks e PDI · CRM: nichos na venda direta e janelas fecham só no X)</footer>
   </div>
 </div>
 
@@ -2977,8 +2977,8 @@ function bindActions(){
 // ---------- MODAIS ----------
 const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
 function closeModal(){ overlay.classList.remove("open","prodov"); modal.classList.remove("prodm","ct-modal"); modal.innerHTML=""; }
-overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+// janelas fecham só pelo X ou pelo Cancelar (clique fora e Esc não fecham, para não perder o que foi preenchido)
+
 function openModal(html){ modal.innerHTML=html; overlay.classList.add("open"); modal.scrollTop=0;
   const x=modal.querySelector("[data-close]"); if(x)x.onclick=closeModal; }
 
@@ -6722,7 +6722,7 @@ function pzAbrir(alvo,modo,depois,ehNova){
   const at=t.querySelector("#pzAtivo"); if(at) at.onclick=()=>{ P.ativo=P.ativo===false; marca(); topo(); }; };
  // ---- diálogo simples dentro da tela ----
  const dialogo=(titulo,corpo,ok,rotOk)=>{ const d=document.createElement("div"); d.className="pz-dlg"; d.innerHTML=`<div class="pz-dlg-c" role="dialog" aria-label="${escAttr(titulo)}"><h3>${esc(titulo)}</h3>${corpo}<div class="crm-pe" style="margin-top:14px"><span style="flex:1"></span><button class="txt-btn" data-x>Cancelar</button><button class="view-btn ce-pri" data-ok>${esc(rotOk||"Salvar")}</button></div></div>`;
-  tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove(); d.onclick=e=>{ if(e.target===d) d.remove(); };
+  tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove(); 
   d.querySelector("[data-ok]").onclick=()=>{ if(ok(d)!==false) d.remove(); }; const f=d.querySelector("input,select,textarea"); f&&setTimeout(()=>f.focus()); return d; };
  const opcoesProd=()=>D.bibliotecas.produtos.filter(p=>p.ativo!==false).map(p=>`<option value="${escAttr(p.nome)}">${esc((p.cat||p.tipo||"")+(p.valor?" · R$ "+p.valor:""))}</option>`).join("");
  const campoNovoProd=(pref)=>`<div class="pz-novo" hidden><p class="sub" style="margin:6px 0">Produto novo. Ele entra na biblioteca e fica disponível para todas as personas.</p>
@@ -6923,7 +6923,7 @@ function dspTela(titulo,sub){ const tela=document.createElement("div"); tela.cla
  tela.innerHTML=`<div class="pz-top"><div class="pz-top-l"><span class="cte-tag">${CRM_ICO.persona} ${esc(titulo)}</span><b class="pz-nome">${esc(sub||"")}</b></div><div class="pz-top-c"></div><div class="pz-top-r"></div></div><div class="pz-corpo"></div>`;
  document.body.appendChild(tela); document.body.classList.add("cte-aberto"); return tela; }
 function dspDialogo(tela,titulo,corpo,ok,rotOk){ const d=document.createElement("div"); d.className="pz-dlg"; d.innerHTML=`<div class="pz-dlg-c" role="dialog" aria-label="${escAttr(titulo)}"><h3>${esc(titulo)}</h3>${corpo}<div class="crm-pe" style="margin-top:14px"><span style="flex:1"></span><button class="txt-btn" data-x>Cancelar</button><button class="view-btn ce-pri" data-ok>${esc(rotOk||"Salvar")}</button></div></div>`;
- tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove(); d.onclick=e=>{ if(e.target===d) d.remove(); }; d.querySelector("[data-ok]").onclick=()=>{ if(ok(d)!==false) d.remove(); };
+ tela.appendChild(d); d.querySelector("[data-x]").onclick=()=>d.remove();  d.querySelector("[data-ok]").onclick=()=>{ if(ok(d)!==false) d.remove(); };
  const f=d.querySelector("input:not([disabled]),select,textarea"); f&&setTimeout(()=>f.focus()); return d; }
 
 // ---------------- FERRAMENTA DOR x SOLUÇÃO x PRODUTO ----------------
@@ -7286,10 +7286,14 @@ async function crmVSimulacoes(v){
 function crmNormTxt(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); }
 
 // ---------- + Nova venda ----------
-async function simNova(tipo){ const negs=await simNegocios(true); const fun=crmFunil("vendas")||{etapas:[]};
+// nichos da venda: os da tabela de preços (4C) + os das personas ativas, carregados do banco antes de abrir a janela
+async function simNichosLista(){ await Promise.allSettled([typeof precoCarregar==="function"?precoCarregar():null,typeof pzCarregar==="function"?pzCarregar():null]);
+ const L=[...(typeof precoNichos==="function"?precoNichos():[]),...((PZ&&PZ.D&&PZ.D.personas)||[]).filter(p=>p.ativo!==false).map(p=>p.nome)].map(n=>String(n||"").trim()).filter(Boolean);
+ const vis=new Map(); L.forEach(n=>{ const k=crmNormTxt(n); if(!vis.has(k)) vis.set(k,n); }); return [...vis.values()].sort((a,b)=>a.localeCompare(b,"pt-BR")); }
+async function simNova(tipo){ const [negs,nichos]=await Promise.all([simNegocios(true),tipo!=="avulso"?simNichosLista():[]]); const fun=crmFunil("vendas")||{etapas:[]};
  const m=crmModal("Nova venda",`Nova venda · ${SIM_TIPOS[tipo]}`,"",`<div class="sim-passos">${(tipo==="diagnostico"?["Nicho e cliente","Atividades/Dores","Produtos","Planos"]:tipo==="direta"?["Nicho e cliente","Planos"]:["Cliente","Produtos"]).map((t,i)=>`<span class="${i===0?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   <div class="crm-form" style="grid-template-columns:1fr 1fr">
-   ${tipo!=="avulso"?`<label class="crm-f crm-w2"><span>Nicho *</span><input class="inp" id="snNicho" list="snNichoL" placeholder="Ex.: farmácia" autocomplete="off"><datalist id="snNichoL">${precoNichos().map(n=>`<option value="${escAttr(n)}">`).join("")}</datalist></label>`:""}
+   ${tipo!=="avulso"?`<label class="crm-f crm-w2"><span>Nicho *</span><input class="inp" id="snNicho" list="snNichoL" placeholder="Ex.: farmácia" autocomplete="off"><datalist id="snNichoL">${nichos.map(n=>`<option value="${escAttr(n)}">`).join("")}</datalist><small class="sub" id="snNichoInfo">${nichos.length?`${nichos.length} nichos cadastrados. Digite para filtrar.`:"Não encontrei nichos cadastrados. Confira a tabela de preços e as personas."}</small></label>`:""}
    <div class="crm-f crm-w2"><span>Cliente</span><div class="seg"><button type="button" class="on" data-sncli="neg">Negócio que já está no funil</button><button type="button" data-sncli="novo">Cliente novo</button></div></div>
    <div class="crm-w2" id="snNeg"><label class="crm-f"><span>Negócio</span><input class="inp" id="snNegI" list="snNegL" placeholder="Busque pelo título, contato ou empresa" autocomplete="off"><datalist id="snNegL">${negs.map(o=>`<option value="${escAttr(o.titulo+(o.empresa_nome?" · "+o.empresa_nome:o.contato_nome?" · "+o.contato_nome:"")+(o.numero?" #"+o.numero:""))}" data-id="${o.id}"></option>`).join("")}</datalist></label></div>
    <div class="crm-w2 crm-form" id="snNovo" hidden style="grid-template-columns:1fr 1fr">
@@ -7301,7 +7305,7 @@ async function simNova(tipo){ const negs=await simNegocios(true); const fun=crmF
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
  let modo="neg"; m.querySelectorAll("[data-sncli]").forEach(b=>b.onclick=()=>{ modo=b.dataset.sncli; m.querySelectorAll("[data-sncli]").forEach(x=>x.classList.toggle("on",x===b)); m.querySelector("#snNeg").hidden=modo!=="neg"; m.querySelector("#snNovo").hidden=modo!=="novo"; });
  m.querySelector("#snOk").onclick=async ev=>{ const b=ev.currentTarget, msg=t=>{ m.querySelector("#snMsg").textContent=t||""; };
-  let nicho=tipo!=="avulso"?crmVal(m,"#snNicho"):""; if(tipo!=="avulso"){ const ach=precoNichos().find(n=>crmNormTxt(n)===crmNormTxt(nicho)); if(!ach){ crmToast("Escolha o nicho da lista."); return; } nicho=ach; }
+  let nicho=tipo!=="avulso"?crmVal(m,"#snNicho"):""; if(tipo!=="avulso"){ if(!nicho){ msg("Informe o nicho."); m.querySelector("#snNicho").focus(); return; } const ach=nichos.find(n=>crmNormTxt(n)===crmNormTxt(nicho)); if(!ach){ msg(`O nicho "${nicho}" não está cadastrado. Escolha um da lista.`); m.querySelector("#snNicho").focus(); return; } nicho=ach; msg(""); }
   let neg=null;
   if(modo==="neg"){ const t=crmVal(m,"#snNegI"); const op=[...m.querySelectorAll("#snNegL option")].find(x=>x.value===t); if(!op){ crmToast("Escolha o negócio da lista ou marque Cliente novo."); return; } neg=negs.find(o=>o.id===op.dataset.id); }
   else if(!crmVal(m,"#snNome")){ crmToast("Informe o nome do cliente."); return; }
@@ -8183,6 +8187,218 @@ function discImprimir(c,t){ const css=[...document.querySelectorAll("style")].ma
 .disc-svg{width:100%;max-width:440px;display:block;margin:0 auto}
 .disc-p{margin:0;line-height:1.65;color:var(--ink-2)}
 .disc-det{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}@media(max-width:700px){.disc-det{grid-template-columns:1fr}}.disc-det b{font:700 13px/1.3 "Urbanist",sans-serif;color:#066789;text-transform:uppercase;letter-spacing:.04em}.disc-det p{margin:4px 0 0;color:var(--ink-2);line-height:1.55}
+`; document.head.appendChild(st); })();
+
+// ================= RH ASSIST · Feedbacks e PDI (modelo do Cohros) =================
+// Feedback: Melhoria, Elogio ou Acompanhamento, no formato FCA (Fato, Causa, Ação), com prazo e itens de avaliação ligados.
+// PDI: ações de desenvolvimento com carga horária, prazo e validação do gestor. Validação parada há 15 dias escala ao RH; alerta 7 dias antes do prazo.
+RH_SECOES.push(["rh_feed","Feedbacks"],["rh_pdi","PDI"]);
+const FB_TIPO={melhoria:["Melhoria","#b4532a","#fbeee6"],acompanhamento:["Acompanhamento","#066789","#e3eef3"],elogio:["Elogio","#0f7a5c","#e2f3ec"]};
+const PDI_SIT={nao_iniciado:["Não iniciado","neutral"],andamento:["Em andamento","info"],vence_logo:["Vence em até 7 dias","warn"],atrasado:["Atrasado","crit"],
+ validacao:["Aguardando validação","warn"],validacao_rh:["Validação parada: com o RH","crit"],concluido:["Concluído","good"],concluido_atraso:["Concluído com atraso","good"],cancelado:["Cancelado","neutral"]};
+let FP={dados:null,fq:"",ft:"",fs:"",pq:"",ps:"",pmodo:"pessoas",pcol:null};
+const fpData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+const fpHoras=m=>{ m=+m||0; const h=Math.floor(m/60), r=m%60; return h&&r?`${h}h${String(r).padStart(2,"0")}`:h?`${h}h`:`${r}min`; };
+const fpNome=id=>((rhPor(RHD&&RHD.colaboradores,id)||{}).nome)||"";
+const fpTile=(lbl,val,cor,dica,attr)=>`<div class="tile ${attr?"fp-tclick":""}" ${attr||""} ${dica?`title="${escAttr(dica)}"`:""}><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:${cor}"`:""}>${val}</div></div></div>`;
+async function fpCarregar(){ await rhCarregar(); FP.dados=await crmRpc("rh_fp_dados",{p:{}}); return FP.dados; }
+function fpPessoasAlvo(){ const D=FP.dados, eu=D.eu&&D.eu.id; return (RHD.colaboradores||[]).filter(c=>c.status==="ativo"&&c.id!==eu).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).map(c=>[c.id,c.nome]); }
+async function fpComps(col){ try{ const r=await crmRpc("rh_fp_dados",{p:{colaborador:col}}); return r.competencias||[]; }catch(e){ return []; } }
+function fpItensHTML(L,sel){ const g={des:"Indicadores de desempenho",soft:"Soft skills",hard:"Hard skills"}, s=new Set((sel||[]).map(String));
+ if(!L.length) return `<span class="sub">Escolha a pessoa para ver os itens de avaliação dela.</span>`;
+ return ["des","soft","hard"].map(k=>{ const ls=L.filter(x=>x.grupo===k); return ls.length?`<div class="fp-itg"><b>${g[k]}</b><div>${ls.map(x=>`<label class="fp-it"><input type="checkbox" value="${x.id}" ${s.has(String(x.id))?"checked":""}> ${esc(x.nome)}</label>`).join("")}</div></div>`:""; }).join(""); }
+const fpItensNomes=(itens,L)=>(itens||[]).map(i=>(L.find(x=>String(x.id)===String(i))||{}).nome||(typeof i==="object"&&i?i.nome:"")).filter(Boolean);
+
+// ---------- Feedbacks ----------
+RHV_EXTRA.rh_feed=async function(v){
+ v.innerHTML=crmHead("Feedbacks","Registro de feedbacks no formato FCA (fato, causa e ação), como no Cohros. O colaborador vê os feedbacks enviados na intranet e pode pedir um feedback por lá.","")+rhAbas("rh_feed")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_feed") return;
+ v.querySelector(".crm-acoes").innerHTML=crmPri('id="fbNovo">+ Dar feedback</button>'); v.querySelector("#fbNovo").onclick=()=>fbEditar(null,v);
+ const F=D.feedbacks||[], S=D.solicitacoes||[], eu=D.eu&&D.eu.id, rh=D.eu&&D.eu.rh, hoje=new Date().toISOString().slice(0,10);
+ const pend=f=>f.status==="enviado"&&!f.resolvido&&f.tipo!=="elogio";
+ const pinta=()=>{ const q=crmNormTxt(FP.fq);
+  const ls=F.filter(f=>(!FP.ft||f.tipo===FP.ft)&&(!FP.fs||(FP.fs==="rascunho"?f.status==="rascunho":FP.fs==="pendente"?pend(f):f.resolvido&&f.status==="enviado"))
+   &&(!q||crmNormTxt([fpNome(f.colaborador_id),f.autor_nome,f.fato,f.causa,f.acao].join(" ")).includes(q)));
+  const env=F.filter(f=>f.status==="enviado");
+  v.querySelector("#rhBox").innerHTML=`${S.length?`<div class="card fp-sol"><div class="rh-ch"><b>Pedidos de feedback (${S.length})</b><span class="sub">Feitos pelos colaboradores na intranet</span></div>${S.map(s=>`<div class="fp-sol-l"><div><b>${esc(fpNome(s.solicitante_id))}</b> <span class="sub">pediu a ${esc(fpNome(s.solicitado_id))} em ${fpData(s.criado_em)}</span><p>${esc(s.mensagem)}</p></div><div class="fp-sol-b"><button class="txt-btn" data-fsr="${s.id}">Recusar</button><button class="view-btn" data-fsa="${s.id}">Responder com feedback</button></div></div>`).join("")}</div>`:""}
+  <div class="tiles fp-tiles">${fpTile("Total",env.length,"","","data-fbf=\"\"")}${["melhoria","acompanhamento","elogio"].map(t=>fpTile(FB_TIPO[t][0]+(t==="elogio"?"s":"s"),env.filter(f=>f.tipo===t).length,FB_TIPO[t][1],"",`data-fbt="${t}"`)).join("")}${fpTile("Pendentes",env.filter(pend).length,"#b4532a","Melhorias e acompanhamentos ainda não resolvidos","data-fbs=\"pendente\"")}${fpTile("Rascunhos",F.filter(f=>f.status==="rascunho").length,"","Salvos temporariamente, ainda não enviados","data-fbs=\"rascunho\"")}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="fbQ" type="search" value="${escAttr(FP.fq)}" placeholder="Buscar pessoa ou texto" aria-label="Buscar"></div>
+   <select class="inp" id="fbT" style="max-width:200px">${crmOpt(Object.entries(FB_TIPO).map(([k,x])=>[k,x[0]]),FP.ft,"Todos os tipos")}</select>
+   <select class="inp" id="fbS" style="max-width:200px">${crmOpt([["pendente","Pendentes"],["resolvido","Resolvidos"],["rascunho","Rascunhos"]],FP.fs,"Todas as situações")}</select></div>
+  <div class="fp-lista">${ls.map(f=>{ const t=FB_TIPO[f.tipo], atr=pend(f)&&f.prazo&&f.prazo<hoje, pode=rh||f.autor_id===eu;
+   return `<div class="card fp-card" style="--c:${t[1]}"><div class="fp-card-h"><div><b>${esc(fpNome(f.colaborador_id))}</b> <span class="sub">recebeu de ${esc(f.autor_nome||"RH")}</span></div>
+    <div class="fp-tags"><span class="fp-tipo" style="color:${t[1]};background:${t[2]}">${t[0]}</span>${f.status==="rascunho"?`<span class="pill neutral">Rascunho</span>`:f.tipo==="elogio"?"":f.resolvido?`<span class="pill good">Resolvido</span>`:`<span class="pill ${atr?"crit":"warn"}">${atr?"Prazo vencido":"Pendente"}</span>`}${f.origem==="cohros"?`<span class="pill neutral">Cohros</span>`:""}<span class="sub">${fpData(f.data)}</span></div></div>
+    <div class="fp-fca"><div><span>Fato</span><p>${esc(f.fato)}</p></div>${f.causa?`<div><span>Causa</span><p>${esc(f.causa)}</p></div>`:""}${f.acao?`<div><span>Ação</span><p>${esc(f.acao)}</p></div>`:""}</div>
+    <div class="fp-card-f"><span class="sub">${f.prazo&&f.tipo!=="elogio"?`Prazo para resolução: ${fpData(f.prazo)}`:""}${(f.itens||[]).length?`${f.prazo?" · ":""}${f.itens.length} ${f.itens.length>1?"itens":"item"} de avaliação`:""}</span>
+     <span>${f.tipo==="melhoria"&&f.status==="enviado"?`<button class="txt-btn" data-fbpdi="${f.id}">Criar PDI</button>`:""}${pode&&f.origem!=="cohros"?`<button class="txt-btn" data-fbe="${f.id}">${f.status==="rascunho"?"Continuar":"Editar"}</button>`:""}</span></div></div>`; }).join("")||`<div class="card"><div class="empty">${F.length?"Nenhum feedback com esses filtros.":"Nenhum feedback registrado ainda. Clique em + Dar feedback para começar."}</div></div>`}</div>`;
+  const qi=v.querySelector("#fbQ"); qi.oninput=()=>{ FP.fq=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#fbQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelector("#fbT").onchange=e=>{ FP.ft=e.target.value; pinta(); }; v.querySelector("#fbS").onchange=e=>{ FP.fs=e.target.value; pinta(); };
+  v.querySelectorAll("[data-fbt]").forEach(b=>b.onclick=()=>{ FP.ft=b.dataset.fbt; FP.fs=""; pinta(); });
+  v.querySelectorAll("[data-fbs]").forEach(b=>b.onclick=()=>{ FP.fs=b.dataset.fbs; FP.ft=""; pinta(); });
+  v.querySelectorAll("[data-fbf]").forEach(b=>b.onclick=()=>{ FP.fs=""; FP.ft=""; FP.fq=""; pinta(); });
+  v.querySelectorAll("[data-fbe]").forEach(b=>b.onclick=()=>fbEditar(F.find(f=>f.id===b.dataset.fbe),v));
+  v.querySelectorAll("[data-fbpdi]").forEach(b=>b.onclick=()=>{ const f=F.find(x=>x.id===b.dataset.fbpdi); pdiEditar({colaborador_id:f.colaborador_id,itens:f.itens,feedback_id:f.id,descricao:f.acao||""},v); });
+  v.querySelectorAll("[data-fsa]").forEach(b=>b.onclick=()=>{ const s=S.find(x=>x.id===b.dataset.fsa); fbEditar({colaborador_id:s.solicitante_id,solicitacao:s.id,tipo:"acompanhamento"},v,s); });
+  v.querySelectorAll("[data-fsr]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Clique de novo para recusar"; return; }
+   try{ await crmRpc("rh_fp_salvar",{p:{acao:"solicitacao_recusar",id:b.dataset.fsr}}); crmToast("Pedido recusado"); RHV_EXTRA.rh_feed(v); }catch(e){ crmToast(crmErro(e)); } }); };
+ pinta();
+};
+
+async function fbEditar(f,v,sol){ const novo=!f||!f.id; f=f||{tipo:""}; const hoje=new Date().toISOString().slice(0,10);
+ const m=crmModal("Feedbacks",novo?"Dar feedback":"Editar feedback","",`${sol?`<div class="rha-aviso ok"><b>${esc(fpNome(sol.solicitante_id))} pediu:</b> ${esc(sol.mensagem)}</div>`:""}<div class="crm-form">
+  <label class="crm-f crm-w2"><span>Para quem *</span><select class="inp" id="fbC" ${novo&&!sol?"":"disabled"}>${crmOpt(novo&&!sol?fpPessoasAlvo():[[f.colaborador_id,fpNome(f.colaborador_id)]],f.colaborador_id,novo&&!sol?"Escolha o colaborador":null)}</select></label>
+  <div class="crm-f crm-w2"><span>Qual o tipo do feedback? *</span><div class="seg fp-seg">${Object.entries(FB_TIPO).map(([k,t])=>`<button type="button" data-tp="${k}" class="${f.tipo===k?"on":""}">${t[0]}</button>`).join("")}</div></div>
+  <label class="crm-f crm-w2"><span>Fato *</span><textarea class="inp" id="fbFa" rows="3" placeholder="O que aconteceu, de forma objetiva: quando, onde e o que foi observado.">${esc(f.fato||"")}</textarea></label>
+  <label class="crm-f crm-w2"><span>Causa</span><textarea class="inp" id="fbCa" rows="2" placeholder="Por que aconteceu, na sua leitura.">${esc(f.causa||"")}</textarea></label>
+  <label class="crm-f crm-w2"><span>Ação</span><textarea class="inp" id="fbAc" rows="2" placeholder="O que fica combinado daqui para frente.">${esc(f.acao||"")}</textarea></label>
+  <label class="crm-f"><span>Data do feedback</span><input class="inp" type="date" id="fbDt" value="${escAttr(f.data||hoje)}"></label>
+  <label class="crm-f fp-so"><span>Prazo para resolução</span><input class="inp" type="date" id="fbPz" value="${escAttr(f.prazo||"")}"></label>
+  <label class="crm-f fp-so"><span>Resolvido</span><select class="inp" id="fbRs">${crmOpt([["false","Não"],["true","Sim"]],String(!!f.resolvido))}</select></label>
+  <div class="crm-f crm-w2"><span>Relacionar a itens de avaliação</span><div id="fbIt" class="fp-its"><span class="sub">Carregando…</span></div></div></div>
+  <div class="rha-pe"><span class="sub" id="fbMsg" style="flex:1">O colaborador vê o feedback na intranet assim que for enviado.</span>${!novo&&(RHD.eu&&RHD.eu.rh||f.status==="rascunho")?`<button class="txt-btn crm-perigo" id="fbDel">Excluir</button>`:""}<button class="txt-btn" data-close2>Cancelar</button>${novo||f.status==="rascunho"?`<button class="txt-btn" id="fbRas">Salvar rascunho</button>`:""}${crmPri('id="fbOk">Enviar feedback</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ let tipo=f.tipo||"", comps=[]; const msg=m.querySelector("#fbMsg");
+ const vis=()=>m.querySelectorAll(".fp-so").forEach(x=>x.hidden=tipo==="elogio");
+ m.querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{ tipo=b.dataset.tp; m.querySelectorAll("[data-tp]").forEach(x=>x.classList.toggle("on",x===b)); vis(); }); vis();
+ const carregaIt=async col=>{ const box=m.querySelector("#fbIt"); if(!col){ box.innerHTML=fpItensHTML([],[]); return; } box.innerHTML=`<span class="sub">Carregando…</span>`; comps=await fpComps(col); box.innerHTML=fpItensHTML(comps,f.itens); };
+ m.querySelector("#fbC").onchange=e=>carregaIt(e.target.value); carregaIt(f.colaborador_id||"");
+ const salvar=async status=>{ const col=m.querySelector("#fbC").value;
+  if(!col){ msg.textContent="Escolha para quem é o feedback."; return; } if(!tipo){ msg.textContent="Escolha o tipo do feedback."; return; }
+  if(m.querySelector("#fbFa").value.trim().length<10){ msg.textContent="Descreva o fato com pelo menos 10 caracteres."; m.querySelector("#fbFa").focus(); return; }
+  const bt=m.querySelectorAll("#fbOk,#fbRas"); bt.forEach(b=>b.disabled=true);
+  try{ await crmRpc("rh_fp_salvar",{p:{acao:"feedback",id:f.id||"",colaborador:col,tipo,fato:m.querySelector("#fbFa").value,causa:m.querySelector("#fbCa").value,acao_texto:m.querySelector("#fbAc").value,
+    data:m.querySelector("#fbDt").value,prazo:tipo==="elogio"?"":m.querySelector("#fbPz").value,resolvido:tipo==="elogio"?true:m.querySelector("#fbRs").value==="true",
+    itens:[...m.querySelectorAll("#fbIt input:checked")].map(i=>i.value),status,solicitacao:f.solicitacao||""}});
+   closeModal(); crmToast(status==="rascunho"?"Rascunho salvo":"Feedback enviado"); RHV_EXTRA.rh_feed(v); }
+  catch(e){ bt.forEach(b=>b.disabled=false); msg.textContent=crmErro(e); } };
+ m.querySelector("#fbOk").onclick=()=>salvar("enviado"); const r=m.querySelector("#fbRas"); if(r) r.onclick=()=>salvar("rascunho");
+ const del=m.querySelector("#fbDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ await crmRpc("rh_fp_salvar",{p:{acao:"feedback_excluir",id:f.id}}); closeModal(); crmToast("Feedback excluído"); RHV_EXTRA.rh_feed(v); }catch(e){ msg.textContent=crmErro(e); } };
+}
+
+// ---------- PDI ----------
+RHV_EXTRA.rh_pdi=async function(v){
+ v.innerHTML=crmHead("PDI","Plano de desenvolvimento individual: ações com carga horária, prazo e validação do gestor. Validação parada há mais de 15 dias passa para o RH.","")+rhAbas("rh_pdi")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_pdi") return;
+ v.querySelector(".crm-acoes").innerHTML=crmPri('id="pdNovo">+ Criar PDI</button>'); v.querySelector("#pdNovo").onclick=()=>pdiEditar(null,v);
+ const A=(D.pdi||[]).filter(x=>x.status!=="cancelado"), cnt=s=>A.filter(x=>s.includes(x.situacao)).length;
+ const grupos=[["Total",null,""],["Atrasados",["atrasado"],"#b4532a"],["Vencem em 7 dias",["vence_logo"],"#d9a23b"],["Não iniciados",["nao_iniciado"],""],["Em andamento",["andamento"],"#066789"],
+  ["Aguardando validação",["validacao","validacao_rh"],"#d9a23b"],["Concluídos",["concluido","concluido_atraso"],"#0f7a5c"]];
+ const pinta=()=>{ const q=crmNormTxt(FP.pq), filtro=FP.ps?grupos.find(g=>g[0]===FP.ps)[1]:null;
+  const ls=A.filter(x=>(!filtro||filtro.includes(x.situacao))&&(!FP.pcol||x.colaborador_id===FP.pcol)&&(!q||crmNormTxt(fpNome(x.colaborador_id)+" "+x.nome+" "+x.descricao).includes(q)));
+  const horas=A.filter(x=>x.status==="concluido").reduce((s,x)=>s+x.carga_minutos,0), escal=cnt(["validacao_rh"]);
+  let corpo;
+  if(FP.pmodo==="pessoas"&&!FP.pcol){ const por={}; ls.forEach(x=>(por[x.colaborador_id]=por[x.colaborador_id]||[]).push(x));
+   const ids=Object.keys(por).sort((a,b)=>fpNome(a).localeCompare(fpNome(b),"pt-BR"));
+   corpo=`<div class="fp-pess">${ids.map(id=>{ const L=por[id], c=s=>L.filter(x=>s.includes(x.situacao)).length, dep=(rhPor(RHD.departamentos,(rhPor(RHD.colaboradores,id)||{}).departamento_id)||{}).nome;
+    return `<button class="card fp-pc" data-pdc="${id}"><div><b>${esc(fpNome(id))}</b>${dep?`<div class="sub">${esc(dep)}</div>`:""}</div><div class="fp-pc-n">${[["Total",L.length,""],["Atrasados",c(["atrasado"]),"#b4532a"],["Andamento",c(["andamento","vence_logo"]),"#066789"],["A validar",c(["validacao","validacao_rh"]),"#d9a23b"],["Concluídos",c(["concluido","concluido_atraso"]),"#0f7a5c"]].map(([t,n,cor])=>`<span><b style="${cor&&n?`color:${cor}`:""}">${n}</b>${t}</span>`).join("")}</div></button>`; }).join("")||`<div class="card"><div class="empty">${A.length?"Nada com esses filtros.":"Nenhuma ação de PDI ainda. Clique em + Criar PDI para começar."}</div></div>`}</div>`;
+  } else {
+   corpo=`${FP.pcol?`<div class="fp-pcol"><button class="txt-btn" id="pdTodos">‹ Todas as pessoas</button><b>${esc(fpNome(FP.pcol))}</b><button class="txt-btn" id="pdNovoP">+ Ação para essa pessoa</button></div>`:""}
+   <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr>${FP.pcol?"":"<th>Colaborador</th>"}<th>Ação</th><th>Prazo</th><th class="right">Carga</th><th>Situação</th><th></th></tr></thead><tbody>
+   ${ls.map(x=>{ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"];
+    return `<tr>${FP.pcol?"":`<td><b>${esc(fpNome(x.colaborador_id))}</b></td>`}<td><a href="#" class="fp-an" data-pdv="${x.id}">${esc(x.nome)}</a><div class="sub">${x.classificacao==="autoproposicao"?"Autoproposição":"Definido pela empresa"}${x.origem==="intranet"?" · pela intranet":x.origem==="cohros"?" · Cohros":""}</div></td>
+     <td>${fpData(x.prazo)}</td><td class="right num">${fpHoras(x.carga_minutos)}</td><td><span class="pill ${s[1]}">${s[0]}</span></td>
+     <td class="right" style="white-space:nowrap">${x.status==="validacao"?`<button class="view-btn" data-pdva="${x.id}">Validar</button>`:`<button class="txt-btn" data-pdv="${x.id}">Abrir</button>`}</td></tr>`; }).join("")||`<tr><td colspan="6"><div class="empty">Nenhuma ação.</div></td></tr>`}</tbody></table></div>`;
+  }
+  v.querySelector("#rhBox").innerHTML=`${escal?`<div class="rha-aviso">${escal} ${escal>1?"ações estão":"ação está"} aguardando validação há mais de 15 dias. ${D.eu&&D.eu.rh?"Elas passaram para o RH validar.":"O RH foi avisado."}</div>`:""}
+  <div class="tiles fp-tiles7">${grupos.map(([t,s,cor])=>fpTile(t,s?cnt(s):A.length,cor,"",`data-pds="${s?t:""}"`)).join("")}</div>
+  <div class="sub" style="margin:8px 2px 0">Horas de desenvolvimento concluídas: <b>${fpHoras(horas)}</b></div>
+  <div class="filters crm-bar2" style="margin:12px 0"><div class="search" style="flex:1;min-width:220px"><input id="pdQ" type="search" value="${escAttr(FP.pq)}" placeholder="Buscar pessoa ou ação" aria-label="Buscar"></div>
+   <select class="inp" id="pdS" style="max-width:220px">${crmOpt(grupos.slice(1).map(g=>[g[0],g[0]]),FP.ps,"Todas as situações")}</select>
+   <div class="seg">${[["pessoas","Por pessoa"],["acoes","Todas as ações"]].map(([k,t])=>`<button type="button" data-pdm="${k}" class="${FP.pmodo===k?"on":""}">${t}</button>`).join("")}</div></div>${corpo}`;
+  const qi=v.querySelector("#pdQ"); qi.oninput=()=>{ FP.pq=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#pdQ"); n.focus(); n.setSelectionRange(p,p); };
+  v.querySelector("#pdS").onchange=e=>{ FP.ps=e.target.value; pinta(); };
+  v.querySelectorAll("[data-pds]").forEach(b=>b.onclick=()=>{ FP.ps=b.dataset.pds; pinta(); });
+  v.querySelectorAll("[data-pdm]").forEach(b=>b.onclick=()=>{ FP.pmodo=b.dataset.pdm; FP.pcol=null; pinta(); });
+  v.querySelectorAll("[data-pdc]").forEach(b=>b.onclick=()=>{ FP.pcol=b.dataset.pdc; pinta(); });
+  const t=v.querySelector("#pdTodos"); if(t) t.onclick=()=>{ FP.pcol=null; pinta(); };
+  const np=v.querySelector("#pdNovoP"); if(np) np.onclick=()=>pdiEditar({colaborador_id:FP.pcol},v);
+  v.querySelectorAll("[data-pdv]").forEach(b=>b.onclick=e=>{ e.preventDefault(); pdiVer(A.find(x=>x.id===b.dataset.pdv),v); });
+  v.querySelectorAll("[data-pdva]").forEach(b=>b.onclick=()=>pdiVer(A.find(x=>x.id===b.dataset.pdva),v)); };
+ pinta();
+};
+
+async function pdiEditar(x,v){ const novo=!x||!x.id; x=x||{}; const fixo=!novo||!!x.colaborador_id;
+ const h=x.carga_minutos?Math.floor(x.carga_minutos/60):"", mi=x.carga_minutos?x.carga_minutos%60:"";
+ const m=crmModal("PDI",novo?"Nova ação de desenvolvimento":"Editar ação","",`<div class="crm-form">
+  <label class="crm-f crm-w2"><span>Colaborador *</span><select class="inp" id="pdC" ${fixo?"disabled":""}>${crmOpt(fixo?[[x.colaborador_id,fpNome(x.colaborador_id)]]:fpPessoasAlvo(),x.colaborador_id,fixo?null:"Escolha o colaborador")}</select></label>
+  <div class="crm-f crm-w2"><span>O que será desenvolvido (pontos a desenvolver)</span><div id="pdIt" class="fp-its"><span class="sub">Carregando…</span></div></div>
+  <label class="crm-f crm-w2"><span>Nome da ação *</span><input class="inp" id="pdN" value="${escAttr(x.nome||"")}" placeholder="Ex.: Curso de Excel avançado"></label>
+  <label class="crm-f crm-w2"><span>Descreva a ação *</span><textarea class="inp" id="pdD" rows="3" placeholder="O que a pessoa vai fazer e onde. Links de cursos podem entrar aqui. Nunca coloque senha ou login.">${esc(x.descricao||"")}</textarea></label>
+  <label class="crm-f crm-w2"><span>Orientações e observações</span><textarea class="inp" id="pdO" rows="2">${esc(x.observacoes||"")}</textarea></label>
+  <div class="crm-f"><span>Carga horária *</span><div class="fp-ch"><input class="inp" type="number" min="0" id="pdH" value="${h}" placeholder="0" aria-label="Horas"> h <input class="inp" type="number" min="0" max="59" id="pdMi" value="${mi}" placeholder="0" aria-label="Minutos"> min</div></div>
+  <label class="crm-f"><span>Prazo *</span><input class="inp" type="date" id="pdP" value="${escAttr(x.prazo||"")}"></label>
+  <label class="crm-f"><span>Formato</span><select class="inp" id="pdF">${crmOpt([["individual","Individual"],["coletivo","Coletivo"]],x.formato||"individual")}</select></label>
+  <label class="crm-f"><span>Classificação do PDI</span><select class="inp" id="pdK">${crmOpt([["empresa","Definido pela empresa"],["autoproposicao","Autoproposição"]],x.classificacao||"empresa")}</select></label>
+  <div class="crm-f crm-w2"><span>Ao concluir, exigir</span><div class="rha-cks"><label class="rha-ck"><input type="checkbox" id="pdCe" ${x.exige_certificado?"checked":""}> Certificado de conclusão</label><label class="rha-ck"><input type="checkbox" id="pdRe" ${x.exige_relatorio?"checked":""}> Relatório de aprendizado</label></div></div></div>
+  <div class="rha-pe"><span class="sub" id="pdMsg" style="flex:1">O colaborador acompanha e conclui a ação pela intranet; o gestor valida.</span>${!novo?`<button class="txt-btn crm-perigo" id="pdDel">Excluir</button>`:""}<button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="pdOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=m.querySelector("#pdMsg");
+ const carregaIt=async col=>{ const box=m.querySelector("#pdIt"); if(!col){ box.innerHTML=fpItensHTML([],[]); return; } box.innerHTML=`<span class="sub">Carregando…</span>`; box.innerHTML=fpItensHTML(await fpComps(col),x.itens); };
+ m.querySelector("#pdC").onchange=e=>carregaIt(e.target.value); carregaIt(x.colaborador_id||"");
+ m.querySelector("#pdOk").onclick=async()=>{ const col=m.querySelector("#pdC").value, cm=(+m.querySelector("#pdH").value||0)*60+(+m.querySelector("#pdMi").value||0);
+  const nome=m.querySelector("#pdN").value.trim(), desc=m.querySelector("#pdD").value.trim(), prazo=m.querySelector("#pdP").value;
+  if(!col){ msg.textContent="Escolha o colaborador."; return; } if(nome.length<3){ msg.textContent="Informe o nome da ação."; return; } if(desc.length<5){ msg.textContent="Descreva a ação."; return; }
+  if(cm<=0){ msg.textContent="A carga horária é obrigatória."; return; } if(!prazo){ msg.textContent="Informe o prazo."; return; }
+  const ok=m.querySelector("#pdOk"); ok.disabled=true;
+  try{ await crmRpc("rh_fp_salvar",{p:{acao:"pdi",id:x.id||"",colaborador:col,nome,descricao:desc,observacoes:m.querySelector("#pdO").value,carga_minutos:cm,prazo,
+    formato:m.querySelector("#pdF").value,classificacao:m.querySelector("#pdK").value,exige_certificado:m.querySelector("#pdCe").checked,exige_relatorio:m.querySelector("#pdRe").checked,
+    itens:[...m.querySelectorAll("#pdIt input:checked")].map(i=>i.value),feedback:x.feedback_id||""}});
+   closeModal(); crmToast(novo?"Ação de PDI criada":"Ação atualizada"); if(MODE==="rh_pdi") RHV_EXTRA.rh_pdi(v); else setMode("rh_pdi"); }
+  catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
+ const del=m.querySelector("#pdDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+  try{ await crmRpc("rh_fp_salvar",{p:{acao:"pdi_excluir",id:x.id}}); closeModal(); crmToast("Ação excluída"); RHV_EXTRA.rh_pdi(v); }catch(e){ msg.textContent=crmErro(e); } };
+}
+
+async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"], val=x.status==="validacao";
+ const lin=(t,c)=>c?`<div class="fp-dl"><span>${t}</span><div>${c}</div></div>`:"";
+ const link=u=>/^https?:\/\//i.test(u||"")?`<a href="${escAttr(u)}" target="_blank" rel="noopener">${esc(u)}</a>`:esc(u||"");
+ const m=crmModal("PDI",esc(x.nome),"",`<div class="fp-vh"><b>${esc(fpNome(x.colaborador_id))}</b><span class="pill ${s[1]}">${s[0]}</span></div>
+  ${lin("Descrição",`<p class="fp-pre">${esc(x.descricao)}</p>`)}${lin("Observações",x.observacoes?`<p class="fp-pre">${esc(x.observacoes)}</p>`:"")}
+  <div class="fp-dg">${lin("Prazo",fpData(x.prazo))}${lin("Carga horária",fpHoras(x.carga_minutos))}${lin("Formato",x.formato==="coletivo"?"Coletivo":"Individual")}${lin("Classificação",x.classificacao==="autoproposicao"?"Autoproposição":"Definido pela empresa")}
+   ${lin("Iniciado em",fpData(x.iniciado_em))}${lin("Enviado para validação",fpData(x.enviado_validacao_em))}${lin("Concluído em",fpData(x.concluido_em))}${lin("Validado por",esc(x.validado_por||""))}</div>
+  ${lin("Exigências",[x.exige_certificado?"Certificado de conclusão":"",x.exige_relatorio?"Relatório de aprendizado":""].filter(Boolean).join(" e "))}
+  ${lin("Relatório de aprendizado",x.relatorio?`<p class="fp-pre">${esc(x.relatorio)}</p>`:"")}${lin("Certificado",link(x.certificado_url))}${lin("Devolutiva do gestor",x.devolutiva?`<p class="fp-pre">${esc(x.devolutiva)}</p>`:"")}
+  ${val||x.status!=="concluido"?`<label class="crm-f" style="margin-top:6px"><span>${val?"Devolutiva (obrigatória se devolver)":"Comentário"}</span><textarea class="inp" id="pvD" rows="2"></textarea></label>`:""}
+  <div class="rha-pe"><span class="sub" id="pvMsg" style="flex:1"></span><button class="txt-btn" id="pvEd">Editar</button>
+   ${val?`<button class="txt-btn" id="pvDev">Devolver para ajuste</button>${crmPri('id="pvOk">Validar conclusão</button>')}`
+     :x.status==="concluido"?`<button class="txt-btn" id="pvReab">Reabrir</button>`
+     :`${x.status!=="cancelado"?`<button class="txt-btn" id="pvCan">Cancelar ação</button>`:""}${x.status==="nao_iniciado"?`<button class="txt-btn" id="pvIni">Marcar em andamento</button>`:""}${crmPri('id="pvOk">Marcar como concluída</button>')}`}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal");
+ const msg=m.querySelector("#pvMsg"), dv=()=>(m.querySelector("#pvD")||{value:""}).value.trim();
+ const muda=async(para,t)=>{ try{ await crmRpc("rh_fp_salvar",{p:{acao:"pdi_status",id:x.id,para,devolutiva:dv()}}); closeModal(); crmToast(t); RHV_EXTRA.rh_pdi(v); }catch(e){ msg.textContent=crmErro(e); } };
+ m.querySelector("#pvEd").onclick=()=>{ closeModal(); pdiEditar(x,v); };
+ const b=(id,f)=>{ const e=m.querySelector(id); if(e) e.onclick=f; };
+ b("#pvOk",()=>{ if(!val&&(x.exige_certificado&&!x.certificado_url||x.exige_relatorio&&!x.relatorio)&&m.querySelector("#pvOk").dataset.ok!=="1"){ m.querySelector("#pvOk").dataset.ok="1"; msg.textContent="Faltam o certificado ou o relatório exigidos. Clique de novo para concluir mesmo assim."; return; } muda("concluido",val?"Conclusão validada":"Ação concluída"); });
+ b("#pvDev",()=>{ if(!dv()){ msg.textContent="Escreva a devolutiva explicando o que ajustar."; m.querySelector("#pvD").focus(); return; } muda("andamento","Ação devolvida para ajuste"); });
+ b("#pvCan",()=>{ const e=m.querySelector("#pvCan"); if(e.dataset.ok!=="1"){ e.dataset.ok="1"; e.textContent="Clique de novo para cancelar"; return; } muda("cancelado","Ação cancelada"); });
+ b("#pvIni",()=>muda("andamento","Ação em andamento")); b("#pvReab",()=>muda("andamento","Ação reaberta"));
+}
+
+(function(){ const st=document.createElement("style"); st.textContent=`
+.fp-tiles,.fp-tiles7{display:grid!important;gap:12px}.fp-tiles{grid-template-columns:repeat(6,1fr)}.fp-tiles7{grid-template-columns:repeat(7,1fr)}.fp-tiles .tile,.fp-tiles7 .tile{margin:0}
+@media(max-width:1100px){.fp-tiles,.fp-tiles7{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.fp-tiles,.fp-tiles7{grid-template-columns:repeat(2,1fr)}}
+.fp-tclick{cursor:pointer}.fp-tclick:hover{border-color:#066789}
+.fp-sol{padding:0!important;margin-bottom:14px;border-color:#f0d9a8}.fp-sol-l{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--border)}.fp-sol-l p{margin:4px 0 0;color:var(--ink-2);font-size:13.5px}.fp-sol-b{display:flex;gap:6px;flex-shrink:0}
+.fp-lista{display:grid;gap:12px}.fp-card{padding:14px 18px!important;border-left:4px solid var(--c)!important}
+.fp-card-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}.fp-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fp-tipo{font:700 11.5px/1 "Urbanist",sans-serif;padding:5px 10px;border-radius:99px;letter-spacing:.02em}
+.fp-fca{display:grid;gap:8px;margin:10px 0}.fp-fca span{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.fp-fca p{margin:2px 0 0;white-space:pre-line;color:var(--ink-2);line-height:1.5;font-size:13.5px}
+.fp-card-f{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--border);padding-top:8px;flex-wrap:wrap}
+.fp-seg{display:flex;width:max-content}.fp-its{display:grid;gap:8px;max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.fp-itg b{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#066789}.fp-itg>div{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px}.fp-it{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.fp-ch{display:flex;align-items:center;gap:6px}.fp-ch .inp{width:80px}
+.fp-pess{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}.fp-pc{text-align:left;cursor:pointer;padding:14px 16px!important;display:grid;gap:10px;font:inherit;color:inherit;background:var(--surface)}.fp-pc:hover{border-color:#066789}
+.fp-pc-n{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.fp-pc-n span{display:flex;flex-direction:column;align-items:center;font-size:10.5px;color:var(--muted);text-align:center}.fp-pc-n b{font:700 18px/1.1 "Urbanist",sans-serif;color:var(--ink)}
+.fp-pcol{display:flex;align-items:center;gap:12px;margin-bottom:10px}.fp-pcol b{flex:1;font:700 16px/1.2 "Urbanist",sans-serif}
+.fp-an{font-weight:600;color:var(--ink);text-decoration:none}.fp-an:hover{color:#066789;text-decoration:underline}
+.fp-vh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}.fp-dg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 14px}@media(max-width:700px){.fp-dg{grid-template-columns:1fr 1fr}}
+.fp-dl{padding:6px 0}.fp-dl>span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.fp-dl>div{font-size:13.5px;color:var(--ink-2)}.fp-pre{white-space:pre-line;margin:2px 0 0;line-height:1.5}
+.pill.info{background:#e3eef3;color:#066789}
 `; document.head.appendChild(st); })();
 
 (async function init(){
