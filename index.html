@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.23 (Íris: alerta urgente e link curto das TVs · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.24 (Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -8954,10 +8954,11 @@ function irisTelas(v,box){
  box.querySelectorAll("[data-ired]").forEach(b=>b.onclick=()=>irisTelaForm(v,T.find(t=>t.id===b.dataset.ired)));
  box.querySelector("#irisNovaTela").onclick=()=>irisTelaForm(v,null);
 }
-function irisTelaForm(v,t){ t=t||{nome:"",local:"",setores:[],mostra_fila:true,central:false,ativa:true};
+function irisTelaForm(v,t){ t=t||{nome:"",local:"",setores:[],mostra_fila:true,central:false,ativa:true,tema:"claro"};
  crmModal("Íris · TV",t.id?t.nome:"Nova TV","",`<div class="crm-form">
   <label class="crm-f"><span>Nome da TV</span><input id="itNome" maxlength="60" value="${escAttr(t.nome||"")}"></label>
   <label class="crm-f"><span>Onde fica</span><input id="itLocal" maxlength="60" value="${escAttr(t.local||"")}"></label>
+  <label class="crm-f crm-w2"><span>Visual da tela</span><select id="itTema">${[["claro","Claro (fundo branco)"],["moldura","Moldura escura (lateral e fundo escuros, conteúdo em cartão branco)"],["escuro","Escuro (tudo escuro)"]].map(([k,n])=>`<option value="${k}" ${(t.tema||"claro")===k?"selected":""}>${n}</option>`).join("")}</select></label>
   <label class="crm-f crm-w2 iris-linha"><input type="checkbox" id="itCentral" ${t.central?"checked":""}> TV central: mostra os chamados de todos os departamentos</label>
   <div class="crm-f crm-w2" id="itSetBox"><span>Departamentos que esta TV enxerga na fila</span>${irisChecks("itSet",t.setores||[])}</div>
   <label class="crm-f crm-w2 iris-linha"><input type="checkbox" id="itFila" ${t.mostra_fila?"checked":""}> Mostrar a fila de chamados e ligações nesta TV</label>
@@ -8967,7 +8968,7 @@ function irisTelaForm(v,t){ t=t||{nome:"",local:"",setores:[],mostra_fila:true,c
  m.querySelector("[data-close2]").onclick=closeModal;
  m.querySelector("#itOk").onclick=async()=>{ const nome=crmVal(m,"#itNome"); if(!nome){ crmToast("Informe o nome da TV."); return; }
   const set=cen.checked?[]:irisMarcados(m,"itSet"); if(!cen.checked&&!set.length&&m.querySelector("#itFila").checked&&(IRIS.d.departamentos||[]).length){ crmToast("Marque ao menos um departamento, ou marque como TV central."); return; }
-  try{ await crmRpc("iris_tela_salvar",{p:{id:t.id||"",nome,local:crmVal(m,"#itLocal"),setores:set,central:cen.checked,mostra_fila:m.querySelector("#itFila").checked,ativa:m.querySelector("#itAtiva").checked}}); closeModal(); crmToast("TV salva."); irisView(v,true); }
+  try{ await crmRpc("iris_tela_salvar",{p:{id:t.id||"",nome,local:crmVal(m,"#itLocal"),setores:set,central:cen.checked,mostra_fila:m.querySelector("#itFila").checked,ativa:m.querySelector("#itAtiva").checked,tema:crmVal(m,"#itTema")||"claro"}}); closeModal(); crmToast("TV salva."); irisView(v,true); }
   catch(e){ crmToast("Não consegui salvar: "+crmErro(e)); } };
 }
 
