@@ -596,7 +596,7 @@ const ROOMS={
   'Jurídico/Tributário':{x:324,y:382,w:336,h:290,nome:'Jurídico/Tributário',dep:'Jurídico/Tributário',wall:'#8e6a5c',piso:'porcelanato'},
   reunioes:{x:672,y:382,w:340,h:290,nome:'Reunião e ligações',wall:'#6c7a82',piso:'piso'},
   trofeus:{x:1024,y:382,w:432,h:290,nome:'Sala de Troféus',wall:'#6b4a2e',piso:'madeiraEsc'},
-  projetos:{x:56,y:714,w:340,h:256,nome:'Projetos',wall:'#8a7458',piso:'madeiraEsc'},
+  recepcao:{x:56,y:714,w:340,h:256,nome:'Recepção',wall:'#2f5f5a',piso:'porcelanato'},
   aniversario:{x:408,y:714,w:300,h:256,nome:'Aniversários',wall:'#b4587a',piso:'festa'},
   agentes:{x:720,y:714,w:420,h:256,nome:'Agentes de IA',wall:'#4f5f86',piso:'tech'},
   ausencia:{x:1152,y:714,w:304,h:256,nome:'Ausências',wall:'#9a7f78',piso:'rosado'}
@@ -1024,7 +1024,7 @@ function scene(){
   g.translate(0,TOP);ANIM.vistos=new Set();
   corredorDecor();arvoresNatal();desenharPresentesNatal();
   DEPTOS.forEach(d=>salaDepto(ROOMS[d.k]));
-  salaReunioes();salaTrofeus();salaProjetos();salaAniversario();salaAgentes();salaAusencia();
+  salaReunioes();salaTrofeus();salaRecepcao();luzesRecepcao();salaAniversario();salaAgentes();salaAusencia();
   desenharAndando();desenharNoel();desenharPatinete();escolherFala();desenharFalas();
   luzes();luzesFesta();luzesTrofeus();luzesNatal();
 }
@@ -1157,14 +1157,94 @@ function desenharPatinete(){const c=cols().find(ehElmer);if(!c||!PAT.pts)return;
   g.fillStyle='rgba(18,18,22,.88)';g.beginPath();g.roundRect(cx-tw/2,y-21,tw,18,9);g.fill();g.fillStyle=corDep(c.depto);g.beginPath();g.arc(cx-tw/2+8,y-12,3,0,7);g.fill();
   g.fillStyle='#fff';g.textAlign='left';g.textBaseline='middle';g.fillText(nome,cx-tw/2+14,y-11.7);
   hits.push({x:x,y:y-8,w:34,h:46,col:c._id,label:c.nome+' de patinete'});}
+
+// ---- trazido da Central em 18/11 (noite): Recepção no lugar da sala Projetos ----
+const isoDe=s=>String(s||'').slice(0,10);
+let RECEP_SYNC={entradas:[],saidas:[],sensiveis:[]};
+const REC_TIPOS={entrada:{n:'Chegando',c:'#3fb56a',l:'Cliente novo'},saida:{n:'Saindo',c:'#e8394a',l:'Cliente saindo'},suspenso:{n:'Suspensos',c:'#f2a541',l:'Serviço suspenso'},sensivel:{n:'Atenção',c:'#a46be0',l:'Cliente sensível'}};
+function recepDados(){const M=(S.recepcao||[]).filter(x=>x&&x.cliente&&!x.encerrado),hoje=todayISO(),d45=isoAdd(hoje,-45);
+  const man=t=>M.filter(x=>x.tipo===t).map(x=>({nome:x.cliente,quando:x.data||isoDe(x.criadoEm),obs:x.obs||'',ate:x.ate||'',id:x._id,manual:true}));
+  const ent=[...(RECEP_SYNC.entradas||[]).map(x=>({nome:x.nome,quando:x.quando,cad:x.cadastro,obs:[x.origem,x.trib].filter(Boolean).join(' · ')})),...man('entrada')].filter(x=>{const d=x.cad||x.quando;return!d||d>=d45;}).sort((a,b)=>String(b.quando||'').localeCompare(String(a.quando||'')));
+  const sai=[...(RECEP_SYNC.saidas||[]).map(x=>({nome:x.nome,quando:x.quando,obs:[x.motivo,x.trib].filter(Boolean).join(' · ')})),...man('saida')].sort((a,b)=>String(a.quando||'').localeCompare(String(b.quando||'')));
+  const sus=man('suspenso').filter(x=>!x.ate||x.ate>=hoje);
+  const sen=[...(RECEP_SYNC.sensiveis||[]).map(x=>({nome:x.nome,quando:x.desde,obs:x.orientacao||'',prio:x.prioridade,cuidado:x.cuidado,equipe:x.equipe})),...man('sensivel')];
+  return{entrada:ent,saida:sai,suspenso:sus,sensivel:sen};}
+const nomeCli=n=>{const s=String(n||'').replace(/\b(LTDA|ME|EPP|EIRELI|S\/?A|S\.A\.)\b\.?/gi,'').replace(/\s+/g,' ').trim();const p=s.split(' ');let t=p.slice(0,2).join(' ');if(t.length>16)t=t.slice(0,15)+'.';return t.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());};
+const RDECO={
+ balcaoRec:()=>spr('balRec',150,34,()=>{sR(0,10,150,24,'#e9e4dc');sR(0,10,150,2,'#ffffff');sR(0,30,150,4,'#c9c1b4');for(let i=0;i<6;i++)sR(10+i*25,14,1,16,'#d6cfc4');sR(0,4,150,7,'#9a6b45');sR(0,4,150,2,'#c08a5c');sR(0,10,150,1,'#6e4a2e');
+   sR(2,13,146,2,'#2f8f86');sR(60,17,30,9,'#2f8f86');sR(62,19,26,5,'#f3e3b0');}),
+ campainha:()=>spr('campa',8,6,()=>{sE(4,3,3.5,2.5,'#f2c94c');sR(0,4,8,2,'#8a6a2a');sP(4,0,'#c9a24a');}),
+ porta:()=>spr('portaRec',60,26,()=>{sR(0,0,60,26,'#2b3140');sR(2,2,56,22,'#3c4558');sR(4,4,25,20,'#9fd3f2');sR(31,4,25,20,'#9fd3f2');sR(4,4,25,3,'#cfeafa');sR(31,4,25,3,'#cfeafa');sR(6,8,2,12,'rgba(255,255,255,.55)');sR(33,8,2,12,'rgba(255,255,255,.55)');sR(26,10,2,8,'#e2c27a');sR(32,10,2,8,'#e2c27a');sR(29,2,2,22,'#2b3140');}),
+ tapeteRec:()=>spr('tapRec',44,12,()=>{sR(0,0,44,12,'#2f8f86');sR(1,1,42,10,'#e9c46a');sR(3,3,38,6,'#2f8f86');}),
+ caixa:()=>spr('caixaMud',9,7,()=>{sR(0,0,9,7,'#c98f5a');sR(0,0,9,1,'#e0a870');sR(4,0,1,7,'#a86b39');}),
+ poltrona:(c)=>spr('poltR'+c,18,18,()=>{sR(0,4,18,12,sh(c,-.2));sR(2,0,14,8,c);sR(2,0,14,1,sh(c,.3));sR(3,8,12,6,sh(c,.08));sR(0,4,3,12,sh(c,-.3));sR(15,4,3,12,sh(c,-.3));sR(2,16,2,2,'#5a3a2a');sR(14,16,2,2,'#5a3a2a');})
+};
+const RECEP_NPC={_id:'recepcionista',nome:'Recepção',visual:{pele:'#c68863',cab:'coque',cc:'#2a1d16',estilo:'blazer',roupa:'#2f8f86',calca:'#2b3a55',ace:['fone'],acor:'#2f8f86',olhos:'#5a3a24'}};
+let VISIT={v:null,n:0};
+function painelRecep(r,D){const x0=r.x+10,y0=r.y+30,W2=r.w-20,cw=Math.floor((W2-4)/4),H2=70;
+  R(x0-3,y0-3,W2+6,H2+6,'#1b1720');R(x0-2,y0-2,W2+4,H2+4,'#4a4552');R(x0,y0,W2,H2,'#0f141c');
+  Object.entries(REC_TIPOS).forEach(([k,T],i)=>{const x=x0+2+i*cw,L=D[k],w=cw-2;R(x,y0+2,w,H2-4,'#151c27');R(x,y0+2,w,15,T.c);R(x,y0+16,w,1,sh(T.c,-.35));
+    g.textBaseline='middle';g.textAlign='left';g.font='800 8px Inter,system-ui,sans-serif';g.fillStyle='#ffffff';g.fillText(T.n.toUpperCase(),x+4,y0+10);
+    g.textAlign='right';g.font='900 12px Inter,system-ui,sans-serif';g.fillStyle='#ffffff';g.fillText(String(L.length),x+w-4,y0+10.5);
+    g.textAlign='left';g.font='700 7.4px Inter,system-ui,sans-serif';
+    L.slice(0,3).forEach((it,j)=>{let t=nomeCli(it.nome);while(g.measureText(t).width>w-7&&t.length>4)t=t.slice(0,-2)+'.';g.fillStyle=j%2?'#d7deea':'#ffffff';g.fillText(t,x+4,y0+26+j*11);});
+    if(!L.length){g.fillStyle='#7a8699';g.fillText('nenhum',x+4,y0+26);}
+    if(L.length>3){g.font='700 6.4px Inter,system-ui,sans-serif';g.fillStyle=T.c;g.fillText('+'+(L.length-3)+' na lista',x+4,y0+60);}
+    hits.push({x,y:y0,w,h:H2,go:'recepcao',label:`${T.n}: ${L.length} ${L.length===1?'cliente':'clientes'}${L.length?' ('+L.slice(0,6).map(it=>nomeCli(it.nome)).join(', ')+')':''}`});});}
+function moverVisitante(r,D){const cx=r.x+r.w/2,porta={x:cx-11,y:r.y+r.h+2},balc={x:cx-11,y:r.y+138},sofa={x:r.x+40,y:r.y+174},V=1.4;
+  if(!VISIT.v){if(REDUCED)return;const ent=D.entrada,sai=D.saida,lst=[...ent.slice(0,6).map(x=>['entrada',x]),...sai.slice(0,6).map(x=>['saida',x])];
+    const n=VISIT.n++;const[tipo,it]=lst.length?lst[n%lst.length]:['visita',{nome:''}];
+    const pts=tipo==='saida'?[{...sofa},{...balc},{x:balc.x,y:balc.y+40},{...porta}]:[{...porta},{x:balc.x,y:balc.y+40},{...balc},{x:sofa.x,y:balc.y+20},{...sofa}];
+    VISIT.v={tipo,nome:it.nome,pts,i:0,x:pts[0].x,y:pts[0].y,pausa:tipo==='saida'?20:0,vis:vis({_id:'cli-'+tipo+n,nome:it.nome||'cliente'}),fim:0};}
+  const v=VISIT.v;if(v.pausa>0){v.pausa--;return;}
+  const a=v.pts[v.i+1];if(!a){v.fim++;if(v.fim>(v.tipo==='saida'?2:40))VISIT.v=null;return;}
+  const dx=a.x-v.x,dy=a.y-v.y,d=Math.hypot(dx,dy);v.dir=dy<-.3?'cima':'baixo';
+  if(d<=V){v.x=a.x;v.y=a.y;v.i++;if(v.i===2&&v.tipo!=='saida')v.pausa=26;if(v.i===1&&v.tipo==='saida')v.pausa=22;}else{v.x+=dx/d*V;v.y+=dy/d*V;}}
+function desenharVisitante(r){const v=VISIT.v;if(!v)return;const parado=v.pausa>0||!v.pts[v.i+1],fr=parado||REDUCED?0:(ANIM.quadro>>1)%2?1:2,sent=v.tipo!=='saida'&&!v.pts[v.i+1];
+  shadow(v.x+11,v.y+37,7,2);
+  if(v.y>r.y+r.h-36){g.save();g.beginPath();g.rect(r.x,r.y,r.w,r.h-4);g.clip();}
+  put(spPessoa(v.vis,v.dir==='cima'&&!sent,sent,sent?0:fr),v.x,v.y);
+  if(v.tipo==='saida'&&!parado)put(RDECO.caixa(),v.x+6,v.y+20);
+  if(v.y>r.y+r.h-36)g.restore();
+  if(!v.nome)return;const T=REC_TIPOS[v.tipo],txt=(v.tipo==='saida'?'Saindo: ':'Chegou: ')+nomeCli(v.nome);
+  g.font='700 10px Inter,system-ui,sans-serif';const tw=g.measureText(txt).width+18,cx=v.x+11,ty=Math.min(v.y-7,r.y+r.h-14);
+  g.fillStyle='rgba(18,18,22,.9)';g.beginPath();g.roundRect(cx-tw/2,ty-8,tw,16,8);g.fill();g.fillStyle=T.c;g.beginPath();g.arc(cx-tw/2+7,ty,2.6,0,7);g.fill();
+  g.fillStyle='#fff';g.textAlign='left';g.textBaseline='middle';g.fillText(txt,cx-tw/2+12.5,ty+.4);}
+function salaRecepcao(){const r=ROOMS.recepcao,cx=r.x+r.w/2,D=recepDados();
+  // parede: logo e letreiro
+  painelRecep(r,D);
+  // tapete do caminho da porta até o balcão
+  R(cx-17,r.y+146,34,r.h-146,'#2f8f86');R(cx-15,r.y+146,30,r.h-146,'#e9c46a');R(cx-13,r.y+146,26,r.h-146,'#2f8f86');for(let y=r.y+152;y<r.y+r.h;y+=10)R(cx-1,y,2,4,'#e9c46a');
+  // recepcionista e balcão
+  if(!NATAL||true){shadow(cx,r.y+148,78,4,.14);}
+  put(spPessoa(vis(RECEP_NPC),false,true),cx-11,r.y+102);
+  put(RDECO.balcaoRec(),cx-75,r.y+114);put(spEquip('monitor'),cx+18,r.y+104);put(RDECO.campainha(),cx-6,r.y+116);put(spItem('girassol'),cx-58,r.y+107);put(spItem('caneca'),cx+48,r.y+111);
+  R(cx-16,r.y+127,32,14,'#f6f1e7');R(cx-16,r.y+127,32,1,'#ffffff');if(LOGO.complete&&LOGO.naturalWidth)g.drawImage(LOGO,cx-6,r.y+128,11.5,12);
+  g.font='800 4.6px Inter,system-ui,sans-serif';g.fillStyle='#2f8f86';g.textBaseline='middle';g.textAlign='right';g.fillText('BEM-VINDO',cx-19,r.y+134);g.textAlign='left';g.fillText('RESILCON',cx+19,r.y+134);
+  if(NATAL){put(SPN.guirlanda(),r.x+r.w-60,r.y+108);}
+  // espera à esquerda
+  shadow(r.x+52,r.y+212,34,3,.12);put(DECO.sofa(64,'#2f8f86'),r.x+20,r.y+196);put(DECO.mesinha(),r.x+41,r.y+222);put(DECO.vasoCostela(),r.x+6,r.y+214);
+  put(DECO.luminariaPe(),r.x+92,r.y+186);
+  // espera à direita
+  put(RDECO.poltrona('#e9a46a'),r.x+r.w-92,r.y+198);put(RDECO.poltrona('#e9a46a'),r.x+r.w-62,r.y+198);put(DECO.mesinha(),r.x+r.w-80,r.y+222);put(DECO.bebedouro(),r.x+r.w-28,r.y+196);
+  put(DECO.vaso(),r.x+r.w-26,r.y+150);put(DECO.vasoEspada(),r.x+8,r.y+150);put(DECO.quadro(),r.x+20,r.y+110);put(DECO.relogio(),r.x+r.w-36,r.y+112);
+  // porta de entrada (parede de baixo) com marquise, luzes e capacho do lado de fora
+  const py=r.y+r.h-6;R(cx-38,py-2,76,30,'#1f2530');put(RDECO.porta(),cx-29,py);
+  R(cx-40,py-6,80,5,'#2f8f86');R(cx-40,py-6,80,1,'#5fc0b4');g.font='800 4.4px Inter,system-ui,sans-serif';g.fillStyle='#f3e3b0';g.textAlign='center';g.textBaseline='middle';g.fillText('ENTRADA',cx,py-3.2);
+  for(const sx2 of[cx-44,cx+40]){R(sx2,py+2,4,6,'#2b3140');E(sx2+2,py+3,2.4,2.4,'#ffe9a8');}
+  put(RDECO.tapeteRec(),cx-22,py+28);put(DECO.vaso(),cx-64,py+16);put(DECO.vaso(),cx+46,py+16);
+  hits.push({x:cx-30,y:py,w:60,h:26,go:'recepcao',label:'Entrada da Resilcon: abrir a recepção'});
+  hits.push({x:cx-75,y:r.y+102,w:150,h:46,go:'recepcao',label:'Balcão da recepção'});
+  moverVisitante(r,D);desenharVisitante(r);}
+function luzesRecepcao(){const r=ROOMS.recepcao,cx=r.x+r.w/2,py=r.y+r.h-6;g.globalCompositeOperation='lighter';glow(cx-42,py+3,14,'255,226,160',.35);glow(cx+42,py+3,14,'255,226,160',.35);glow(cx,r.y+60,90,'120,200,190',.06);g.globalCompositeOperation='source-over';}
 function montarEscritorio(canvas){
   cv=canvas;cv.width=CW*SC;cv.height=CH*SC;g=cv.getContext('2d');BG=null;NOEL.pts=null;NOEL.presentes=[];ANIM={pos:{},walk:{},pronto:false,ultimoPasseio:0,refazerOverlay:false,quadro:0};for(const k in FALA.ativas)delete FALA.ativas[k];setTimeout(()=>{ANIM.pronto=true;},6000);
   const desenha=()=>{try{scene();g.setTransform(SC,0,0,SC,-CX0*SC,-CY0*SC);desenharTags();}catch(e){console.error('escritorio',e);}};
-  const t1=setInterval(()=>{ANIM.quadro++;tick=Math.floor(ANIM.quadro/3);passeio();moverNoel();moverPatinete();desenha();},150);
+  const t1=setInterval(()=>{ANIM.quadro++;tick=Math.floor(ANIM.quadro/3);passeio();moverNoel();moverPatinete();try{moverVisitante(ROOMS.recepcao,recepDados());}catch(e){}desenha();},150);
   desenha();
   return{
     atualizar(payload,ligacoes){const p=payload||{};S={colaboradores:(p.colaboradores||[]).map(c=>({...c,_id:c._id||c.id})),projetos:p.projetos||[],ferramentas:(p.ferramentas||[]).map(f=>({...f,_id:f._id||f.nome})),apis:p.apis||[],paginas:(p.paginas||[]).map(x=>({...x,_id:x._id||x.nome})),campanhas:p.campanhas||[]};
-      S.projetos=S.projetos.map(x=>({...x,_id:x._id||x.nome}));ANIV={hoje:[],proximos:[],...(p.aniversarios||{})};TROFEUS={top:[],...(p.trofeus||{})};TROFEUS_MES=p.trofeusMes||null;LIG=ligacoes||[];aplicarLigacoes();desenha();},
+      S.projetos=S.projetos.map(x=>({...x,_id:x._id||x.nome}));ANIV={hoje:[],proximos:[],...(p.aniversarios||{})};TROFEUS={top:[],...(p.trofeus||{})};TROFEUS_MES=p.trofeusMes||null;const RC=p.recepcao||{};RECEP_SYNC={entradas:RC.entradas||[],saidas:RC.saidas||[],sensiveis:RC.sensiveis||[]};S.recepcao=(RC.manuais||[]).map(x=>({...x,_id:x._id||x.id}));LIG=ligacoes||[];aplicarLigacoes();desenha();},
     destruir(){clearInterval(t1);}
   };}
 
