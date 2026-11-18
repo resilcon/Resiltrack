@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.31 (Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.32 (Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -8430,7 +8430,7 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 // ================= KRONOS · controle de ponto (painel do dia, espelho, pendências e saldo do mês) =================
 // Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
 // com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
-const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_registro","Forma de registro"]];
+const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_ajustes","Ajustes"],["kr_registro","Forma de registro"]];
 const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
 const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"],nao_registra:["Não registra ponto","neutro"],apurado:["Apurado","good"],em_andamento:["Em andamento","good"],sem_batida:["",""]};
 const KR_DOW=["","Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
@@ -8454,6 +8454,7 @@ async function krView(v){
  if(MODE==="kr_pend") return krPendencias(v);
  if(MODE==="kr_saldos") return krSaldos(v);
  if(MODE==="kr_registro") return krRegistro(v);
+ if(MODE==="kr_ajustes") return krAjustes(v);
  return krPainel(v);
 }
 
@@ -8510,15 +8511,19 @@ async function krEspelho(v){
   res.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
   let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"espelho",colaborador:KR.col,mes:KR.mes}}); }catch(e){ res.innerHTML=krSemAcesso(e); return; }
   if(MODE!=="kr_espelho") return;
+  let AJ={pode_editar:false,dias:{}}; try{ AJ=await crmRpc("kronos_ajuste",{p:{acao:"mes",colaborador:KR.col,mes:KR.mes}}); }catch(_){ }
+  if(MODE!=="kr_espelho") return;
+  const nomeCol=((KR.pessoas||[]).find(p=>p.id===KR.col)||{}).nome||"";
   const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), ap=dias.filter(d=>d.situacao==="apurado"), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
   const sld=ap.reduce((a,d)=>a+(+d.credito||0),0), semReg=dias.filter(d=>d.situacao==="sem_registro").length, E=D.escala;
   const escTxt=E?(E.registra_ponto===false?"Não registra ponto":(E.dias||[]).length?(E.dias||[]).map(x=>`${KR_DOW[x.dia_semana]} ${x.entrada} às ${x.saida}`).join(" · ")+` · intervalo de ${(E.dias[0]||{}).intervalo} min`:"Sem horários definidos"):"";
   res.innerHTML=`${E?`<div class="kr-esc"><b>Escala:</b> ${esc(E.nome)}<div class="sub">${esc(escTxt)}</div></div>`:`<div class="kr-aviso">Este colaborador ainda não tem escala no Kronos. Sem escala não há previsto nem saldo.</div>`}
   <div class="tiles kr-tiles">${krTile("Dias apurados",ap.length)}${krTile("Horas trabalhadas",krHM(tot))}${krTile("Saldo do mês",krSaldo(sld)||"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}${krTile("Sem registro",semReg)}</div>
-  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th>Situação</th></tr></thead><tbody>
-  ${dias.map(d=>{ const livre=d.tipo_dia==="folga"||d.tipo_dia==="feriado"; return `<tr class="${livre&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidas(d.batidas):`<span class="sub">${d.feriado?esc("Feriado: "+d.feriado):d.tipo_dia==="folga"?"Folga":d.situacao==="sem_registro"?"Sem registro no relógio":""}</span>`}</td>
-    <td class="right num">${d.previsto?krHM(d.previsto):""}</td><td class="right num">${d.qtd?krHM(d.minutos):""}</td><td class="right num">${krSaldo(d.saldo)}${d.credito!=null&&d.credito!==d.saldo?` <span class="sub" title="Crédito com acréscimo de 100%">vale ${krHM(d.credito)}</span>`:""}</td><td>${d.situacao==="apurado"?"":krPill(d.situacao)}</td></tr>`; }).join("")||`<tr><td colspan="6"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">Saldo do dia: trabalhado menos previsto, zerado dentro da tolerância de 10 minutos. Horas em sábado, domingo e feriado valem em dobro no banco. Dia com batida faltando ou sem registro no relógio fica fora do saldo até ser ajustado. Ainda não entram aqui atestados, ajustes manuais e o saldo anterior do Tangerino.</p>`; };
+  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th>Situação</th><th></th></tr></thead><tbody>
+  ${dias.map(d=>{ const livre=d.tipo_dia==="folga"||d.tipo_dia==="feriado"; return `<tr class="${livre&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidasAj(d.batidas,(AJ.dias||{})[String(d.data).slice(0,10)]):`<span class="sub">${d.feriado?esc("Feriado: "+d.feriado):d.tipo_dia==="folga"?"Folga":d.situacao==="sem_registro"?"Sem registro no relógio":""}</span>`}</td>
+    <td class="right num">${d.previsto?krHM(d.previsto):""}</td><td class="right num">${d.qtd?krHM(d.minutos):""}</td><td class="right num">${krSaldo(d.saldo)}${d.credito!=null&&d.credito!==d.saldo?` <span class="sub" title="Crédito com acréscimo de 100%">vale ${krHM(d.credito)}</span>`:""}</td><td>${d.situacao==="apurado"?"":krPill(d.situacao)}</td><td class="right">${AJ.pode_editar&&String(d.data).slice(0,10)<=krHojeISO()?`<button class="view-btn" data-kaj="${String(d.data).slice(0,10)}">${(AJ.dias||{})[String(d.data).slice(0,10)]?"Ver ajuste":"Ajustar"}</button>`:(AJ.dias||{})[String(d.data).slice(0,10)]?`<button class="view-btn" data-kaj="${String(d.data).slice(0,10)}">Ver ajuste</button>`:""}</td></tr>`; }).join("")||`<tr><td colspan="7"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Saldo do dia: trabalhado menos previsto, zerado dentro da tolerância de 10 minutos. Horas em sábado, domingo e feriado valem em dobro no banco. Dia com batida faltando ou sem registro no relógio fica fora do saldo até ser ajustado. Batidas com contorno tracejado foram incluídas pelo RH; riscadas foram desconsideradas. Ainda não entram aqui atestados e o saldo anterior do Tangerino.</p>`;
+  res.querySelectorAll("[data-kaj]").forEach(b=>b.onclick=()=>krAjusteDia(KR.col,nomeCol,b.dataset.kaj,carrega)); };
  box.querySelector("#keCol").onchange=e=>{ KR.col=e.target.value; carrega(); };
  box.querySelector("#keMes").onchange=e=>{ KR.mes=e.target.value; carrega(); };
  carrega();
@@ -8537,8 +8542,9 @@ async function krPendencias(v){
   <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="kpQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div></div>
   <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Dia</th><th>Colaborador</th><th>Batidas registradas</th><th></th></tr></thead><tbody>
   ${ls.map(x=>`<tr><td style="white-space:nowrap"><b>${krDataBR(x.data)}</b></td><td><b>${esc(x.nome)}</b><div class="sub">${esc(x.departamento||"Sem departamento")}</div></td><td>${krBatidas(x.batidas)} <span class="sub">${x.qtd} de ${x.qtd+1}</span></td>
-    <td class="right"><button class="view-btn" data-kpv="${x.colaborador_id}" data-kpm="${String(x.data).slice(0,7)}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">${L.length?"Ninguém encontrado.":"Nenhuma batida faltando no período."}</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">O ajuste com justificativa e aprovação entra na próxima etapa. Por enquanto esta lista serve para conferir com o que está no Tangerino.</p>`;
+    <td class="right" style="white-space:nowrap"><button class="view-btn" data-kpa="${x.colaborador_id}" data-kpd="${String(x.data).slice(0,10)}" data-kpn="${escAttr(x.nome)}">Ajustar</button> <button class="view-btn" data-kpv="${x.colaborador_id}" data-kpm="${String(x.data).slice(0,7)}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="4"><div class="empty">${L.length?"Ninguém encontrado.":"Nenhuma batida faltando no período."}</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Use Ajustar para incluir a batida esquecida, com motivo e justificativa. O dia sai da lista assim que fica com número par de batidas.</p>`;
+  box.querySelectorAll("[data-kpa]").forEach(b=>b.onclick=()=>krAjusteDia(b.dataset.kpa,b.dataset.kpn,b.dataset.kpd,()=>krPendencias(v)));
   const qi=box.querySelector("#kpQ"); qi.oninput=()=>{ q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#kpQ"); x.focus(); x.setSelectionRange(p,p); };
   box.querySelectorAll("[data-kpv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.kpv; KR.mes=b.dataset.kpm; setMode("kr_espelho"); }); };
  pinta();
@@ -8615,6 +8621,93 @@ tr.kr-fds td{opacity:.55}
 .kr-dias{display:flex;gap:4px}.kr-dias.off{opacity:.4}.kr-dia{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font:700 12px/1 "Urbanist",sans-serif;cursor:pointer}.kr-dia.on{background:var(--accent);border-color:var(--accent);color:#fff}.kr-dia:disabled{cursor:default}
 .kr-esc{margin:0 0 12px;padding:11px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);font-size:13.5px}
 `; document.head.appendChild(st); })();
+
+// ---------- Ajustes de ponto (REP-A: a batida original nunca é alterada; o ajuste fica registrado à parte) ----------
+const KR_MOTIVOS=[["esquecimento","Esqueceu de registrar"],["falha_relogio","Relógio ou sistema fora do ar"],["trabalho_externo","Trabalho externo ou em cliente"],["batida_duplicada","Batida duplicada"],["batida_errada","Registro feito por engano"],["outro","Outro motivo"]];
+const krMotivo=k=>(KR_MOTIVOS.find(x=>x[0]===k)||[k,k])[1];
+const krHojeISO=()=>{ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const krOrigem=o=>({relogio:"relógio",online:"online",ajuste:"ajuste",remoto:"remoto"})[o]||o||"";
+function krBatidasAj(b,aj){ const inc=new Set((aj&&aj.incluidas)||[]), des=(aj&&aj.desconsideradas)||[];
+ const h=(b||[]).map((x,i)=>`<span class="kr-bat ${i%2?"sai":"ent"} ${inc.has(x)?"kr-inc":""}" title="${i%2?"Saída":"Entrada"}${inc.has(x)?" incluída pelo RH":""}">${esc(x)}</span>`).join("");
+ return (h||`<span class="sub">Nenhuma</span>`)+des.map(x=>`<span class="kr-bat kr-des" title="Desconsiderada pelo RH">${esc(x)}</span>`).join(""); }
+
+async function krAjusteDia(col,nome,data,depois){
+ const m=crmModal("Kronos · ajuste de ponto",`${nome||"Colaborador"} · ${krDataBR(data)}`,"",`<div class="empty">Carregando…</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal");
+ let alterou=false;
+ const fechar=()=>{ closeModal(); if(alterou&&depois) depois(); };
+ const pinta=async()=>{ let D; try{ D=await crmRpc("kronos_ajuste",{p:{acao:"dia",colaborador:col,data}}); }catch(e){ m.querySelector(".modal-body").innerHTML=`<div class="rha-aviso">${esc(krErroAj(e))}</div>`; return; }
+  const ed=D.pode_editar, M=D.marcacoes||[], I=D.incluidas||[], C=D.cancelados||[];
+  const todas=[...M.map(x=>({...x,k:"m"})),...I.map(x=>({...x,k:"i"}))].sort((a,b)=>a.hora.localeCompare(b.hora));
+  let n=0; const linhas=todas.map(x=>{ const conta=x.k==="i"||!x.desconsiderada; const tipo=conta?(n++%2?"Saída":"Entrada"):"Não conta";
+   return `<div class="kaj-l ${conta?"":"kaj-off"}"><b class="kaj-h">${esc(x.hora)}</b><span class="kaj-t">${tipo}</span>
+    <span class="kaj-o">${x.k==="i"?`<span class="kr-pill kr-warn">Incluída pelo RH</span> ${esc(krMotivo(x.motivo))}: ${esc(x.justificativa)} <span class="sub">· ${esc(x.por)}</span>`
+      :x.desconsiderada?`<span class="kr-pill kr-crit">Desconsiderada</span> ${esc(krMotivo(x.motivo))}: ${esc(x.justificativa)} <span class="sub">· ${esc(x.por)}</span>`
+      :`<span class="sub">${esc(krOrigem(x.origem))}${x.comprovante?` · comprovante ${x.comprovante}`:""}</span>`}</span>
+    ${ed?(x.k==="i"||x.desconsiderada?`<button class="txt-btn" data-canc="${x.k==="i"?x.id:x.ajuste_id}">Desfazer</button>`:`<button class="txt-btn" data-desc="${x.id}">Desconsiderar</button>`):""}</div>`; }).join("")||`<div class="empty">Nenhuma batida neste dia.</div>`;
+  const qtd=todas.filter(x=>x.k==="i"||!x.desconsiderada).length;
+  m.querySelector(".modal-body").innerHTML=`${qtd%2?`<div class="rha-aviso">O dia está com ${qtd} batida(s): falta uma entrada ou saída.</div>`:""}
+   <div class="kaj-lista">${linhas}</div>
+   ${ed?`<div class="kaj-form"><h4>Incluir batida esquecida</h4><div class="crm-form">
+     <label class="crm-f"><span>Horário</span><input class="inp" type="time" id="kaH"></label>
+     <label class="crm-f"><span>Motivo</span><select class="inp" id="kaM">${crmOpt(KR_MOTIVOS.filter(x=>!["batida_duplicada","batida_errada"].includes(x[0])),"esquecimento")}</select></label>
+     <label class="crm-f crm-w2"><span>Justificativa</span><input class="inp" id="kaJ" placeholder="Ex.: confirmou por e-mail que saiu para o almoço às 12h e voltou às 13h"></label></div>
+     <div class="rha-pe"><span class="sub" id="kaMsg" style="flex:1">A batida original não muda. O ajuste fica registrado com seu nome, data e hora.</span><button class="txt-btn" id="kaFecha">Fechar</button>${crmPri('id="kaOk">Incluir batida</button>')}</div></div>`
+   :`<div class="rha-pe"><span class="sub" style="flex:1">Só o RH faz ajustes.</span><button class="txt-btn" id="kaFecha">Fechar</button></div>`}
+   ${C.length?`<details class="kaj-hist"><summary>Ajustes desfeitos neste dia (${C.length})</summary>${C.map(c=>`<div class="sub">${c.tipo==="incluir"?"Inclusão":"Desconsideração"} das ${esc(c.hora||"")} desfeita por ${esc(c.cancelado_por||"")}: ${esc(c.cancelado_motivo||"")}</div>`).join("")}</details>`:""}`;
+  m.querySelector("#kaFecha").onclick=fechar;
+  const ok=m.querySelector("#kaOk"); if(ok) ok.onclick=async()=>{ const msg=m.querySelector("#kaMsg"), h=m.querySelector("#kaH").value, j=m.querySelector("#kaJ").value.trim();
+   if(!h){ msg.textContent="Informe o horário."; return; } if(j.length<5){ msg.textContent="Escreva a justificativa."; return; }
+   ok.disabled=true; try{ await crmRpc("kronos_ajuste",{p:{acao:"incluir",colaborador:col,data,hora:h,motivo:m.querySelector("#kaM").value,justificativa:j}}); alterou=true; crmToast("Batida incluída"); pinta(); }
+   catch(e){ ok.disabled=false; msg.textContent=krErroAj(e); } };
+  m.querySelectorAll("[data-desc]").forEach(b=>b.onclick=()=>krPergunta(m,"Desconsiderar batida","Por que esta batida não deve contar?",true,async(mot,j)=>{
+   await crmRpc("kronos_ajuste",{p:{acao:"desconsiderar",marcacao_id:b.dataset.desc,motivo:mot,justificativa:j}}); alterou=true; crmToast("Batida desconsiderada"); pinta(); }));
+  m.querySelectorAll("[data-canc]").forEach(b=>b.onclick=()=>krPergunta(m,"Desfazer ajuste","Por que este ajuste está sendo desfeito?",false,async(_,j)=>{
+   await crmRpc("kronos_ajuste",{p:{acao:"cancelar",id:b.dataset.canc,justificativa:j}}); alterou=true; crmToast("Ajuste desfeito"); pinta(); }));
+ };
+ m.querySelector("[data-close]").onclick=fechar;
+ pinta();
+}
+function krErroAj(e){ const t=String((e&&e.message)||e||""); if(t.includes("sem_permissao")) return "Só o RH pode fazer ajustes de ponto."; if(t.includes("Could not find the function")) return "Os ajustes ainda não estão no banco. Rode o arquivo 25_kronos_ajustes.sql."; return t; }
+function krPergunta(m,tit,lbl,comMotivo,fn){ const box=m.querySelector(".kaj-form")||m.querySelector(".modal-body");
+ const d=document.createElement("div"); d.className="kaj-perg"; d.innerHTML=`<h4>${esc(tit)}</h4><div class="crm-form">${comMotivo?`<label class="crm-f"><span>Motivo</span><select class="inp" data-pm>${crmOpt(KR_MOTIVOS.filter(x=>x[0]!=="esquecimento"),"batida_duplicada")}</select></label>`:""}
+  <label class="crm-f ${comMotivo?"":"crm-w2"}"><span>${esc(lbl)}</span><input class="inp" data-pj></label></div><div class="rha-pe"><span class="sub" data-pmsg style="flex:1"></span><button class="txt-btn" data-pno>Voltar</button>${crmPri('data-pok>Confirmar</button>')}</div>`;
+ box.prepend(d); d.scrollIntoView({block:"nearest"}); d.querySelector("[data-pj]").focus();
+ d.querySelector("[data-pno]").onclick=()=>d.remove();
+ d.querySelector("[data-pok]").onclick=async()=>{ const j=d.querySelector("[data-pj]").value.trim(), mot=(d.querySelector("[data-pm]")||{}).value||"";
+  if(j.length<5){ d.querySelector("[data-pmsg]").textContent="Escreva pelo menos 5 caracteres."; return; }
+  try{ await fn(mot,j); }catch(e){ d.querySelector("[data-pmsg]").textContent=krErroAj(e); } }; }
+
+async function krAjustes(v){
+ if(!KR.ajIni){ const h=new Date(); h.setDate(h.getDate()-30); KR.ajIni=h.toISOString().slice(0,10); KR.ajFim=krHojeISO(); }
+ const box=krMoldura(v,"kr_ajustes","Ajustes de ponto","Tudo o que o RH incluiu ou desconsiderou no espelho, com motivo, justificativa e quem fez. As batidas originais continuam guardadas, como exige a Portaria 671.",
+  `<input type="date" class="inp" id="kjIni" value="${escAttr(KR.ajIni)}" aria-label="De" style="max-width:160px"> <input type="date" class="inp" id="kjFim" value="${escAttr(KR.ajFim)}" aria-label="Até" style="max-width:160px">`);
+ v.querySelector("#kjIni").onchange=e=>{ KR.ajIni=e.target.value; krAjustes(v); }; v.querySelector("#kjFim").onchange=e=>{ KR.ajFim=e.target.value; krAjustes(v); };
+ let D; try{ D=await crmRpc("kronos_ajuste",{p:{acao:"historico",inicio:KR.ajIni,fim:KR.ajFim}}); }catch(e){ box.innerHTML=`<div class="card"><div class="empty">${esc(krErroAj(e))}</div></div>`; return; }
+ if(MODE!=="kr_ajustes") return;
+ const L=D.ajustes||[], at=L.filter(x=>x.status==="ativo"); let q="", st="ativo";
+ const pinta=()=>{ const nq=crmNormTxt(q), ls=L.filter(x=>(!st||x.status===st)&&(!nq||crmNormTxt(x.nome+" "+x.justificativa+" "+x.por).includes(nq)));
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Batidas incluídas",at.filter(x=>x.tipo==="incluir").length)}${krTile("Batidas desconsideradas",at.filter(x=>x.tipo==="desconsiderar").length)}${krTile("Pessoas ajustadas",new Set(at.map(x=>x.colaborador_id)).size)}${krTile("Ajustes desfeitos",L.length-at.length)}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="kjQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa, justificativa ou quem ajustou" aria-label="Buscar"></div>
+   <select class="inp" id="kjS" style="max-width:200px">${crmOpt([["ativo","Valendo"],["cancelado","Desfeitos"]],st,"Todos")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Dia</th><th>Colaborador</th><th>Ajuste</th><th>Motivo e justificativa</th><th>Feito por</th><th></th></tr></thead><tbody>
+  ${ls.map(x=>`<tr class="${x.status==="cancelado"?"kaj-off":""}"><td style="white-space:nowrap"><b>${krDataBR(x.data)}</b></td><td><b>${esc(x.nome)}</b></td>
+   <td>${x.tipo==="incluir"?`<span class="kr-pill kr-warn">Incluiu ${esc(x.hora)}</span>`:`<span class="kr-pill kr-crit">Desconsiderou ${esc(x.hora)}</span>`}${x.status==="cancelado"?`<div class="sub">Desfeito por ${esc(x.cancelado_por||"")}: ${esc(x.cancelado_motivo||"")}</div>`:""}</td>
+   <td>${esc(krMotivo(x.motivo))}<div class="sub">${esc(x.justificativa)}</div></td><td>${esc(x.por)}<div class="sub">${new Date(x.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</div></td>
+   <td class="right"><button class="view-btn" data-kjd="${x.colaborador_id}|${String(x.data).slice(0,10)}|${escAttr(x.nome)}">Abrir dia</button></td></tr>`).join("")||`<tr><td colspan="6"><div class="empty">Nenhum ajuste no período.</div></td></tr>`}</tbody></table></div>`;
+  const qi=box.querySelector("#kjQ"); qi.oninput=()=>{ q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#kjQ"); x.focus(); x.setSelectionRange(p,p); };
+  box.querySelector("#kjS").onchange=e=>{ st=e.target.value; pinta(); };
+  box.querySelectorAll("[data-kjd]").forEach(b=>b.onclick=()=>{ const [c,d,n]=b.dataset.kjd.split("|"); krAjusteDia(c,n,d,()=>krAjustes(v)); }); };
+ pinta();
+}
+(function(){ if(document.getElementById("kaj-css")) return; const s=document.createElement("style"); s.id="kaj-css"; s.textContent=`
+.kr-bat.kr-inc{outline:1.5px dashed #b7791f;outline-offset:1px}.kr-bat.kr-des{text-decoration:line-through;opacity:.55;background:#f3f3f3;color:#777}
+.kaj-lista{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.kaj-l{display:grid;grid-template-columns:60px 80px 1fr auto;gap:10px;align-items:center;background:#f6f9fa;border-radius:10px;padding:8px 12px}
+.kaj-h{font:700 16px "Urbanist",sans-serif}.kaj-t{font-size:12.5px;color:var(--muted)}.kaj-off{opacity:.6}.kaj-off .kaj-h{text-decoration:line-through}
+.kaj-form,.kaj-perg{border-top:1px solid var(--border);padding-top:12px;margin-top:6px}.kaj-perg{border:1px solid #f0d9a8;background:#fdf8ef;border-radius:12px;padding:12px;margin-bottom:12px}.kaj-form h4,.kaj-perg h4{margin:0 0 8px;font:700 14px "Urbanist",sans-serif;color:#044B64}
+.kaj-hist{margin-top:10px;font-size:13px}.kaj-hist summary{cursor:pointer;color:var(--muted)}
+@media(max-width:700px){.kaj-l{grid-template-columns:52px 1fr}.kaj-o{grid-column:1/-1}}
+`; document.head.appendChild(s); })();
 
 // ================= RH ASSIST · Assistente de RH com IA =================
 // Para gestores, diretores e RH. Escolhe uma pessoa da equipe e a IA lê avaliações, feedbacks, PDI e DISC para sugerir
