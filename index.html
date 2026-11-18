@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.20.1 (Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.21 (CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -5570,8 +5570,8 @@ function precoPintar(v){
   </div></div>
   <div class="card ce-pad preco-resumo"><h3>Proposta</h3>
    ${S.cesta.length?S.cesta.map((c,i)=>`<div class="ce-row"><span><b>${esc(c.plano)}</b><br><span class="sub">${esc(c.produto)}</span></span><span style="display:flex;gap:8px;align-items:center"><b class="num">${precoMoeda(c.valor)}/mês</b><button class="txt-btn crm-perigo" data-tirar="${i}">Tirar</button></span></div>`).join(""):`<p class="sub">Escolha um plano ao lado. Se o cliente precisar de mais de um produto (por exemplo, Contábil e BPO), troque o produto no topo e escolha o plano dele também.</p>`}
-   ${tot.extrasM.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">extra mensal</span></span><b class="num">${precoMoeda(e.total)}/mês</b></div>`).join("")}
-   ${tot.extrasU.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">${e.qtd>1?e.qtd+" × "+precoMoeda(e.valor):"cobrança única"}</span></span><b class="num">${precoMoeda(e.total)}</b></div>`).join("")}
+   ${tot.extrasM.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">${e.desconto?"desconto na mensalidade":"extra mensal"}</span></span><b class="num">${precoMoeda(e.total)}/mês</b></div>`).join("")}
+   ${tot.extrasU.map(e=>`<div class="ce-row"><span>${esc(e.nome)}<br><span class="sub">${e.desconto?"desconto nos avulsos":e.livre||!(e.qtd>1)?"cobrança única":e.qtd+" × "+precoMoeda(e.valor)}</span></span><b class="num">${precoMoeda(e.total)}</b></div>`).join("")}
    <div class="preco-tot"><div><span>Mensalidade</span><b class="num">${precoMoeda(tot.mensal)}</b></div><div><span>Serviços avulsos</span><b class="num">${precoMoeda(tot.avulso)}</b></div></div>
    ${tot.avulso?`<label class="crm-f"><span>Parcelar os avulsos em</span><select class="inp" id="prParc">${[1,2,3,4,5,6,7,8,9,10,11,12,24,36].map(n=>`<option value="${n}" ${+S.parcelas===n?"selected":""}>${n===1?"Uma parcela":n+" parcelas"} de ${precoMoeda(tot.avulso/n)}</option>`).join("")}</select></label>`:""}
    <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" type="number" min="1" id="prVal" value="${escAttr(S.validade)}"></label>
@@ -5676,9 +5676,9 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
  try{ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:S.negocio.id}}); const o=(f.negocios||[]).find(x=>x.id===S.negocio.id); if(!o) throw new Error("Negócio não encontrado");
   const t=precoTotais();
   const itens=[...S.cesta.map(c=>({servico_id:null,nome:`${c.plano} (${c.produto})`,valor:c.valor,qtd:1,desconto:0,recorrencia:"mensal"})),
-   ...t.extrasM.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"mensal"})),
-   ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:precoNum(e.valor),qtd:Number(e.qtd)||1,desconto:0,recorrencia:"unico"}))];
-  const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:Object.values(S.extras),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso,diagnostico:S.diag||null};
+   ...t.extrasM.map(e=>({servico_id:null,nome:e.nome,valor:e.livre?e.total:precoNum(e.valor),qtd:e.livre?1:(Number(e.qtd)||1),desconto:0,recorrencia:"mensal"})),
+   ...t.extrasU.map(e=>({servico_id:null,nome:e.nome,valor:e.livre?e.total:precoNum(e.valor),qtd:e.livre?1:(Number(e.qtd)||1),desconto:0,recorrencia:"unico"}))];
+  const proposta={nicho:S.nicho||null,gerada_em:new Date().toISOString(),cesta:S.cesta.map(({linhas,...c})=>c),extras:[...t.extrasM,...t.extrasU].map(({k,...e})=>e.livre?{...e,valor:precoValorTxt(e.total),qtd:1}:e),parcelas:S.parcelas,obs:S.obs,validade_dias:S.validade,mensal:t.mensal,avulso:t.avulso,diagnostico:S.diag||null};
   await crmRpc("crm_salvar_negocio",{p:{id:o.id,funil_id:o.funil_id,titulo:o.titulo,contato_id:o.contato_id,responsavel:o.responsavel_email,origem:o.origem,previsao_fechamento:o.previsao_fechamento,
    tema:o.tema,obs:o.obs,campos:{...(o.campos||{}),...simCamposDoSimulador(o.campos),...(S.nicho?{nicho:S.nicho}:{}),proposta},itens,indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome,gclick_empresa_id:o.gclick_empresa_id}});
   try{ await crmRpc("crm_atividade",{p:{oportunidade_id:o.id,contato_id:o.contato_id,empresa_id:o.empresa_id,tipo:"nota",texto:precoResumoTexto()}}); }catch(_){}
@@ -5706,7 +5706,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td{padding:9px 0;border
 <div class="hero"><img src="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/montar-email?logo=branco" alt="Resilcon"><h1>Proposta comercial</h1><p>${cli?"Preparada para "+e(cli)+" · ":""}${hoje.toLocaleDateString("pt-BR")}</p></div>
 <div class="sec"><h2>Plano escolhido</h2>${S.cesta.map(c=>`<div class="plano" style="--c:${e((PRECO_DB[c.arq]&&(PRECO_DB[c.arq].P.planos.find(p=>p.id===c.planoId)||{}).cor)||"#006789")}"><div class="t"><div><b>${e(c.plano)}</b><div style="font-size:13px;color:#5b6770">${e(c.produto)}</div></div><div class="v">${precoMoeda(c.valor)}<span style="font-size:13px;color:#5b6770;font-weight:400">/mês</span></div></div>
  ${c.inclusos.length?`<ul>${c.inclusos.map(x=>`<li>${e(cap(x))}</li>`).join("")}</ul>`:""}</div>`).join("")}</div>
-${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais</h2><table>${t.extrasM.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">${x.qtd>1?x.qtd+" × "+precoMoeda(precoNum(x.valor)):"cobrança única"}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
+${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais</h2><table>${t.extrasM.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(cap(x.nome))}<br><small style="color:#5b6770">${x.desconto?"desconto nos avulsos":x.livre||!(x.qtd>1)?"cobrança única":x.qtd+" × "+precoMoeda(precoNum(x.valor))}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
 <div class="sec"><h2>Investimento</h2><div class="tot"><div><span>Mensalidade</span><b>${precoMoeda(t.mensal)}</b></div><div><span>Serviços avulsos</span><b>${precoMoeda(t.avulso)}</b>${t.avulso&&S.parcelas>1?`<div style="font-size:13px;color:#5b6770;margin-top:4px">em ${S.parcelas}x de ${precoMoeda(t.avulso/S.parcelas)}</div>`:""}</div></div></div>
 ${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</div></div>`:""}
 <div class="rod">Proposta válida até ${val.toLocaleDateString("pt-BR")}. Valores sujeitos a revisão se houver mudança no faturamento, no regime tributário ou no volume de operações informado.<br>Resilcon Contabilidade Consultiva · WhatsApp (11) 97414-4223 · resilcon.com.br</div>
@@ -8773,7 +8773,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td{padding:9px 0;border
 <div class="sec"><h2>Dados do cliente</h2><div class="cli">${B.dados.map(([k,v])=>`<div><small>${e(k)}</small><b>${e(v)}</b></div>`).join("")}</div></div>
 <div class="sec"><h2>Plano escolhido</h2>${S.cesta.map(c=>`<div class="plano" style="--c:${e((PRECO_DB[c.arq]&&(PRECO_DB[c.arq].P.planos.find(p=>p.id===c.planoId)||{}).cor)||"#006789")}"><div class="t"><div><b>${e(c.plano)}</b><div style="font-size:13px;color:#5b6770">${e(c.produto)}</div></div><div class="v">${precoMoeda(c.valor)}<span style="font-size:13px;color:#5b6770;font-weight:400">/mês</span></div></div>
  ${c.inclusos.length?`<ul>${c.inclusos.map(x=>`<li>${e(cap(x))}</li>`).join("")}</ul>`:""}</div>`).join("")}</div>
-${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>Serviços adicionais</h2><table>${t.extrasM.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">${x.qtd>1?x.qtd+" × "+precoMoeda(precoNum(x.valor)):"cobrança única"}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
+${t.extrasM.length||t.extrasU.length?`<div class="sec"><h2>${[...t.extrasM,...t.extrasU].some(x=>x.desconto)?"Ajustes e serviços adicionais":"Serviços adicionais"}</h2><table>${t.extrasM.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">mensal</small></td><td class="r">${precoMoeda(x.total)}/mês</td></tr>`).join("")}${t.extrasU.map(x=>`<tr><td>${e(x.livre?x.nome:cap(x.nome))}<br><small style="color:#5b6770">${x.desconto?"desconto nos avulsos":x.livre||!(x.qtd>1)?"cobrança única":x.qtd+" × "+precoMoeda(precoNum(x.valor))}</small></td><td class="r">${precoMoeda(x.total)}</td></tr>`).join("")}</table></div>`:""}
 <div class="sec"><h2>Investimento</h2><div class="tot"><div><span>Mensalidade</span><b>${precoMoeda(t.mensal)}</b></div><div><span>Serviços avulsos</span><b>${precoMoeda(t.avulso)}</b>${t.avulso&&S.parcelas>1?`<div style="font-size:13px;color:#5b6770;margin-top:4px">em ${S.parcelas}x de ${precoMoeda(t.avulso/S.parcelas)}</div>`:""}</div></div></div>
 ${S.obs?`<div class="sec"><h2>Observações</h2><div class="obs">${e(S.obs)}</div></div>`:""}
 <div class="sec"><h2>De acordo</h2><p style="margin:0;font-size:13.5px;color:#33414a">As partes concordam com as condições desta proposta. A assinatura do cliente é feita de forma digital.</p>${B.ass}</div>
@@ -8841,6 +8841,64 @@ async function crmCopilotoContato(m,c,depois){ const box=m.querySelector("#iaBox
 .sim-cli .sim-cli-av{display:inline-block;color:var(--warn,#b7791f);font-weight:600;font-size:12.5px}.sim-cli .txt-btn{padding:4px 10px}
 .preco-col{display:grid;gap:14px;align-content:start;min-width:0}
 .preco-ad{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px auto;gap:8px;align-items:center;margin-bottom:8px}@media(max-width:640px){.preco-ad{grid-template-columns:1fr 1fr}.preco-ad .inp:first-child{grid-column:1/-1}}
+`; document.head.appendChild(s); })();
+
+// ================= AJUSTES NO VALOR (v3.21): acréscimos e descontos, em R$ ou %, com condição =================
+// Substitui o card "Valores adicionais". Cada linha é um extra "livre:*" com tipo (acrescimo|desconto), modo (valor|pct),
+// cobrança (mensal|avulso) e condição (só desconto). Desconto entra negativo nos totais, na proposta e no negócio.
+function ajTotal(x,base){ const v=precoNum(x.valor)||0; const t=x.modo==="pct"?base*Math.min(v,100)/100:v*(Number(x.qtd)||1); return x.tipo==="desconto"?-t:t; }
+function ajRotulo(x){ const n=String(x.nome||"").trim()||(x.tipo==="desconto"?"Desconto":"Valor adicional");
+ const pct=x.modo==="pct"?` (${String(x.valor).replace(/\s/g,"")}%)`:""; const c=x.tipo==="desconto"&&String(x.cond||"").trim()?` · condição: ${String(x.cond).trim()}`:""; return n+pct+c; }
+function precoTotais(){ const S=PRECO_ST; const ent=Object.entries(S.extras);
+ const fixos=ent.filter(([k])=>!k.startsWith("livre:")).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
+ const livres=ent.filter(([k,s])=>k.startsWith("livre:")&&precoNum(s.valor)>0&&(s.tipo==="desconto"||String(s.nome||"").trim()));
+ const acr=livres.filter(([,s])=>s.tipo!=="desconto"), des=livres.filter(([,s])=>s.tipo==="desconto");
+ const planos=S.cesta.reduce((s,c)=>s+c.valor,0);
+ const mk=([k,s],base)=>({...s,k,livre:true,desconto:s.tipo==="desconto",nome:ajRotulo(s),total:ajTotal(s,base)});
+ const aM=acr.filter(([,s])=>s.cobranca==="mensal").map(e=>mk(e,planos)), aU=acr.filter(([,s])=>s.cobranca!=="mensal").map(e=>mk(e,0));
+ const baseM=planos+fixos.filter(e=>e.cobranca==="mensal").reduce((s,e)=>s+e.total,0)+aM.reduce((s,e)=>s+e.total,0);
+ const baseU=fixos.filter(e=>e.cobranca!=="mensal").reduce((s,e)=>s+e.total,0)+aU.reduce((s,e)=>s+e.total,0);
+ const dM=des.filter(([,s])=>s.cobranca==="mensal").map(e=>mk(e,baseM)), dU=des.filter(([,s])=>s.cobranca!=="mensal").map(e=>mk(e,baseU));
+ const extrasM=[...fixos.filter(e=>e.cobranca==="mensal"),...aM,...dM], extrasU=[...fixos.filter(e=>e.cobranca!=="mensal"),...aU,...dU];
+ const mensal=Math.max(0,planos+extrasM.reduce((s,e)=>s+e.total,0)), avulso=Math.max(0,extrasU.reduce((s,e)=>s+e.total,0));
+ return {extrasM,extrasU,mensal,avulso,descontoM:-dM.reduce((s,e)=>s+e.total,0),descontoU:-dU.reduce((s,e)=>s+e.total,0)}; }
+function precoAdicionaisHTML(){ const S=PRECO_ST; const L=Object.entries(S.extras).filter(([k])=>k.startsWith("livre:")); const t=precoTotais();
+ const tot=Object.fromEntries([...t.extrasM,...t.extrasU].filter(e=>e.livre).map(e=>[e.k,e.total]));
+ return `<div class="card ce-pad"><h3>Ajustes no valor</h3><p class="sub" style="margin:0 0 10px">Dê um desconto (em R$ ou %, com condição se quiser) ou some um valor que não está na tabela. Tudo aparece na proposta com a descrição que você escrever.</p>
+  ${L.map(([k,x])=>{ const d=x.tipo==="desconto"; const v=tot[k];
+   return `<div class="aj-lin ${d?"aj-des":"aj-acr"}"><div class="aj-top">
+    <select class="inp" data-ajt="${k}" aria-label="Tipo"><option value="acrescimo" ${!d?"selected":""}>+ Acréscimo</option><option value="desconto" ${d?"selected":""}>− Desconto</option></select>
+    <input class="inp" data-adn="${k}" value="${escAttr(x.nome||"")}" placeholder="${d?"Descrição, ex.: Desconto de pontualidade":"Descrição, ex.: Regularização de pendências"}" aria-label="Descrição">
+    <button type="button" class="crm-x" data-adr="${k}" aria-label="Remover">✕</button></div>
+   <div class="aj-bot"><div class="aj-val"><input class="inp" data-adv="${k}" value="${escAttr(x.valor||"")}" placeholder="0,00" inputmode="decimal" aria-label="Valor">
+    <select class="inp" data-ajm="${k}" aria-label="Valor em"><option value="valor" ${x.modo!=="pct"?"selected":""}>R$</option><option value="pct" ${x.modo==="pct"?"selected":""}>%</option></select></div>
+    <select class="inp" data-adc="${k}" aria-label="Aplica em"><option value="mensal" ${x.cobranca==="mensal"?"selected":""}>${d?"Na mensalidade":"Todo mês"}</option><option value="avulso" ${x.cobranca!=="mensal"?"selected":""}>${d?"Nos serviços avulsos":"Uma vez"}</option></select>
+    <b class="num aj-res">${v!=null?(v<0?"− ":"+ ")+precoMoeda(Math.abs(v))+(x.cobranca==="mensal"?"/mês":""):"—"}</b></div>
+   ${d?`<input class="inp aj-cond" data-ajc="${k}" value="${escAttr(x.cond||"")}" placeholder="Condição (opcional), ex.: pagamento até o dia 5 ou válido nos 3 primeiros meses" aria-label="Condição do desconto">`:""}</div>`; }).join("")}
+  ${t.descontoM||t.descontoU?`<p class="sub" style="margin:2px 0 10px">Desconto total: ${t.descontoM?precoMoeda(t.descontoM)+"/mês":""}${t.descontoM&&t.descontoU?" e ":""}${t.descontoU?precoMoeda(t.descontoU)+" nos avulsos":""}.</p>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="view-btn ghost" id="prAdDes">− Dar desconto</button><button type="button" class="view-btn ghost" id="prAdAdd">+ Adicionar valor</button></div></div>`; }
+function precoLigarAdicionais(box,re){ const S=PRECO_ST; let t=null; const lento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
+   if(ds){ const k=Object.keys(ds)[0]; const n=k&&box.querySelector(`[data-${k}="${ds[k]}"]`); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } },450); };
+ const novo=tipo=>{ const k="livre:"+Date.now().toString(36); S.extras[k]={nome:"",valor:"",cobranca:"mensal",qtd:1,arq:"livre",livre:true,tipo,modo:tipo==="desconto"?"pct":"valor",cond:""}; re();
+  setTimeout(()=>{ const n=box.querySelector(`[data-adv="${k}"]`); if(n) n.focus(); },0); };
+ const a=box.querySelector("#prAdAdd"); if(a) a.onclick=()=>novo("acrescimo");
+ const d=box.querySelector("#prAdDes"); if(d) d.onclick=()=>novo("desconto");
+ const x=k=>S.extras[k];
+ box.querySelectorAll("[data-adn]").forEach(i=>i.oninput=()=>{ if(x(i.dataset.adn)){ x(i.dataset.adn).nome=i.value; lento(); } });
+ box.querySelectorAll("[data-ajc]").forEach(i=>i.oninput=()=>{ if(x(i.dataset.ajc)){ x(i.dataset.ajc).cond=i.value; lento(); } });
+ box.querySelectorAll("[data-adv]").forEach(i=>precoLigarMascara(i,v=>{ if(x(i.dataset.adv)){ x(i.dataset.adv).valor=v; lento(); } }));
+ box.querySelectorAll("[data-adc]").forEach(i=>i.onchange=()=>{ if(x(i.dataset.adc)){ x(i.dataset.adc).cobranca=i.value; re(); } });
+ box.querySelectorAll("[data-ajt]").forEach(i=>i.onchange=()=>{ const e=x(i.dataset.ajt); if(e){ e.tipo=i.value; if(i.value!=="desconto") e.modo="valor"; re(); } });
+ box.querySelectorAll("[data-ajm]").forEach(i=>i.onchange=()=>{ const e=x(i.dataset.ajm); if(e){ e.modo=i.value; re(); } });
+ box.querySelectorAll("[data-adr]").forEach(b=>b.onclick=()=>{ delete S.extras[b.dataset.adr]; re(); }); }
+(function(){ const s=document.createElement("style"); s.textContent=`
+.aj-lin{border:1px solid var(--line,#e3e8ea);border-left:3px solid #269A9E;border-radius:12px;padding:10px;margin-bottom:10px;display:grid;gap:8px}
+.aj-lin.aj-des{border-left-color:#E0A23B}
+.aj-top{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:center}
+.aj-bot{display:grid;grid-template-columns:minmax(0,1fr) 190px auto;gap:8px;align-items:center}
+.aj-val{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:6px}
+.aj-res{white-space:nowrap;min-width:110px;text-align:right}.aj-des .aj-res{color:#b7791f}
+@media(max-width:640px){.aj-top{grid-template-columns:1fr auto}.aj-top .inp:nth-child(2){grid-column:1/-1;grid-row:2}.aj-bot{grid-template-columns:1fr 1fr}.aj-res{grid-column:1/-1;text-align:left}}
 `; document.head.appendChild(s); })();
 
 // ================= ÍRIS · gestão das TVs do escritório =================
