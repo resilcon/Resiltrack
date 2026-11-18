@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05303D">
 <meta name="robots" content="noindex">
 <title>Íris · TV Resilcon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +23,7 @@ body{color:var(--ink);font-family:"DM Sans",system-ui,sans-serif}
 h1,h2,h3,.u{font-family:"Urbanist",system-ui,sans-serif;letter-spacing:-.01em}
 .num{font-variant-numeric:tabular-nums}
 
-#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;background:var(--bg);
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:center;background:var(--bg);
   display:grid;grid-template-columns:1fr;grid-template-rows:104px 1fr 54px;overflow:hidden}
 #stage.op{grid-template-columns:452px 1fr}
 #stage>.top,#stage>.mid,#stage>.bot{grid-column:-2/-1;min-width:0}
@@ -1032,7 +1034,7 @@ function montarEscritorio(canvas){
 var CFG={
   url:"https://aumfhrqrnudmprvmvesb.supabase.co",
   chave:"sb_publishable_bDvvjpuVzD54iAlAHXMhmw_asJ0XMKF",
-  versao:"1.4",
+  versao:"1.5",
   buscaMs:20000,          // a cada 20 s pergunta ao banco
   filaVelhaSeg:180,       // fila sem atualizacao ha 3 min: esconde
   ligVelhaSeg:180,        // ligacoes sem atualizacao ha 3 min: esconde
@@ -1072,8 +1074,33 @@ function espera(seg){var m=Math.max(0,Math.floor(seg/60));return m>=60?Math.floo
 function mmss(seg){seg=Math.max(0,Math.floor(seg));var m=Math.floor(seg/60),s=seg%60;return m>=60?Math.floor(m/60)+":"+("0"+m%60).slice(-2)+":"+("0"+s).slice(-2):("0"+m).slice(-2)+":"+("0"+s).slice(-2);}
 
 /* ---------- escala 1920x1080 em qualquer tela ---------- */
-function escala(){var s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform="translate(-50%,-50%) scale("+s+")";}
-addEventListener("resize",escala);escala();
+/* Ocupa a tela inteira em qualquer TV: a altura de desenho e sempre 1080 e a largura acompanha
+   a proporcao real da tela (barra do navegador, 16:9, 16:10). Usa zoom quando existe, que deixa o
+   texto nitido; se nao existir, cai para transform. */
+var temZoom=!!(window.CSS&&CSS.supports&&CSS.supports("zoom","2"));
+function escala(){
+  var W=document.documentElement.clientWidth||innerWidth,H=document.documentElement.clientHeight||innerHeight;
+  var s=H/1080,w=W/s;
+  if(w<1600){w=1600;s=Math.min(W/1600,H/1080);}
+  if(w>2560){w=2560;s=Math.min(W/2560,H/1080);}
+  stage.style.width=Math.round(w)+"px";
+  if(temZoom){
+    stage.style.transform="none";stage.style.zoom=s;
+    stage.style.left=((W-w*s)/2/s)+"px";stage.style.top=((H-1080*s)/2/s)+"px";
+  }else{
+    stage.style.left="50%";stage.style.top="50%";stage.style.transform="translate(-50%,-50%) scale("+s+")";
+  }
+}
+addEventListener("resize",escala);escala();setTimeout(escala,500);
+
+/* tela cheia com qualquer tecla do controle ou clique, e TV sem descanso de tela */
+function telaCheia(){var e=document.documentElement,f=e.requestFullscreen||e.webkitRequestFullscreen;
+  if(f&&!(document.fullscreenElement||document.webkitFullscreenElement)){try{var r=f.call(e);if(r&&r.catch)r.catch(function(){});}catch(x){}}}
+addEventListener("keydown",telaCheia);addEventListener("click",telaCheia);
+var trava=null;
+function manterAcesa(){if(!navigator.wakeLock||document.visibilityState!=="visible")return;
+  navigator.wakeLock.request("screen").then(function(l){trava=l;}).catch(function(){});}
+document.addEventListener("visibilitychange",manterAcesa);manterAcesa();
 
 /* ---------- relogio ---------- */
 var DIAS=["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
