@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.28 (Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.29 (Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -4317,11 +4317,11 @@ async function crmFichaNegocio(id,preset){
   <div class="crm-2col"><div class="crm-colform">
    <div class="panel"><h4>Negócio</h4><div class="crm-form">
     <label class="crm-f crm-w2"><span>Título</span><input class="inp" id="nTit" value="${escAttr(o.titulo||"")}" placeholder="Ex.: Contabilidade e BPO fiscal"></label>
+    ${!o.id?negEmpHTML():""}
     <label class="crm-f crm-w2"><span>Contato</span><input class="inp" id="nCont" list="nContL" value="${escAttr(contTxt(cont))}" placeholder="Busque pelo nome, empresa ou e-mail"><datalist id="nContL">${contOpts}</datalist></label>
     ${!o.id?`<details class="crm-w2 crm-novo-c"><summary>O contato ainda não está cadastrado? Cadastre aqui</summary><div class="crm-form">
-      <label class="crm-f"><span>Nome</span><input class="inp" id="ncNome"></label><label class="crm-f"><span>Empresa</span><input class="inp" id="ncEmp"></label>
-      <label class="crm-f"><span>E-mail</span><input class="inp" id="ncEmail" type="email"></label><label class="crm-f"><span>Telefone</span><input class="inp" id="ncTel" inputmode="tel"></label>
-      <label class="crm-f"><span>CNPJ</span><input class="inp" id="ncCnpj" inputmode="numeric"></label></div></details>`:""}
+      <label class="crm-f"><span>Nome</span><input class="inp" id="ncNome"></label><label class="crm-f"><span>Cargo</span><input class="inp" id="ncCargo" placeholder="Ex.: Sócio"></label>
+      <label class="crm-f"><span>E-mail</span><input class="inp" id="ncEmail" type="email"></label><label class="crm-f"><span>Telefone</span><input class="inp" id="ncTel" inputmode="tel"></label></div></details>`:""}
     ${!o.id?`<label class="crm-f"><span>Etapa</span><select class="inp" id="nEt">${crmOpt((fun.etapas||[]).map(e=>[e.id,e.nome]),o.etapa)}</select></label>`:""}
     <label class="crm-f"><span>Responsável</span><select class="inp" id="nResp">${crmRespOpts(o.responsavel_email)}${!o.id?'<option value="_rodizio">Distribuir pelo rodízio</option>':""}</select></label>
     <label class="crm-f"><span>Origem</span><select class="inp" id="nOrig">${crmOpt(Object.entries(CRM_ORIG).filter(([k])=>k!=="lista_comprada"||o.origem==="lista_comprada"),o.origem)}</select></label>
@@ -4349,6 +4349,7 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
+ if(!o.id) negEmpLigar(m,preset);
  if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); const nc=m.querySelector("#nContr"); if(nc) nc.onclick=()=>cliGarantir({negocio:o},()=>ctGerar({negocio:o})); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
   crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
@@ -4364,9 +4365,12 @@ async function crmFichaNegocio(id,preset){
   b.disabled=true; b.textContent="Salvando…";
   try{
    if(o.id&&cont&&m.querySelector("#nCliP")) await crmClienteSalvarPainel(m,cont,ficha.empresa);
-   if(!contato_id&&!o.id&&(crmVal(m,"#ncNome")||crmVal(m,"#ncEmail")||crmVal(m,"#ncEmp")))
-    contato_id=await crmRpc("crm_salvar_contato",{p:{nome:crmVal(m,"#ncNome"),email:crmVal(m,"#ncEmail"),telefone:crmVal(m,"#ncTel"),empresa:crmVal(m,"#ncEmp"),cnpj:crmVal(m,"#ncCnpj"),origem:crmVal(m,"#nOrig")||"manual",responsavel:crmVal(m,"#nResp")}});
-   const nid=await crmRpc("crm_salvar_negocio",{p:{id:o.id||null,funil_id:o.funil_id,titulo,contato_id,etapa:o.id?undefined:crmVal(m,"#nEt"),responsavel:crmVal(m,"#nResp"),origem:crmVal(m,"#nOrig"),
+   let empresa_id=o.id?undefined:(m._negEmp?m._negEmp.id:null);
+   if(!o.id&&!empresa_id&&crmVal(m,"#nEmp")){ const nome=crmVal(m,"#nEmp").replace(/ · \d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,"");
+    empresa_id=await crmRpc("crm_salvar_empresa",{p:{id:null,nome,cnpj:crmVal(m,"#nEmpCnpj").replace(/\D/g,""),campos:{}}}); NEGEMP.lista=null; }
+   if(!contato_id&&!o.id&&(crmVal(m,"#ncNome")||crmVal(m,"#ncEmail")))
+    contato_id=await crmRpc("crm_salvar_contato",{p:{nome:crmVal(m,"#ncNome"),cargo:crmVal(m,"#ncCargo"),email:crmVal(m,"#ncEmail"),telefone:crmVal(m,"#ncTel"),empresa_id:empresa_id||"",origem:crmVal(m,"#nOrig")||"manual",responsavel:crmVal(m,"#nResp")}});
+   const nid=await crmRpc("crm_salvar_negocio",{p:{id:o.id||null,funil_id:o.funil_id,titulo,contato_id,...(empresa_id?{empresa_id}:{}),etapa:o.id?undefined:crmVal(m,"#nEt"),responsavel:crmVal(m,"#nResp"),origem:crmVal(m,"#nOrig"),
      previsao_fechamento:crmVal(m,"#nPrev"),tema:crmVal(m,"#nTema"),obs:crmVal(m,"#nObs"),campos:crmCamposLer(m,o.campos),
      itens:itens.filter(x=>x.servico_id||x.valor).map(x=>({servico_id:x.servico_id||null,nome:x.nome||((serv.find(s=>s.id===x.servico_id)||{}).nome)||"",valor:x.valor,qtd:x.qtd||1,desconto:x.desconto||0,recorrencia:x.recorrencia||"mensal"})),
      valor_mensal:crmVal(m,"#nVm"),valor_unico:crmVal(m,"#nVu"),indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome}});
@@ -8906,6 +8910,7 @@ function precoLigarAdicionais(box,re){ const S=PRECO_ST; let t=null; const lento
 // Ao digitar um CNPJ válido (14 dígitos) em qualquer cadastro do Hermes CRM, consulta a BrasilAPI (reserva: publica.cnpj.ws)
 // e preenche só os campos que estão vazios. Nada é sobrescrito. Avisa se a empresa não está ativa na Receita.
 const CNPJ_CAMPOS={
+ nEmpCnpj:{nome:"nEmp",tel:"ncTel",mail:"ncEmail"},
  eCnpj:{nome:"eNome",seg:"eSeg",cid:"eCid",uf:"eUf",tel:"eTel"},
  cCnpj:{nome:"cEmp",seg:"cSeg",cid:"cCid",uf:"cUf"},
  ncCnpj:{nome:"ncEmp",tel:"ncTel",mail:"ncEmail"},
@@ -9002,6 +9007,37 @@ async function simVincular(s,depois){
     empresa_nome:o.empresa_nome||emp.nome||"",documento:o.cnpj||emp.cnpj||o.documento||""}});
    closeModal(); crmToast(`Simulação ${simNum(s.numero)} vinculada a ${o.empresa_nome||emp.nome||o.titulo}`); if(depois) depois();
   }catch(e){ b.disabled=false; b.textContent="Vincular"; msg(""); crmToast(crmErro(e)); } }; }
+
+// ================= NOVO NEGÓCIO COM EMPRESA (v3.29) =================
+// No cadastro de negócio novo, o campo Empresa busca as empresas já cadastradas (nome ou CNPJ).
+// Empresa da lista: liga o negócio a ela e mostra só os contatos dela. Nome novo: avisa que será cadastrada.
+// CNPJ igual ao de uma empresa existente troca para a empresa existente (evita duplicar).
+const NEGEMP={lista:null};
+async function negEmpLista(force){ if(force||!NEGEMP.lista){ try{ NEGEMP.lista=await crmRpc("crm_dados",{p_secao:"empresas",p_param:{}})||[]; }catch(_){ NEGEMP.lista=[]; } } return NEGEMP.lista; }
+const negEmpRot=e=>e.nome+(e.cnpj?" · "+fmtCnpj(e.cnpj):"");
+function negEmpHTML(){ return `<div class="crm-w2 crm-form neg-emp" style="grid-template-columns:minmax(0,1fr) 210px">
+  <label class="crm-f"><span>Empresa</span><input class="inp" id="nEmp" list="nEmpL" placeholder="Busque pelo nome ou CNPJ, ou digite uma empresa nova" autocomplete="off"><datalist id="nEmpL"></datalist></label>
+  <label class="crm-f"><span>CNPJ</span><input class="inp" id="nEmpCnpj" inputmode="numeric" placeholder="Só números"></label>
+  <small class="sub crm-w2 neg-emp-info" id="nEmpInfo">Carregando empresas cadastradas…</small></div>`; }
+async function negEmpLigar(m,preset){ const L=await negEmpLista(true); if(!m.isConnected) return;
+ const inp=m.querySelector("#nEmp"), doc=m.querySelector("#nEmpCnpj"), info=m.querySelector("#nEmpInfo"), dl=m.querySelector("#nEmpL"); if(!inp) return;
+ dl.innerHTML=L.map(e=>`<option value="${escAttr(negEmpRot(e))}"></option>`).join("");
+ const contTodos=[...m.querySelectorAll("#nContL option")].map(o=>({v:o.value,id:o.dataset.id}));
+ const contDe=id=>(CRMD.contatos||[]).filter(c=>c.empresa_id===id);
+ const filtraCont=emp=>{ const dlc=m.querySelector("#nContL"); if(!dlc) return; const ids=emp?new Set(contDe(emp.id).map(c=>c.id)):null;
+  const vis=ids&&ids.size?contTodos.filter(o=>ids.has(o.id)):contTodos; dlc.innerHTML=vis.map(o=>`<option value="${escAttr(o.v)}" data-id="${o.id}"></option>`).join("");
+  const nc=m.querySelector("#nCont"); if(nc&&m._negAuto&&nc.value===m._negAuto&&!(emp&&ids&&ids.size===1)){ nc.value=""; m._negAuto=null; } if(emp&&ids&&ids.size===1&&nc&&!nc.value){ nc.value=vis[0].v; m._negAuto=nc.value; } };
+ const pinta=()=>{ const e=m._negEmp; doc.readOnly=!!e;
+  if(e){ const nc=contDe(e.id).length; info.innerHTML=`<b>Empresa já cadastrada.</b> ${nc?`${nc} contato${nc>1?"s":""} dela ${nc>1?"aparecem":"aparece"} no campo Contato.`:"Ela ainda não tem contato: cadastre um abaixo."}${e.negocios_abertos?` Atenção: já tem ${e.negocios_abertos} negócio${e.negocios_abertos>1?"s":""} aberto${e.negocios_abertos>1?"s":""} no funil.`:""}`; info.dataset.tipo="ok"; }
+  else if(inp.value.trim()){ info.textContent="Empresa nova: será cadastrada quando você salvar o negócio. Informe o CNPJ para puxar os dados da Receita."; info.dataset.tipo="novo"; }
+  else { info.textContent="Deixe em branco se o cliente for pessoa física."; info.dataset.tipo=""; }
+  filtraCont(e); };
+ const usar=e=>{ m._negEmp=e||null; if(e){ inp.value=negEmpRot(e); doc.value=e.cnpj?fmtCnpj(e.cnpj):""; } pinta(); };
+ inp.addEventListener("input",()=>{ const e=L.find(x=>negEmpRot(x)===inp.value); if(e) return usar(e); if(m._negEmp){ m._negEmp=null; doc.value=""; } pinta(); });
+ doc.addEventListener("input",()=>{ if(m._negEmp) return; const d=doc.value.replace(/\D/g,""); if(d.length!==14) return; const e=L.find(x=>String(x.cnpj||"").replace(/\D/g,"")===d);
+  if(e){ usar(e); crmToast("Esse CNPJ já está cadastrado. Usei a empresa existente."); } });
+ const pre=preset&&preset.empresa_id&&L.find(x=>x.id===preset.empresa_id); usar(pre||null); }
+(function(){ const s=document.createElement("style"); s.textContent=`.neg-emp-info{display:block;margin-top:-4px}.neg-emp-info[data-tipo=ok]{color:#1f7a5a}.neg-emp-info[data-tipo=novo]{color:#066789}`; document.head.appendChild(s); })();
 
 // ================= ÍRIS · gestão das TVs do escritório =================
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
