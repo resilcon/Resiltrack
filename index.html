@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.27 (Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.28 (Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -7279,16 +7279,17 @@ async function crmVSimulacoes(v){
    <select class="fsel" id="simSt" aria-label="Situação"><option value="">Todas as situações</option>${Object.entries(SIM_ST).map(([k,[,t]])=>`<option value="${k}" ${SIMF.status===k?"selected":""}>${t}</option>`).join("")}</select>
    <select class="fsel" id="simTp" aria-label="Tipo"><option value="">Todos os tipos</option>${Object.entries(SIM_TIPOS).map(([k,t])=>`<option value="${k}" ${SIMF.tipo===k?"selected":""}>${t}</option>`).join("")}</select></div>
   <div class="card" style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Cliente</th><th>Nicho / persona</th><th>Situação</th><th>Tipo</th><th class="right">Valor</th><th>Criada em</th><th></th></tr></thead><tbody>
-  ${vis.slice(0,400).map(s=>{ const st=SIM_ST[s.status]||["neutral",s.status]; return `<tr><td><button class="crm-link r-name" data-simab2="${s.id}">${esc(s.cliente_nome||s.negocio_titulo||"Cliente")}</button><div class="sub">${esc([s.empresa_nome,s.documento].filter(Boolean).join(" · "))}${s.negocio_titulo?` · negócio: ${esc(s.negocio_titulo)}`:""}</div></td>
+  ${vis.slice(0,400).map(s=>{ const st=SIM_ST[s.status]||["neutral",s.status]; return `<tr><td><button class="crm-link r-name" data-simab2="${s.id}">${esc(s.cliente_nome||s.negocio_titulo||"Cliente")}</button><div class="sub">${!s.oportunidade_id&&!s.empresa_nome&&!s.documento?"Sem cliente vinculado":""}${esc([s.empresa_nome,s.documento].filter(Boolean).join(" · "))}${s.negocio_titulo?` · negócio: ${esc(s.negocio_titulo)}`:""}</div></td>
    <td>${esc(s.persona||s.nicho||"")}${s.tem_diag?` <span class="pill neutral" title="Tem diagnóstico de dores">diagnóstico</span>`:""}</td>
    <td><span class="pill ${st[0]}">${st[1]}</span>${s.etapa?`<div class="sub">Etapa: ${esc(s.etapa)}</div>`:""}</td><td>${esc(SIM_TIPOS[s.tipo]||s.tipo)}</td>
    <td class="right num">${s.valor_mensal?brl(s.valor_mensal)+"/mês":""}${s.valor_unico?`<div class="sub">${brl(s.valor_unico)} avulso</div>`:""}</td>
    <td class="num sub">${new Date(s.criado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}<div>por ${esc(crmNomeResp(s.criado_por)||s.criado_por||"")}</div><div>${simNum(s.numero)}</div></td>
-   <td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-simab2="${s.id}">Abrir</button><button class="txt-btn" data-simdup="${s.id}">Duplicar</button>${s.status==="andamento"?`<button class="txt-btn" data-simst="${s.id}:concluida">Concluir</button>`:`<button class="txt-btn" data-simst="${s.id}:andamento">Reabrir</button>`}<button class="txt-btn crm-perigo" data-simdel="${s.id}">Excluir</button></td></tr>`; }).join("")
+   <td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-simab2="${s.id}">Abrir</button>${!s.oportunidade_id?`<button class="txt-btn" data-simvinc="${s.id}">Vincular cliente</button>`:""}<button class="txt-btn" data-simdup="${s.id}">Duplicar</button>${s.status==="andamento"?`<button class="txt-btn" data-simst="${s.id}:concluida">Concluir</button>`:`<button class="txt-btn" data-simst="${s.id}:andamento">Reabrir</button>`}<button class="txt-btn crm-perigo" data-simdel="${s.id}">Excluir</button></td></tr>`; }).join("")
   ||`<tr><td colspan="7"><div class="empty">${(L||[]).length?"Nenhuma simulação com esses filtros.":"Nenhuma simulação ainda. Clique em + Nova venda para começar."}</div></td></tr>`}</tbody></table></div>`;
   const qi=v.querySelector("#simQ"); qi.oninput=()=>{ SIMF.q=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#simQ"); n.focus(); n.setSelectionRange(p,p); };
   v.querySelector("#simSt").onchange=e=>{ SIMF.status=e.target.value; pinta(); }; v.querySelector("#simTp").onchange=e=>{ SIMF.tipo=e.target.value; pinta(); };
   v.querySelectorAll("[data-simab2]").forEach(b=>b.onclick=()=>simAbrir(b.dataset.simab2));
+  v.querySelectorAll("[data-simvinc]").forEach(b=>b.onclick=()=>{ const x=(L||[]).find(y=>y.id===b.dataset.simvinc); if(x) simVincular(x,()=>crmVSimulacoes(v)); });
   v.querySelectorAll("[data-simdup]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ const r=await crmRpc("crm_simulacoes",{p:{id:b.dataset.simdup}}); const {id,numero,criado_em,atualizado_em,criado_por,...resto}=r; await crmRpc("crm_salvar_simulacao",{p:{...resto,status:"andamento"}}); crmToast("Simulação duplicada"); crmVSimulacoes(v); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
   v.querySelectorAll("[data-simst]").forEach(b=>b.onclick=async()=>{ const [id,st]=b.dataset.simst.split(":"); try{ await crmRpc("crm_salvar_simulacao",{p:{id,status:st}}); const s=L.find(x=>x.id===id); if(s) s.status=st; pinta(); crmToast(st==="concluida"?"Simulação concluída":"Simulação reaberta"); }catch(e){ crmToast(crmErro(e)); } });
   v.querySelectorAll("[data-simdel]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Clique de novo para excluir"; return; } try{ await crmRpc("crm_salvar_simulacao",{p:{id:b.dataset.simdel,acao:"excluir"}}); L=L.filter(x=>x.id!==b.dataset.simdel); pinta(); crmToast("Simulação excluída"); }catch(e){ crmToast(crmErro(e)); } }); };
@@ -8953,6 +8954,54 @@ document.addEventListener("paste",ev=>{ const t=ev.target; if(t&&t.id&&CNPJ_CAMP
 .cnpj-aviso{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#5b6770)}
 .cnpj-aviso[data-tipo=ok]{color:#1f7a5a}.cnpj-aviso[data-tipo=erro]{color:#b7791f}
 `; document.head.appendChild(s); })();
+
+// ================= VINCULAR SIMULAÇÃO A UM CLIENTE (v3.28) =================
+// Para simulações feitas sem cliente: escolhe um negócio aberto do funil ou uma empresa já cadastrada.
+// Empresa sem negócio aberto: cria o negócio no funil de vendas e liga a simulação a ele.
+async function simVincular(s,depois){
+ let negs=[], emps=[];
+ try{ [negs,emps]=await Promise.all([simNegocios(true),crmRpc("crm_dados",{p_secao:"empresas",p_param:{}}).then(r=>r||[])]); }catch(e){ crmToast(crmErro(e)); return; }
+ const fun=crmFunil("vendas")||{etapas:[]};
+ const rotN=o=>"Negócio: "+o.titulo+(o.empresa_nome?" · "+o.empresa_nome:o.contato_nome?" · "+o.contato_nome:"")+(o.numero?" #"+o.numero:"");
+ const rotE=e=>"Empresa: "+e.nome+(e.cnpj?" · "+fmtCnpj(e.cnpj):"");
+ const ops=[...negs.map(o=>({v:rotN(o),t:"neg",id:o.id})),...emps.map(e=>({v:rotE(e),t:"emp",id:e.id}))];
+ const m=crmModal("Vincular cliente",`Vincular a simulação ${simNum(s.numero)}`,"",`<p class="sub" style="margin:0 0 12px">Escolha o negócio ou a empresa que já está cadastrada. A simulação passa a mostrar os dados desse cliente, e os valores e planos continuam como estão.</p>
+  <div class="crm-form" style="grid-template-columns:1fr">
+   <label class="crm-f"><span>Cliente</span><input class="inp" id="svBusca" list="svL" placeholder="Busque pelo nome, empresa ou CNPJ" autocomplete="off"><datalist id="svL">${ops.map((o,i)=>`<option value="${escAttr(o.v)}" data-i="${i}"></option>`).join("")}</datalist></label>
+   <div id="svEmp" hidden></div></div>
+  <div class="crm-pe" style="margin-top:12px"><span class="sub" id="svMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="svOk">Vincular</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=t=>{ m.querySelector("#svMsg").textContent=t||""; };
+ let esc1=null, ficha=null;
+ const box=m.querySelector("#svEmp"), inp=m.querySelector("#svBusca");
+ const escolher=async()=>{ const o=ops.find(x=>x.v===inp.value)||null; esc1=o; ficha=null; box.hidden=true; box.innerHTML=""; msg("");
+  if(!o||o.t!=="emp") return;
+  box.hidden=false; box.innerHTML=`<p class="sub">Carregando a empresa…</p>`;
+  try{ ficha=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{empresa:o.id}}); }catch(e){ box.innerHTML=`<p class="sub">${esc(crmErro(e))}</p>`; return; }
+  if(esc1!==o) return;
+  const ab=(ficha.negocios||[]).filter(n=>n.etapa!=="ganha"&&n.etapa!=="perdida"), cts=ficha.contatos_empresa||[];
+  box.innerHTML=`<div class="crm-form" style="grid-template-columns:1fr 1fr">
+   <label class="crm-f crm-w2"><span>Negócio</span><select class="inp" id="svNeg">${ab.map(n=>`<option value="${n.id}">Usar o negócio aberto: ${esc(n.titulo)}</option>`).join("")}<option value="">Criar um negócio novo no funil para esta empresa</option></select></label>
+   <div class="crm-w2 crm-form" id="svNovo" style="grid-template-columns:1fr 1fr" ${ab.length?"hidden":""}>
+    <label class="crm-f"><span>Contato</span><select class="inp" id="svCont">${cts.map(c=>`<option value="${c.id}">${esc(c.nome||c.email)}</option>`).join("")||`<option value="">Empresa sem contato cadastrado</option>`}</select></label>
+    <label class="crm-f"><span>Etapa do funil</span><select class="inp" id="svEt">${crmOpt((fun.etapas||[]).map(e=>[e.id,e.nome]),(fun.etapas[0]||{}).id)}</select></label></div></div>`;
+  const sel=box.querySelector("#svNeg"); sel.onchange=()=>{ box.querySelector("#svNovo").hidden=!!sel.value; }; };
+ inp.addEventListener("input",escolher); inp.addEventListener("change",escolher);
+ m.querySelector("#svOk").onclick=async ev=>{ const b=ev.currentTarget;
+  if(!esc1){ msg("Escolha um cliente da lista."); inp.focus(); return; }
+  if(esc1.t==="emp"&&!ficha){ msg("Aguarde carregar a empresa."); return; }
+  b.disabled=true; b.textContent="Vinculando…";
+  try{ let nid=esc1.t==="neg"?esc1.id:(box.querySelector("#svNeg")||{}).value||"";
+   if(esc1.t==="emp"&&!nid){ const e=ficha.empresa||{}; msg("Criando o negócio no funil…");
+    nid=await crmRpc("crm_salvar_negocio",{p:{id:null,funil_id:"vendas",titulo:`${s.nicho?s.nicho+" · ":""}${e.nome||"Cliente"}`,contato_id:crmVal(m,"#svCont")||null,empresa_id:e.id,
+     etapa:crmVal(m,"#svEt"),responsavel:(CRMB.eu||{}).email,origem:"manual",campos:s.nicho?{nicho:s.nicho}:{},itens:[]}}); }
+   const lst=await simNegocios(true); let o=lst.find(x=>x.id===nid);
+   if(!o){ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:nid}}); const x=(f.negocios||[]).find(n=>n.id===nid)||{}; o={...x,contato_nome:(f.contato||{}).nome,empresa_nome:(f.empresa||{}).nome||(f.contato||{}).empresa_nome,cnpj:(f.empresa||{}).cnpj}; }
+   const emp=esc1.t==="emp"?(ficha.empresa||{}):{};
+   await crmRpc("crm_salvar_simulacao",{p:{id:s.id,oportunidade_id:nid,contato_id:o.contato_id||"",cliente_nome:o.contato_nome||emp.nome||o.titulo||"",
+    empresa_nome:o.empresa_nome||emp.nome||"",documento:o.cnpj||emp.cnpj||o.documento||""}});
+   closeModal(); crmToast(`Simulação ${simNum(s.numero)} vinculada a ${o.empresa_nome||emp.nome||o.titulo}`); if(depois) depois();
+  }catch(e){ b.disabled=false; b.textContent="Vincular"; msg(""); crmToast(crmErro(e)); } }; }
 
 // ================= ÍRIS · gestão das TVs do escritório =================
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
