@@ -267,7 +267,7 @@
   .drill{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
   @media (max-width:900px){.kpi-big,.drill{grid-template-columns:1fr}}
 
-  /* CRM kanban */
+  /* Midas CRM kanban */
   .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
   .kcol{flex:0 0 300px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:72vh}
   .kcol-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top-left-radius:12px;border-top-right-radius:12px;background:var(--surface);border-bottom:1px solid var(--border)}
@@ -639,7 +639,7 @@
   .ce-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:var(--shadow-lg)}
   @media (max-width:600px){.ce-g2{grid-template-columns:1fr}.ce-nums{grid-template-columns:repeat(2,1fr)}}
 
-  /* ===== CRM de vendas ===== */
+  /* ===== Midas CRM de vendas ===== */
   .srl-sub button.on{color:var(--frame-strong);font-weight:700}
   .crm-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .txt-btn.crm-pri{background:var(--grad);color:#fff;border-color:transparent}
@@ -730,7 +730,7 @@
   @media (max-width:860px){.crm-2col{grid-template-columns:1fr}}
   @media (max-width:600px){.crm-form{grid-template-columns:1fr}.crm-seg{min-width:96px}}
 
-  /* ===== CRM fase 2 ===== */
+  /* ===== Midas CRM fase 2 ===== */
   .crm-badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 6px;border-radius:999px;background:var(--crit);color:#fff;font-size:11px;font-weight:700;margin-left:4px;vertical-align:1px}
   .crm-prox{margin-top:7px;font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crm-prox.atr{color:var(--crit);background:var(--crit-soft);font-weight:600}.crm-prox.sem{color:var(--warn);background:var(--warn-soft)}
@@ -766,7 +766,7 @@
   .crm-momentos .ce-row{gap:12px}
   .crm-regra{align-items:flex-start}.crm-rod{display:flex;flex-direction:column;gap:6px}
 
-  /* ===== CRM fases 3 e 4 ===== */
+  /* ===== Midas CRM fases 3 e 4 ===== */
   .crm-barras{display:flex;flex-direction:column;gap:8px}
   .crm-barra{display:grid;grid-template-columns:minmax(90px,170px) 1fr auto;gap:10px;align-items:center;font-size:13px}
   .crm-barra-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.24 (Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.26 (Midas CRM: novo nome do CRM · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -851,7 +851,7 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial (CRM de vendas)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris (gestão das TVs)"]];
+const MODULOS=[["financeiro","Financeiro (ver)"],["financeiro_editar","Financeiro (decidir cobrança)"],["comercial","Comercial (Midas CRM)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris (gestão das TVs)"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
 try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
@@ -864,7 +864,7 @@ let HFIL={status:"",q:"",sort:"risco_desc"};
 let CFIL={q:"",status:"",servico:"",sort:"atend_desc"};
 let CLFIL={q:"",setor:"",sort:"score_desc",painel:"",vinculo:""};
 const PAGE_SIZE=30;
-// ---- CRM ----
+// ---- Midas CRM ----
 let CVIEW="quadro"; // quadro | lista | ranking
 let QFIL={q:"",status:"",tag:"",cs:""};
 let CRMCFG={colunas:[],tags:[]};
@@ -1203,7 +1203,7 @@ function renderSide(){
   if(podeModulo("iris")) h+=`<button class="srl-item ${MODE==='iris'?'on':''}" data-mode="iris">${_ICO_IRIS}Íris</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
-      h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+      h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}Midas CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
       if(noCRM) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="crm"><div>`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)&&m!=="crm_precos").map(([m,t])=>`<button data-mode="${m}" class="${MODE===m||(m==="crm_simulacoes"&&MODE==="crm_precos")?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div></div>`; } }
   if(podeEmails()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
   s.innerHTML=h;
@@ -2109,7 +2109,7 @@ function empresaAgg(empId){
   const oports=list.filter(a=>a.oport).map(a=>a.oport);
   return {list,media,count:list.length,sat,churn,cols,health,ultima,primeira,durMin,satMedia,aderMedia,servicos,desfechos,colabs,notasBaixas,notasAltas,erros,melhorias,oports};
 }
-// ---------- CRM: helpers, quadro, lista, ranking ----------
+// ---------- Midas CRM: helpers, quadro, lista, ranking ----------
 function diasSemContato(ts){ return ts?Math.floor((Date.now()-ts)/864e5):null; }
 function colunaDe(empId,sc){ const st=CRMCLI[empId];
   if(st&&st.coluna&&CRMCFG.colunas.some(c=>c.id===st.coluna)) return st.coluna;
@@ -2125,10 +2125,10 @@ function csMotivo(empId,sc){ const m=CRMCLI[empId]&&CRMCLI[empId].cs_manual; if(
   if(sc.reclam>0)r.push(sc.reclam+" reclamação(ões)"); return r.length?("Sugerido por: "+r.join(", ")):"Sem sinais no momento"; }
 async function salvarClienteCRM(empId){ const st=CRMCLI[empId]||{}; try{
   await sb.schema("atendimentos").from("crm_clientes").upsert({empresa_id:empId,coluna:st.coluna??null,tags:st.tags||[],cs_manual:(st.cs_manual===undefined?null:st.cs_manual),cs_obs:st.cs_obs||null,atualizado_em:new Date().toISOString()},{onConflict:"empresa_id"});
-}catch(e){ console.warn("crm cliente save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do CRM no Supabase."); } }
+}catch(e){ console.warn("crm cliente save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do Midas CRM no Supabase."); } }
 async function salvarConfigCRM(){ try{
   await sb.schema("atendimentos").from("crm_config").upsert({id:1,colunas:CRMCFG.colunas,tags:CRMCFG.tags,atualizado_em:new Date().toISOString()},{onConflict:"id"});
-}catch(e){ console.warn("crm cfg save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do CRM no Supabase."); } }
+}catch(e){ console.warn("crm cfg save:",e); alert("Não consegui salvar no banco. Confira se você rodou o SQL das tabelas do Midas CRM no Supabase."); } }
 const uid=()=>Math.random().toString(36).slice(2,8);
 
 // Quem vê o quê: atendimento = admin e gestores; financeiro = admin e quem tem a permissão "financeiro"
@@ -2218,7 +2218,7 @@ function _crmSort(r,pipe,srt){
   return r.sort(k[srt]||(pipe==="cob"?k.valor_desc:k.risco_desc));
 }
 function viewClientes(v){
-  if(!podeCRM()){ v.innerHTML=`<div class="soon"><h2 style="font-size:18px">Sem acesso ao CRM</h2><p>Peça à gestão para liberar atendimento ou financeiro para o seu e-mail.</p></div>`; return; }
+  if(!podeCRM()){ v.innerHTML=`<div class="soon"><h2 style="font-size:18px">Sem acesso ao Midas CRM</h2><p>Peça à gestão para liberar atendimento ou financeiro para o seu e-mail.</p></div>`; return; }
   if(crmVerFin() && FIN===null && !FINLOADING){ FINLOADING=true; loadFinanceiro(); }
   const pipes=crmPipes(); if(!pipes.some(p=>p[0]===CPIPE)) CPIPE=pipes[0][0];
   const finCarregando=crmVerFin() && FIN===null;
@@ -2319,7 +2319,7 @@ function crmRanking(c,itens){
 function openGerenciarTags(){
   const linhas=CRMCFG.tags.map(t=>`<div class="tagrow" data-tid="${escAttr(t.id)}"><input type="color" value="${escAttr(t.cor||'#006789')}"><input type="text" value="${escAttr(t.nome)}" placeholder="Nome da tag"><button class="close-x" data-del="${escAttr(t.id)}" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
   openModal(`
-    <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Gerenciar tags</h3><div class="m-chips"><span class="m-chip">nome e cor livres</span></div></div>
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Midas CRM</div><h3>Gerenciar tags</h3><div class="m-chips"><span class="m-chip">nome e cor livres</span></div></div>
       <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="modal-body">
       <div class="panel"><h4>Tags</h4><div id="tagList">${linhas||'<div class="sub">Nenhuma tag ainda.</div>'}</div>
@@ -2339,7 +2339,7 @@ function openGerenciarTags(){
 function openEditarColunas(){
   const linhas=CRMCFG.colunas.map((col,i)=>`<div class="tagrow" data-cid="${escAttr(col.id)}"><input type="color" value="${escAttr(col.cor||'#006789')}"><input type="text" value="${escAttr(col.nome)}" placeholder="Nome da coluna"><button class="close-x" data-up title="Subir" style="width:32px;height:32px" ${i===0?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><button class="close-x" data-del title="Remover" style="width:32px;height:32px;background:var(--crit-soft);color:var(--crit)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join("");
   openModal(`
-    <div class="modal-head"><div class="mh-l"><div class="m-sub">CRM</div><h3>Editar colunas</h3><div class="m-chips"><span class="m-chip">arraste os cards depois</span></div></div>
+    <div class="modal-head"><div class="mh-l"><div class="m-sub">Midas CRM</div><h3>Editar colunas</h3><div class="m-chips"><span class="m-chip">arraste os cards depois</span></div></div>
       <button class="close-x" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="modal-body">
       <div class="panel"><h4>Colunas do quadro</h4><div id="colList">${linhas}</div>
@@ -3192,7 +3192,7 @@ function openEmpresa(empId){
       <button class="close-x" data-cpdf="${empId}" title="Baixar relatório do cliente em PDF" aria-label="Baixar PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 21h14"/></svg></button>
       </div></div>
     <div class="modal-body">
-      <div class="panel crm-panel"><h4>CRM · relacionamento</h4>
+      <div class="panel crm-panel"><h4>Midas CRM · relacionamento</h4>
         <div class="crm-grid">
           <div class="crm-field"><div class="k">Coluna do quadro</div>
             <select class="fsel" id="crmCol" style="width:100%">${CRMCFG.colunas.map(col=>`<option value="${escAttr(col.id)}" ${col.id===colAtual?'selected':''}>${esc(col.nome)}</option>`).join("")}</select></div>
@@ -3201,10 +3201,10 @@ function openEmpresa(empId){
             <div class="sub" id="crmCSsug" style="margin-top:6px">${csM==='auto'?esc(csMotivo(empId,sc)):(csM==='sim'?'Marcado manualmente: o time deve entrar em contato.':'Marcado manualmente: sem necessidade de contato agora.')}${csM==='auto'?` · sugestão do sistema: <strong>${csSug?'contatar':'tudo certo'}</strong>`:''}</div></div>
         </div>
         <div class="crm-field" style="margin-top:12px"><div class="k">Tags do cliente</div>
-          <div class="tag-pick" id="crmTags">${CRMCFG.tags.length?CRMCFG.tags.map(t=>`<button class="tag-opt ${tagsSel.includes(t.id)?'on':''}" data-tag="${escAttr(t.id)}" style="--tc:${t.cor}">${esc(t.nome)}</button>`).join(""):'<span class="sub">Nenhuma tag criada ainda. Use “Gerenciar tags” no CRM.</span>'}</div></div>
+          <div class="tag-pick" id="crmTags">${CRMCFG.tags.length?CRMCFG.tags.map(t=>`<button class="tag-opt ${tagsSel.includes(t.id)?'on':''}" data-tag="${escAttr(t.id)}" style="--tc:${t.cor}">${esc(t.nome)}</button>`).join(""):'<span class="sub">Nenhuma tag criada ainda. Use “Gerenciar tags” no Midas CRM.</span>'}</div></div>
         <div class="crm-field" style="margin-top:12px"><div class="k">Observação do time (opcional)</div>
           <textarea id="crmObs" class="crm-obs" rows="2" placeholder="Ex.: cliente pediu retorno sobre a folha, ligar até sexta.">${esc(stC.cs_obs||"")}</textarea></div>
-        <div class="crm-save-row"><span class="sub" id="crmSaved"></span><button class="btn-primary" id="crmSalvar">Salvar no CRM</button></div>
+        <div class="crm-save-row"><span class="sub" id="crmSaved"></span><button class="btn-primary" id="crmSalvar">Salvar no Midas CRM</button></div>
       </div>
       ${finPanelEmpresa(emp)}${omiePanelEmpresa(empId,emp)}
       <div class="panel"><h4>Visão geral</h4><div class="grid2">
@@ -3234,7 +3234,7 @@ function openEmpresa(empId){
   modal.querySelectorAll("[data-col2]").forEach(b=>b.onclick=()=>{ closeModal(); openColaborador(b.dataset.col2); });
   modal.querySelectorAll("[data-openfin]").forEach(b=>b.onclick=()=>{ closeModal(); MODE="financeiro"; try{localStorage.setItem("resiltrack_mode","financeiro");}catch(e){} render(); openFinCliente(b.dataset.openfin); });
   const cp=modal.querySelector("[data-cpdf]"); if(cp) cp.onclick=()=>baixarClientePDF(empId,cp);
-  // ---- CRM: coluna, CS e tags ----
+  // ---- Midas CRM: coluna, CS e tags ----
   let csEscolha=csM;
   const marcarAlterado=()=>{ const s=modal.querySelector("#crmSaved"); if(s){ s.textContent="alterações não salvas"; s.style.color="var(--warn,#b7791f)"; } };
   modal.querySelectorAll("#crmCS [data-cs]").forEach(b=>b.onclick=()=>{
@@ -3256,11 +3256,11 @@ function openEmpresa(empId){
     CRMCLI[empId].cs_obs=obsEl?obsEl.value.trim():"";
     salvarBtn.disabled=true; salvarBtn.textContent="Salvando...";
     await salvarClienteCRM(empId);
-    salvarBtn.disabled=false; salvarBtn.textContent="Salvar no CRM";
+    salvarBtn.disabled=false; salvarBtn.textContent="Salvar no Midas CRM";
     const s=modal.querySelector("#crmSaved"); if(s){ s.textContent="salvo"; s.style.color="var(--good,#128a5b)"; }
   };
 }
-// ---------- PDF do cliente (CRM) ----------
+// ---------- PDF do cliente (Midas CRM) ----------
 function baixarClientePDF(empId,btn){
   const emp=EMPRESAS[empId]; if(!emp)return; const ag=empresaAgg(empId); const sc=clienteScore(empId);
   if(typeof html2pdf==="undefined"){ alert("Gerador de PDF ainda carregando. Tente de novo em instantes."); return; }
@@ -3833,7 +3833,7 @@ document.addEventListener("input",ev=>{
 
 
 // Layout dos e-mails da Resilcon (azul #006789, preto e branco), inspirado no modelo "Recruiter".
-// Usado pela função montar-email (réguas) e pelo Resiltrack (envio individual pelo CRM).
+// Usado pela função montar-email (réguas) e pelo Resiltrack (envio individual pelo Midas CRM).
 // Estilos: 'marketing' (blocos com hero escuro), 'carta' (parece escrito pelo consultor) e 'sistema' (aviso interno).
 var RESILCON_EMAIL = (function () {
   const AZUL = '#006789', AZUL_ESC = '#004E68', PRETO = '#1B1B1B', GRAFITE = '#2A2A2A', TEXTO = '#333333', CINZA = '#7C8487', CLARO = '#F4F6F7', LINHA = '#E3E8EA';
@@ -3998,7 +3998,7 @@ function ceTesteModal(chave){
   closeModal(); ceAviso2(`${data} e-mail${data===1?"":"s"} de teste a caminho de ${email}. Acompanhe em Envios.`); delete CE_CACHE.envios; };
 }
 
-// ================= CRM DE VENDAS (Fase 1) =================
+// ================= Midas CRM DE VENDAS (Fase 1) =================
 // Funil completo (Atração → Indicação), contatos, empresas, linha do tempo, indicações, importação e configurações.
 // Tudo passa pelas funções public.crm_* do Supabase, com o login do Resiltrack.
 const CRM_ETAPA_COR={atracao:"#7B5BA6",nutricao:"#E2557A",conversao:"#EE8A2E",decisao:"#D24F93",retencao:"#D24F93",lealdade:"#EE8A2E",indicacao:"#E2557A",ganha:"#2E8B57",perdida:"#8A9599"};
@@ -4034,10 +4034,10 @@ async function crmRpc(fn,args){ const {data,error}=await sb.rpc(fn,args||{}); if
 async function crmBase(force){ if(!CRMB||force) CRMB=await crmRpc("crm_dados",{p_secao:"base"}); return CRMB; }
 function crmErro(e){ const m=String((e&&e.message)||e||"");
  if(m.includes("sem_permissao_neg")) return "Esse registro é de outro vendedor. Peça ao gestor comercial para transferir.";
- if(m.includes("sem_permissao_gestor")) return "Só o gestor comercial ou um admin pode mudar as configurações do CRM.";
+ if(m.includes("sem_permissao_gestor")) return "Só o gestor comercial ou um admin pode mudar as configurações do Midas CRM.";
  if(m.includes("sem_permissao_fin")) return "Só o financeiro pode registrar pagamentos de indicação.";
- if(m.includes("sem_permissao")) return "Seu usuário não tem acesso ao CRM de vendas. Peça a um admin para liberar a permissão Comercial no painel Admin.";
- if(m.includes("Could not find the function")||m.includes("crm_dados")||m.includes("does not exist")) return "As funções do CRM ainda não foram criadas no Supabase. Rode o arquivo crm-fase1.sql no SQL Editor.";
+ if(m.includes("sem_permissao")) return "Seu usuário não tem acesso ao Midas CRM. Peça a um admin para liberar a permissão Comercial no painel Admin.";
+ if(m.includes("Could not find the function")||m.includes("crm_dados")||m.includes("does not exist")) return "As funções do Midas CRM ainda não foram criadas no Supabase. Rode o arquivo crm-fase1.sql no SQL Editor.";
  if(m.startsWith("email_existente")) return "Já existe um contato com esse e-mail.";
  if(m.startsWith("etapa_invalida")) return "Essa etapa não existe neste funil.";
  return m||"Não foi possível salvar agora. Tente de novo."; }
@@ -4491,7 +4491,7 @@ function crmNovaIndicacao(gid){
 
 // ================= CONTATOS E EMPRESAS =================
 async function crmVContatos(v){
- v.innerHTML=crmHead("Contatos e empresas","Leads, prospects e clientes cadastrados no CRM. A mesma base usada pela Central de E-mails.",
+ v.innerHTML=crmHead("Contatos e empresas","Leads, prospects e clientes cadastrados no Midas CRM. A mesma base usada pela Central de E-mails.",
   `<button class="txt-btn" data-mode-ir="crm_importar">Importar planilha</button><button class="txt-btn" id="crmNovaEmp">Nova empresa</button>${crmPri('id="crmNovoCont">Novo contato</button>')}`)+`<div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#crmNovoCont").onclick=()=>crmFichaContato(null); v.querySelector("#crmNovaEmp").onclick=()=>crmFichaEmpresa(null);
  v.querySelector("[data-mode-ir]").onclick=()=>setMode("crm_importar");
@@ -4625,7 +4625,7 @@ function crmVImportar(v){
    <fieldset class="crm-radio"><legend>Essas pessoas autorizaram receber e-mails da Resilcon?</legend>
     <label><input type="radio" name="crmCons" value="sim" ${I.consent===true?"checked":""}> Sim, autorizaram (cadastro, evento, cliente que pediu contato)</label>
     <label><input type="radio" name="crmCons" value="nao" ${I.consent===false?"checked":""}> Não ou não sei (lista comprada ou de terceiros)</label></fieldset>
-   <p class="sub" id="crmConsMsg">${I.consent===false?"Entram no CRM para o comercial trabalhar, mas ficam fora das réguas e campanhas até autorizarem.":I.consent===true?"Entram no CRM e podem receber as réguas de e-mail quando forem ativadas.":""}</p>
+   <p class="sub" id="crmConsMsg">${I.consent===false?"Entram no Midas CRM para o comercial trabalhar, mas ficam fora das réguas e campanhas até autorizarem.":I.consent===true?"Entram no Midas CRM e podem receber as réguas de e-mail quando forem ativadas.":""}</p>
    <label class="crm-f crm-chk"><input type="checkbox" id="crmCriar" ${I.criar?"checked":""}><span>Criar um negócio em Atração para cada contato novo</span></label>
    <label class="crm-f" style="max-width:320px"><span>Responsável</span><select class="inp" id="crmImpResp">${crmRespOpts(I.resp,"Distribuir pelo rodízio (se estiver ligado)")}</select></label>
    <div class="crm-pe"><span style="flex:1"></span>${crmPri(`id="crmImpOk">Importar ${I.linhas.length} linha(s)</button>`)}</div><div id="crmImpProg"></div></div>`;
@@ -4650,7 +4650,7 @@ function crmVImportar(v){
 // ================= CONFIGURAÇÕES =================
 function crmVConfig(v){
  const B=CRMB; const rec={mensal:"Mensal",anual:"Anual",unico:"Único"}; const tipos={texto:"Texto",numero:"Número",data:"Data",lista:"Lista de opções",sim_nao:"Sim ou não"}; const ents={contato:"Contato",negocio:"Negócio",empresa:"Empresa"};
- v.innerHTML=crmHead("Configurações do CRM","Automações, rodízio de leads, serviços, motivos de perda, campos personalizados e funis.","")+`<div id="crmAuto"><div class="card ce-pad"><p class="sub" style="margin:0">Carregando automações…</p></div></div><div class="ce-g2">
+ v.innerHTML=crmHead("Configurações do Midas CRM","Automações, rodízio de leads, serviços, motivos de perda, campos personalizados e funis.","")+`<div id="crmAuto"><div class="card ce-pad"><p class="sub" style="margin:0">Carregando automações…</p></div></div><div class="ce-g2">
   <div class="card ce-pad"><div class="ce-ch"><h3>Serviços</h3></div>
    ${(B.servicos||[]).map(s=>`<div class="ce-row ${s.ativo?"":"crm-off"}"><span><b>${esc(s.nome)}</b><span class="sub"> · ${esc(rec[s.recorrencia])}</span></span><span class="crm-row-a"><span class="num">${s.valor!=null?brl(s.valor):"sem valor"}</span><button class="view-btn ghost" data-ed-serv="${s.id}">Editar</button></span></div>`).join("")||`<p class="sub">Nenhum serviço cadastrado.</p>`}
    <div class="crm-form crm-add" id="cfgServ"><input type="hidden" id="sId"><label class="crm-f crm-w2"><span>Serviço</span><input class="inp" id="sNome" placeholder="Ex.: BPO Fiscal"></label>
@@ -4703,7 +4703,7 @@ function crmReguasPainel(rg,c){
   ${bloq?`<p class="sub" style="margin:8px 0 0">${bloq}.</p>`:`<div class="crm-pe" style="margin-top:8px"><select class="fsel" id="rgSel" aria-label="Régua">${crmOpt((rg.reguas||[]).map(r=>[r.chave,r.nome+(r.status!=="ativa"?" (ainda não ativa)":"")]),"","Incluir em uma régua…")}</select><button class="view-btn" id="rgIncl">Incluir</button></div>`}</div>`;
 }
 
-// ================= CRM · FASE 2: tarefas, contratos, automações, rodízio, ações em massa =================
+// ================= Midas CRM · FASE 2: tarefas, contratos, automações, rodízio, ações em massa =================
 const CRM_TAR_TIPOS={ligacao:"Ligação",reuniao:"Reunião",email:"E-mail",whatsapp:"WhatsApp",visita:"Visita",proposta:"Proposta",contrato:"Contrato",indicacao:"Pedir indicação",outro:"Outro"};
 const CRM_CT_ST={rascunho:"Em preparação",enviado:"Enviado para assinatura",assinado:"Assinado",cancelado:"Cancelado"};
 const CRM_CT_SIT={assinado:["good","Assinado"],vence:["warn","Vence em breve"],aguardando:["warn","Aguardando assinatura"],vencido:["crit","Vencido"],preparo:["neutral","Em preparação"],sem:["crit","Sem contrato"]};
@@ -4716,7 +4716,7 @@ function crmResumoTarefas(forcar){
  if(!sb||!podeVendas()) return; if(CRM_TAR&&!forcar) return; if(CRM_TAR===false) return;
  CRM_TAR=CRM_TAR||{carregando:1};
  crmRpc("crm_tarefas",{p:{resumo:true}}).then(r=>{ CRM_TAR=r||{atrasadas:0}; renderSide();
-   if(!CRM_TAR_AVISOU&&r&&r.atrasadas){ CRM_TAR_AVISOU=true; crmToast(`Você tem ${r.atrasadas} tarefa(s) atrasada(s) no CRM.`); } })
+   if(!CRM_TAR_AVISOU&&r&&r.atrasadas){ CRM_TAR_AVISOU=true; crmToast(`Você tem ${r.atrasadas} tarefa(s) atrasada(s) no Midas CRM.`); } })
   .catch(()=>{ CRM_TAR=false; });
 }
 const crmHojeISO=()=>new Date().toLocaleDateString("sv-SE");
@@ -4891,7 +4891,7 @@ function crmLigarContratos(root,lista,recarregar){
  p.querySelectorAll("[data-ct]").forEach(r=>r.onclick=()=>crmContratoModal((lista||[]).find(c=>c.id===r.dataset.ct),null,recarregar));
 }
 async function crmVContratos(v){
- v.innerHTML=crmHead("Contratos","Contrato de prestação de serviço de cada cliente. Em vermelho, quem ainda não tem contrato assinado.",`<button class="txt-btn" id="crmSincCart" title="Cadastra no CRM os clientes novos do G-Click, coloca no funil de clientes e liga os contatos do WhatsApp">Atualizar carteira do G-Click</button>`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.innerHTML=crmHead("Contratos","Contrato de prestação de serviço de cada cliente. Em vermelho, quem ainda não tem contrato assinado.",`<button class="txt-btn" id="crmSincCart" title="Cadastra no Midas CRM os clientes novos do G-Click, coloca no funil de clientes e liga os contatos do WhatsApp">Atualizar carteira do G-Click</button>`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#crmSincCart").onclick=ev=>crmSincronizarCarteira(ev.currentTarget,()=>crmVContratos(v));
  try{ const [k,neg]=await Promise.all([crmRpc("crm_contratos",{p:{}}),podeVendas()?crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}).catch(()=>[]):Promise.resolve([])]);
   CRMD.contr=k; CRMD.ganhos=(neg||[]).filter(o=>o.etapa==="ganha"); if(MODE==="crm_contratos") crmContrPinta(v); }
@@ -4902,7 +4902,7 @@ function crmLinhasContrato(){
  const l=cli.map(c=>{ const ks=busca(c.id,c.cnpj); return {tipo:"gclick",id:c.id,nome:c.nome,cnpj:c.cnpj,ks,...crmSituacaoContrato(ks)}; });
  (CRMD.ganhos||[]).forEach(o=>{ if(o.cnpj&&cnpjs.has(dig(o.cnpj))) return; const ks=(CRMD.contr||[]).filter(k=>k.oportunidade_id===o.id||(dig(o.cnpj)&&dig(k.cnpj)===dig(o.cnpj)));
   l.push({tipo:"novo",id:o.id,nome:o.empresa_nome||o.contato_nome||o.titulo,cnpj:o.cnpj,op:o,ks,...crmSituacaoContrato(ks)}); });
- // contratos de clientes que ainda não estão no G-Click nem ganhos no CRM (ex.: importados da 4C)
+ // contratos de clientes que ainda não estão no G-Click nem ganhos no Midas CRM (ex.: importados da 4C)
  const usados=new Set(l.flatMap(x=>(x.ks||[]).map(k=>k.id))); const sobra={};
  (CRMD.contr||[]).filter(k=>!usados.has(k.id)&&k.status!=="cancelado").forEach(k=>{ const key=dig(k.cnpj)||String(k.cliente_nome||k.id).toLowerCase(); (sobra[key]=sobra[key]||[]).push(k); });
  Object.entries(sobra).forEach(([key,ks])=>l.push({tipo:"avulso",id:key,nome:ks[0].cliente_nome||"Cliente",cnpj:ks[0].cnpj,ks,...crmSituacaoContrato(ks)}));
@@ -4922,7 +4922,7 @@ function crmContrPinta(v){
  <div class="filters crm-bar2" style="margin-top:16px"><div class="ce-tabs" style="margin:0">${abas.map(([k,t,s])=>`<button class="${aba[0]===k?"on":""}" data-ab="${k}">${t} <span class="num">${s?n(s):tot}</span></button>`).join("")}</div>
   <div class="search" style="flex:1;min-width:200px"><input id="crmQk" type="search" value="${escAttr(CRMK.q)}" placeholder="Buscar cliente ou CNPJ" aria-label="Buscar"></div></div>
  <div class="card" style="overflow-x:auto"><table><thead><tr><th>Cliente</th><th>CNPJ</th><th>Situação</th><th>Assinado em</th><th>Vigência</th><th class="right">Honorário</th><th></th></tr></thead><tbody>
- ${vis.slice(0,500).map(x=>{ const c=x.c, s=CRM_CT_SIT[x.sit]; return `<tr><td><button class="crm-link r-name" ${x.tipo==="gclick"?`data-cli="${escAttr(x.id)}"`:x.tipo==="novo"?`data-neg="${x.id}"`:`data-ctx="${escAttr(x.tipo+":"+x.id)}"`}>${esc(x.nome)}</button>${x.tipo==="novo"?`<div class="sub">Ganho no CRM, ainda fora do G-Click</div>`:x.tipo==="avulso"?`<div class="sub">${x.ks.length>1?x.ks.length+" contratos · ":""}cliente ainda fora do G-Click</div>`:""}</td>
+ ${vis.slice(0,500).map(x=>{ const c=x.c, s=CRM_CT_SIT[x.sit]; return `<tr><td><button class="crm-link r-name" ${x.tipo==="gclick"?`data-cli="${escAttr(x.id)}"`:x.tipo==="novo"?`data-neg="${x.id}"`:`data-ctx="${escAttr(x.tipo+":"+x.id)}"`}>${esc(x.nome)}</button>${x.tipo==="novo"?`<div class="sub">Ganho no Midas CRM, ainda fora do G-Click</div>`:x.tipo==="avulso"?`<div class="sub">${x.ks.length>1?x.ks.length+" contratos · ":""}cliente ainda fora do G-Click</div>`:""}</td>
   <td class="num sub">${x.cnpj?esc(fmtCnpj(x.cnpj)):""}</td><td><span class="pill ${s[0]}">${s[1]}</span></td><td class="num sub">${c&&c.assinado_em?crmData(c.assinado_em+"T12:00"):""}</td>
   <td class="num sub">${c?(c.fim?"até "+crmData(c.fim+"T12:00"):(c.status==="assinado"?"indeterminado":"")):""}</td><td class="right num">${c&&c.valor_mensal?brl(c.valor_mensal):""}</td>
   <td class="right" style="white-space:nowrap">${c&&c.status==="enviado"&&String(c.origem_ref||"").startsWith("d4sign:")?`<button class="view-btn ghost" data-assin="${escAttr(String(c.origem_ref).slice(7))}">Assinatura</button>`:""}${c&&c.arquivo_path?`<button class="view-btn ghost" data-arq="${escAttr(c.arquivo_path)}">Abrir</button>`:""}<button class="view-btn ${x.sit==="sem"?"ce-pri":""}" data-ctx="${escAttr(x.tipo+":"+x.id)}">${c?"Atualizar":"Adicionar contrato"}</button></td></tr>`; }).join("")
@@ -5035,7 +5035,7 @@ async function crmConfigAutomacoes(v){
   try{ await crmRpc("crm_salvar_automacao",{p_tipo:"rodizio",p:{ativo:at,membros:mem}}); crmToast("Rodízio salvo"); recarga(); }catch(e){ crmToast(crmErro(e)); } };
 }
 
-// ================= CRM · FASE 3: relatórios e permissões por vendedor =================
+// ================= Midas CRM · FASE 3: relatórios e permissões por vendedor =================
 let CRMR={per:"90",vend:""};
 function podeGestorCRM(){ return (CRMB&&CRMB.eu&&CRMB.eu.gestor)||isAdmin()||podeModulo("comercial_gestor"); }
 const crmOrigTxt=o=>String(o||"").startsWith("regua:")?"Régua de e-mail":(CRM_ORIG[o]||o||"Sem origem");
@@ -5100,7 +5100,7 @@ function crmRelPinta(v,r){
 }
 const crmHoras=h=>{ h=+h; if(h<1) return Math.max(1,Math.round(h*60))+" min"; if(h<48) return String(Math.round(h*10)/10).replace(".",",")+" h"; return String(Math.round(h/24*10)/10).replace(".",",")+" dias"; };
 
-// ================= CRM · FASE 4: e-mail, WhatsApp, Outlook, copiloto de IA e prioridades =================
+// ================= Midas CRM · FASE 4: e-mail, WhatsApp, Outlook, copiloto de IA e prioridades =================
 function crmWaLink(tel,txt){ let d=dig(tel); if(d.length<10) return null; if(d.length<=11) d="55"+d; return `https://wa.me/${d}${txt?`?text=${encodeURIComponent(txt)}`:""}`; }
 const crmPrimeiroNome=n=>String(n||"").trim().split(/\s+/)[0]||"";
 function crmAcoesContatoHTML(c){ if(!c) return "";
@@ -5167,7 +5167,7 @@ async function crmCopiloto(m,o,contato,depois){
   ${r.tarefa&&r.tarefa.titulo?`<button class="view-btn ce-pri" data-ia-tar>Criar tarefa: ${esc(r.tarefa.titulo)}</button>`:""}
   ${r.mensagem_whatsapp?`<label class="crm-f" style="margin-top:12px"><span>Mensagem sugerida</span><textarea class="inp" id="iaMsg" style="min-height:96px">${esc(r.mensagem_whatsapp)}</textarea></label>
    <div class="crm-pe" style="margin-top:6px"><button class="view-btn ghost" data-ia-copiar>Copiar</button>${wa?`<button class="view-btn" data-ia-wa>Abrir no WhatsApp</button>`:""}</div>`:""}
-  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no CRM. Confira antes de usar.</p></div>`;
+  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no Midas CRM. Confira antes de usar.</p></div>`;
  box.querySelector("[data-ia-fechar]").onclick=()=>box.innerHTML="";
  const bt=box.querySelector("[data-ia-tar]"); if(bt) bt.onclick=async()=>{ const t=r.tarefa; const d=new Date(); d.setDate(d.getDate()+(+t.prazo_dias||0));
   try{ await crmRpc("crm_salvar_tarefa",{p:{titulo:t.titulo,tipo:CRM_TAR_TIPOS[t.tipo]?t.tipo:"outro",vence_em:new Date(d.toLocaleDateString("sv-SE")+"T18:00:00").toISOString(),oportunidade_id:o.id,contato_id:o.contato_id}});
@@ -5181,15 +5181,15 @@ function crmIcsTexto(ev){ const f=d=>d.toISOString().replace(/[-:]/g,"").replace
  const ini=new Date(ev.vence_em), fim=new Date(ini.getTime()+30*60000);
  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Resilcon//CRM Resiltrack//PT-BR","BEGIN:VEVENT",`UID:${ev.id}@crm.resilcon.com.br`,`DTSTAMP:${f(new Date())}`,`DTSTART:${f(ini)}`,`DTEND:${f(fim)}`,
   `SUMMARY:${e(`[${CRM_TAR_TIPOS[ev.tipo]||"Tarefa"}] ${ev.titulo}`)}`,`DESCRIPTION:${e([ev.negocio_titulo,ev.contato_nome,ev.contato_telefone,ev.obs].filter(Boolean).join("\n"))}`,
-  "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Tarefa do CRM","TRIGGER:-PT15M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
+  "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Tarefa do Midas CRM","TRIGGER:-PT15M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
 function crmBaixarIcs(t){ const b=new Blob([crmIcsTexto(t)],{type:"text/calendar"}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="tarefa-crm.ics"; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 async function crmOutlookModal(){
  let tok; try{ tok=await crmRpc("crm_agenda_link",{p_novo:false}); }catch(e){ crmToast(crmErro(e)); return; }
  const url=t=>`${SUPABASE_URL}/functions/v1/crm-agenda?t=${t}`;
- const m=crmModal("Agenda no Outlook","Suas tarefas do CRM no calendário","",`<p style="margin:0">Assine este link uma vez e as suas tarefas abertas aparecem no calendário do Outlook, com lembrete 15 minutos antes.</p>
+ const m=crmModal("Agenda no Outlook","Suas tarefas do Midas CRM no calendário","",`<p style="margin:0">Assine este link uma vez e as suas tarefas abertas aparecem no calendário do Outlook, com lembrete 15 minutos antes.</p>
   <label class="crm-f"><span>Seu link pessoal (não compartilhe)</span><div class="crm-par"><input class="inp" id="olUrl" readonly value="${escAttr(url(tok))}"><button class="view-btn" id="olCop">Copiar</button></div></label>
   <ol class="crm-passos-ol"><li>No Outlook, abra o <b>Calendário</b>.</li><li>Clique em <b>Adicionar calendário</b> e depois em <b>Assinar da Web</b> (no Outlook do Windows: <b>Adicionar calendário › Da Internet</b>).</li>
-   <li>Cole o link, dê o nome "Tarefas do CRM" e confirme.</li></ol>
+   <li>Cole o link, dê o nome "Tarefas do Midas CRM" e confirme.</li></ol>
   <p class="sub" style="margin:0">O Outlook atualiza calendários assinados sozinho, normalmente a cada poucas horas. Para concluir uma tarefa, use o Resiltrack. Se o link vazar, gere um novo: o antigo para de funcionar.</p>
   <div class="crm-pe"><button class="txt-btn" id="olNovo">Gerar novo link</button><span style="flex:1"></span><button class="txt-btn" data-close2>Fechar</button></div>`);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
@@ -5219,7 +5219,7 @@ function crmPrioridadesHTML(lista){ if(!lista.length) return "";
    <div class="sub">${esc([x.o.empresa_nome,x.o.contato_nome].filter(Boolean).join(" · "))}</div><div class="crm-motivos">${x.mot.slice(0,4).map(t=>`<span>${esc(t)}</span>`).join("")}</div></div></div>
    <span class="crm-etq" style="--c:${CRM_ETAPA_COR[x.o.etapa]}">${esc(crmEtapaNome(x.o.funil_id,x.o.etapa))}</span></div>`).join("")}</div>`; }
 
-// ================= CRM · FORMULÁRIOS DO SITE: biblioteca de códigos, prévia e formulários de campanha =================
+// ================= Midas CRM · FORMULÁRIOS DO SITE: biblioteca de códigos, prévia e formulários de campanha =================
 const CRMFORM_SCRIPT="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/formulario-site?widget=1";
 const CRMFORM_API="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/formulario-site";
 CRM_ICO.form='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
@@ -5233,7 +5233,7 @@ const CRMFORM_PRONTOS=[
 ];
 // campos do formulário de campanha: [chave, rótulo, tipo, ajuda]
 const CRMFORM_CAMPOS=[
- ["campanha","Nome da campanha","texto","Curto e sem espaços, ex.: black-friday-2026. Aparece no título do negócio no CRM."],
+ ["campanha","Nome da campanha","texto","Curto e sem espaços, ex.: black-friday-2026. Aparece no título do negócio no Midas CRM."],
  ["titulo","Título","texto","Frase principal do formulário."],
  ["texto","Texto de apoio","area","Uma ou duas frases abaixo do título."],
  ["kicker","Texto pequeno acima do título","texto","Ex.: Oferta de novembro."],
@@ -5266,7 +5266,7 @@ function crmFormMontarPrevia(alvo,html){ alvo.innerHTML=html.replace(/<script[\s
 async function crmFormCopiar(txt,ta){ try{ await navigator.clipboard.writeText(txt); crmToast("Código copiado. Agora é só colar na página."); }catch(_){ if(ta){ ta.focus(); ta.select(); } crmToast("Selecionei o código: use Ctrl+C para copiar."); } }
 
 async function crmVFormularios(v){
- v.innerHTML=crmHead("Formulários do site","Copie o código e cole na página onde o formulário deve aparecer. Os leads caem direto aqui no CRM.",crmPri('id="frmNovo">Novo formulário de campanha</button>'))+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.innerHTML=crmHead("Formulários do site","Copie o código e cole na página onde o formulário deve aparecer. Os leads caem direto aqui no Midas CRM.",crmPri('id="frmNovo">Novo formulário de campanha</button>'))+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#frmNovo").onclick=()=>crmFormEditor(null,()=>crmVFormularios(v));
  let D; try{ D=await crmRpc("crm_formularios"); }catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); return; }
  if(MODE!=="crm_formularios") return;
@@ -5292,7 +5292,7 @@ async function crmVFormularios(v){
 
 function crmFormVer(f){
  const cod=crmFormCodigoPronto(f.tipo);
- const m=crmModal("Formulários do site",f.nome,"",`<p class="sub" style="margin:0 0 10px">Prévia de teste: aqui dentro do CRM nada é gravado.</p>
+ const m=crmModal("Formulários do site",f.nome,"",`<p class="sub" style="margin:0 0 10px">Prévia de teste: aqui dentro do Midas CRM nada é gravado.</p>
   <div id="frmPrev" style="background:#f3f6f8;border-radius:14px;padding:18px"></div>
   <h4 class="crm-h4" style="margin:16px 0 6px">Código para colar na página</h4>
   <textarea class="inp" id="frmCod" readonly rows="3" style="font-family:monospace;font-size:12px;width:100%">${esc(cod)}</textarea>
@@ -5307,7 +5307,7 @@ function crmFormEditor(s,depois){
  const m=crmModal("Formulário de campanha",s?s.nome:"Novo formulário de campanha","",`
   <div class="crm-frm-ed" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px;align-items:start">
    <div class="crm-form" style="display:grid;gap:10px">
-    <label class="crm-f"><span>Nome interno</span><input class="inp" id="frmNome" value="${escAttr(s?s.nome:"")}" placeholder="Ex.: Landing Black Friday 2026"><small class="sub">Só aparece aqui no CRM.</small></label>
+    <label class="crm-f"><span>Nome interno</span><input class="inp" id="frmNome" value="${escAttr(s?s.nome:"")}" placeholder="Ex.: Landing Black Friday 2026"><small class="sub">Só aparece aqui no Midas CRM.</small></label>
     ${CRMFORM_CAMPOS.map(campo).join("")}
     <label class="crm-chk"><input type="checkbox" id="frmPerg" ${c.perguntar?"checked":""}><span>Perguntar o ramo da empresa antes dos dados</span></label>
     <label class="crm-chk"><input type="checkbox" id="frmMsg" ${c.mensagem?"checked":""}><span>Mostrar campo de mensagem</span></label>
@@ -5331,7 +5331,7 @@ function crmFormEditor(s,depois){
  m.querySelector("#frmCop").onclick=()=>crmFormCopiar(m.querySelector("#frmCod").value,m.querySelector("#frmCod"));
  m.querySelector("#frmSalvar").onclick=async ev=>{ const b=ev.currentTarget; const cfg=ler(); const nome=crmVal(m,"#frmNome");
   if(!nome){ crmToast("Dê um nome interno para o formulário."); return; }
-  if(!cfg.campanha){ crmToast("Preencha o nome da campanha. É ele que identifica os leads no CRM."); return; }
+  if(!cfg.campanha){ crmToast("Preencha o nome da campanha. É ele que identifica os leads no Midas CRM."); return; }
   if(cfg.material&&!cfg.link){ crmToast("Informe o link do material."); return; }
   b.disabled=true; b.textContent="Salvando…";
   try{ await crmRpc("crm_salvar_formulario",{p:{id:s?s.id:null,nome,config:cfg}}); closeModal(); crmToast("Formulário salvo"); depois&&depois(); }
@@ -5340,7 +5340,7 @@ function crmFormEditor(s,depois){
   try{ await crmRpc("crm_excluir_formulario",{p_id:s.id}); closeModal(); crmToast("Formulário excluído. O código já colado em páginas continua funcionando."); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
 }
 
-// ================= CRM · MOTOR DE PRECIFICAÇÃO (mesma lógica da ferramenta comercial da Resilcon) =================
+// ================= Midas CRM · MOTOR DE PRECIFICAÇÃO (mesma lógica da ferramenta comercial da Resilcon) =================
 const PRECO_CHAVES_PLANO=["Básico","Intermediário","Avançado"];
 function precoNum(s){ s=String(s==null?"":s).trim().replace(/[^\d.,-]/g,""); if(!s) return 0;
  if(s.includes(",")) return Number(s.replace(/\./g,"").replace(",","."))||0;
@@ -5361,7 +5361,7 @@ function precoAchaFaixa(faixas,x){ x=Number(x)||0; const fx=faixas.map(f=>({f,r:
  if(antes.length) return {faixa:antes[0].f,fora:x>Math.max(...fx.map(o=>o.r.hi))};
  return fx.length?{faixa:fx[0].f,fora:true}:{faixa:null,fora:true}; }
 
-// Converte os campos brutos da ferramenta (pares [nome, valor, valorCheckbox]) no modelo usado pelo CRM
+// Converte os campos brutos da ferramenta (pares [nome, valor, valorCheckbox]) no modelo usado pelo Midas CRM
 function precoNormalizar(bruto){
  const pares=(bruto&&bruto.pares)||[]; const P={planos:[],atividades:[],criterios:[],extras:[],nichos:(bruto&&bruto.nichos)||[],percentual:false};
  const pl={}, ord=[], at={}, atOrd=[], cr={}, crOrd=[], ex={}, exOrd=[];
@@ -5419,7 +5419,7 @@ function precoCalcular(P,r){
  return out; }
 function precoMoeda(v){ return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 
-// ================= CRM · SIMULADOR DE PLANOS E PROPOSTA (tabela de preços da Resilcon) =================
+// ================= Midas CRM · SIMULADOR DE PLANOS E PROPOSTA (tabela de preços da Resilcon) =================
 CRM_ICO.preco='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 19h8"/></svg>';
 (function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_contatos"); CRM_SECOES.splice(i<0?2:i,0,["crm_precos","Simulador de planos","preco"]); })();
 (function(){ if(document.getElementById("preco-css")) return; const st=document.createElement("style"); st.id="preco-css"; st.textContent=`
@@ -5759,7 +5759,7 @@ function precoVincularNichos(arq,depois){
 @media(max-width:760px){.vn-grade,.vn-todos{grid-template-columns:1fr}}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · CONTRATOS: modelos (vindos da 4C + personalizados), editor e geração a partir do plano =================
+// ================= Midas CRM · CONTRATOS: modelos (vindos da 4C + personalizados), editor e geração a partir do plano =================
 CRM_ICO.contr2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg>';
 (function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_contratos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i+1,0,["crm_modelos","Modelos de contrato","contr2"]); })();
 const CT_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
@@ -5871,7 +5871,7 @@ async function ctGerar(opts){
     <p class="sub" style="margin:0">Dica: só de digitar o CNPJ ou o CEP nos campos abaixo, o endereço e a razão social vêm da Receita.</p></div>
    <h4 class="crm-h4">Dados do cliente</h4><div class="crm-form" id="gCli" style="grid-template-columns:1fr 1fr"></div></div>
   <div class="ct-ed-r ct-ger-r"><p class="sub" style="margin:0 0 6px">Prévia. O que estiver em amarelo ainda falta preencher.</p><iframe id="gPrev" title="Prévia do contrato"></iframe></div></div>
-  <div class="crm-pe" id="gPe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ghost" id="gSalvar">Salvar no CRM</button><button class="view-btn ce-pri" id="gAss">Enviar para assinatura</button></div>`);
+  <div class="crm-pe" id="gPe" style="margin-top:12px"><span style="flex:1"></span><button class="view-btn ghost" id="gPdf">Imprimir ou salvar PDF</button><button class="view-btn ghost" id="gSalvar">Salvar no Midas CRM</button><button class="view-btn ce-pri" id="gAss">Enviar para assinatura</button></div>`);
  modal.classList.add("ct-modal");
  const camposCli=CT_PALAVRAS[0][1].filter(([k])=>k!=="CONTRATANTE");
  const pintaCli=()=>{ m.querySelector("#gCli").innerHTML=camposCli.map(([k,r])=>`<label class="crm-f"><span>${esc(r)}</span><input class="inp" data-cli="${k}" value="${escAttr(st.cli[k]||"")}"></label>`).join("");
@@ -5919,7 +5919,7 @@ async function ctGerar(opts){
  m.querySelector("#gIni").oninput=e=>{ st.inicio=e.target.value; prevLento(); }; m.querySelector("#gFim").oninput=e=>{ st.fim=e.target.value; prevLento(); };
  m.querySelector("#gPdf").onclick=async()=>{ const d=await doc(true,false); ctAbrirJanela(d.html); };
  m.querySelector("#gAss").onclick=()=>asPainel(m,{st,cfg,doc:()=>doc(false,false)});
- m.querySelector("#gSalvar").onclick=async ev=>{ const b=ev.currentTarget; if(!st.negocio){ crmToast("Escolha o negócio para salvar o contrato no CRM. Sem negócio, use Imprimir ou salvar PDF."); return; }
+ m.querySelector("#gSalvar").onclick=async ev=>{ const b=ev.currentTarget; if(!st.negocio){ crmToast("Escolha o negócio para salvar o contrato no Midas CRM. Sem negócio, use Imprimir ou salvar PDF."); return; }
   b.disabled=true; b.textContent="Salvando…";
   try{ const d=await doc(true,false); const nomeArq=`Contrato ${(st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||"cliente")} ${st.inicio}.html`;
    const path=`contratos/${new Date().getFullYear()}/${Date.now()}-${nomeArq.normalize("NFD").replace(/[^\w.\-]+/g,"_")}`;
@@ -5927,7 +5927,7 @@ async function ctGerar(opts){
    await crmRpc("crm_salvar_contrato",{p:{oportunidade_id:st.negocio,contato_id:st.oNeg&&st.oNeg.contato_id,cliente_nome:st.cli.CLIENTE_EMPRESA_NOME||st.cli.CLIENTE_NOME||null,cnpj:st.cli.CLIENTE_EMPRESA_DOCUMENTO||null,
     titulo:d.mod.nome,servicos:d.v.NOME_PLANO?`${d.v.NOME_PLANO}: ${d.v.SERVICOS_INCLUSOS}`:null,valor_mensal:precoNum(d.v.VALOR_PROPOSTA)||null,status:"rascunho",inicio:st.inicio,fim:st.fim,arquivo_path:path,arquivo_nome:nomeArq,obs:"Gerado no Resiltrack com o modelo "+d.mod.nome}});
    closeModal(); crmToast("Contrato salvo em Contratos como rascunho. Quando voltar assinado, anexe o PDF e marque como assinado.");
-  }catch(e){ b.disabled=false; b.textContent="Salvar no CRM"; crmToast(crmErro(e)); } };
+  }catch(e){ b.disabled=false; b.textContent="Salvar no Midas CRM"; crmToast(crmErro(e)); } };
  pintaCli(); pintaProp(); if(st.negocio) carregarNeg(st.negocio); else prevLento();
 }
 
@@ -5948,7 +5948,7 @@ async function ctGerar(opts){
 @media(max-width:1100px){.ct-ed,.ct-ger{grid-template-columns:1fr}.ct-ed-r iframe{height:60vh}}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · CONTRATOS: editor visual de modelos (mesmo jeito do editor da 4C, sem limite de blocos nem de itens) =================
+// ================= Midas CRM · CONTRATOS: editor visual de modelos (mesmo jeito do editor da 4C, sem limite de blocos nem de itens) =================
 const CT_BLOCOS={
  "capa-contrato":{nome:"Capa",grupo:"contrato",ico:"capa",conteudo:{companyName:"[CONTABILIDADE_NOME]",title:"Contrato de Prestação de Serviços",subtitle:"Condições comerciais e operacionais do projeto.",clientName:"[CLIENTE_NOME]",date:"[MES_ATUAL] de [ANO_ATUAL]",vigencia:"[DATA_VIGENCIA_DE] até [DATA_VIGENCIA_ATE]",textAlign:"center"},estilo:{padding:48,heightPreset:"medium"}},
  "cabecalho-contrato":{nome:"Cabeçalho",grupo:"contrato",ico:"cab",conteudo:{companyName:"[CONTABILIDADE_NOME]",tagline:"Assessoria contábil, fiscal e empresarial"}},
@@ -6459,7 +6459,7 @@ body.cte-aberto{overflow:hidden}
 @media(max-width:820px){.cte{inset:0;border-radius:0}.cte-main{display:block;overflow:auto}.cte-lib,.cte-pr{overflow:visible;border:0}.cte-cv{overflow:visible;min-height:60vh;padding:20px 8px}.cte-top{flex-wrap:wrap}.cte-top-r{flex:none}}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · CARTEIRA DE CLIENTES: vínculo com o G-Click, Omie e o Resiltrack Atendimento =================
+// ================= Midas CRM · CARTEIRA DE CLIENTES: vínculo com o G-Click, Omie e o Resiltrack Atendimento =================
 const crmDia=s=>!s?"":(/^\d{4}-\d{2}-\d{2}$/.test(s)?s.split("-").reverse().join("/"):crmData(s));
 const CRM_RISCO_TXT={possivel:"Risco possível",provavel:"Risco provável",nenhum:"Sem risco"};
 const CRM_SAT_TXT={positivo:"Satisfeito",negativo:"Insatisfeito",neutro:"Neutro"};
@@ -6516,7 +6516,7 @@ async function crmSincronizarCarteira(btn,depois){ if(btn){ btn.disabled=true; b
 .crt-alerta{color:var(--crit,#cf4257)!important;font-size:12.5px;margin-top:8px}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · APRESENTAÇÃO COMERCIAL: preenche o PowerPoint da Resilcon com os dados do simulador =================
+// ================= Midas CRM · APRESENTAÇÃO COMERCIAL: preenche o PowerPoint da Resilcon com os dados do simulador =================
 const APRES_PASTA="apresentacao";
 const APRES_JSZIP="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
 function apresCarregaJSZip(){ if(window.JSZip) return Promise.resolve(window.JSZip);
@@ -6621,7 +6621,7 @@ async function apresAbrir(){ const S=PRECO_ST; try{ await pzCarregar(); }catch(_
   <div class="crm-form"><label class="crm-f crm-w2"><span>Empresa do cliente</span><input class="inp" id="apEmp" value="${escAttr(d.empresa)}" placeholder="Nome que aparece nos slides"></label>
    <label class="crm-f"><span>Plano recomendado</span><select class="inp" id="apRec"><option value="-1">Nenhum em destaque</option>${d.planos.map((p,i)=>`<option value="${i}" ${i===rec?"selected":""}>${esc(p.nome)} · ${precoMoeda(p.valor)}</option>`).join("")}</select></label>
    <label class="crm-f"><span>Validade da proposta (dias)</span><input class="inp" id="apVal" type="number" min="1" value="${escAttr(d.validade||30)}"></label></div>
-  <div class="ce-note">${modelo?`Modelo usado: ${esc(modelo.split("/").pop())}.`:`Ainda não há modelo da apresentação no CRM. Envie o arquivo .pptx da apresentação comercial (com os campos do simulador) uma vez, e ele fica salvo para todos.`}
+  <div class="ce-note">${modelo?`Modelo usado: ${esc(modelo.split("/").pop())}.`:`Ainda não há modelo da apresentação no Midas CRM. Envie o arquivo .pptx da apresentação comercial (com os campos do simulador) uma vez, e ele fica salvo para todos.`}
    <label class="txt-btn" style="cursor:pointer;margin-left:6px">${modelo?"Trocar modelo":"Enviar modelo"}<input type="file" id="apArq" accept=".pptx" hidden></label></div>
   <div class="crm-pe"><span class="sub" id="apMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="apOk">Gerar apresentação</button>')}</div>`);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
@@ -6654,7 +6654,7 @@ function apresDoresHTML(d){ const S=PRECO_ST;
   <label class="crm-f" style="margin-top:8px"><span>Persona</span><select class="inp" id="apPer"><option value="">Sem dores na apresentação</option>${D.personas.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).map(p=>`<option value="${p.id}" ${P&&P.id===p.id?"selected":""}>${esc(p.nome)}</option>`).join("")}</select></label>
   <div id="apDores">${apresDoresLista(P?P.id:"")}</div></div>`; }
 (function(){ if(document.getElementById("ap-css")) return; const s=document.createElement("style"); s.id="ap-css"; s.textContent=`.ap-dores{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;max-height:230px;overflow:auto;margin-top:8px;background:#fff;border:1px solid #e1e8ec;border-radius:10px;padding:8px}.ap-dores small{font-weight:400}@media(max-width:700px){.ap-dores{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
-// ================= CRM · PERSONAS: Dor x Solução x Produto (mesma mecânica da construção de personas da 4C) =================
+// ================= Midas CRM · PERSONAS: Dor x Solução x Produto (mesma mecânica da construção de personas da 4C) =================
 CRM_ICO.persona='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6h7M7.5 8l8.6 8.2"/></svg>';
 (function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_precos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i+1,0,["crm_personas","Personas","persona"]); })();
 let PZ={raw:null,D:null,carregando:null,f:{q:"",sit:"A"}};
@@ -6922,7 +6922,7 @@ function pzAbrir(alvo,modo,depois,ehNova){
 @media(max-width:900px){.pz-tela{inset:0;border-radius:0}.pz-2c{grid-template-columns:1fr}.pz-mapa{grid-template-columns:1fr 24px 1fr;padding:12px 8px}.pz-corpo{padding:12px}}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · DOR x SOLUÇÃO x PRODUTO (ferramenta da 4C) + DIAGNÓSTICO DO CLIENTE (usado na apresentação) =================
+// ================= Midas CRM · DOR x SOLUÇÃO x PRODUTO (ferramenta da 4C) + DIAGNÓSTICO DO CLIENTE (usado na apresentação) =================
 const DSP_METAS_PADRAO=["Aumentar faturamento","Focar em um setor específico","Número de clientes","Organizar processos internos"];
 function dspPrepara(D){ const B=D.bibliotecas; B.metas=Array.isArray(B.metas)&&B.metas.length?B.metas:[...DSP_METAS_PADRAO]; B.dores.forEach(d=>{ if(d.desc==null) d.desc=""; }); return D; }
 const dspDorLib=(D,n)=>D.bibliotecas.dores.find(x=>x.nome===n);
@@ -7177,11 +7177,11 @@ function diagParaApresentacao(dg){ if(!dg||!(dg.dores||[]).length||!PZ.D) return
 @media(max-width:900px){.ds-2c{grid-template-columns:1fr}}
 `; document.head.appendChild(s); })();
 
-// ================= CRM · ASSINATURA DIGITAL (D4Sign): envia o contrato para o e-mail de quem assina e acompanha =================
+// ================= Midas CRM · ASSINATURA DIGITAL (D4Sign): envia o contrato para o e-mail de quem assina e acompanha =================
 const AS_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/crm-assinatura";
 async function asChamar(body){ const r=await fetch(AS_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await ctTok()},body:JSON.stringify(body)});
  const j=await r.json().catch(()=>({})); if(!r.ok||j.erro) throw new Error(j.erro||("Falha na assinatura ("+r.status+")")); return j; }
-// HTML do contrato -> PDF A4 (base64) e número de páginas. O CSS do contrato fica restrito ao bloco .as-doc para não mexer na tela do CRM.
+// HTML do contrato -> PDF A4 (base64) e número de páginas. O CSS do contrato fica restrito ao bloco .as-doc para não mexer na tela do Midas CRM.
 function asEscopo(css){ let st; try{ st=new CSSStyleSheet(); st.replaceSync(css); }catch(_){ return ""; }
  const pref=sel=>sel.split(",").map(x=>{ x=x.trim(); if(!x) return x; if(/^(html|body|:root)$/i.test(x)) return ".as-doc"; return ".as-doc "+x.replace(/^(html|body)\s+/i,""); }).join(", ");
  const regras=lst=>[...lst].map(r=>{ if(r instanceof CSSStyleRule) return `${pref(r.selectorText)}{${r.style.cssText}}`; if(r instanceof CSSMediaRule){ if(/print/i.test(r.conditionText)&&!/screen/i.test(r.conditionText)) return ""; return `@media ${r.conditionText}{${regras(r.cssRules)}}`; } if(r instanceof CSSFontFaceRule||r instanceof CSSImportRule) return r.cssText; return ""; }).join("\n");
@@ -7251,7 +7251,7 @@ async function asAcompanhar(uuid,depois){ const m=crmModal("Contratos","Assinatu
 .as-box{border:1px solid rgba(0,103,137,.35);background:rgba(0,103,137,.05);border-radius:12px;padding:14px;margin-top:12px}
 .as-sig{display:grid;gap:6px}.as-linha{display:grid;grid-template-columns:170px 1fr 1.2fr 170px 60px;gap:6px;align-items:center}.as-linha b{font-size:12.5px}
 @media(max-width:900px){.as-linha{grid-template-columns:1fr 1fr}.as-linha b{grid-column:1/-1}}`; document.head.appendChild(s); })();
-// ================= CRM · SIMULAÇÕES: listagem e "+ Nova venda" (Com diagnóstico, Direta, Produtos/Serviços avulsos), igual à 4C =================
+// ================= Midas CRM · SIMULAÇÕES: listagem e "+ Nova venda" (Com diagnóstico, Direta, Produtos/Serviços avulsos), igual à 4C =================
 (function(){ const i=CRM_SECOES.findIndex(s=>s[0]==="crm_precos"); CRM_SECOES.splice(i<0?CRM_SECOES.length:i,0,["crm_simulacoes","Simulação","preco"]); })();
 const SIM_TIPOS={diagnostico:"Com diagnóstico",direta:"Venda direta",avulso:"Produtos/Serviços avulsos"};
 const SIM_ST={andamento:["warn","Em andamento"],concluida:["good","Concluída"],cancelada:["neutral","Cancelada"]};
@@ -8630,7 +8630,7 @@ function iaHistorico(v){ const box=v.querySelector("#iaHist"); if(!box) return; 
 .ia-hl{display:grid;gap:4px}.ia-hi{display:flex;gap:12px;align-items:baseline;border:0;background:none;text-align:left;padding:6px 4px;border-radius:8px;cursor:pointer;font:inherit;color:var(--ink)}.ia-hi:hover{background:var(--surface-2,#f3f6f7)}
 `; document.head.appendChild(st); })();
 
-// ================= CRM · dados do cliente na simulação, proposta com assinaturas e IA no contato =================
+// ================= Midas CRM · dados do cliente na simulação, proposta com assinaturas e IA no contato =================
 // Simular não exige cliente. Para gerar proposta ou contrato, os dados do cliente precisam estar completos: se faltar algo, abre a janela para completar
 // (e cria o contato e o negócio quando a simulação começou sem cliente).
 const CLI_CACHE={};
@@ -8670,7 +8670,7 @@ function cliCompletar(ctx,cl,depois){ const v=cl||{}; const novo=!ctx.negocio;
   if(!/^\S+@\S+\.\S+$/.test(val.email)){ msg("Confira o e-mail."); return; }
   ok.disabled=true; ok.textContent="Salvando…";
   try{ const r=await cliSalvar(ctx,v,val); closeModal(); crmToast(novo?"Cliente cadastrado e negócio criado no funil":"Dados do cliente salvos"); depois&&depois(r.cl,r.negocio); }
-  catch(e){ ok.disabled=false; ok.textContent="Salvar e continuar"; const t=String(e.message||""); msg(t.startsWith("email_existente")?"Esse e-mail já é de outro contato no CRM. Use o negócio dele em Nova venda, ou outro e-mail.":crmErro(e)); } };
+  catch(e){ ok.disabled=false; ok.textContent="Salvar e continuar"; const t=String(e.message||""); msg(t.startsWith("email_existente")?"Esse e-mail já é de outro contato no Midas CRM. Use o negócio dele em Nova venda, ou outro e-mail.":crmErro(e)); } };
 }
 async function cliSalvar(ctx,antes,val){ const c=(antes&&antes.contato)||null, cnpj=val.doc.length===14?val.doc:"", cpf=val.doc.length===11?val.doc:"";
  const base={nome:val.nome,cargo:val.cargo,email:val.email,telefone:val.telefone,empresa:val.razao,cnpj,cidade:val.cidade,uf:val.uf};
@@ -8827,7 +8827,7 @@ async function crmCopilotoContato(m,c,depois){ const box=m.querySelector("#iaBox
   ${r.tarefa&&r.tarefa.titulo?`<button class="view-btn ce-pri" data-ia-tar>Criar tarefa: ${esc(r.tarefa.titulo)}</button>`:""}
   ${r.mensagem_whatsapp?`<label class="crm-f" style="margin-top:12px"><span>Mensagem sugerida</span><textarea class="inp" id="iaMsgC" style="min-height:96px">${esc(r.mensagem_whatsapp)}</textarea></label>
    <div class="crm-pe" style="margin-top:6px"><button class="view-btn ghost" data-ia-copiar>Copiar</button>${wa?`<button class="view-btn" data-ia-wa>Abrir no WhatsApp</button>`:""}</div>`:""}
-  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no CRM. Confira antes de usar.</p></div>`;
+  <p class="sub" style="margin:10px 0 0">Sugestão gerada por IA com base no que está registrado no Midas CRM. Confira antes de usar.</p></div>`;
  box.querySelector("[data-ia-fechar]").onclick=()=>box.innerHTML="";
  const bt=box.querySelector("[data-ia-tar]"); if(bt) bt.onclick=async()=>{ const t=r.tarefa; const d=new Date(); d.setDate(d.getDate()+(+t.prazo_dias||0));
   try{ await crmRpc("crm_salvar_tarefa",{p:{titulo:t.titulo,tipo:CRM_TAR_TIPOS[t.tipo]?t.tipo:"outro",vence_em:new Date(d.toLocaleDateString("sv-SE")+"T18:00:00").toISOString(),oportunidade_id:r.negocio_id||null,contato_id:c.id}});
@@ -8899,6 +8899,59 @@ function precoLigarAdicionais(box,re){ const S=PRECO_ST; let t=null; const lento
 .aj-val{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:6px}
 .aj-res{white-space:nowrap;min-width:110px;text-align:right}.aj-des .aj-res{color:#b7791f}
 @media(max-width:640px){.aj-top{grid-template-columns:1fr auto}.aj-top .inp:nth-child(2){grid-column:1/-1;grid-row:2}.aj-bot{grid-template-columns:1fr 1fr}.aj-res{grid-column:1/-1;text-align:left}}
+`; document.head.appendChild(s); })();
+
+// ================= BUSCA DE CNPJ (v3.25): preenche os dados da empresa pela Receita =================
+// Ao digitar um CNPJ válido (14 dígitos) em qualquer cadastro do Midas CRM, consulta a BrasilAPI (reserva: publica.cnpj.ws)
+// e preenche só os campos que estão vazios. Nada é sobrescrito. Avisa se a empresa não está ativa na Receita.
+const CNPJ_CAMPOS={
+ eCnpj:{nome:"eNome",seg:"eSeg",cid:"eCid",uf:"eUf",tel:"eTel"},
+ cCnpj:{nome:"cEmp",seg:"cSeg",cid:"cCid",uf:"cUf"},
+ ncCnpj:{nome:"ncEmp",tel:"ncTel",mail:"ncEmail"},
+ iCnpj:{nome:"iEmp",tel:"iTel",mail:"iEmail"},
+ snDoc:{nome:"snEmp",tel:"snTel",mail:"snMail"},
+ clDoc:{nome:"clRaz",cid:"clCid",uf:"clUf",tel:"clTel",mail:"clEmail"},
+ nkDoc:{nome:"nkRaz",cid:"nkCid",uf:"nkUf",tel:"nkTel",mail:"nkEmail"}};
+const CNPJ_CACHE={};
+function cnpjValido(d){ if(!/^\d{14}$/.test(d)||/^(\d)\1+$/.test(d)) return false;
+ const dv=n=>{ let s=0,p=n-7; for(let i=0;i<n;i++){ s+=+d[i]*p--; if(p<2) p=9; } const r=s%11; return r<2?0:11-r; };
+ return dv(12)===+d[12]&&dv(13)===+d[13]; }
+function cnpjTel(ddd,num){ const t=String(ddd||"")+String(num||""); const d=t.replace(/\D/g,""); if(d.length<10) return "";
+ return d.length===10?`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`:`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7,11)}`; }
+const cnpjTitulo=s=>String(s||"").toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g,w=>w.toLowerCase()).replace(/\b(Ltda|Me|Epp|Eireli|S\/a|Sa)\b/gi,w=>w.toUpperCase());
+async function cnpjBuscar(d){ if(CNPJ_CACHE[d]) return CNPJ_CACHE[d];
+ const tenta=async(url,conv)=>{ const ac=new AbortController(); const to=setTimeout(()=>ac.abort(),9000);
+  try{ const r=await fetch(url,{signal:ac.signal}); if(r.status===404) return {naoAchou:true}; if(!r.ok) return null; return conv(await r.json()); }catch(_){ return null; } finally{ clearTimeout(to); } };
+ let x=await tenta(`https://brasilapi.com.br/api/cnpj/v1/${d}`,j=>({razao:j.razao_social,fantasia:j.nome_fantasia,cidade:j.municipio,uf:j.uf,
+   tel:cnpjTel("",j.ddd_telefone_1),email:j.email,atividade:j.cnae_fiscal_descricao,situacao:j.descricao_situacao_cadastral}));
+ if(!x||x.naoAchou){ const y=await tenta(`https://publica.cnpj.ws/cnpj/${d}`,j=>{ const e=j.estabelecimento||{}; return {razao:j.razao_social,fantasia:e.nome_fantasia,
+   cidade:(e.cidade||{}).nome,uf:(e.estado||{}).sigla,tel:cnpjTel(e.ddd1,e.telefone1),email:e.email,atividade:(e.atividade_principal||{}).descricao,situacao:e.situacao_cadastral}; });
+  if(y) x=y; }
+ if(x&&!x.naoAchou) CNPJ_CACHE[d]=x; return x; }
+function cnpjAviso(inp,txt,tipo){ let n=inp.parentElement.querySelector(".cnpj-aviso");
+ if(!txt){ if(n) n.remove(); return; } if(!n){ n=document.createElement("small"); n.className="cnpj-aviso"; inp.insertAdjacentElement("afterend",n); }
+ n.textContent=txt; n.dataset.tipo=tipo||""; }
+async function cnpjAoDigitar(inp){ const d=inp.value.replace(/\D/g,""); const mapa=CNPJ_CAMPOS[inp.id]; if(!mapa) return;
+ if(d.length!==14){ if(inp.dataset.cnpjFeito!==d) cnpjAviso(inp,""); return; }
+ if(inp.dataset.cnpjFeito===d) return; inp.dataset.cnpjFeito=d;
+ if(!cnpjValido(d)){ cnpjAviso(inp,"Esse CNPJ não é válido. Confira os números.","erro"); return; }
+ cnpjAviso(inp,"Buscando os dados na Receita…","");
+ const x=await cnpjBuscar(d); if(inp.value.replace(/\D/g,"")!==d) return;
+ if(!x){ cnpjAviso(inp,"Não consegui consultar agora. Preencha à mão ou tente de novo daqui a pouco.","erro"); inp.dataset.cnpjFeito=""; return; }
+ if(x.naoAchou){ cnpjAviso(inp,"CNPJ não encontrado na Receita.","erro"); return; }
+ const raiz=inp.closest(".crm-modal,.modal,[role=dialog]")||document; const pega=id=>id&&raiz.querySelector("#"+id);
+ const vals={nome:(x.razao||"").toUpperCase(),seg:x.atividade?cnpjTitulo(x.atividade):"",cid:x.cidade?cnpjTitulo(x.cidade):"",uf:(x.uf||"").toUpperCase(),tel:x.tel||"",mail:(x.email||"").toLowerCase()};
+ const feitos=[];
+ Object.entries(mapa).forEach(([k,id])=>{ const el=pega(id); const v=vals[k]; if(!el||!v||String(el.value||"").trim()) return;
+  el.value=v; el.dispatchEvent(new Event("input",{bubbles:true})); el.dispatchEvent(new Event("change",{bubbles:true})); feitos.push(k); });
+ const sit=String(x.situacao||"").toUpperCase(); const ativa=!sit||sit==="ATIVA";
+ const nome=x.fantasia&&x.fantasia!==x.razao?`${x.razao} (${x.fantasia})`:x.razao||"";
+ cnpjAviso(inp,(ativa?"":`Atenção: situação na Receita ${sit}. `)+(feitos.length?`Preenchido pela Receita: ${nome}.`:`Encontrado: ${nome}. Os campos já estavam preenchidos e não mudei nada.`),ativa?"ok":"erro"); }
+document.addEventListener("input",ev=>{ const t=ev.target; if(t&&t.id&&CNPJ_CAMPOS[t.id]) cnpjAoDigitar(t); });
+document.addEventListener("paste",ev=>{ const t=ev.target; if(t&&t.id&&CNPJ_CAMPOS[t.id]) setTimeout(()=>cnpjAoDigitar(t),0); });
+(function(){ const s=document.createElement("style"); s.textContent=`
+.cnpj-aviso{display:block;margin-top:4px;font-size:12px;line-height:1.35;color:var(--muted,#5b6770)}
+.cnpj-aviso[data-tipo=ok]{color:#1f7a5a}.cnpj-aviso[data-tipo=erro]{color:#b7791f}
 `; document.head.appendChild(s); })();
 
 // ================= ÍRIS · gestão das TVs do escritório =================
