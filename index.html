@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.32 (Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.33 (Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -8430,7 +8430,7 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 // ================= KRONOS · controle de ponto (painel do dia, espelho, pendências e saldo do mês) =================
 // Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
 // com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
-const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_ajustes","Ajustes"],["kr_registro","Forma de registro"]];
+const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_ajustes","Ajustes"],["kr_registro","Forma de registro"],["kr_fiscal","Fiscalização"]];
 const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
 const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"],nao_registra:["Não registra ponto","neutro"],apurado:["Apurado","good"],em_andamento:["Em andamento","good"],sem_batida:["",""]};
 const KR_DOW=["","Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
@@ -8444,7 +8444,8 @@ const krTile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div
 const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos. Fale com o RH.</div></div>`:crmCaixaErro(e);
 function krAbas(at){ return `<div class="sim-abas"><div class="seg">${KR_SECOES.map(([m,t])=>`<button type="button" data-krab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
 function krMoldura(v,sec,tit,sub,btns){
- v.innerHTML=crmHead(tit,sub,btns||"")+krAbas(sec)+`<div id="krBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ if(KR.conv===undefined){ KR.conv=null; crmRpc("kronos_convencao",{p:{acao:"listar"}}).then(c=>{ KR.conv=c; const el=document.getElementById("krConvAviso"); if(el) el.outerHTML=krConvAviso(); }).catch(()=>{}); }
+ v.innerHTML=crmHead(tit,sub,btns||"")+krAbas(sec)+(sec==="kr_fiscal"?"":krConvAviso())+`<div id="krBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-krab]").forEach(b=>b.onclick=()=>setMode(b.dataset.krab));
  return v.querySelector("#krBox");
 }
@@ -8455,6 +8456,7 @@ async function krView(v){
  if(MODE==="kr_saldos") return krSaldos(v);
  if(MODE==="kr_registro") return krRegistro(v);
  if(MODE==="kr_ajustes") return krAjustes(v);
+ if(MODE==="kr_fiscal") return krFiscal(v);
  return krPainel(v);
 }
 
@@ -8707,6 +8709,69 @@ async function krAjustes(v){
 .kaj-form,.kaj-perg{border-top:1px solid var(--border);padding-top:12px;margin-top:6px}.kaj-perg{border:1px solid #f0d9a8;background:#fdf8ef;border-radius:12px;padding:12px;margin-bottom:12px}.kaj-form h4,.kaj-perg h4{margin:0 0 8px;font:700 14px "Urbanist",sans-serif;color:#044B64}
 .kaj-hist{margin-top:10px;font-size:13px}.kaj-hist summary{cursor:pointer;color:var(--muted)}
 @media(max-width:700px){.kaj-l{grid-template-columns:52px 1fr}.kaj-o{grid-column:1/-1}}
+`; document.head.appendChild(s); })();
+
+// ---------- Fiscalização (REP-A): convenção coletiva com vigência e exportação dos registros ----------
+function krConvStatus(){ const C=KR.conv; if(!C) return null; const hoje=C.hoje, v=C.vigente;
+ if(!v){ const fut=(C.convencoes||[]).find(c=>c.vigencia_inicio>hoje); return {nivel:"crit",txt:fut?`Nenhuma convenção vigente hoje. A próxima começa em ${krDataBR(fut.vigencia_inicio)}.`:"Nenhuma convenção coletiva vigente cadastrada. O ponto online (REP-A) depende dela."}; }
+ const dias=Math.round((new Date(v.vigencia_fim+"T12:00:00")-new Date(hoje+"T12:00:00"))/864e5);
+ if(dias<=60) return {nivel:"warn",txt:`A convenção coletiva vence em ${dias} dia(s), em ${krDataBR(v.vigencia_fim)}. Sem a renovação, o ponto online perde a base legal.`};
+ return {nivel:"ok",txt:`Convenção vigente até ${krDataBR(v.vigencia_fim)} (${esc(v.sindicato)}).`}; }
+function krConvAviso(){ const s=krConvStatus(); return s&&s.nivel!=="ok"?`<div id="krConvAviso" class="kr-aviso ${s.nivel==="crit"?"":"kr-info"}" style="margin-top:12px">${s.txt} <a href="#" onclick="setMode('kr_fiscal');return false">Ver em Fiscalização</a></div>`:`<div id="krConvAviso"></div>`; }
+
+async function krFiscal(v){
+ const box=krMoldura(v,"kr_fiscal","Fiscalização","Base legal do ponto online (REP-A) e exportação dos registros para o fiscal do trabalho, o DP ou o jurídico.","");
+ let C; try{ C=await crmRpc("kronos_convencao",{p:{acao:"listar"}}); KR.conv=C; }catch(e){ box.innerHTML=krSemAcesso(e); return; }
+ if(MODE!=="kr_fiscal") return;
+ const av=document.getElementById("krConvAviso"); if(av) av.outerHTML=krConvAviso();
+ const ed=C.pode_editar, L=C.convencoes||[], st=krConvStatus();
+ const hoje=C.hoje, ini=hoje.slice(0,8)+"01";
+ box.innerHTML=`<div class="kf-grid">
+  <div class="card kf-card"><h3>Convenção coletiva</h3><p class="sub">O REP-A só vale enquanto a convenção ou o acordo coletivo que autoriza o sistema estiver em vigor. Cadastre cada renovação.</p>
+   <div class="kr-aviso ${st.nivel==="ok"?"kf-ok":st.nivel==="warn"?"kr-info":""}">${st.txt}</div>
+   ${L.length?`<table class="kf-tab"><thead><tr><th>Sindicato</th><th>Registro</th><th>Vigência</th><th></th></tr></thead><tbody>${L.map(c=>`<tr><td><b>${esc(c.sindicato)}</b>${c.clausula?`<div class="sub">${esc(c.clausula)}</div>`:""}</td><td>${esc(c.numero_registro||"-")}</td>
+     <td style="white-space:nowrap">${krDataBR(c.vigencia_inicio)} a ${krDataBR(c.vigencia_fim)}</td><td class="right">${ed?`<button class="view-btn" data-kfe="${c.id}">Editar</button>`:""}</td></tr>`).join("")}</tbody></table>`:""}
+   ${ed?`<button class="txt-btn crm-pri" id="kfNova" style="margin-top:10px">+ Cadastrar convenção</button>`:""}</div>
+  <div class="card kf-card"><h3>Exportar para a fiscalização</h3><p class="sub">Todas as marcações do período, do relógio e do ponto online, com os ajustes feitos pelo RH. A batida original sempre aparece, mesmo quando foi desconsiderada.</p>
+   ${ed?`<div class="kf-per"><label class="crm-f"><span>De</span><input type="date" class="inp" id="kfIni" value="${ini}"></label><label class="crm-f"><span>Até</span><input type="date" class="inp" id="kfFim" value="${hoje}"></label></div>
+   <div class="kf-bts"><button class="txt-btn crm-pri" data-kfx="marcacoes">Marcações (planilha)</button><button class="txt-btn" data-kfx="ajustes">Ajustes do RH (planilha)</button><button class="txt-btn" data-kfx="afd">AFD do relógio (.txt)</button><button class="txt-btn" data-kfx="tudo">Relatório completo (.json)</button></div>
+   <p class="sub" id="kfMsg" style="margin-top:8px">O AFD aqui é o trecho do período, guardado a cada coleta. O arquivo oficial completo também pode ser tirado direto do relógio.</p>`
+   :`<div class="empty">Só o RH exporta os registros.</div>`}</div></div>`;
+ const form=c=>{ c=c||{}; const m=crmModal("Kronos · fiscalização",c.id?"Editar convenção":"Cadastrar convenção","",`<div class="crm-form">
+   <label class="crm-f crm-w2"><span>Sindicato ou acordo</span><input class="inp" id="kcS" value="${escAttr(c.sindicato||"")}" placeholder="Ex.: Sescon-SP / Sindicato dos empregados em empresas de serviços contábeis"></label>
+   <label class="crm-f"><span>Número de registro (Mediador)</span><input class="inp" id="kcN" value="${escAttr(c.numero_registro||"")}" placeholder="Ex.: SP001234/2026"></label>
+   <label class="crm-f"><span>Cláusula que autoriza o sistema alternativo</span><input class="inp" id="kcC" value="${escAttr(c.clausula||"")}" placeholder="Ex.: Cláusula 42ª"></label>
+   <label class="crm-f"><span>Início da vigência</span><input type="date" class="inp" id="kcI" value="${escAttr(c.vigencia_inicio||"")}"></label>
+   <label class="crm-f"><span>Fim da vigência</span><input type="date" class="inp" id="kcF" value="${escAttr(c.vigencia_fim||"")}"></label>
+   <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="kcO" rows="2">${esc(c.obs||"")}</textarea></label></div>
+   <div class="rha-pe"><span class="sub" id="kcMsg" style="flex:1">Guarde também a cópia da convenção na pasta do DP.</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="kcOk">Salvar</button>')}</div>`);
+  m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+  m.querySelector("#kcOk").onclick=async()=>{ const g=id=>m.querySelector("#"+id).value.trim();
+   try{ await crmRpc("kronos_convencao",{p:{acao:"salvar",id:c.id||"",sindicato:g("kcS"),numero_registro:g("kcN"),clausula:g("kcC"),vigencia_inicio:g("kcI"),vigencia_fim:g("kcF"),obs:g("kcO")}}); closeModal(); crmToast("Convenção salva"); KR.conv=undefined; krFiscal(v); }
+   catch(e){ m.querySelector("#kcMsg").textContent=String(e.message||e); } }; };
+ const nb=box.querySelector("#kfNova"); if(nb) nb.onclick=()=>form(null);
+ box.querySelectorAll("[data-kfe]").forEach(b=>b.onclick=()=>form(L.find(c=>c.id===b.dataset.kfe)));
+ box.querySelectorAll("[data-kfx]").forEach(b=>b.onclick=async()=>{ const msg=box.querySelector("#kfMsg"), i=box.querySelector("#kfIni").value, f=box.querySelector("#kfFim").value;
+  b.disabled=true; msg.textContent="Gerando…";
+  try{ const D=await crmRpc("kronos_exportar",{p:{inicio:i,fim:f}}); const nome=`kronos-${b.dataset.kfx}-${i}-a-${f}`;
+   if(b.dataset.kfx==="marcacoes") krBaixar(nome+".csv",krCsv(["Data","Hora","Colaborador","CPF","Origem","Relógio","NSR","Comprovante online","IP","Código de verificação","Desconsiderada pelo RH"],
+     (D.marcacoes||[]).map(x=>[krDataBR(x.data),x.hora,x.nome||"(sem cadastro)",x.cpf,krOrigem(x.origem),x.relogio,x.nsr,x.comprovante,x.ip,x.hash,x.desconsiderada?"sim":"não"])),"text/csv");
+   else if(b.dataset.kfx==="ajustes") krBaixar(nome+".csv",krCsv(["Data","Colaborador","Ajuste","Horário","Motivo","Justificativa","Situação","Feito por","Feito em","Desfeito por","Desfeito em","Motivo do desfazer"],
+     (D.ajustes||[]).map(x=>[krDataBR(x.data),x.nome,x.tipo==="incluir"?"Inclusão":"Desconsideração",x.hora,krMotivo(x.motivo),x.justificativa,x.status==="ativo"?"Valendo":"Desfeito",x.feito_por,krDH(x.feito_em),x.desfeito_por,krDH(x.desfeito_em),x.motivo_desfeito])),"text/csv");
+   else if(b.dataset.kfx==="afd") krBaixar(nome+".txt",(D.afd||[]).join("\r\n")+"\r\n","text/plain");
+   else krBaixar(nome+".json",JSON.stringify(D,null,1),"application/json");
+   msg.textContent=`Pronto: ${(D.marcacoes||[]).length} marcações e ${(D.ajustes||[]).length} ajustes no período.`; }
+  catch(e){ msg.textContent=String(e.message||e).includes("sem_permissao")?"Só o RH exporta os registros.":String(e.message||e); }
+  b.disabled=false; });
+}
+const krDH=t=>t?new Date(t).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"";
+function krCsv(cab,linhas){ const c=v=>{ const s=v==null?"":String(v); return /[";\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }; return "﻿"+[cab,...linhas].map(l=>l.map(c).join(";")).join("\r\n"); }
+function krBaixar(nome,conteudo,tipo){ const u=URL.createObjectURL(new Blob([conteudo],{type:tipo+";charset=utf-8"})); const a=document.createElement("a"); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
+(function(){ if(document.getElementById("kf-css")) return; const s=document.createElement("style"); s.id="kf-css"; s.textContent=`
+.kf-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:1000px){.kf-grid{grid-template-columns:1fr}}
+.kf-card{padding:18px 20px}.kf-card h3{margin:0 0 4px;font:700 17px "Urbanist",sans-serif;color:#044B64}.kf-ok{background:#e6f4f1!important;border-color:#bfe2da!important;color:#0f5c4e!important}
+.kf-tab{width:100%;margin-top:10px}.kf-tab td,.kf-tab th{padding:8px 6px;border-bottom:1px solid var(--border)}
+.kf-per{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.kf-per .crm-f{flex:1;min-width:150px}.kf-bts{display:flex;gap:8px;flex-wrap:wrap}
 `; document.head.appendChild(s); })();
 
 // ================= RH ASSIST · Assistente de RH com IA =================
