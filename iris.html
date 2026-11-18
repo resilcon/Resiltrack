@@ -892,9 +892,9 @@ function salaTrofeus(){
   for(let x=r.x+8;x<r.x+r.w-8;x+=24)R(x,r.y+30,1,200,'rgba(0,0,0,.08)');
   const prat=(x0,x1,y,cores)=>{R(x0,y+18,x1-x0,4,'#8a5a3a');R(x0,y+18,x1-x0,1,'#b77a42');R(x0,y+22,x1-x0,2,'rgba(0,0,0,.2)');
     for(let x=x0+6,i=0;x<x1-14;x+=22,i++)put(DECO_N.trofeu(cores[i%cores.length]),x,y);};
-  prat(r.x+r.w-132,r.x+r.w-12,r.y+34,['#d08a4e','#f2c94c','#c9ced8']);
+  prat(r.x+r.w-122,r.x+r.w-12,r.y+34,['#d08a4e','#f2c94c','#c9ced8']);
   // placa
-  const pw=124,py=r.y+36;const pcx=r.x+r.w/2+19;R(pcx-pw/2-2,py-2,pw+4,28,'#2b2433');R(pcx-pw/2,py,pw,24,'#7a4f2c');R(pcx-pw/2,py,pw,2,'#a8723f');R(pcx-pw/2+3,py+3,pw-6,18,'#5e3a1f');
+  const pw=108,py=r.y+36;const pcx=r.x+r.w/2+34;R(pcx-pw/2-2,py-2,pw+4,28,'#2b2433');R(pcx-pw/2,py,pw,24,'#7a4f2c');R(pcx-pw/2,py,pw,2,'#a8723f');R(pcx-pw/2+3,py+3,pw-6,18,'#5e3a1f');
   g.font='800 8.5px Inter,system-ui,sans-serif';g.fillStyle='#f2c94c';g.textAlign='center';g.textBaseline='middle';g.fillText('TOP 5 ATENDIMENTO',pcx,py+9);
   const TV=trofeusVivos();g.font='600 6px Inter,system-ui,sans-serif';g.fillStyle='#f3dcb2';g.fillText(TV.periodo||'Resiltrack',pcx,py+17);
   placar(r);
@@ -1031,7 +1031,7 @@ function feriadosAno(y){if(FER_CACHE[y])return FER_CACHE[y];
   F[isoAdd(pas,-48)]='Carnaval (ponto facultativo)';F[isoAdd(pas,-47)]='Carnaval (ponto facultativo)';F[isoAdd(pas,-2)]='Sexta-feira Santa';F[isoAdd(pas,60)]='Corpus Christi';
   return FER_CACHE[y]=F;}
 const feriado=iso=>feriadosAno(+iso.slice(0,4))[iso]||null;
-function placar(r){const K=1.15,AX=r.x+8,AY=r.y+33;g.save();g.translate(AX,AY);g.scale(K,K);try{placarDesenho(r,AX,AY,K);}finally{g.restore();}}
+function placar(r){const K=1.3225,AX=r.x+8,AY=r.y+33;g.save();g.translate(AX,AY);g.scale(K,K);try{placarDesenho(r,AX,AY,K);}finally{g.restore();}}
 function placarDesenho(r,AX,AY,K){const W=136,H=52,x0=0,y0=0,P=placarAnterior();
   R(x0-3,y0-3,W+6,H+6,'#1b1720');R(x0-2,y0-2,W+4,H+4,'#4a4552');R(x0,y0,W,H,'#0b0d12');
   for(let yy=y0+1;yy<y0+H;yy+=2)R(x0,yy,W,1,'rgba(255,255,255,.025)');
