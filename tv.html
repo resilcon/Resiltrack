@@ -1006,7 +1006,7 @@ function montarEscritorio(canvas){
 var CFG={
   url:"https://aumfhrqrnudmprvmvesb.supabase.co",
   chave:"sb_publishable_bDvvjpuVzD54iAlAHXMhmw_asJ0XMKF",
-  versao:"1.2",
+  versao:"1.3",
   buscaMs:20000,          // a cada 20 s pergunta ao banco
   filaVelhaSeg:180,       // fila sem atualizacao ha 3 min: esconde
   ligVelhaSeg:180,        // ligacoes sem atualizacao ha 3 min: esconde
@@ -1185,6 +1185,7 @@ function busca(){
     if(d&&d.erro==="tela_nao_encontrada"){aviso("Tela não encontrada","O código "+codigo+" não existe ou está desativado. Confira o link no Resiltrack, em Íris.");return false;}
     $("aviso").classList.remove("on");
     if(d.agora){var s=new Date(d.agora).getTime();if(!isNaN(s))offset=s-Date.now();}
+    if(d.tela&&d.tela.codigo&&d.tela.codigo!==codigo)codigo=d.tela.codigo;
     lembraCodigo();FEED=d;falhas=0;ultimoOk=Date.now();$("rede").classList.remove("on");
     $("tvname").textContent=d.tela&&d.tela.nome||"Íris";
     atualizaEscritorio();desenhaLateral();
