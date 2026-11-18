@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.30 (Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.31 (Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -1118,11 +1118,14 @@ function isAdmin(){ return !!(ACCESS && ACCESS.nivel==="admin"); }
 function isGestor(){ return !!(ACCESS && ACCESS.nivel==="gestor"); }
 function podeModulo(m){ return isAdmin() || (ACCESS && (ACCESS.permissoes||[]).includes(m)); }
 function podePainelGestor(){ return isAdmin() || isGestor(); }
+function podeGestorMod(){ return isAdmin() || podeModulo("painel_gestor"); }
+function podeRH(){ return isAdmin() || podeModulo("rh") || podeModulo("rh_editar"); }
+function podeKronos(){ return isAdmin() || podeModulo("kronos"); }
 function deptDoSetor(setor){ const r=DEPSETOR.find(m=>m.setor===setor); return r?r.departamento:null; }
 function deptDoAtendente(atId,setor){ const o=ATDMAP[String(atId)]; return o||deptDoSetor(setor); }
 function gestorDoDep(dep){ const a=ACESSOS.find(x=>x.nivel==="gestor"&&(x.departamentos||[]).includes(dep)); return a?a.email:null; }
 function allowedTabKeys(){
-  if(isAdmin()) return ["dashboard","relatorio","detalhes","colaboradores","contestacoes","setor","tv","admin"];
+  if(isAdmin()) return ["dashboard","relatorio","detalhes","colaboradores","contestacoes","setor","tv"];
   const t=[];
   if(isGestor()) t.push("dashboard","relatorio","detalhes","colaboradores","contestacoes","setor");
   if(podeModulo("comercial")) t.push("comercial");
@@ -1137,14 +1140,17 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE==="iris"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE.startsWith("adm_")||MODE==="iris"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
-  if(MODE==="gestor" && podePainelGestor()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
+  if(MODE==="gestor" && podeGestorMod()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
-  if(MODE.startsWith("rh_") && podePainelGestor()){ tabsEl.classList.add("hidden"); rhView(v); return; }
+  if(MODE.startsWith("rh_") && podeRH()){ tabsEl.classList.add("hidden"); rhView(v); return; }
   if(MODE.startsWith("rh_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
-  if(MODE.startsWith("kr_") && podePainelGestor()){ tabsEl.classList.add("hidden"); krView(v); return; }
+  if(MODE.startsWith("kr_") && podeKronos()){
+ tabsEl.classList.add("hidden"); krView(v); return; }
   if(MODE.startsWith("kr_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  if(MODE.startsWith("adm_") && isAdmin()){ tabsEl.classList.add("hidden"); admView(v); return; }
+  if(MODE.startsWith("adm_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="iris" && podeModulo("iris")){ tabsEl.classList.add("hidden"); irisView(v); return; }
   if(MODE==="iris"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
@@ -1156,7 +1162,7 @@ function render(){ renderSide(); const v=document.getElementById("view"); const 
   if(MODE.startsWith("ce_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="crm" && !podeCRM()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="financeiro" && !podeModulo("financeiro")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
-  if(MODE==="gestor" && !podePainelGestor()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  if(MODE==="gestor" && !podeGestorMod()){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   tabsEl.classList.remove("hidden"); tabsEl.classList.add("tabs-lateral"); renderTabs();
   const keys=allowedTabKeys();
   if(!keys.length){ v.innerHTML=`<div class="soon" style="margin-top:40px"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><h2 style="font-size:18px;margin-bottom:6px">Acesso não configurado</h2><p>Seu e-mail ainda não tem acesso liberado aqui. Fale com a gestão para definir seu departamento.</p></div>`; return; }
@@ -1187,16 +1193,16 @@ function renderSide(){
   { const ks=MODE==='atendimentos'?allowedTabKeys():[], temSub=ks.length>1, ab=srlAberto("atend");
     h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos" ${temSub?`data-dobra="atend" aria-expanded="${ab}"`:""}>${_ICO_ATEND}Atendimentos${temSub?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(temSub) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="atend"><div>`+ks.map(k=>`<button data-atab="${k}" class="${k===TAB?'on':''}">${TABS_ALL[k]||k}</button>`).join("")+`</div></div>`; }
-  if(gestorOK){ const no=MODE==='gestor', ab=srlAberto("gestor");
+  if(podeGestorMod()){ const no=MODE==='gestor', ab=srlAberto("gestor");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="gestor" ${no?`data-dobra="gestor" aria-expanded="${ab}"`:""}>${_ICO_GESTOR}Painel do Gestor${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="gestor"><div>`+
       [["wallboard","Wallboard"],["revisao","Revisão diária"],["pessoas","Pessoas"],["clientes","Clientes"],["processos","Processos"]]
       .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div></div>`;
   }
-  if(gestorOK){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
+  if(podeRH()){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}RH Assist${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="rh"><div>`+RH_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
-  if(gestorOK){ const no=MODE.startsWith('kr_'), ab=srlAberto("kr");
+  if(podeKronos()){ const no=MODE.startsWith('kr_'), ab=srlAberto("kr");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="kr_painel" ${no?`data-dobra="kr" aria-expanded="${ab}"`:""}>${_ICO_KR}Kronos${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="kr"><div>`+KR_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Mida$</button>`;
@@ -1206,11 +1212,14 @@ function renderSide(){
       h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}Hermes CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
       if(noCRM) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="crm"><div>`+CRM_SECOES.filter(([m])=>crmSecaoPode(m)&&m!=="crm_precos").map(([m,t])=>`<button data-mode="${m}" class="${MODE===m||(m==="crm_simulacoes"&&MODE==="crm_precos")?'on':''}">${crmSecLabel(m,t)}</button>`).join("")+`</div></div>`; } }
   if(podeEmails()){ h+=`<div class="srl-title">Central de E-mails</div>`; CE_SECOES.forEach(([m,t,i])=>{ if(m!=="ce_funil"&&!podeEmails()) return; h+=`<button class="srl-item ${MODE===m?'on':''}" data-mode="${m}">${CE_ICO[i]}${t}</button>`; }); }
+  if(isAdmin()){ const no=MODE.startsWith('adm_'), ab=srlAberto("adm");
+    h+=`<div class="srl-title">Administração</div><button class="srl-item ${no?'on':''}" data-mode="adm_acessos" ${no?`data-dobra="adm" aria-expanded="${ab}"`:""}>${_ICO_ADM}Admin${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="adm"><div>`+ADM_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   s.innerHTML=h;
   s.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.dobra; if(k){ const sub=s.querySelector(`[data-dobra-box="${k}"]`); if(!sub) return; const ab=sub.classList.toggle("fech")===false;
       srlAberto(k,ab); b.setAttribute("aria-expanded",ab); const st=b.querySelector(".srl-seta"); if(st) st.classList.toggle("fech",!ab); return; }
-    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":String(b.dataset.mode).startsWith("kr_")?"kr":""),true);
+    if(b.classList.contains("srl-item")) srlAberto({atendimentos:"atend",gestor:"gestor"}[b.dataset.mode]||(String(b.dataset.mode).startsWith("crm")?"crm":String(b.dataset.mode).startsWith("rh_")?"rh":String(b.dataset.mode).startsWith("kr_")?"kr":String(b.dataset.mode).startsWith("adm_")?"adm":""),true);
     setMode(b.dataset.mode); });
   s.querySelectorAll("[data-atab]").forEach(b=>b.onclick=()=>{ TAB=b.dataset.atab; window.scrollTo(0,0); render(); });
   s.querySelectorAll("[data-gsec]").forEach(b=>b.onclick=()=>{ const t=document.getElementById("g-"+b.dataset.gsec); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -3636,7 +3645,7 @@ function openAcessoModal(ac){
       const i=ACESSOS.findIndex(a=>(a.email||"").toLowerCase()===email);
       if(i>=0) ACESSOS[i]={...ACESSOS[i],...row}; else ACESSOS.push(row);
       if(email===(ME||"").toLowerCase()){ ACCESS={email,nivel:row.nivel,departamentos:row.departamentos,permissoes:row.permissoes}; }
-      closeModal(); viewAdmin(document.getElementById("view"));
+      closeModal(); render();
     }
   };
 }
@@ -9715,6 +9724,106 @@ function admImprimir(){ const a=ADM.det, f=a.ficha||{}, c=a.contratuais||{}, w=w
 .adm-mot{width:100%;font-size:12.5px;color:#b4532a}.adm-anexa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}.adm-anexa select{max-width:280px}.adm-file{cursor:pointer}
 .adm-acoes-f{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}.adm-chk{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--text);font-weight:500}
 .adm-ev{display:grid;grid-template-columns:130px 1fr auto;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px}.adm-ul li{margin:6px 0}
+`; document.head.appendChild(s); })();
+
+// ================= ADMIN · usuários e acessos por módulo (v3.31) =================
+// Matriz pessoa x módulo, gravada em atendimentos.acessos (nivel + permissoes). Só admin vê.
+// Admin tem acesso total. Gestor e colaborador veem só os módulos marcados. "Departamentos" define o que o gestor enxerga nos dados.
+const ADM_MODS=[
+ ["painel_gestor","Painel do Gestor","Indicadores e revisão diária dos departamentos"],
+ ["rh","RH Assist","Ver colaboradores, organograma, avaliações e PDI da equipe"],
+ ["rh_editar","RH Assist: gerenciar","Editar tudo do RH, inclusive salários, admissão e forma de registro do ponto"],
+ ["kronos","Kronos","Painel do dia, espelho, pendências e saldos do ponto"],
+ ["comercial","Hermes CRM","Funil de vendas, simulações e contratos"],
+ ["comercial_gestor","Hermes CRM: gestor","Vê os negócios de toda a equipe comercial"],
+ ["financeiro","Mida$","Ver o financeiro e a inadimplência"],
+ ["financeiro_editar","Mida$: decidir","Decidir cobranças e confirmar pagamentos de indicação"],
+ ["emails","Central de E-mails","Campanhas, réguas e envios"],
+ ["iris","Íris","Gestão das TVs do escritório"]];
+const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris"};
+const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["RH Assist",["rh","rh_editar"]],["Kronos",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]]];
+// mantém a lista usada no modal antigo igual à nova
+MODULOS.splice(0,MODULOS.length,...ADM_MODS.map(([k,t])=>[k,t]));
+const ADM_SECOES=[["adm_acessos","Usuários e acessos"],["adm_deps","Departamentos e atendentes"]];
+const _ICO_ADM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>';
+let ADMA={q:"",f:"",pessoas:null};
+const admaEmailOk=e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(e||"").trim());
+function admaNomes(){ const m={}; (ADMA.pessoas||[]).forEach(p=>{ if(p.email) m[p.email.toLowerCase()]=p.nome; }); return m; }
+async function admaCarregaPessoas(){ if(ADMA.pessoas) return; try{ const d=await crmRpc("rh_dados",{p:{}}); ADMA.pessoas=(d.colaboradores||[]).filter(c=>c.status==="ativo").map(c=>({nome:c.nome,email:(c.email||"").toLowerCase()})); }catch(e){ ADMA.pessoas=[]; } }
+const admaQtdAdmins=()=>ACESSOS.filter(a=>a.nivel==="admin").length;
+
+async function admaSalvar(ac,mud,v){ const novo={email:ac.email,nivel:ac.nivel,departamentos:ac.departamentos||[],permissoes:ac.permissoes||[],...mud};
+ const eu=(ac.email||"").toLowerCase()===(ME||"").toLowerCase();
+ if(ac.nivel==="admin"&&novo.nivel!=="admin"){ if(admaQtdAdmins()<=1){ crmToast("Precisa sobrar pelo menos um admin."); admAcessosView(v); return; }
+  if(eu&&!confirm("Você vai deixar de ser admin e perder acesso a este painel. Continuar?")){ admAcessosView(v); return; } }
+ if(novo.nivel!=="gestor") novo.departamentos=[];
+ if(await salvarAcesso(novo)){ const i=ACESSOS.findIndex(a=>(a.email||"").toLowerCase()===novo.email.toLowerCase()); if(i>=0) ACESSOS[i]={...ACESSOS[i],...novo}; else ACESSOS.push(novo);
+  if(eu){ ACCESS={email:novo.email,nivel:novo.nivel,departamentos:novo.departamentos,permissoes:novo.permissoes}; renderSide(); if(!isAdmin()){ setMode("atendimentos"); return; } }
+  crmToast("Acesso salvo"); }
+ admAcessosView(v); }
+
+async function admAcessosView(v){
+ v.innerHTML=`<div class="page-head ce-head"><div><h2>Usuários e acessos</h2><p>Escolha, pessoa por pessoa, quais módulos do Resiltrack ela usa. Admin tem acesso a tudo, inclusive a este painel. Cada alteração é salva na hora.</p></div><div class="crm-acoes"><button class="txt-btn crm-pri" id="admaNovo">+ Adicionar usuário</button></div></div><div id="admaBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ await admaCarregaPessoas(); if(MODE!=="adm_acessos") return;
+ const nomes=admaNomes(), box=v.querySelector("#admaBox");
+ const L=ACESSOS.slice().sort((a,b)=>(a.nivel==="admin")-(b.nivel==="admin")||(nomes[a.email]||a.email).localeCompare(nomes[b.email]||b.email,"pt-BR"));
+ const pinta=()=>{ const q=crmNormTxt(ADMA.q);
+  const vis=L.filter(a=>(!ADMA.f||(ADMA.f.startsWith("n:")?a.nivel===ADMA.f.slice(2):(a.nivel==="admin"||(a.permissoes||[]).includes(ADMA.f))))&&(!q||crmNormTxt((nomes[a.email]||"")+" "+a.email).includes(q)));
+  const cont=k=>ACESSOS.filter(a=>a.nivel==="admin"||(a.permissoes||[]).includes(k)).length;
+  box.innerHTML=`<div class="adma-res">${ADM_MOD_GRUPOS.map(([g,ks])=>`<div class="tile"><div><div class="lbl">${g}</div><div class="val">${cont(ks[0])}</div><div class="sub">pessoas com acesso</div></div></div>`).join("")}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="admaQ" type="search" placeholder="Buscar por nome ou e-mail" value="${escAttr(ADMA.q)}" aria-label="Buscar usuário"></div>
+   <select class="fsel" id="admaF" aria-label="Filtrar">${crmOpt([["n:admin","Só admins"],["n:gestor","Só gestores"],["n:colaborador","Só colaboradores"],...ADM_MODS.map(([k,t])=>[k,"Com acesso a "+t])],ADMA.f,"Todos os usuários")}</select></div>
+  <div class="card adma-wrap"><table class="adma"><thead><tr><th rowspan="2" class="adma-pes">Usuário</th><th rowspan="2">Papel</th>${ADM_MOD_GRUPOS.map(([g,ks])=>`<th colspan="${ks.length}" class="adma-g">${g}</th>`).join("")}<th rowspan="2">Departamentos (gestor)</th><th rowspan="2"></th></tr>
+   <tr>${ADM_MOD_GRUPOS.map(([,ks])=>ks.map(k=>{ const m=ADM_MODS.find(x=>x[0]===k); return `<th class="adma-m" title="${escAttr(m[2])}">${esc(ADM_CURTO[k]||m[1])}</th>`; }).join("")).join("")}</tr></thead>
+  <tbody>${vis.map(a=>{ const adm=a.nivel==="admin", P=new Set(a.permissoes||[]), nm=nomes[a.email];
+   return `<tr data-em="${escAttr(a.email)}"><td class="adma-pes"><b>${esc(nm||a.email.split("@")[0])}</b><span class="sub">${esc(a.email)}</span></td>
+    <td><select class="fsel adma-niv" data-niv="${escAttr(a.email)}">${crmOpt([["admin","Admin"],["gestor","Gestor"],["colaborador","Colaborador"]],a.nivel)}</select></td>
+    ${ADM_MOD_GRUPOS.map(([,ks])=>ks.map(k=>`<td class="adma-c">${adm?`<span class="adma-tot" title="Admin tem acesso total">✓</span>`:`<input type="checkbox" data-mod="${k}" data-em="${escAttr(a.email)}" ${P.has(k)?"checked":""} aria-label="${escAttr((ADM_MODS.find(x=>x[0]===k)||[])[1]+" para "+(nm||a.email))}">`}</td>`).join("")).join("")}
+    <td>${a.nivel==="gestor"?`<button class="txt-btn adma-dep" data-dep="${escAttr(a.email)}">${(a.departamentos||[]).length?esc((a.departamentos||[]).join(", ")):"Escolher"}</button>`:`<span class="sub">${adm?"todos":"-"}</span>`}</td>
+    <td><button class="txt-btn crm-perigo adma-rm" data-rm="${escAttr(a.email)}" title="Remover acesso" aria-label="Remover acesso">✕</button></td></tr>`; }).join("")||`<tr><td colspan="20"><div class="empty">Ninguém com esse filtro.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Passe o mouse no nome de cada coluna para ver o que ela libera. "RH Assist: gerenciar" é para o RH: dá acesso a salários, admissão e à forma de registro do ponto. Quem não está na lista entra só como colaborador, sem nenhum módulo.</p>`;
+  const qi=box.querySelector("#admaQ"); qi.oninput=()=>{ ADMA.q=qi.value; const p=qi.selectionStart; pinta(); const n=box.querySelector("#admaQ"); n.focus(); n.setSelectionRange(p,p); };
+  box.querySelector("#admaF").onchange=e=>{ ADMA.f=e.target.value; pinta(); };
+  box.querySelectorAll("[data-niv]").forEach(s=>s.onchange=()=>{ const a=ACESSOS.find(x=>x.email===s.dataset.niv); admaSalvar(a,{nivel:s.value},v); });
+  box.querySelectorAll("[data-mod]").forEach(c=>c.onchange=()=>{ const a=ACESSOS.find(x=>x.email===c.dataset.em); const P=new Set(a.permissoes||[]);
+   if(c.checked){ P.add(c.dataset.mod); if(c.dataset.mod==="rh_editar") P.add("rh"); if(c.dataset.mod==="financeiro_editar") P.add("financeiro"); if(c.dataset.mod==="comercial_gestor") P.add("comercial"); }
+   else{ P.delete(c.dataset.mod); if(c.dataset.mod==="rh") P.delete("rh_editar"); if(c.dataset.mod==="financeiro") P.delete("financeiro_editar"); if(c.dataset.mod==="comercial") P.delete("comercial_gestor"); }
+   admaSalvar(a,{permissoes:[...P]},v); });
+  box.querySelectorAll("[data-dep]").forEach(b=>b.onclick=()=>openAcessoModal(ACESSOS.find(x=>x.email===b.dataset.dep)));
+  box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{ const a=ACESSOS.find(x=>x.email===b.dataset.rm);
+   if(a.nivel==="admin"&&admaQtdAdmins()<=1){ crmToast("Precisa sobrar pelo menos um admin."); return; }
+   if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Remover?"; return; }
+   if(await removerAcesso(a.email)){ ACESSOS=ACESSOS.filter(x=>x.email!==a.email); crmToast("Acesso removido"); admAcessosView(v); } });
+ };
+ pinta();
+ v.querySelector("#admaNovo").onclick=()=>admaNovo(v);
+}
+
+function admaNovo(v){ const ja=new Set(ACESSOS.map(a=>(a.email||"").toLowerCase())), sug=(ADMA.pessoas||[]).filter(p=>p.email&&!ja.has(p.email));
+ const m=crmModal("Admin","Adicionar usuário","",`<div class="crm-form">
+  <label class="crm-f crm-w2"><span>E-mail de login no Resiltrack</span><input class="inp" id="anEm" type="email" list="anLista" placeholder="pessoa@resilcon.com.br"><datalist id="anLista">${sug.map(p=>`<option value="${escAttr(p.email)}">${esc(p.nome)}</option>`).join("")}</datalist></label>
+  <label class="crm-f"><span>Papel</span><select class="inp" id="anNiv">${crmOpt([["colaborador","Colaborador"],["gestor","Gestor"],["admin","Admin"]],"colaborador")}</select></label>
+  <div class="crm-f crm-w2"><span>Módulos</span><div class="adma-novo">${ADM_MODS.map(([k,t,d])=>`<label title="${escAttr(d)}"><input type="checkbox" data-nm="${k}"> ${esc(t)}</label>`).join("")}</div></div></div>
+  <div class="rha-pe"><span class="sub" id="anMsg" style="flex:1">Gestor: depois escolha os departamentos que ele enxerga.</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="anOk">Adicionar</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#anOk").onclick=async()=>{ const em=m.querySelector("#anEm").value.trim().toLowerCase(), msg=m.querySelector("#anMsg");
+  if(!admaEmailOk(em)){ msg.textContent="Informe um e-mail válido."; return; } if(ja.has(em)){ msg.textContent="Esse e-mail já está na lista."; return; }
+  const P=new Set([...m.querySelectorAll("[data-nm]:checked")].map(i=>i.dataset.nm)); if(P.has("rh_editar")) P.add("rh"); if(P.has("financeiro_editar")) P.add("financeiro"); if(P.has("comercial_gestor")) P.add("comercial");
+  const row={email:em,nivel:m.querySelector("#anNiv").value,departamentos:[],permissoes:[...P]};
+  if(await salvarAcesso(row)){ ACESSOS.push(row); closeModal(); crmToast("Usuário adicionado"); admAcessosView(v); if(row.nivel==="gestor") openAcessoModal(row); } };
+}
+
+function admView(v){ if(MODE==="adm_deps"){ v.innerHTML=""; return viewAdmin(v); } return admAcessosView(v); }
+
+(function(){ if(document.getElementById("adma-css")) return; const s=document.createElement("style"); s.id="adma-css"; s.textContent=`
+.adma-res{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}@media(max-width:1100px){.adma-res{grid-template-columns:repeat(3,1fr)}}
+.adma-res .tile .val{font:700 26px "Urbanist",sans-serif;color:#044B64}
+.adma-wrap{overflow-x:auto;padding:0}.adma{border-collapse:separate;border-spacing:0;min-width:1100px}.adma th,.adma td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.adma thead th{font-size:11.5px;text-transform:none;letter-spacing:0;color:var(--muted);background:#f6f9fa;white-space:nowrap}.adma th.adma-g{text-align:center;color:#044B64;font-weight:700;border-left:1px solid var(--border)}
+.adma th.adma-m{text-align:center;cursor:help}.adma td.adma-c{text-align:center}.adma td.adma-c input{width:18px;height:18px;accent-color:#066789;cursor:pointer}
+.adma-pes{position:sticky;left:0;background:var(--surface);min-width:220px;z-index:1}.adma thead .adma-pes{background:#f6f9fa}.adma-pes b{display:block;font-weight:600}.adma-pes .sub{font-size:12px}
+.adma-tot{color:#0f7a5c;font-weight:800}.adma-rm{padding:6px 10px}.adma-niv{min-width:120px}.adma-dep{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adma-novo{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}.adma-novo label{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--text);font-weight:500}
 `; document.head.appendChild(s); })();
 
 (async function init(){
