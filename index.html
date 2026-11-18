@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.21 (CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.22 (Íris: alerta urgente · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -8905,7 +8905,7 @@ function precoLigarAdicionais(box,re){ const S=PRECO_ST; let t=null; const lento
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
 // Tudo passa pelas funções public.iris_* (admin do Resiltrack ou permissão "iris"). A TV em si roda em iris.html, sem login.
 const _ICO_IRIS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 20.5h8M12 17.5v3"/></svg>';
-let IRIS={aba:"telas",d:null,timer:null};
+let IRIS={aba:"telas",d:null,timer:null,al:null};
 const IRIS_FONTES={digisac_fila:["Chamados do WhatsApp (Digisac)",3],yeastar_ligacoes:["Ligações em andamento (Yeastar)",3],escritorio:["Escritório virtual",90]};
 const IRIS_TIPOS={comunicado:"Comunicado",elogio:"Elogio",boas_vindas:"Boas-vindas"};
 const irisHa=s=>{ if(!s) return "nunca"; const m=Math.max(0,Math.round((Date.now()-new Date(s).getTime())/60000)); return m<1?"agora há pouco":m<60?`há ${m} min`:m<1440?`há ${Math.floor(m/60)} h`:`há ${Math.floor(m/1440)} d`; };
@@ -8922,13 +8922,15 @@ const irisMarcados=(m,nome)=>[...m.querySelectorAll(`input[name="${nome}"]:check
 async function irisView(v,silencioso){
  if(IRIS.timer){ clearTimeout(IRIS.timer); IRIS.timer=null; }
  if(!silencioso||!v.querySelector("#irisBox")){
-  v.innerHTML=crmHead("Íris","Gestão das TVs do escritório: o que cada tela mostra, os comunicados e a situação das fontes de dados.",`<button class="view-btn ce-pri" id="irisNovo">Novo comunicado</button>`)+
+  v.innerHTML=crmHead("Íris","Gestão das TVs do escritório: o que cada tela mostra, os comunicados e a situação das fontes de dados.",`<button class="view-btn iris-al-btn" id="irisAlerta">Alerta urgente</button> <button class="view-btn ce-pri" id="irisNovo">Novo comunicado</button>`)+`<div id="irisAlBanner"></div>`+
    `<div class="sim-abas"><div class="seg">${[["telas","TVs"],["conteudos","Comunicados"],["fontes","Fontes de dados"]].map(([k,t])=>`<button type="button" data-irab="${k}" class="${IRIS.aba===k?"on":""}">${t}</button>`).join("")}</div></div><div id="irisBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
   v.querySelectorAll("[data-irab]").forEach(b=>b.onclick=()=>{ IRIS.aba=b.dataset.irab; irisView(v); });
   v.querySelector("#irisNovo").onclick=()=>irisConteudoForm(v,null);
+  v.querySelector("#irisAlerta").onclick=()=>irisAlertaForm(v);
  }
  const box=v.querySelector("#irisBox");
  try{ IRIS.d=await crmRpc("iris_painel"); }catch(e){ if(document.body.contains(box)) box.innerHTML=irisSemAcesso(e); return; }
+ await irisAlertasCarregar(); irisAlertaBanner(v);
  if(MODE!=="iris"||!document.body.contains(box)) return;
  if(IRIS.aba==="conteudos") irisConteudos(v,box); else if(IRIS.aba==="fontes") irisFontes(box); else irisTelas(v,box);
  if(IRIS.aba!=="conteudos") IRIS.timer=setTimeout(()=>{ if(MODE==="iris") irisView(v,true); },30000);
@@ -9007,6 +9009,94 @@ function irisConteudoForm(v,c){ const novo=!c; c=c||{tipo:"comunicado",titulo:""
   try{ await crmRpc("iris_conteudo_apagar",{p_id:c.id}); closeModal(); crmToast("Comunicado apagado."); irisView(v,true); }catch(e){ crmToast("Não consegui apagar: "+crmErro(e)); } };
 }
 
+// ---------- Alerta urgente (tela cheia + som em todas as TVs) ----------
+const IRIS_DUR=[1,2,5,10,15,30,60];
+async function irisAlertasCarregar(){ try{ IRIS.al=await crmRpc("iris_alertas"); }catch(e){ IRIS.al=null; } return IRIS.al; }
+function irisAlertaBanner(v){
+ const el=v.querySelector("#irisAlBanner"); if(!el) return; const A=(IRIS.al&&IRIS.al.no_ar)||[];
+ el.innerHTML=A.map(a=>`<div class="iris-al-on"><b>No ar agora:</b> ${esc(a.titulo)} <span class="sub">até ${crmDataHora(a.expira_em).slice(-5)}${a.telas&&a.telas.length?` · ${a.telas.length} TV(s)`:" · todas as TVs"}</span><button class="view-btn ghost" data-ialx="${escAttr(a.id)}">Encerrar agora</button></div>`).join("");
+ el.querySelectorAll("[data-ialx]").forEach(b=>b.onclick=async()=>{ b.disabled=true;
+  try{ await crmRpc("iris_alerta_encerrar",{p_id:b.dataset.ialx}); crmToast("Alerta encerrado. Sai das TVs em até 5 segundos."); await irisAlertasCarregar(); irisAlertaBanner(v); }
+  catch(e){ b.disabled=false; crmToast("Não consegui encerrar: "+crmErro(e)); } });
+}
+async function irisAlertaForm(v,pre){
+ const d=IRIS.al||await irisAlertasCarregar();
+ if(!d){ crmToast("O alerta urgente ainda não está ativo no banco. Rode o script da fase 4 da Íris."); return; }
+ const sons=d.sons||[], recentes=d.recentes||[], telas=((IRIS.d&&IRIS.d.telas)||[]).filter(t=>t.ativa);
+ const a=Object.assign({titulo:"",texto:"",duracao_min:1,silencioso:false,som:"padrao",telas:null},pre||{});
+ crmModal("Íris · Alerta urgente","Enviar alerta para as TVs","",`
+  <div class="iris-al-aviso">O alerta cobre a tela inteira das TVs e toca o som escolhido. Aparece em até 5 segundos.</div>
+  ${recentes.length?`<div class="crm-f crm-w2" style="margin-bottom:12px"><span>Usados recentemente (clique para repetir)</span><div class="iris-al-rec">${recentes.map((r,i)=>`<button type="button" class="iris-al-chip" data-ialr="${i}">${esc(r.titulo)}</button>`).join("")}</div></div>`:""}
+  <div class="crm-form">
+   <label class="crm-f crm-w2"><span>Título (aparece enorme na TV)</span><input id="ialTit" maxlength="80" placeholder="Ex.: MARCI, PORTÃO" value="${escAttr(a.titulo)}"></label>
+   <label class="crm-f crm-w2"><span>Mensagem (opcional)</span><textarea id="ialTxt" rows="2" maxlength="300">${esc(a.texto||"")}</textarea></label>
+   <label class="crm-f"><span>Fica na tela por</span><select id="ialDur">${IRIS_DUR.map(n=>`<option value="${n}" ${+a.duracao_min===n?"selected":""}>${n===60?"1 hora":n+" minuto"+(n>1?"s":"")}</option>`).join("")}</select></label>
+   <div class="crm-f"><span>Som</span><div style="display:flex;gap:8px"><select id="ialSom" style="flex:1">${sons.map(s=>`<option value="${escAttr(s.chave)}" ${a.som===s.chave?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><button type="button" class="view-btn ghost" id="ialOuvir" title="Ouvir">Ouvir</button></div></div>
+   <label class="crm-f crm-w2 iris-linha"><input type="checkbox" id="ialMudo" ${a.silencioso?"checked":""}> Modo silencioso: mostra na tela sem tocar som</label>
+   <div class="crm-f crm-w2"><span>Em quais TVs</span>
+    <label class="iris-linha"><input type="checkbox" id="ialTodas" ${!(a.telas&&a.telas.length)?"checked":""}> Todas as TVs</label>
+    <div id="ialTelasBox" class="iris-chk" style="margin-top:6px">${telas.map(t=>`<label><input type="checkbox" name="ialTela" value="${escAttr(t.id)}" ${(a.telas||[]).includes(t.id)?"checked":""}> ${esc(t.nome)}</label>`).join("")}</div></div>
+  </div>
+  <div class="crm-pe" style="margin-top:14px"><button class="txt-btn" id="ialSons" style="margin-right:auto">Gerenciar sons</button><button class="txt-btn" data-close2>Cancelar</button><button class="txt-btn crm-pri iris-al-btn" id="ialOk">Enviar agora</button></div>`);
+ const m=modal, todas=m.querySelector("#ialTodas"), box=m.querySelector("#ialTelasBox"), liga=()=>{ box.style.display=todas.checked?"none":""; }; todas.onchange=liga; liga();
+ m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#ialOuvir").onclick=()=>{ const s=sons.find(x=>x.chave===crmVal(m,"#ialSom")); irisTocarSom(s?s.chave:"padrao",s&&s.url); };
+ m.querySelector("#ialSons").onclick=()=>irisSonsForm(v);
+ m.querySelectorAll("[data-ialr]").forEach(b=>b.onclick=()=>{ const r=recentes[+b.dataset.ialr]; if(!r) return;
+  m.querySelector("#ialTit").value=r.titulo||""; m.querySelector("#ialTxt").value=r.texto||""; m.querySelector("#ialDur").value=String(r.duracao_min||1);
+  m.querySelector("#ialMudo").checked=!!r.silencioso; if(sons.some(s=>s.chave===r.som)) m.querySelector("#ialSom").value=r.som;
+  todas.checked=!(r.telas&&r.telas.length); m.querySelectorAll('input[name="ialTela"]').forEach(x=>x.checked=(r.telas||[]).includes(x.value)); liga(); });
+ m.querySelector("#ialOk").onclick=async function(){ const titulo=crmVal(m,"#ialTit"); if(!titulo){ crmToast("Escreva o título do alerta."); return; }
+  const sel=todas.checked?[]:irisMarcados(m,"ialTela"); if(!todas.checked&&!sel.length){ crmToast("Marque ao menos uma TV, ou deixe em Todas as TVs."); return; }
+  this.disabled=true; this.textContent="Enviando…";
+  try{ await crmRpc("iris_alerta_enviar",{p:{titulo,texto:crmVal(m,"#ialTxt"),duracao_min:+crmVal(m,"#ialDur")||1,silencioso:m.querySelector("#ialMudo").checked,som:crmVal(m,"#ialSom")||"padrao",telas:sel}});
+   closeModal(); crmToast("Alerta enviado. Aparece nas TVs em até 5 segundos."); await irisAlertasCarregar(); irisAlertaBanner(v); }
+  catch(e){ this.disabled=false; this.textContent="Enviar agora"; crmToast("Não consegui enviar: "+crmErro(e)); } };
+ setTimeout(()=>{ const t=m.querySelector("#ialTit"); if(t) t.focus(); },50);
+}
+async function irisSonsForm(v){
+ const d=await irisAlertasCarregar(); const sons=(d&&d.sons)||[];
+ crmModal("Íris · Alerta urgente","Sons do alerta","",`
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Som</th><th></th></tr></thead><tbody>
+  ${sons.map(s=>`<tr><td><b>${esc(s.nome)}</b><div class="sub">${s.embutido?"Já vem na Íris":"Arquivo enviado"}</div></td><td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-isouv="${escAttr(s.chave)}">Ouvir</button>${s.embutido?"":` <button class="view-btn ghost" data-isdel="${escAttr(s.chave)}">Apagar</button>`}</td></tr>`).join("")}
+  </tbody></table></div>
+  <div class="crm-form" style="margin-top:14px">
+   <label class="crm-f"><span>Nome do novo som</span><input id="isNome" maxlength="40" placeholder="Ex.: iFood"></label>
+   <label class="crm-f"><span>Arquivo de áudio (MP3, até 3 MB)</span><input id="isArq" type="file" accept="audio/*"></label>
+  </div>
+  <div class="crm-pe" style="margin-top:14px"><button class="txt-btn" id="isVoltar" style="margin-right:auto">Voltar ao alerta</button><button class="txt-btn crm-pri" id="isOk">Enviar som</button></div>`);
+ const m=modal;
+ m.querySelector("#isVoltar").onclick=()=>irisAlertaForm(v);
+ m.querySelectorAll("[data-isouv]").forEach(b=>b.onclick=()=>{ const s=sons.find(x=>x.chave===b.dataset.isouv); if(s) irisTocarSom(s.chave,s.url); });
+ m.querySelectorAll("[data-isdel]").forEach(b=>b.onclick=async()=>{ const s=sons.find(x=>x.chave===b.dataset.isdel); if(!s||!confirm(`Apagar o som "${s.nome}"?`)) return;
+  try{ await crmRpc("iris_som_apagar",{p_chave:s.chave}); const p=String(s.url||"").split("/iris-sons/")[1]; if(p) await sb.storage.from("iris-sons").remove([decodeURIComponent(p.split("?")[0])]); crmToast("Som apagado."); irisSonsForm(v); }
+  catch(e){ crmToast("Não consegui apagar: "+crmErro(e)); } });
+ m.querySelector("#isOk").onclick=async function(){ const nome=crmVal(m,"#isNome"), f=m.querySelector("#isArq").files[0];
+  if(!nome||!f){ crmToast("Dê um nome e escolha o arquivo."); return; } if(f.size>3*1024*1024){ crmToast("O arquivo passa de 3 MB."); return; }
+  this.disabled=true; this.textContent="Enviando…";
+  try{ const chave=nome.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24)+"-"+Date.now().toString(36);
+   const ext=(f.name.split(".").pop()||"mp3").toLowerCase().replace(/[^a-z0-9]/g,""), path=chave+"."+ext;
+   const {error}=await sb.storage.from("iris-sons").upload(path,f,{contentType:f.type||"audio/mpeg",upsert:false}); if(error) throw error;
+   const url=sb.storage.from("iris-sons").getPublicUrl(path).data.publicUrl;
+   await crmRpc("iris_som_salvar",{p:{chave,nome,url}}); crmToast("Som salvo."); irisSonsForm(v); }
+  catch(e){ this.disabled=false; this.textContent="Enviar som"; crmToast("Não consegui enviar o som: "+crmErro(e)); } };
+}
+
+function irisTocarSom(chave,url){
+ if(url){ try{ const a=new Audio(url); a.volume=1; const p=a.play(); if(p&&p.catch) p.catch(function(e){console.warn("som",e);}); }catch(e){} return; }
+ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; let ctx; try{ ctx=new AC(); if(ctx.resume) ctx.resume(); }catch(e){ return; }
+ const tom=(f,ini,dur,tipo,vol)=>{ const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+ini; o.type=tipo||"sine"; o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.4,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+dur+0.05); };
+ const P={
+  padrao:[[784,0,1.1],[1175,0.32,1.3],[784,1.5,1.1],[1175,1.82,1.6]],
+  bipe:[0,1.2,2.4].reduce((a,o)=>a.concat([[880,o,0.2,"square",0.25],[880,o+0.3,0.2,"square",0.25],[1100,o+0.6,0.4,"square",0.25]]),[]),
+  alarme:Array.from({length:8},(_,i)=>[i%2?720:960,i*0.3,0.28,"sawtooth",0.22]),
+  campainha:[[659,0,1.0],[523,0.55,1.5],[659,2.0,1.0],[523,2.55,1.6]]
+ };
+ (P[chave]||P.padrao).forEach(x=>tom(x[0],x[1],x[2],x[3],x[4]));
+ setTimeout(()=>{ try{ctx.close();}catch(e){} },5500);
+}
+
 // ---------- Fontes de dados ----------
 function irisFontes(box){
  const F=IRIS.d.fontes||[], por={}; F.forEach(f=>por[f.chave]=f);
@@ -9017,13 +9107,17 @@ function irisFontes(box){
  box.innerHTML=`<div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Fonte</th><th>Situação</th><th>Último recebimento</th><th class="right">Falhas em 24h</th></tr></thead><tbody>${linhas}
   <tr><td><b>Comunicados e elogios da intranet</b></td><td><span class="pill ${it.registros?"good":"warn"}">${it.registros?"Recebendo":"Ainda sem dados"}</span></td><td>${irisHa(it.ultimo)}<div class="sub">${it.ultimo?crmDataHora(it.ultimo):""}</div></td><td class="right">${it.registros||0} registros</td></tr>
  </tbody></table></div>
- <p class="sub" style="margin-top:10px">Chamados e ligações chegam a cada minuto pelo n8n. O escritório virtual chega de hora em hora, das 7h às 19h, em dias úteis. Se uma fonte aparecer como parada, a TV esconde aquele bloco em vez de mostrar dado velho.</p>`;
+ <p class="sub" style="margin-top:10px">Chamados e ligações chegam a cada poucos segundos pelos scripts do Digisac e da Yeastar. O escritório virtual chega de hora em hora, das 7h às 19h, em dias úteis. Se uma fonte aparecer como parada, a TV esconde aquele bloco em vez de mostrar dado velho.</p>`;
 }
 
 (function(){ const st=document.createElement("style"); st.textContent=`
 .iris-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 12px;font-weight:500;color:var(--ink-2);font-size:13px}
 .iris-chk label,.iris-linha{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;font-weight:500;color:var(--ink-2);font-size:13px}
 .iris-chk input,.iris-linha input{width:auto;flex:none;margin:0}
+.iris-al-btn{background:#D4513F!important;color:#fff!important;border-color:#D4513F!important}
+.iris-al-on{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;border-radius:12px;background:#FBE4DF;border:1px solid #F1B9AE;color:#7A2417;font-size:14px}.iris-al-on button{margin-left:auto}
+.iris-al-aviso{padding:10px 14px;border-radius:12px;background:#FBE4DF;color:#7A2417;font-size:13px;margin-bottom:14px}
+.iris-al-rec{display:flex;flex-wrap:wrap;gap:6px}.iris-al-chip{font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line,#dce5e8);background:#fff;color:var(--ink-2,#3d4b50);cursor:pointer}.iris-al-chip:hover{border-color:#D4513F;color:#D4513F}
 .iris-dq{display:grid;grid-template-columns:1fr 110px 1fr;gap:8px}@media(max-width:640px){.iris-dq{grid-template-columns:1fr}}
 `; document.head.appendChild(st); })();
 
