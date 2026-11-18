@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.29 (Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.30 (Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -8418,17 +8418,18 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 .pill.info{background:#e3eef3;color:#066789}
 `; document.head.appendChild(st); })();
 
-// ================= KRONOS · controle de ponto (fase 1: painel do dia, espelho e pendências) =================
+// ================= KRONOS · controle de ponto (painel do dia, espelho, pendências e saldo do mês) =================
 // Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
 // com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
-const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"]];
+const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_registro","Forma de registro"]];
 const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
-const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"]};
+const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"],nao_registra:["Não registra ponto","neutro"],apurado:["Apurado","good"],em_andamento:["Em andamento","good"],sem_batida:["",""]};
 const KR_DOW=["","Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 let KR={data:"",q:"",f:"",dep:"",col:"",mes:"",pessoas:null,timer:null};
 const krHM=m=>{ m=Math.max(0,Math.round(+m||0)); return Math.floor(m/60)+"h"+String(m%60).padStart(2,"0"); };
 const krDataBR=d=>{ const p=String(d||"").slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:""; };
-const krPill=s=>{ const [t,c]=KR_SIT[s]||[s,"neutro"]; return `<span class="kr-pill kr-${c}">${t}</span>`; };
+const krPill=s=>{ const [t,c]=KR_SIT[s]||[s,"neutro"]; return t?`<span class="kr-pill kr-${c}">${t}</span>`:""; };
+const krSaldo=m=>m==null?"":`<span class="kr-sd ${m>0?"pos":m<0?"neg":""}">${m>0?"+":m<0?"−":""}${krHM(Math.abs(m))}</span>`;
 const krBatidas=b=>(b||[]).length?(b||[]).map((h,i)=>`<span class="kr-bat ${i%2?"sai":"ent"}" title="${i%2?"Saída":"Entrada"}">${esc(h)}</span>`).join(""):`<span class="sub">Nenhuma</span>`;
 const krTile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:var(--${cor})"`:""}>${val}</div></div></div>`;
 const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos. Fale com o RH.</div></div>`:crmCaixaErro(e);
@@ -8442,6 +8443,8 @@ async function krView(v){
  if(KR.timer){ clearTimeout(KR.timer); KR.timer=null; }
  if(MODE==="kr_espelho") return krEspelho(v);
  if(MODE==="kr_pend") return krPendencias(v);
+ if(MODE==="kr_saldos") return krSaldos(v);
+ if(MODE==="kr_registro") return krRegistro(v);
  return krPainel(v);
 }
 
@@ -8449,7 +8452,7 @@ async function krView(v){
 async function krPainel(v,silencioso){
  let box=v.querySelector("#krBox");
  if(!silencioso||!box){
-  box=krMoldura(v,"kr_painel","Painel do dia","Batidas do relógio de ponto, por colaborador. No dia de hoje a tela se atualiza sozinha a cada 30 segundos.",
+  box=krMoldura(v,"kr_painel","Painel do dia","Batidas do relógio de ponto, por colaborador, com o previsto na escala. No dia de hoje a tela se atualiza sozinha a cada 30 segundos.",
    `<input type="date" class="inp" id="krData" value="${escAttr(KR.data)}" aria-label="Dia" style="max-width:170px"> <button class="txt-btn" id="krHoje">Hoje</button>`);
   v.querySelector("#krData").onchange=e=>{ KR.data=e.target.value; krPainel(v); };
   v.querySelector("#krHoje").onclick=()=>{ KR.data=""; krPainel(v); };
@@ -8463,19 +8466,19 @@ async function krPainel(v,silencioso){
  const R=D.relogio||{}, col=R.ultima_coleta_em?new Date(R.ultima_coleta_em):null, parado=hoje&&(!col||(Date.now()-col.getTime())>10*60000);
  const pinta=()=>{ const q=crmNormTxt(KR.q);
   const ls=P.filter(p=>(!q||crmNormTxt(p.nome+" "+(p.departamento||"")).includes(q))&&(!KR.f||p.situacao===KR.f)&&(!KR.dep||p.departamento===KR.dep));
-  const sits=hoje?["trabalhando","intervalo","saiu","sem_registro"]:["completo","pendente","sem_registro"];
+  const sits=hoje?["trabalhando","intervalo","saiu","sem_registro","nao_registra"]:["completo","pendente","sem_registro","nao_registra"];
   box.innerHTML=`<div class="tiles kr-tiles">${hoje
     ?krTile("Trabalhando agora",n("trabalhando"),"good")+krTile("Em intervalo",n("intervalo"),"warn")+krTile("Já saíram",n("saiu"))+krTile("Sem registro",n("sem_registro"))
     :krTile("Dia completo",n("completo"),"good")+krTile("Batida faltando",n("pendente"),"crit")+krTile("Sem registro",n("sem_registro"))+krTile("Com registro",`${comReg} <span class="sub">de ${P.length}</span>`)}
     ${krTile("Horas no dia",krHM(minTot))}</div>
-  ${parado?`<div class="kr-aviso">O coletor do relógio ainda não está enviando as batidas sozinho. ${col?`Última carga em ${col.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""} Os dados abaixo vão até o registro ${esc(R.ultimo_nsr??"")} do relógio.</div>`:""}
+  ${D.feriado?`<div class="kr-aviso kr-info">Feriado: ${esc(D.feriado)}.</div>`:""}${parado?`<div class="kr-aviso">O coletor do relógio ainda não está enviando as batidas sozinho. ${col?`Última carga em ${col.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""} Os dados abaixo vão até o registro ${esc(R.ultimo_nsr??"")} do relógio.</div>`:""}
   <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="krQ" type="search" value="${escAttr(KR.q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
    <select class="inp" id="krF" style="max-width:200px">${crmOpt(sits.map(s=>[s,KR_SIT[s][0]]),KR.f,"Todas as situações")}</select>
    <select class="inp" id="krDep" style="max-width:230px">${crmOpt(deps.map(d=>[d,d]),KR.dep,"Todos os departamentos")}</select></div>
-  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Situação</th><th>Batidas</th><th class="right">Horas</th><th></th></tr></thead><tbody>
-  ${ls.map(p=>`<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.usa_relogio?"":" · não cadastrado no relógio"}</div></td><td>${krPill(p.situacao)}</td><td>${krBatidas(p.batidas)}</td>
-    <td class="right num">${p.qtd?krHM(p.minutos):""}</td><td class="right"><button class="view-btn" data-krv="${p.id}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">${hoje?`Atualizado às ${esc(D.agora)}. `:""}Entradas em verde e saídas em cinza. As horas somam os pares de entrada e saída${hoje?" e, para quem está trabalhando, contam até agora":""}. Quem registra o ponto fora do relógio aparece como "Sem registro" por enquanto.</p>`;
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Situação</th><th>Batidas</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th></th></tr></thead><tbody>
+  ${ls.map(p=>`<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.usa_relogio||p.registra_ponto===false?"":" · não cadastrado no relógio"}</div></td><td>${krPill(p.situacao)}</td><td>${krBatidas(p.batidas)}</td>
+    <td class="right num">${p.previsto?krHM(p.previsto):""}</td><td class="right num">${p.qtd?krHM(p.minutos):""}</td><td class="right num">${krSaldo(p.saldo)}</td><td class="right"><button class="view-btn" data-krv="${p.id}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="7"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">${hoje?`Atualizado às ${esc(D.agora)}. `:""}Entradas em verde e saídas em cinza. As horas somam os pares de entrada e saída${hoje?" e, para quem está trabalhando, contam até agora":""}. O saldo aparece nos dias já encerrados e zera dentro da tolerância de 10 minutos. Quem registra o ponto fora do relógio aparece como "Sem registro" por enquanto.</p>`;
   const qi=box.querySelector("#krQ"); qi.oninput=()=>{ KR.q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#krQ"); x.focus(); x.setSelectionRange(p,p); };
   box.querySelector("#krF").onchange=e=>{ KR.f=e.target.value; pinta(); };
   box.querySelector("#krDep").onchange=e=>{ KR.dep=e.target.value; pinta(); };
@@ -8498,12 +8501,15 @@ async function krEspelho(v){
   res.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
   let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"espelho",colaborador:KR.col,mes:KR.mes}}); }catch(e){ res.innerHTML=krSemAcesso(e); return; }
   if(MODE!=="kr_espelho") return;
-  const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
-  res.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Dias com registro",com.length)}${krTile("Horas no mês",krHM(tot))}${krTile("Média por dia",com.length?krHM(tot/com.length):"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}</div>
-  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Horas</th><th>Situação</th></tr></thead><tbody>
-  ${dias.map(d=>{ const fds=d.dia_semana>=6; return `<tr class="${fds&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidas(d.batidas):`<span class="sub">${fds?"Fim de semana":"Sem registro no relógio"}</span>`}</td>
-    <td class="right num">${d.qtd?krHM(d.minutos):""}</td><td>${d.pendente?krPill("pendente"):d.qtd?(d.qtd%2?krPill("trabalhando"):krPill("completo")):""}</td></tr>`; }).join("")||`<tr><td colspan="4"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">Nesta etapa o espelho mostra só o que veio do relógio. Escalas, feriados, atrasos, banco de horas e ajustes entram na próxima etapa.</p>`; };
+  const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), ap=dias.filter(d=>d.situacao==="apurado"), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
+  const sld=ap.reduce((a,d)=>a+(+d.credito||0),0), semReg=dias.filter(d=>d.situacao==="sem_registro").length, E=D.escala;
+  const escTxt=E?(E.registra_ponto===false?"Não registra ponto":(E.dias||[]).length?(E.dias||[]).map(x=>`${KR_DOW[x.dia_semana]} ${x.entrada} às ${x.saida}`).join(" · ")+` · intervalo de ${(E.dias[0]||{}).intervalo} min`:"Sem horários definidos"):"";
+  res.innerHTML=`${E?`<div class="kr-esc"><b>Escala:</b> ${esc(E.nome)}<div class="sub">${esc(escTxt)}</div></div>`:`<div class="kr-aviso">Este colaborador ainda não tem escala no Kronos. Sem escala não há previsto nem saldo.</div>`}
+  <div class="tiles kr-tiles">${krTile("Dias apurados",ap.length)}${krTile("Horas trabalhadas",krHM(tot))}${krTile("Saldo do mês",krSaldo(sld)||"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}${krTile("Sem registro",semReg)}</div>
+  <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th>Situação</th></tr></thead><tbody>
+  ${dias.map(d=>{ const livre=d.tipo_dia==="folga"||d.tipo_dia==="feriado"; return `<tr class="${livre&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidas(d.batidas):`<span class="sub">${d.feriado?esc("Feriado: "+d.feriado):d.tipo_dia==="folga"?"Folga":d.situacao==="sem_registro"?"Sem registro no relógio":""}</span>`}</td>
+    <td class="right num">${d.previsto?krHM(d.previsto):""}</td><td class="right num">${d.qtd?krHM(d.minutos):""}</td><td class="right num">${krSaldo(d.saldo)}${d.credito!=null&&d.credito!==d.saldo?` <span class="sub" title="Crédito com acréscimo de 100%">vale ${krHM(d.credito)}</span>`:""}</td><td>${d.situacao==="apurado"?"":krPill(d.situacao)}</td></tr>`; }).join("")||`<tr><td colspan="6"><div class="empty">Sem dias neste mês.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Saldo do dia: trabalhado menos previsto, zerado dentro da tolerância de 10 minutos. Horas em sábado, domingo e feriado valem em dobro no banco. Dia com batida faltando ou sem registro no relógio fica fora do saldo até ser ajustado. Ainda não entram aqui atestados, ajustes manuais e o saldo anterior do Tangerino.</p>`; };
  box.querySelector("#keCol").onchange=e=>{ KR.col=e.target.value; carrega(); };
  box.querySelector("#keMes").onchange=e=>{ KR.mes=e.target.value; carrega(); };
  carrega();
@@ -8529,6 +8535,63 @@ async function krPendencias(v){
  pinta();
 }
 
+// ---------- Saldo do mês (prévia do banco de horas) ----------
+async function krSaldos(v){
+ if(!KR.mes){ const d=new Date(); KR.mes=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+ const box=krMoldura(v,"kr_saldos","Saldo do mês","Quanto cada pessoa trabalhou a mais ou a menos que o previsto na escala, só com os dias já apurados.",
+  `<input type="month" class="inp" id="ksMes" value="${escAttr(KR.mes)}" aria-label="Mês" style="max-width:190px">`);
+ v.querySelector("#ksMes").onchange=e=>{ KR.mes=e.target.value; krSaldos(v); };
+ let D; try{ D=await crmRpc("kronos_dados",{p:{acao:"saldos",mes:KR.mes}}); }catch(e){ box.innerHTML=krSemAcesso(e); return; }
+ if(MODE!=="kr_saldos") return;
+ const P=(D.pessoas||[]).filter(p=>p.registra_ponto!==false), pos=P.reduce((a,p)=>a+(+p.positivo||0),0), neg=P.reduce((a,p)=>a+(+p.negativo||0),0), pd=P.reduce((a,p)=>a+(+p.pendentes||0),0), sr=P.reduce((a,p)=>a+(+p.sem_registro||0),0);
+ let q="", ord="nome";
+ const pinta=()=>{ const nq=crmNormTxt(q); const ls=P.filter(p=>!nq||crmNormTxt(p.nome+" "+(p.departamento||"")).includes(nq)).sort((a,b)=>ord==="maior"?b.saldo-a.saldo:ord==="menor"?a.saldo-b.saldo:a.nome.localeCompare(b.nome,"pt-BR"));
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Horas a mais",krSaldo(pos)||"0h00")}${krTile("Horas a menos",krSaldo(neg)||"0h00")}${krTile("Dias com batida faltando",pd,pd?"crit":"")}${krTile("Dias sem registro",sr)}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="ksQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
+   <select class="inp" id="ksO" style="max-width:220px">${crmOpt([["nome","Ordenar por nome"],["maior","Maior saldo primeiro"],["menor","Menor saldo primeiro"]],ord)}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th class="right">Dias apurados</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th class="right">Batida faltando</th><th class="right">Sem registro</th><th></th></tr></thead><tbody>
+  ${ls.map(p=>`<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.escala?" · "+esc(p.escala):" · sem escala"}</div></td><td class="right num">${p.dias_apurados}</td><td class="right num">${p.dias_apurados?krHM(p.previsto):""}</td><td class="right num">${p.dias_apurados?krHM(p.trabalhado):""}</td>
+    <td class="right num">${p.dias_apurados?(krSaldo(p.saldo)||"0h00"):""}</td><td class="right num">${p.pendentes||""}</td><td class="right num">${p.sem_registro||""}</td><td class="right"><button class="view-btn" data-ksv="${p.id}">Espelho</button></td></tr>`).join("")||`<tr><td colspan="8"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Período de ${krDataBR(D.inicio)} a ${krDataBR(D.fim)}. Isto é uma prévia para conferir com o Tangerino, não o saldo oficial do banco de horas: não inclui o saldo de meses anteriores, atestados, ajustes nem os dias registrados fora do relógio. Quem está na escala "Não registra ponto" não aparece.</p>`;
+  const qi=box.querySelector("#ksQ"); qi.oninput=()=>{ q=qi.value; const p=qi.selectionStart; pinta(); const x=box.querySelector("#ksQ"); x.focus(); x.setSelectionRange(p,p); };
+  box.querySelector("#ksO").onchange=e=>{ ord=e.target.value; pinta(); };
+  box.querySelectorAll("[data-ksv]").forEach(b=>b.onclick=()=>{ KR.col=b.dataset.ksv; setMode("kr_espelho"); }); };
+ pinta();
+}
+
+// ---------- Forma de registro (quem usa o relógio, quem pode usar o ponto online e em quais dias) ----------
+const KR_DIAS_ABR=[[1,"S","Segunda"],[2,"T","Terça"],[3,"Q","Quarta"],[4,"Q","Quinta"],[5,"S","Sexta"],[6,"S","Sábado"],[7,"D","Domingo"]];
+async function krRegistro(v){
+ const box=krMoldura(v,"kr_registro","Forma de registro","Defina, pessoa por pessoa, quem registra no relógio do escritório, quem pode usar o ponto online pela intranet e em quais dias da semana o online fica liberado.","");
+ let D; try{ D=await crmRpc("kronos_registro",{p:{acao:"listar"}}); }catch(e){ box.innerHTML=krSemAcesso(e); return; }
+ if(MODE!=="kr_registro") return;
+ const rh=!!(D.eu&&D.eu.rh), P=D.pessoas||[]; let q="", f="";
+ const salvar=async(p)=>{ try{ await crmRpc("kronos_registro",{p:{acao:"salvar",colaborador:p.id,relogio:p.relogio,online:p.online,dias_online:p.dias_online}}); p.definido=true; crmToast("Salvo: "+p.nome.split(" ")[0]); }
+   catch(e){ crmToast("Não salvou: "+crmErro(e)); try{ D=await crmRpc("kronos_registro",{p:{acao:"listar"}}); P.splice(0,P.length,...(D.pessoas||[])); }catch(_){} } pinta(); };
+ const pinta=()=>{ const nq=crmNormTxt(q);
+  const ls=P.filter(p=>(!nq||crmNormTxt(p.nome+" "+(p.departamento||"")).includes(nq))&&(!f||(f==="nd"?!p.definido:f==="on"?p.online:f==="rel"?(p.relogio&&!p.online):f==="si"?(p.online&&!p.intranet):true)));
+  const nOn=P.filter(p=>p.online).length, nRel=P.filter(p=>p.definido&&p.relogio&&!p.online).length, nNd=P.filter(p=>!p.definido).length, nSi=P.filter(p=>p.online&&!p.intranet).length;
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Com ponto online",nOn,"good")}${krTile("Só relógio",nRel)}${krTile("Ainda não definidos",nNd,nNd?"warn":"")}${krTile("Online sem perfil na intranet",nSi,nSi?"crit":"")}</div>
+  ${rh?"":`<div class="kr-aviso kr-info">Você pode consultar. Só o RH altera a forma de registro.</div>`}
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="krgQ" type="search" value="${escAttr(q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
+   <select class="inp" id="krgF" style="max-width:240px">${crmOpt([["nd","Ainda não definidos"],["on","Com ponto online"],["rel","Só relógio"],["si","Online sem perfil na intranet"]],f,"Todos")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th class="center">Relógio</th><th class="center">Online</th><th>Dias com online liberado</th><th>Uso nos últimos 30 dias</th><th></th></tr></thead><tbody>
+  ${ls.map(p=>{ const dias=p.dias_online||[];
+   return `<tr data-krg="${p.id}"><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.departamento||"Sem departamento")}${p.registra_ponto===false?" · escala sem registro de ponto":""}${p.no_relogio?"":" · sem cadastro no relógio"}</div></td>
+    <td class="center"><input type="checkbox" class="kr-ck" data-k="relogio" ${p.relogio?"checked":""} ${rh?"":"disabled"} aria-label="Registra no relógio"></td>
+    <td class="center"><input type="checkbox" class="kr-ck" data-k="online" ${p.online?"checked":""} ${rh?"":"disabled"} aria-label="Pode usar o ponto online"></td>
+    <td><div class="kr-dias ${p.online?"":"off"}">${KR_DIAS_ABR.map(([n,l,t])=>`<button type="button" class="kr-dia ${dias.includes(n)?"on":""}" data-d="${n}" title="${t}" ${rh&&p.online?"":"disabled"}>${l}</button>`).join("")}</div>${p.online&&!dias.length?`<div class="sub" style="color:var(--crit)">Nenhum dia marcado: o online fica bloqueado.</div>`:""}${p.online&&!p.intranet?`<div class="sub" style="color:var(--crit)">Sem perfil ligado na intranet: não consegue usar.</div>`:""}</td>
+    <td class="sub">Relógio: ${p.dias_relogio_30||0} dia(s)<br>Online: ${p.dias_online_30||0} dia(s)</td>
+    <td class="right">${p.definido?`<span class="kr-pill kr-good">Definido</span>`:`<span class="kr-pill kr-warn">Não definido</span>`}</td></tr>`; }).join("")||`<tr><td colspan="6"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Cada alteração é salva na hora. Quem ainda não foi definido registra só no relógio. Em dia que não está marcado, o ponto online recusa o registro e avisa a pessoa para usar o relógio. O horário da batida online é sempre o do servidor, e cada uma gera um comprovante numerado.</p>`;
+  const qi=box.querySelector("#krgQ"); qi.oninput=()=>{ q=qi.value; const pos=qi.selectionStart; pinta(); const x=box.querySelector("#krgQ"); x.focus(); x.setSelectionRange(pos,pos); };
+  box.querySelector("#krgF").onchange=e=>{ f=e.target.value; pinta(); };
+  if(rh) box.querySelectorAll("tr[data-krg]").forEach(tr=>{ const p=P.find(x=>x.id===tr.dataset.krg); if(!p) return;
+   tr.querySelectorAll(".kr-ck").forEach(c=>c.onchange=()=>{ p[c.dataset.k]=c.checked; if(c.dataset.k==="online"&&c.checked&&!(p.dias_online||[]).length) p.dias_online=[5]; salvar(p); });
+   tr.querySelectorAll(".kr-dia").forEach(b=>b.onclick=()=>{ const n=+b.dataset.d, s=new Set(p.dias_online||[]); if(s.has(n)) s.delete(n); else s.add(n); p.dias_online=[...s].sort((a,b)=>a-b); salvar(p); }); }); };
+ pinta();
+}
+
 (function(){ const st=document.createElement("style"); st.textContent=`
 .kr-tiles{display:grid!important;grid-template-columns:repeat(5,1fr);gap:12px}.kr-tiles.kr-t4{grid-template-columns:repeat(4,1fr)}.kr-tiles .tile{margin:0}@media(max-width:900px){.kr-tiles,.kr-tiles.kr-t4{grid-template-columns:repeat(2,1fr)}}
 .kr-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
@@ -8537,6 +8600,11 @@ async function krPendencias(v){
 .kr-bat.ent{background:var(--good-soft);color:var(--good);border-color:transparent}.kr-bat.sai{background:var(--surface-2,#f3f6f7);color:var(--ink-2)}
 .kr-aviso{margin-top:12px;padding:11px 14px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:500}
 tr.kr-fds td{opacity:.55}
+.kr-sd{font-variant-numeric:tabular-nums;font-weight:600}.kr-sd.pos{color:var(--good)}.kr-sd.neg{color:var(--crit)}
+.kr-aviso.kr-info{background:var(--accent-soft);color:var(--accent)}
+.kr-ck{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}.kr-ck:disabled{cursor:default}
+.kr-dias{display:flex;gap:4px}.kr-dias.off{opacity:.4}.kr-dia{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font:700 12px/1 "Urbanist",sans-serif;cursor:pointer}.kr-dia.on{background:var(--accent);border-color:var(--accent);color:#fff}.kr-dia:disabled{cursor:default}
+.kr-esc{margin:0 0 12px;padding:11px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);font-size:13.5px}
 `; document.head.appendChild(st); })();
 
 // ================= RH ASSIST · Assistente de RH com IA =================
@@ -9260,6 +9328,394 @@ function irisFontes(box){
 .iris-al-rec{display:flex;flex-wrap:wrap;gap:6px}.iris-al-chip{font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line,#dce5e8);background:#fff;color:var(--ink-2,#3d4b50);cursor:pointer}.iris-al-chip:hover{border-color:#D4513F;color:#D4513F}
 .iris-dq{display:grid;grid-template-columns:1fr 110px 1fr;gap:8px}@media(max-width:640px){.iris-dq{grid-template-columns:1fr}}
 `; document.head.appendChild(st); })();
+
+// ================= RH ASSIST · Admissão (modelo do Tangerino/Sólides) =================
+// Etapas: Pré-admissão > Aguardando documentação (candidato preenche pelo link seguro) > Aprovar documentos > Dados contratuais
+// > Aguardando assinatura (D4Sign ou contrato assinado anexado) > Concluída (cria o colaborador, liga escala e forma de registro no Kronos
+// e avisa o n8n para o onboarding). Só o RH acessa. Dados em rh.admissoes; arquivos no bucket privado rh-admissao.
+RH_SECOES.push(["rh_adm","Admissão"]);
+const ADM_FN="rh-admissao";
+const ADM_ETAPAS=[["pre","Pré-admissão"],["documentacao","Aguardando documentação"],["aprovar","Aprovar documentos"],["contratuais","Dados contratuais"],["assinatura","Aguardando assinatura"],["concluida","Concluídas"],["cancelada","Canceladas"]];
+const ADM_ETQ={pre:["neutral","Pré-admissão"],documentacao:["info","Aguardando documentação"],aprovar:["warn","Aprovar documentos"],contratuais:["warn","Dados contratuais"],assinatura:["info","Aguardando assinatura"],concluida:["good","Concluída"],cancelada:["neutral","Cancelada"]};
+const ADM_GRUPOS={sugerida:"Documentação sugerida",outras:"Outras documentações",dependentes:"Documentos dos dependentes",personalizado:"Documentos personalizados"};
+const ADM_MODELO_CONTR=["CLT","Estágio","Aprendiz","Temporário","Intermitente","Prazo determinado"];
+const ADM_FICHA=[
+ ["Dados pessoais",[["nome","Nome"],["nome_social","Nome social"],["nascimento","Nascimento","d"],["sexo","Sexo"],["genero","Gênero"],["raca_cor","Raça/cor"],["estado_civil","Estado civil"],["nacionalidade","Nacionalidade"],["naturalidade","Naturalidade"],["nome_mae","Nome da mãe"],["nome_pai","Nome do pai"],["escolaridade","Grau de instrução"],["pcd","PcD"],["qtd_filhos","Filhos"],["camisa","Camisa"],["telefone","Telefone"],["email","E-mail pessoal"]]],
+ ["Documentos",[["cpf","CPF"],["pis","PIS"],["rg","RG"],["rg_emissao","Emissão RG","d"],["rg_orgao","Órgão/UF RG"],["titulo","Título de eleitor"],["titulo_zona","Zona"],["titulo_secao","Seção"],["ctps","CTPS"],["ctps_serie","Série"],["ctps_emissao","Emissão CTPS","d"],["reservista","Reservista"],["orgao_classe","Órgão de classe"]]],
+ ["Endereço",[["cep","CEP"],["endereco","Endereço"],["numero","Número"],["complemento","Complemento"],["bairro","Bairro"],["cidade","Cidade"],["uf","UF"],["pais","País"]]],
+ ["Dados bancários",[["banco","Banco"],["agencia","Agência"],["conta","Conta"],["conta_tipo","Tipo de conta"],["pix_tipo","Tipo PIX"],["pix","Chave PIX"]]],
+ ["Contato de emergência",[["emergencia_nome","Nome"],["emergencia_telefone","Telefone"],["emergencia_parentesco","Parentesco"]]]];
+const ADM_CONTR=[
+ ["email_corporativo","E-mail corporativo (vira o login do colaborador)","t"],
+ ["cbo","CBO *","t","Ex.: 252210 - Contador"],
+ ["categoria","Categoria do trabalhador *","s",["101 - Empregado geral","103 - Aprendiz","105 - Contrato por prazo determinado","111 - Intermitente","901 - Estagiário"]],
+ ["tipo_contrato","Tipo de contrato *","s",["Prazo indeterminado","Prazo determinado em dias","Prazo determinado vinculado a fato"]],
+ ["regime_jornada","Regime da jornada","s",["Submetido a horário de trabalho (Cap. II do Título II da CLT)","Atividade externa (art. 62, I, CLT)","Cargo de confiança (art. 62, II, CLT)","Teletrabalho (art. 62, III, CLT)"]],
+ ["natureza","Natureza da atividade","s",["Trabalho urbano","Trabalho rural"]],
+ ["indicativo","Indicativo da admissão","s",["Normal","Decorrente de ação fiscal","Decorrente de decisão judicial"]],
+ ["tipo_admissao","Tipo de admissão","s",["Admissão","Transferência de empresa do mesmo grupo","Transferência por sucessão","Mudança de CPF"]],
+ ["regime_trabalhista","Regime trabalhista","s",["CLT","Estatutário"]],
+ ["regime_previdenciario","Regime previdenciário","s",["RGPS","RPPS","Regime de previdência no exterior"]],
+ ["tipo_contratacao","Tipo de contratação","s",["Contratação normal","Primeiro emprego","Reintegração","Reemprego"]],
+ ["codigo_dirf","Código DIRF","t"],["cnpj_filial","CNPJ da filial","t"],["sindicato_cnpj","CNPJ do sindicato","t"],["sindicato_nome","Razão social do sindicato","t"]];
+let ADM={d:null,f:"",q:"",sel:null,det:null,aba:"resumo"};
+const admDt=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+const admDH=d=>d?new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+const admBRL=v=>v==null||v===""?"":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const admHoje=()=>new Date().toISOString().slice(0,10);
+function admErro(e){ const m=String((e&&e.message)||e||""); if(m.includes("sem_permissao")) return "Só o RH (admin) acessa a admissão.";
+ if(m.includes("Could not find the function")) return "As funções da admissão ainda não estão no Supabase. Rode o arquivo 21_rh_admissao_funcoes.sql."; return m.replace(/^Error:\s*/,""); }
+async function admFn(body){ const {data,error}=await sb.functions.invoke(ADM_FN,{body}); if(error){ let m=error.message; try{ const j=await error.context.json(); m=j.erro||m; }catch(_){} throw new Error(m); } if(data&&data.erro) throw new Error(data.erro); return data; }
+async function admCarregar(){ ADM.d=await crmRpc("rh_adm_dados",{p:{acao:"lista"}}); return ADM.d; }
+async function admDetalhe(id){ ADM.det=await crmRpc("rh_adm_dados",{p:{acao:"detalhe",id}}); return ADM.det; }
+const admDocNome=c=>((ADM.d&&ADM.d.doc_tipos||[]).find(t=>t.codigo===c)||{}).nome||({contrato:"Contrato e termos para assinar",contrato_assinado:"Contrato assinado",outros:"Outros"})[c]||c;
+
+RHV_EXTRA.rh_adm=async function(v){
+ v.innerHTML=crmHead("Admissão","Do convite ao primeiro dia: o candidato preenche a ficha e envia os documentos pelo link seguro, o RH aprova, completa os dados contratuais e manda assinar. Ao concluir, a pessoa entra no RH Assist e no Kronos.","")+rhAbas("rh_adm")+`<div id="rhBox" style="margin-top:14px"><div class="card adm-box"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ try{ await rhCarregar(); await admCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=`<div class="card adm-box"><div class="empty">${esc(admErro(e))}</div></div>`; return; }
+ if(MODE!=="rh_adm") return;
+ if(ADM.sel){ try{ await admDetalhe(ADM.sel); }catch(e){ ADM.sel=null; } }
+ if(ADM.sel&&ADM.det) return admTelaDetalhe(v);
+ v.querySelector(".crm-acoes").innerHTML=`<button class="txt-btn" id="admCfg">Configurações</button><button class="txt-btn" id="admMod">Meus modelos</button>${crmPri('id="admNova">+ Nova admissão</button>')}`;
+ v.querySelector("#admNova").onclick=()=>admNova(v); v.querySelector("#admMod").onclick=()=>admModelos(v); v.querySelector("#admCfg").onclick=()=>admConfig(v);
+ admLista(v);
+};
+
+function admLista(v){ const L=ADM.d.admissoes||[], box=v.querySelector("#rhBox"), hoje=admHoje();
+ const cont=e=>L.filter(a=>a.etapa===e).length, ativos=L.filter(a=>!["concluida","cancelada"].includes(a.etapa));
+ const pinta=()=>{ const q=crmNormTxt(ADM.q);
+  const vis=L.filter(a=>(ADM.f?a.etapa===ADM.f:a.etapa!=="cancelada")&&(!q||crmNormTxt([a.nome,a.email,a.cargo,a.departamento].join(" ")).includes(q)));
+  box.innerHTML=`<div class="adm-etapas">${[["","Em andamento",ativos.length],...ADM_ETAPAS.map(([k,t])=>[k,t,cont(k)])].map(([k,t,n])=>`<button class="${ADM.f===k?"on":""}" data-f="${k}">${t}<b>${n}</b></button>`).join("")}</div>
+  <div class="filters crm-bar2" style="margin:12px 0"><div class="search" style="flex:1;min-width:220px"><input id="admQ" type="search" value="${escAttr(ADM.q)}" placeholder="Buscar por nome, cargo ou e-mail" aria-label="Buscar admissão"></div></div>
+  ${vis.length?vis.map(a=>{ const [c,t]=ADM_ETQ[a.etapa]||["neutral",a.etapa], venc=a.etapa==="documentacao"&&a.prazo_docs&&a.prazo_docs<hoje;
+   return `<div class="card adm-it" data-abre="${a.id}"><span class="rh-av" style="--c:#066789">${esc(rhIni(a.nome))}</span>
+    <div class="adm-it-n"><b>${esc(a.nome)}</b><span class="sub">${esc(a.cargo||"Cargo a definir")}${a.departamento?` · ${esc(a.departamento)}`:""}</span><span class="sub">${esc(a.email||a.telefone||"")}</span></div>
+    <div class="adm-it-d"><span class="sub">Envio dos documentos até</span><b class="${venc?"adm-venc":""}">${admDt(a.prazo_docs)||"-"}${venc?" · vencido":""}</b></div>
+    <div class="adm-it-d"><span class="sub">Admissão</span><b>${admDt(a.data_admissao)||"-"}</b></div>
+    <div class="adm-it-s"><span class="pill ${c}">${t}</span>${a.a_avaliar?`<span class="adm-badge">${a.a_avaliar} para avaliar</span>`:""}${a.etapa==="assinatura"&&a.assinatura_status?`<span class="sub">${{enviado:"Na D4Sign",assinado:"Assinado",manual:"Assinado (anexado)",cancelado:"Envio cancelado"}[a.assinatura_status]||""}</span>`:""}</div></div>`; }).join("")
+   :`<div class="card adm-box"><div class="empty">${L.length?"Nenhuma admissão com esse filtro.":"Nenhuma admissão ainda. Clique em + Nova admissão para começar."}</div></div>`}`;
+  box.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ ADM.f=b.dataset.f; pinta(); });
+  const qi=box.querySelector("#admQ"); qi.oninput=()=>{ ADM.q=qi.value; const p=qi.selectionStart; pinta(); const n=box.querySelector("#admQ"); n.focus(); n.setSelectionRange(p,p); };
+  box.querySelectorAll("[data-abre]").forEach(c=>c.onclick=async()=>{ ADM.sel=c.dataset.abre; ADM.aba="resumo"; RHV_EXTRA.rh_adm(v); });
+ }; pinta(); }
+
+// ---------- formulário de admissão (nova, edição e modelo) ----------
+function admCamposForm(a,soModelo){ const D=ADM.d, deps=D.departamentos||[], car=D.cargos||[], ges=D.gestores||[], esc_=D.escalas||[];
+ const docsSel=new Map((a.documentos||[]).map(x=>[x.codigo,!!x.obrigatorio])), rp=a.registro_ponto||{relogio:true,online:false,dias_online:[5]};
+ const sw=(id,on,txt)=>`<label class="adm-sw"><input type="checkbox" id="${id}" ${on?"checked":""}><span></span>${txt}</label>`;
+ const grupos=Object.entries(ADM_GRUPOS).map(([g,t])=>{ const L=(D.doc_tipos||[]).filter(x=>x.grupo===g); if(!L.length&&g!=="personalizado") return "";
+  return `<details class="adm-dg" ${g==="sugerida"||L.some(x=>docsSel.has(x.codigo))?"open":""}><summary>${t}</summary><div>${L.map(x=>`<div class="adm-doc"><label><input type="checkbox" data-doc="${x.codigo}" ${docsSel.has(x.codigo)?"checked":""}> ${esc(x.nome)}</label><label class="adm-ob"><input type="checkbox" data-ob="${x.codigo}" ${(docsSel.has(x.codigo)?docsSel.get(x.codigo):x.obrigatorio)?"checked":""}> obrigatório</label></div>`).join("")}
+   ${g==="personalizado"?`<button type="button" class="txt-btn" id="admNovoDoc" style="margin-top:6px">+ Criar documento personalizado</button>`:""}</div></details>`; }).join("");
+ return `<div class="crm-form">
+ ${soModelo?"":`<div class="adm-sec crm-w2">Candidato</div>
+  <label class="crm-f crm-w2"><span>Nome completo *</span><input class="inp" id="aNome" value="${escAttr(a.nome||"")}"></label>
+  <label class="crm-f"><span>E-mail</span><input class="inp" id="aEmail" type="email" value="${escAttr(a.email||"")}"></label>
+  <label class="crm-f"><span>Celular (WhatsApp)</span><input class="inp" id="aTel" value="${escAttr(a.telefone||"")}"></label>
+  <label class="crm-f"><span>CPF</span><input class="inp" id="aCpf" value="${escAttr(a.cpf||"")}"></label>
+  <label class="crm-f"><span>Data de nascimento</span><input class="inp" type="date" id="aNasc" value="${escAttr(a.nascimento||"")}"></label>
+  <label class="crm-f"><span>Data limite para envio dos documentos *</span><input class="inp" type="date" id="aPrazo" value="${escAttr(a.prazo_docs||"")}"></label>
+  <label class="crm-f"><span>Data de admissão *</span><input class="inp" type="date" id="aAdm" value="${escAttr(a.data_admissao||"")}"></label>`}
+ <div class="adm-sec crm-w2">Contratação</div>
+ <label class="crm-f"><span>Modelo de contratação</span><select class="inp" id="aModC">${crmOpt(ADM_MODELO_CONTR.map(x=>[x,x]),a.modelo_contratacao||"CLT")}</select></label>
+ <label class="crm-f"><span>Filial</span><input class="inp" id="aFil" value="${escAttr(a.filial||"Matriz")}"></label>
+ <label class="crm-f"><span>Cargo *</span><select class="inp" id="aCargo">${crmOpt(car.map(x=>[x.id,x.nome]),a.cargo_id,"Selecione o cargo")}</select></label>
+ <label class="crm-f"><span>Departamento</span><select class="inp" id="aDep">${crmOpt(deps.map(x=>[x.id,x.nome]),a.departamento_id,"Selecione")}</select></label>
+ <label class="crm-f"><span>Gestor imediato</span><select class="inp" id="aGes">${crmOpt(ges.map(x=>[x.id,x.nome]),a.gestor_id,"Selecione")}</select></label>
+ <label class="crm-f"><span>Modalidade</span><select class="inp" id="aMod">${crmOpt(Object.entries(RH_MOD),a.modalidade,"Selecione")}</select></label>
+ <label class="crm-f"><span>Tipo de salário</span><select class="inp" id="aTSal">${crmOpt([["mensal","Mensal"],["horista","Por hora"],["diarista","Por dia"]],a.tipo_salario||"mensal")}</select></label>
+ <label class="crm-f"><span>Salário (R$)</span><input class="inp" id="aSal" inputmode="decimal" value="${escAttr(a.salario!=null?String(a.salario).replace(".",","):"")}"></label>
+ <label class="crm-f"><span>Local de trabalho / setor</span><input class="inp" id="aLocal" value="${escAttr(a.local_trabalho||"")}"></label>
+ <label class="crm-f"><span>Centro de custo</span><input class="inp" id="aCC" value="${escAttr(a.centro_custo||"")}"></label>
+ ${soModelo?"":`<label class="crm-f"><span>Número do registro</span><input class="inp" id="aReg" value="${escAttr(a.numero_registro||"")}"></label>
+ <label class="crm-f"><span>Matrícula eSocial</span><input class="inp" id="aMat" value="${escAttr(a.matricula_esocial||"")}"></label>`}
+ <label class="crm-f"><span>Forma de pagamento</span><select class="inp" id="aPag">${crmOpt([["deposito","Depósito em conta"],["pix","PIX"],["outro","Outro"]],a.forma_pagamento,"Selecione")}</select></label>
+ <div class="crm-f crm-w2 adm-linha">${sw("aAdi",a.adiantamento,"Adiantamento salarial")}<input class="inp" id="aAdiP" placeholder="% do adiantamento" style="max-width:170px" value="${escAttr(a.adiantamento_pct??"")}">
+  ${sw("aExp",a.experiencia,"Contrato de experiência")}<input class="inp" id="aExpD" placeholder="Dias (ex.: 45)" style="max-width:130px" value="${escAttr(a.experiencia_dias??"")}"><input class="inp" id="aExpP" placeholder="Prorrogação (dias)" style="max-width:150px" value="${escAttr(a.experiencia_prorrogacao??"")}"></div>
+ <div class="adm-sec crm-w2">Ponto (Kronos)</div>
+ <label class="crm-f"><span>Escala de trabalho</span><select class="inp" id="aEsc">${crmOpt(esc_.map(x=>[x.id,x.nome]),a.escala_id,"Selecione a escala")}</select></label>
+ <div class="crm-f"><span>Forma de registro</span><div class="adm-linha">${sw("aRel",rp.relogio!==false,"Relógio do escritório")}${sw("aOnl",!!rp.online,"Ponto online")}</div>
+  <div class="adm-dias">${[[1,"Seg"],[2,"Ter"],[3,"Qua"],[4,"Qui"],[5,"Sex"],[6,"Sáb"]].map(([n,t])=>`<label><input type="checkbox" data-dia="${n}" ${(rp.dias_online||[]).map(Number).includes(n)?"checked":""}> ${t}</label>`).join("")}<span class="sub">dias do ponto online</span></div></div>
+ <div class="adm-sec crm-w2">Documentos para o processo de admissão</div>
+ <div class="crm-f crm-w2">${sw("aAso",a.aso!==false,"ASO: o exame admissional deve ser enviado")}</div>
+ <div class="crm-w2">${grupos}</div>
+ <label class="crm-f crm-w2"><span>Observação para o candidato</span><textarea class="inp" id="aObs" rows="2" placeholder="Aparece no topo da página do candidato.">${esc(a.observacao||"")}</textarea></label></div>`; }
+
+function admLerForm(m,soModelo){ const g=id=>{ const e=m.querySelector("#"+id); return e?e.value.trim():""; }, ck=id=>!!(m.querySelector("#"+id)||{}).checked;
+ const docs=[...m.querySelectorAll("[data-doc]:checked")].map(i=>({codigo:i.dataset.doc,obrigatorio:!!(m.querySelector(`[data-ob="${i.dataset.doc}"]`)||{}).checked}));
+ if(ck("aAso")&&!docs.some(d=>d.codigo==="aso")) docs.push({codigo:"aso",obrigatorio:true});
+ const o={modelo_contratacao:g("aModC"),filial:g("aFil"),cargo_id:g("aCargo"),departamento_id:g("aDep"),gestor_id:g("aGes"),modalidade:g("aMod"),tipo_salario:g("aTSal"),
+  salario:g("aSal").replace(/\./g,"").replace(",","."),local_trabalho:g("aLocal"),centro_custo:g("aCC"),forma_pagamento:g("aPag"),
+  adiantamento:ck("aAdi"),adiantamento_pct:g("aAdiP").replace(",","."),experiencia:ck("aExp"),experiencia_dias:g("aExpD"),experiencia_prorrogacao:g("aExpP"),
+  escala_id:g("aEsc"),registro_ponto:{relogio:ck("aRel"),online:ck("aOnl"),dias_online:[...m.querySelectorAll("[data-dia]:checked")].map(i=>+i.dataset.dia)},
+  aso:ck("aAso"),documentos:docs,observacao:g("aObs")};
+ if(!soModelo) Object.assign(o,{nome:g("aNome"),email:g("aEmail"),telefone:g("aTel"),cpf:g("aCpf"),nascimento:g("aNasc"),prazo_docs:g("aPrazo"),data_admissao:g("aAdm"),numero_registro:g("aReg"),matricula_esocial:g("aMat")});
+ return o; }
+
+function admLigaForm(m,v,reabre){ const nd=m.querySelector("#admNovoDoc"); if(nd) nd.onclick=()=>admDocNovo(m,v,reabre);
+ m.querySelectorAll("[data-ob]").forEach(i=>i.onchange=()=>{ if(i.checked){ const d=m.querySelector(`[data-doc="${i.dataset.ob}"]`); if(d) d.checked=true; } }); }
+
+function admNova(v){ const M=ADM.d.modelos||[];
+ const m=crmModal("Admissão","Nova admissão","",`${M.length?`<div class="adm-modelo"><span>Começar de um modelo</span><select class="inp" id="aModelo">${crmOpt(M.map(x=>[x.id,x.nome]),"","Admissão do zero")}</select></div>`:""}
+  <div id="aFormBox">${admCamposForm({prazo_docs:"",documentos:(ADM.d.doc_tipos||[]).filter(t=>t.grupo==="sugerida").map(t=>({codigo:t.codigo,obrigatorio:t.obrigatorio}))},false)}</div>
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1">Depois de salvar, gere o link para o candidato preencher.</span><button class="txt-btn" data-close2>Cancelar</button><button class="txt-btn" id="aSalvaMod">Salvar também como modelo</button>${crmPri('id="aOk">Salvar admissão</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ let modeloId=""; admLigaForm(m,v);
+ const sm=m.querySelector("#aModelo"); if(sm) sm.onchange=()=>{ modeloId=sm.value; const md=M.find(x=>x.id===sm.value); const atual=admLerForm(m,false);
+  m.querySelector("#aFormBox").innerHTML=admCamposForm({...(md?md.config:{}),nome:atual.nome,email:atual.email,telefone:atual.telefone,cpf:atual.cpf,nascimento:atual.nascimento,prazo_docs:atual.prazo_docs,data_admissao:atual.data_admissao},false); admLigaForm(m,v); };
+ const salvar=async comoModelo=>{ const o=admLerForm(m,false), msg=m.querySelector("#aMsg");
+  if(!o.nome){ msg.textContent="Informe o nome completo."; return; }
+  let nomeModelo=""; if(comoModelo){ nomeModelo=(prompt("Nome do modelo (ex.: Analista Fiscal CLT)",(ADM.d.cargos.find(c=>c.id===o.cargo_id)||{}).nome||"")||"").trim(); if(!nomeModelo) return; }
+  m.querySelectorAll("#aOk,#aSalvaMod").forEach(b=>b.disabled=true);
+  try{ if(comoModelo){ const {nome,email,telefone,cpf,nascimento,prazo_docs,data_admissao,numero_registro,matricula_esocial,...cfg}=o; const r=await crmRpc("rh_adm_salvar",{p:{acao:"modelo_salvar",nome:nomeModelo,config:cfg}}); modeloId=r.id; }
+   const r=await crmRpc("rh_adm_salvar",{p:{acao:"salvar",...o,modelo_id:modeloId}}); closeModal(); crmToast("Admissão criada"); ADM.sel=r.id; ADM.aba="resumo"; RHV_EXTRA.rh_adm(v); }
+  catch(e){ msg.textContent=admErro(e); m.querySelectorAll("#aOk,#aSalvaMod").forEach(b=>b.disabled=false); } };
+ m.querySelector("#aOk").onclick=()=>salvar(false); m.querySelector("#aSalvaMod").onclick=()=>salvar(true);
+}
+function admEditar(v){ const a=ADM.det;
+ const m=crmModal("Admissão","Dados da admissão","",`${admCamposForm(a,false)}<div class="rha-pe"><span class="sub" id="aMsg" style="flex:1">${a.etapa==="documentacao"?"O candidato vê as mudanças de documentos na hora, pelo mesmo link.":""}</span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal; admLigaForm(m,v,()=>admEditar(v));
+ m.querySelector("#aOk").onclick=async()=>{ const o=admLerForm(m,false), msg=m.querySelector("#aMsg"); if(!o.nome){ msg.textContent="Informe o nome."; return; }
+  try{ await crmRpc("rh_adm_salvar",{p:{acao:"salvar",id:a.id,...o}}); closeModal(); crmToast("Admissão salva"); RHV_EXTRA.rh_adm(v); }catch(e){ msg.textContent=admErro(e); } };
+}
+async function admDocNovo(m,v,reabre){ const nome=(prompt("Nome do documento personalizado (ex.: Certificado de curso)")||"").trim(); if(!nome) return;
+ try{ const r=await crmRpc("rh_adm_salvar",{p:{acao:"doc_tipo_salvar",nome,obrigatorio:false}}); await admCarregar();
+  const box=m.querySelector("#aFormBox"); const atual=admLerForm(m,false); atual.documentos.push({codigo:r.codigo,obrigatorio:false});
+  if(box){ box.innerHTML=admCamposForm(atual,false); admLigaForm(m,v,reabre); } else if(reabre){ ADM.det={...ADM.det,...atual}; reabre(); }
+  crmToast("Documento criado"); }catch(e){ crmToast(admErro(e)); } }
+
+function admModelos(v){ const M=ADM.d.modelos||[];
+ const m=crmModal("Admissão","Meus modelos de admissão","",`<p class="sub">Um modelo guarda cargo, salário, escala, forma de registro e a lista de documentos. Para criar, monte uma nova admissão e clique em "Salvar também como modelo".</p>
+  ${M.length?M.map(x=>{ const c=(ADM.d.cargos.find(k=>k.id===x.config.cargo_id)||{}).nome; return `<div class="adm-mod"><div><b>${esc(x.nome)}</b><span class="sub">${esc([c,x.config.modelo_contratacao,(x.config.documentos||[]).length+" documentos"].filter(Boolean).join(" · "))}</span></div><button class="txt-btn" data-ed="${x.id}">Editar</button><button class="txt-btn crm-perigo" data-del="${x.id}">Excluir</button></div>`; }).join(""):`<div class="empty">Nenhum modelo ainda.</div>`}`);
+ m.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar"; return; }
+  try{ await crmRpc("rh_adm_salvar",{p:{acao:"modelo_excluir",id:b.dataset.del}}); await admCarregar(); admModelos(v); }catch(e){ crmToast(admErro(e)); } });
+ m.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{ const x=M.find(k=>k.id===b.dataset.ed);
+  const mm=crmModal("Admissão","Modelo: "+x.nome,"",`<label class="crm-f"><span>Nome do modelo</span><input class="inp" id="mNome" value="${escAttr(x.nome)}"></label><div id="aFormBox">${admCamposForm(x.config,true)}</div>
+   <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Salvar modelo</button>')}</div>`);
+  mm.classList.remove("prodm"); mm.classList.add("rha-modal"); mm.querySelector("[data-close2]").onclick=()=>admModelos(v); admLigaForm(mm,v);
+  mm.querySelector("#aOk").onclick=async()=>{ try{ await crmRpc("rh_adm_salvar",{p:{acao:"modelo_salvar",id:x.id,nome:mm.querySelector("#mNome").value,config:admLerForm(mm,true)}}); await admCarregar(); crmToast("Modelo salvo"); admModelos(v); }catch(e){ mm.querySelector("#aMsg").textContent=admErro(e); } }; });
+}
+function admConfig(v){ const c=ADM.d.config||{};
+ const m=crmModal("Admissão","Configurações da admissão","",`<div class="crm-form">
+  <label class="crm-f crm-w2"><span>Nome da empresa (aparece para o candidato)</span><input class="inp" id="cEmp" value="${escAttr(c.empresa_nome||"")}"></label>
+  <label class="crm-f crm-w2"><span>Endereço da página do candidato</span><input class="inp" id="cUrl" value="${escAttr(c.portal_url||"")}"><small class="sub">Onde o arquivo admissao.html foi publicado (mesmo repositório do Resiltrack).</small></label>
+  <label class="crm-f crm-w2"><span>Webhook do n8n (avisos e onboarding)</span><input class="inp" id="cN8n" value="${escAttr(c.n8n_webhook||"")}" placeholder="https://...n8n.cloud/webhook/..."><small class="sub">Recebe os eventos convite_admissao, admissao_enviada, admissao_devolvida, admissao_assinada e admissao_concluida. Em branco, nada é enviado e o RH manda o link manualmente.</small></label>
+  <label class="crm-f crm-w2"><span>E-mails do TI (separados por vírgula)</span><input class="inp" id="cTi" value="${escAttr(c.emails_ti||"")}"><small class="sub">Vão junto no aviso de admissão concluída, para preparar equipamento e acessos.</small></label></div>
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Salvar</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#aOk").onclick=async()=>{ const n8=m.querySelector("#cN8n").value.trim(); if(n8&&!/^https:\/\//.test(n8)){ m.querySelector("#aMsg").textContent="O webhook precisa começar com https://"; return; }
+  try{ for(const [k,id] of [["empresa_nome","cEmp"],["portal_url","cUrl"],["n8n_webhook","cN8n"],["emails_ti","cTi"]]) await crmRpc("rh_adm_salvar",{p:{acao:"config",chave:k,valor:m.querySelector("#"+id).value}});
+   await admCarregar(); closeModal(); crmToast("Configurações salvas"); }catch(e){ m.querySelector("#aMsg").textContent=admErro(e); } };
+}
+
+// ---------- tela da admissão ----------
+function admTelaDetalhe(v){ const a=ADM.det, et=a.etapa, [pc,pt]=ADM_ETQ[et]||["neutral",et], fechada=["concluida","cancelada"].includes(et);
+ const ordem=["pre","documentacao","aprovar","contratuais","assinatura","concluida"], ix=ordem.indexOf(et);
+ const avaliar=(a.arquivos||[]).filter(x=>x.status==="enviado").length, recus=(a.arquivos||[]).filter(x=>x.status==="recusado").length;
+ v.querySelector(".crm-acoes").innerHTML=`<button class="txt-btn" id="admVolta">← Voltar à lista</button>`;
+ v.querySelector("#admVolta").onclick=()=>{ ADM.sel=null; ADM.det=null; RHV_EXTRA.rh_adm(v); };
+ const prox={pre:["Gere o link e envie ao candidato.",`${crmPri('id="adConv">Gerar link para o candidato</button>')}`],
+  documentacao:[a.link_ativo?`Link ativo até ${admDt(a.token_expira)}. O candidato está preenchendo.`:"O link venceu ou não foi gerado.",`<button class="txt-btn" id="adConv">${a.convite_em?"Gerar link novo":"Gerar link"}</button><button class="txt-btn" id="adFichaRh">Preencher pelo RH</button>${(a.pendencias||[]).length?"":crmPri('id="adAprov">Aprovar documentos</button>')}`],
+  aprovar:[avaliar?`${avaliar} arquivo(s) esperando avaliação.`:recus?`${recus} arquivo(s) recusado(s): devolva ao candidato ou exclua.`:"Tudo avaliado. Aprove para seguir.",`<button class="txt-btn" id="adDev">Devolver ao candidato</button>${crmPri(`id="adAprov" ${avaliar?"disabled":""}>Aprovar documentos</button>`)}`],
+  contratuais:["Complete os dados contratuais do eSocial.",`<button class="txt-btn" id="adDev">Devolver ao candidato</button>`],
+  assinatura:[{enviado:"Contrato na D4Sign esperando assinaturas.",assinado:"Contrato assinado. Pode concluir.",manual:"Contrato assinado anexado. Pode concluir.",cancelado:"Envio cancelado. Mande de novo ou anexe o contrato assinado."}[a.assinatura_status]||"Anexe o contrato e mande para assinar.",
+   ["assinado","manual"].includes(a.assinatura_status)?crmPri('id="adConc">Concluir admissão</button>'):""],
+  concluida:[`Concluída em ${admDH(a.concluida_em)}. A pessoa já está no RH Assist e no Kronos.`,`<button class="txt-btn" id="adColab">Abrir ficha do colaborador</button>`],
+  cancelada:[`Cancelada${a.cancelada_motivo?": "+esc(a.cancelada_motivo):""}.`,`<button class="txt-btn" id="adReab">Reabrir</button>`]}[et]||["",""];
+ const abas=[["resumo","Resumo"],["ficha","Ficha do candidato"],["docs",`Documentos${avaliar?` (${avaliar})`:""}`],["contr","Dados contratuais"],["ass","Assinatura"],["hist","Histórico"]];
+ v.querySelector("#rhBox").innerHTML=`<div class="card adm-cab"><div class="adm-cab-t"><span class="rh-av" style="--c:#066789">${esc(rhIni(a.nome))}</span><div><h3>${esc(a.nome)}</h3><span class="sub">${esc([a.cargo,a.departamento,a.modelo_contratacao].filter(Boolean).join(" · "))}</span></div><span class="pill ${pc}">${pt}</span></div>
+  <div class="adm-step">${ordem.map((k,i)=>`<div class="${et==="cancelada"?"":i<ix?"ok":i===ix?"on":""}"><i>${i<ix&&et!=="cancelada"?"✓":i+1}</i><span>${(ADM_ETQ[k]||[])[1]}</span></div>`).join("")}</div>
+  <div class="adm-prox"><span>${prox[0]}</span><div>${prox[1]}${!fechada?`<button class="txt-btn" id="adEdit">Editar admissão</button><button class="txt-btn crm-perigo" id="adCanc">${et==="pre"&&!(a.arquivos||[]).length?"Excluir":"Cancelar"}</button>`:""}</div></div></div>
+  <div class="sim-abas" style="margin:12px 0"><div class="seg">${abas.map(([k,t])=>`<button type="button" data-aba="${k}" class="${ADM.aba===k?"on":""}">${t}</button>`).join("")}</div></div><div id="admAba"></div>`;
+ const B=id=>v.querySelector("#"+id);
+ v.querySelectorAll("[data-aba]").forEach(b=>b.onclick=()=>{ ADM.aba=b.dataset.aba; admTelaDetalhe(v); });
+ if(B("adConv")) B("adConv").onclick=()=>admConvite(v);
+ if(B("adAprov")) B("adAprov").onclick=()=>admAcao(v,"aprovar_docs",{},"Documentos aprovados");
+ if(B("adDev")) B("adDev").onclick=()=>admDevolver(v);
+ if(B("adConc")) B("adConc").onclick=()=>admConcluir(v);
+ if(B("adEdit")) B("adEdit").onclick=()=>admEditar(v);
+ if(B("adFichaRh")) B("adFichaRh").onclick=()=>admFichaEditar(v);
+ if(B("adReab")) B("adReab").onclick=()=>admAcao(v,"reabrir",{},"Admissão reaberta");
+ if(B("adColab")) B("adColab").onclick=()=>{ setMode("rh_colab"); setTimeout(()=>{ try{ rhFicha(rhPor(RHD.colaboradores,a.colaborador_id)); }catch(_){ } },600); };
+ if(B("adCanc")) B("adCanc").onclick=()=>admCancelar(v);
+ const box=B("admAba");
+ ({resumo:admAbaResumo,ficha:admAbaFicha,docs:admAbaDocs,contr:admAbaContr,ass:admAbaAss,hist:admAbaHist}[ADM.aba]||admAbaResumo)(box,v);
+}
+async function admAcao(v,acao,extra,ok){ try{ ADM.det=await crmRpc("rh_adm_salvar",{p:{acao,id:ADM.det.id,...(extra||{})}}); if(ok) crmToast(ok); await admCarregar(); RHV_EXTRA.rh_adm(v); }catch(e){ crmToast(admErro(e)); } }
+
+function admAbaResumo(box,v){ const a=ADM.det, rp=a.registro_ponto||{}, pend=a.pendencias||[], it=(l,x)=>`<div><span class="lbl">${l}</span><b>${x||"-"}</b></div>`;
+ box.innerHTML=`<div class="adm-2">${a.etapa!=="concluida"&&a.etapa!=="cancelada"&&pend.length?`<div class="card adm-pend"><b>O que falta na ficha e nos documentos (${pend.length})</b><ul>${pend.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>`:""}
+  <div class="card adm-res"><h4>Candidato</h4><div class="adm-kv">${it("E-mail",esc(a.email))}${it("Celular",esc(a.telefone))}${it("Envio dos documentos até",admDt(a.prazo_docs))}${it("Data de admissão",admDt(a.data_admissao))}${it("Link gerado em",admDH(a.convite_em))}${it("Ficha enviada em",admDH(a.enviado_em))}</div></div>
+  <div class="card adm-res"><h4>Contratação</h4><div class="adm-kv">${it("Cargo",esc(a.cargo))}${it("Departamento",esc(a.departamento))}${it("Gestor",esc(a.gestor))}${it("Salário",admBRL(a.salario)+(a.tipo_salario&&a.tipo_salario!=="mensal"?` (${a.tipo_salario})`:""))}${it("Modalidade",esc(RH_MOD[a.modalidade]||""))}${it("Experiência",a.experiencia?`${a.experiencia_dias||"?"} dias${a.experiencia_prorrogacao?` + ${a.experiencia_prorrogacao}`:""}`:"Não")}</div></div>
+  <div class="card adm-res"><h4>Ponto no Kronos</h4><div class="adm-kv">${it("Escala",esc(a.escala))}${it("Relógio",rp.relogio===false?"Não":"Sim")}${it("Ponto online",rp.online?"Sim, "+(rp.dias_online||[]).map(n=>["","seg","ter","qua","qui","sex","sáb"][n]).join(", "):"Não")}</div><p class="sub" style="margin:8px 0 0">Ligados automaticamente ao concluir, a partir da data de admissão.</p></div>
+  ${a.observacao?`<div class="card adm-res"><h4>Recado para o candidato</h4><p style="margin:0">${esc(a.observacao)}</p></div>`:""}</div>`; }
+
+function admAbaFicha(box,v){ const a=ADM.det, f=a.ficha||{}, deps=a.dependentes||[];
+ const val=(k,t)=>{ const x=f[k]; return x==null||x===""?"-":t==="d"?admDt(x):esc(x); };
+ box.innerHTML=`${!Object.keys(f).length?`<div class="card adm-box"><div class="empty">O candidato ainda não preencheu a ficha.${!["concluida","cancelada"].includes(a.etapa)?` <button class="txt-btn" id="fRh">Preencher pelo RH</button>`:""}</div></div>`:
+  `${ADM_FICHA.map(([t,L])=>`<div class="card adm-res"><h4>${t}</h4><div class="adm-kv">${L.map(([k,l,tp])=>`<div><span class="lbl">${l}</span><b>${val(k,tp)}</b></div>`).join("")}</div></div>`).join("")}
+  <div class="card adm-res"><h4>Dependentes (${deps.length})</h4>${deps.length?deps.map(d=>`<div class="adm-kv">${[["nome","Nome"],["parentesco","Parentesco"],["nascimento","Nascimento","d"],["cpf","CPF"],["ir","IR"]].map(([k,l,t])=>`<div><span class="lbl">${l}</span><b>${d[k]?(t==="d"?admDt(d[k]):esc(d[k])):"-"}</b></div>`).join("")}</div>`).join("<hr>"):`<p class="sub" style="margin:0">Nenhum dependente informado.</p>`}</div>
+  <div class="adm-acoes-f">${f.aceite_lgpd?`<span class="sub">Aceite LGPD em ${admDH(f.aceite_lgpd)||esc(f.aceite_lgpd)}</span>`:`<span class="sub">Sem aceite LGPD registrado</span>`}${!["concluida","cancelada"].includes(a.etapa)?`<button class="txt-btn" id="fRh">Editar ficha</button>`:""}<button class="txt-btn" id="fImp">Imprimir ficha</button></div>`}`;
+ const r=box.querySelector("#fRh"); if(r) r.onclick=()=>admFichaEditar(v);
+ const im=box.querySelector("#fImp"); if(im) im.onclick=()=>admImprimir(); }
+
+function admFichaEditar(v){ const a=ADM.det, f={...(a.ficha||{})}; if(!f.nome) f.nome=a.nome; if(!f.email) f.email=a.email||""; if(!f.telefone) f.telefone=a.telefone||""; if(!f.cpf) f.cpf=a.cpf||"";
+ const m=crmModal("Admissão","Ficha do candidato (preenchida pelo RH)","",`<p class="sub">Use quando o candidato entregar os dados por outro meio. Os campos com * entram na conferência.</p>
+  ${ADM_FICHA.map(([t,L])=>`<div class="adm-sec">${t}</div><div class="crm-form">${L.map(([k,l,tp])=>`<label class="crm-f"><span>${l}</span><input class="inp" data-fk="${k}" ${tp==="d"?'type="date"':""} value="${escAttr(f[k]??"")}"></label>`).join("")}</div>`).join("")}
+  <label class="adm-sw" style="margin-top:12px"><input type="checkbox" id="fLgpd" ${f.aceite_lgpd?"checked":""}><span></span>O candidato autorizou o uso dos dados (LGPD), por escrito ou no termo assinado</label>
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Salvar ficha</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#aOk").onclick=async()=>{ const nf={...f}; m.querySelectorAll("[data-fk]").forEach(i=>{ const x=i.value.trim(); if(x) nf[i.dataset.fk]=x; else delete nf[i.dataset.fk]; });
+  if(m.querySelector("#fLgpd").checked){ nf.aceite_lgpd=f.aceite_lgpd||("rh:"+new Date().toISOString()); } else delete nf.aceite_lgpd;
+  try{ ADM.det=await crmRpc("rh_adm_salvar",{p:{acao:"ficha",id:a.id,ficha:nf,dependentes:a.dependentes||[]}}); closeModal(); crmToast("Ficha salva"); admTelaDetalhe(v); }catch(e){ m.querySelector("#aMsg").textContent=admErro(e); } };
+}
+
+function admAbaDocs(box,v){ const a=ADM.det, A=a.arquivos||[], pedidos=a.documentos||[], fech=a.etapa==="concluida";
+ const cods=[...new Set([...pedidos.map(d=>d.codigo),...A.map(x=>x.doc_codigo)])];
+ const linha=x=>`<div class="adm-arq"><span class="adm-arq-n">${esc(x.nome||"arquivo")}${x.dependente!=null?` <span class="sub">· ${esc(((a.dependentes||[])[x.dependente]||{}).nome||"dependente "+(x.dependente+1))}</span>`:""}<small>${admDH(x.enviado_em)} · ${x.origem==="candidato"?"candidato":x.origem==="rh"?"RH":"D4Sign"}${x.tamanho?` · ${Math.round(x.tamanho/1024)} KB`:""}</small></span>
+  <span class="pill ${{enviado:"info",aprovado:"good",recusado:"crit"}[x.status]}">${{enviado:"Para avaliar",aprovado:"Aprovado",recusado:"Recusado"}[x.status]}</span>
+  <button class="txt-btn" data-ver="${x.id}">Ver</button>${!fech&&x.status!=="aprovado"?`<button class="txt-btn" data-apr="${x.id}">Aprovar</button>`:""}${!fech&&x.status!=="recusado"&&x.origem==="candidato"?`<button class="txt-btn" data-rec="${x.id}">Recusar</button>`:""}${!fech?`<button class="txt-btn crm-perigo" data-exc="${x.id}">Excluir</button>`:""}
+  ${x.status==="recusado"&&x.motivo?`<div class="adm-mot">Motivo: ${esc(x.motivo)}</div>`:""}</div>`;
+ box.innerHTML=`<div class="card adm-box">${cods.length?cods.map(c=>{ const p=pedidos.find(d=>d.codigo===c), L=A.filter(x=>x.doc_codigo===c);
+  return `<div class="adm-dbloc"><div class="adm-dh"><b>${esc(admDocNome(c))}</b>${p?`<span class="pill ${p.obrigatorio?"warn":"neutral"}">${p.obrigatorio?"Obrigatório":"Opcional"}</span>`:""}${!L.length?`<span class="sub">Nada enviado</span>`:""}</div>${L.map(linha).join("")}</div>`; }).join(""):`<div class="empty">Nenhum documento pedido.</div>`}
+  ${!fech?`<div class="adm-anexa"><b>Anexar pelo RH</b><select class="inp" id="dCod">${crmOpt([...pedidos.map(d=>[d.codigo,admDocNome(d.codigo)]),["contrato","Contrato e termos para assinar"],["outros","Outros"]],"contrato")}</select><label class="txt-btn adm-file">Escolher arquivo<input type="file" id="dArq" accept="application/pdf,image/jpeg,image/png" hidden></label><span class="sub" id="dMsg"></span></div>`:""}</div>`;
+ box.querySelectorAll("[data-ver]").forEach(b=>b.onclick=async()=>{ const w=window.open("about:blank","_blank"); try{ const r=await admFn({acao:"arquivo_url",id:a.id,arquivo_id:b.dataset.ver}); if(w) w.location=r.url; else location.href=r.url; }catch(e){ if(w) w.close(); crmToast(admErro(e)); } });
+ box.querySelectorAll("[data-apr]").forEach(b=>b.onclick=async()=>{ try{ ADM.det=await crmRpc("rh_adm_salvar",{p:{acao:"arquivo_avaliar",id:b.dataset.apr,status:"aprovado"}}); admTelaDetalhe(v); }catch(e){ crmToast(admErro(e)); } });
+ box.querySelectorAll("[data-rec]").forEach(b=>b.onclick=async()=>{ const mot=(prompt("Por que este arquivo foi recusado? O candidato vai ler essa mensagem.")||"").trim(); if(!mot) return;
+  try{ ADM.det=await crmRpc("rh_adm_salvar",{p:{acao:"arquivo_avaliar",id:b.dataset.rec,status:"recusado",motivo:mot}}); admTelaDetalhe(v); }catch(e){ crmToast(admErro(e)); } });
+ box.querySelectorAll("[data-exc]").forEach(b=>b.onclick=async()=>{ if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar exclusão"; return; }
+  try{ await admFn({acao:"arquivo_excluir",id:a.id,arquivo_id:b.dataset.exc}); await admDetalhe(a.id); admTelaDetalhe(v); }catch(e){ crmToast(admErro(e)); } });
+ const fi=box.querySelector("#dArq"); if(fi) fi.onchange=async()=>{ const f=fi.files[0]; if(!f) return; const msg=box.querySelector("#dMsg"); msg.textContent="Enviando…";
+  try{ const b64=await new Promise((ok,er)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result)); r.onerror=er; r.readAsDataURL(f); });
+   await admFn({acao:"upload",id:a.id,doc_codigo:box.querySelector("#dCod").value,nome:f.name,base64:b64}); await admDetalhe(a.id); crmToast("Arquivo anexado"); admTelaDetalhe(v); }
+  catch(e){ msg.textContent=admErro(e); } };
+}
+
+function admAbaContr(box,v){ const a=ADM.det, c=a.contratuais||{}, pode=["aprovar","contratuais","assinatura"].includes(a.etapa);
+ if(!pode&&a.etapa!=="concluida"){ box.innerHTML=`<div class="card adm-box"><div class="empty">Os dados contratuais ficam liberados depois que os documentos forem aprovados.</div></div>`; return; }
+ box.innerHTML=`<div class="card adm-box"><div class="crm-form">${ADM_CONTR.map(([k,l,t,o])=>`<label class="crm-f ${k==="email_corporativo"?"crm-w2":""}"><span>${l}</span>${t==="s"?`<select class="inp" data-ck="${k}" ${pode?"":"disabled"}>${crmOpt(o.map(x=>[x,x]),c[k]||"","Selecione")}</select>`:`<input class="inp" data-ck="${k}" value="${escAttr(c[k]||"")}" ${o?`placeholder="${escAttr(o)}"`:""} ${pode?"":"disabled"}>`}</label>`).join("")}
+  <label class="crm-f crm-w2"><span>Observações do DP</span><textarea class="inp" data-ck="obs" rows="2" ${pode?"":"disabled"}>${esc(c.obs||"")}</textarea></label></div>
+  ${pode?`<div class="rha-pe"><span class="sub" id="cMsg" style="flex:1">Cargo, salário e data de admissão ficam em "Editar admissão".</span><button class="txt-btn" id="cSalva">Salvar</button>${a.etapa==="contratuais"?crmPri('id="cOk">Salvar e seguir para assinatura</button>'):""}</div>`:""}</div>`;
+ const ler=()=>{ const o={}; box.querySelectorAll("[data-ck]").forEach(i=>o[i.dataset.ck]=i.value.trim()); return o; };
+ const go=async av=>{ try{ ADM.det=await crmRpc("rh_adm_salvar",{p:{acao:"contratuais",id:a.id,contratuais:ler(),avancar:av}}); crmToast(av?"Pronto para assinatura":"Dados salvos"); if(av){ ADM.aba="ass"; await admCarregar(); } admTelaDetalhe(v); }catch(e){ box.querySelector("#cMsg").textContent=admErro(e); } };
+ const s=box.querySelector("#cSalva"); if(s) s.onclick=()=>go(false); const o=box.querySelector("#cOk"); if(o) o.onclick=()=>go(true); }
+
+function admAbaAss(box,v){ const a=ADM.det, f=a.ficha||{}, st=a.assinatura_status;
+ if(a.etapa!=="assinatura"&&a.etapa!=="concluida"){ box.innerHTML=`<div class="card adm-box"><div class="empty">A assinatura fica liberada depois dos dados contratuais.</div></div>`; return; }
+ const pdfs=(a.arquivos||[]).filter(x=>x.mime==="application/pdf"&&["contrato","outros"].includes(x.doc_codigo));
+ const assinado=(a.arquivos||[]).filter(x=>x.doc_codigo==="contrato_assinado");
+ const eu=(RHD.colaboradores||[]).find(c=>c.id===(RHD.eu&&RHD.eu.id))||{};
+ box.innerHTML=`<div class="card adm-box">${assinado.length?`<div class="rha-aviso ok">Contrato assinado guardado: ${assinado.map(x=>`<button class="txt-btn" data-ver="${x.id}">${esc(x.nome||"abrir")}</button>`).join(" ")}</div>`:""}
+  ${st==="enviado"?`<div class="rha-aviso">Enviado para a D4Sign. A situação atualiza sozinha quando todos assinarem.</div><div id="sLista" class="sub">Carregando assinaturas…</div><div class="adm-acoes-f"><button class="txt-btn crm-perigo" id="sCanc">Cancelar envio</button></div>`:""}
+  ${a.etapa==="assinatura"&&st!=="enviado"&&!["assinado","manual"].includes(st)?`<h4 style="margin:0 0 8px">Enviar pela D4Sign</h4>
+   ${pdfs.length?`<div class="crm-f"><span>Documentos para assinar</span>${pdfs.map(x=>`<label class="adm-chk"><input type="checkbox" data-pdf="${x.id}" checked> ${esc(x.nome)}</label>`).join("")}</div>`:`<div class="rha-aviso">Anexe primeiro o contrato e os termos em PDF na aba Documentos (tipo "Contrato e termos para assinar").</div>`}
+   <div class="crm-form" style="margin-top:10px">
+    <label class="crm-f"><span>Colaborador: nome</span><input class="inp" id="s1n" value="${escAttr(f.nome||a.nome)}"></label><label class="crm-f"><span>E-mail</span><input class="inp" id="s1e" value="${escAttr(f.email||a.email||"")}"></label>
+    <label class="crm-f"><span>WhatsApp (opcional)</span><input class="inp" id="s1w" value="${escAttr(f.telefone||a.telefone||"")}"></label><span></span>
+    <label class="crm-f"><span>Pela Resilcon: nome</span><input class="inp" id="s2n" value="${escAttr(eu.nome||"")}"></label><label class="crm-f"><span>E-mail</span><input class="inp" id="s2e" value="${escAttr(eu.email||"")}"></label>
+    <label class="crm-f crm-w2"><span>Mensagem no e-mail</span><textarea class="inp" id="sMsg" rows="2">Olá! Seguem o contrato de trabalho e os termos da sua admissão na Resilcon para assinatura digital.</textarea></label></div>
+   <div class="rha-pe"><span class="sub" id="sOut" style="flex:1"></span>${crmPri(`id="sEnv" ${pdfs.length?"":"disabled"}>Enviar para assinatura</button>`)}</div>
+   <hr style="margin:18px 0"><h4 style="margin:0 0 6px">Ou: assinou fora da D4Sign?</h4><p class="sub">Anexe o contrato já assinado e a admissão fica pronta para concluir.</p>
+   <label class="txt-btn adm-file">Anexar contrato assinado<input type="file" id="sMan" accept="application/pdf" hidden></label>`:""}
+  ${["assinado","manual"].includes(st)&&a.etapa==="assinatura"?`<p style="margin:10px 0 0">Tudo certo. Clique em <b>Concluir admissão</b> no topo para criar o colaborador e avisar gestor e TI.</p>`:""}</div>`;
+ box.querySelectorAll("[data-ver]").forEach(b=>b.onclick=async()=>{ try{ const r=await admFn({acao:"arquivo_url",id:a.id,arquivo_id:b.dataset.ver}); window.open(r.url,"_blank"); }catch(e){ crmToast(admErro(e)); } });
+ if(st==="enviado") admFn({acao:"assinatura_status",id:a.id}).then(r=>{ const el=box.querySelector("#sLista"); if(!el) return;
+  el.innerHTML=(r.signatarios||[]).map(s=>`<div class="adm-arq"><span class="adm-arq-n">${esc(s.nome||s.email)}<small>${esc(s.email)}</small></span><span class="pill ${s.assinou?"good":"warn"}">${s.assinou?"Assinou":"Pendente"}</span>${s.assinou?"":`<button class="txt-btn" data-re="${escAttr(s.email)}" data-ch="${escAttr(s.chave||"")}">Reenviar e-mail</button>`}</div>`).join("")||"Sem dados da D4Sign.";
+  el.querySelectorAll("[data-re]").forEach(b=>b.onclick=async()=>{ try{ await admFn({acao:"assinatura_reenviar",id:a.id,email:b.dataset.re,chave:b.dataset.ch}); crmToast("E-mail reenviado"); }catch(e){ crmToast(admErro(e)); } }); })
+  .catch(e=>{ const el=box.querySelector("#sLista"); if(el) el.textContent=admErro(e); });
+ const sc=box.querySelector("#sCanc"); if(sc) sc.onclick=async()=>{ if(sc.dataset.ok!=="1"){ sc.dataset.ok="1"; sc.textContent="Confirmar cancelamento"; return; } try{ await admFn({acao:"assinatura_cancelar",id:a.id}); await admDetalhe(a.id); admTelaDetalhe(v); }catch(e){ crmToast(admErro(e)); } };
+ const se=box.querySelector("#sEnv"); if(se) se.onclick=async()=>{ const out=box.querySelector("#sOut"), g=id=>box.querySelector("#"+id).value.trim();
+  const sig=[{nome:g("s1n"),email:g("s1e"),whatsapp:g("s1w"),papel:"colaborador"},{nome:g("s2n"),email:g("s2e"),papel:"empresa"}].filter(s=>s.email);
+  const arqs=[...box.querySelectorAll("[data-pdf]:checked")].map(i=>i.dataset.pdf);
+  if(sig.length<2){ out.textContent="Informe o e-mail do colaborador e de quem assina pela Resilcon."; return; } if(!arqs.length){ out.textContent="Marque ao menos um documento."; return; }
+  se.disabled=true; out.textContent="Enviando para a D4Sign…";
+  try{ await admFn({acao:"assinatura_enviar",id:a.id,signatarios:sig,arquivos:arqs,mensagem:g("sMsg")}); await admDetalhe(a.id); crmToast("Enviado para assinatura"); admTelaDetalhe(v); }catch(e){ se.disabled=false; out.textContent=admErro(e); } };
+ const sm=box.querySelector("#sMan"); if(sm) sm.onchange=async()=>{ const fl=sm.files[0]; if(!fl) return;
+  try{ const b64=await new Promise((ok,er)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result)); r.onerror=er; r.readAsDataURL(fl); });
+   await admFn({acao:"upload",id:a.id,doc_codigo:"contrato_assinado",nome:fl.name,base64:b64}); await admDetalhe(a.id); await admCarregar(); crmToast("Contrato assinado anexado"); admTelaDetalhe(v); }catch(e){ crmToast(admErro(e)); } };
+}
+
+function admAbaHist(box){ const E=ADM.det.eventos||[];
+ box.innerHTML=`<div class="card adm-box">${E.length?E.map(e=>`<div class="adm-ev"><span class="sub">${admDH(e.em)}</span><span>${esc(e.texto||e.tipo)}</span><span class="sub">${esc(e.por||"")}</span></div>`).join(""):`<div class="empty">Sem registros.</div>`}</div>`; }
+
+async function admConvite(v){ const a=ADM.det;
+ try{ const r=await admFn({acao:"convite",id:a.id}); await admDetalhe(a.id); await admCarregar();
+  const pn=String(a.nome||"").split(/\s+/)[0]; const pn2=pn.charAt(0)+pn.slice(1).toLowerCase();
+  const txt=`Olá, ${pn2}! Que bom ter você com a gente na Resilcon. Para preparar sua admissão, preencha seus dados e envie os documentos neste link até ${admDt(a.prazo_docs)}: ${r.link}`;
+  const tel=String(a.telefone||"").replace(/\D/g,""); const wa=tel?`https://wa.me/55${tel.replace(/^55(?=\d{10,11}$)/,"")}?text=${encodeURIComponent(txt)}`:`https://wa.me/?text=${encodeURIComponent(txt)}`;
+  const m=crmModal("Admissão","Link do candidato","",`${r.avisado?`<div class="rha-aviso ok">O n8n recebeu o aviso e vai mandar o convite por e-mail.</div>`:`<div class="rha-aviso">Envie o link ao candidato. Ele vale até ${admDt(ADM.det.token_expira)} e só aparece agora: se perder, gere outro.</div>`}
+   <label class="crm-f"><span>Link</span><input class="inp" id="lk" readonly value="${escAttr(r.link)}"></label>
+   <label class="crm-f" style="margin-top:10px"><span>Mensagem sugerida</span><textarea class="inp" id="lkTxt" rows="4">${esc(txt)}</textarea></label>
+   <div class="rha-pe"><button class="txt-btn" id="lkCp">Copiar mensagem</button>${a.email?`<a class="txt-btn" href="mailto:${escAttr(a.email)}?subject=${encodeURIComponent("Sua admissão na Resilcon")}&body=${encodeURIComponent(txt)}">Abrir e-mail</a>`:""}<a class="txt-btn crm-pri" target="_blank" rel="noopener" href="${escAttr(wa)}">Enviar pelo WhatsApp</a></div>`);
+  m.classList.remove("prodm"); m.classList.add("rha-modal");
+  m.querySelector("#lkCp").onclick=async()=>{ try{ await navigator.clipboard.writeText(m.querySelector("#lkTxt").value); crmToast("Mensagem copiada"); }catch(_){ m.querySelector("#lkTxt").select(); } };
+  admTelaDetalhe(v); }
+ catch(e){ crmToast(admErro(e)); } }
+
+function admDevolver(v){ const a=ADM.det, rec=(a.arquivos||[]).filter(x=>x.status==="recusado").map(x=>`${admDocNome(x.doc_codigo)}: ${x.motivo}`);
+ const m=crmModal("Admissão","Devolver ao candidato","",`<p class="sub">O candidato volta a editar pelo mesmo link e vê esta mensagem no topo da página. Os arquivos recusados aparecem com o motivo.</p>
+  <textarea class="inp" id="dvM" rows="4" placeholder="O que precisa ser corrigido">${esc(rec.length?"Precisamos de novos arquivos: "+rec.join("; ")+".":"")}</textarea>
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Devolver</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#aOk").onclick=async()=>{ try{ const r=await admFn({acao:"devolver",id:a.id,motivo:m.querySelector("#dvM").value}); closeModal(); crmToast(r.avisado?"Devolvida e candidato avisado":"Devolvida. Avise o candidato pelo mesmo link."); await admCarregar(); RHV_EXTRA.rh_adm(v); }catch(e){ m.querySelector("#aMsg").textContent=admErro(e); } }; }
+
+function admConcluir(v){ const a=ADM.det;
+ const m=crmModal("Admissão","Concluir admissão","",`<p>Ao concluir:</p><ul class="adm-ul"><li><b>${esc(a.nome)}</b> entra no RH Assist como colaborador ativo${a.cargo?` (${esc(a.cargo)})`:""}, com CPF, nascimento e salário na área restrita ao RH.</li>
+  <li>A escala ${a.escala?`<b>${esc(a.escala)}</b> `:""}e a forma de registro passam a valer no Kronos a partir de ${admDt(a.data_admissao)}.</li>
+  <li>${ADM.d.config&&ADM.d.config.n8n_webhook?"O n8n recebe o aviso para o onboarding e os e-mails ao gestor e ao TI.":"O webhook do n8n não está configurado: gestor e TI não serão avisados automaticamente."}</li>
+  ${(a.contratuais||{}).email_corporativo?"":`<li class="adm-venc">Sem e-mail corporativo nos dados contratuais: o colaborador não vai conseguir entrar na intranet até alguém preencher o e-mail no RH Assist.</li>`}</ul>
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Concluir admissão</button>')}</div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#aOk").onclick=async()=>{ const b=m.querySelector("#aOk"); b.disabled=true;
+  try{ const r=await admFn({acao:"concluir",id:a.id}); closeModal(); crmToast(r.reativado?"Admissão concluída: cadastro anterior reativado":"Admissão concluída"); RHD=null; await admCarregar(); RHV_EXTRA.rh_adm(v); }
+  catch(e){ b.disabled=false; m.querySelector("#aMsg").textContent=admErro(e); } }; }
+
+function admCancelar(v){ const a=ADM.det, excluir=a.etapa==="pre"&&!(a.arquivos||[]).length;
+ const m=crmModal("Admissão",excluir?"Excluir admissão":"Cancelar admissão","",`${excluir?`<p>A admissão de <b>${esc(a.nome)}</b> ainda não foi enviada e será apagada.</p>`:`<p>O link do candidato deixa de funcionar. Os documentos ficam guardados no histórico e dá para reabrir depois.</p><textarea class="inp" id="cnM" rows="2" placeholder="Motivo (opcional)"></textarea>`}
+  <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Voltar</button><button class="txt-btn crm-perigo" id="aOk">${excluir?"Excluir":"Cancelar admissão"}</button></div>`);
+ m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#aOk").onclick=async()=>{ try{ await crmRpc("rh_adm_salvar",{p:{acao:excluir?"excluir":"cancelar",id:a.id,motivo:(m.querySelector("#cnM")||{}).value||""}}); closeModal(); if(excluir){ ADM.sel=null; ADM.det=null; } await admCarregar(); RHV_EXTRA.rh_adm(v); }catch(e){ m.querySelector("#aMsg").textContent=admErro(e); } }; }
+
+function admImprimir(){ const a=ADM.det, f=a.ficha||{}, c=a.contratuais||{}, w=window.open("","_blank"); if(!w) return;
+ const v=(x,t)=>x==null||x===""?"-":t==="d"?admDt(x):esc(x);
+ w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ficha - ${esc(a.nome)}</title><style>body{font:12px Arial,sans-serif;color:#222;margin:24px}h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;background:#eef3f5;padding:6px 8px;margin:16px 0 6px}table{width:100%;border-collapse:collapse}td{border:1px solid #d8e0e4;padding:5px 7px;vertical-align:top}td b{display:block;font-size:10px;color:#666;font-weight:normal}@media print{button{display:none}}</style></head><body>
+ <button onclick="print()">Imprimir</button><h1>Ficha do colaborador</h1><div>${esc(ADM.d.config.empresa_nome||"")}</div>
+ ${ADM_FICHA.map(([t,L])=>`<h2>${t}</h2><table>${L.reduce((r,x,i)=>(i%3?r[r.length-1].push(x):r.push([x]),r),[]).map(row=>`<tr>${row.map(([k,l,tp])=>`<td><b>${l}</b>${v(f[k],tp)}</td>`).join("")}</tr>`).join("")}</table>`).join("")}
+ <h2>Dependentes</h2><table>${(a.dependentes||[]).map(d=>`<tr><td><b>Nome</b>${v(d.nome)}</td><td><b>Parentesco</b>${v(d.parentesco)}</td><td><b>Nascimento</b>${v(d.nascimento,"d")}</td><td><b>CPF</b>${v(d.cpf)}</td></tr>`).join("")||"<tr><td>Nenhum</td></tr>"}</table>
+ <h2>Informações contratuais</h2><table><tr><td><b>Cargo</b>${v(a.cargo)}</td><td><b>Departamento</b>${v(a.departamento)}</td><td><b>Data de admissão</b>${v(a.data_admissao,"d")}</td></tr><tr><td><b>Modelo</b>${v(a.modelo_contratacao)}</td><td><b>Salário</b>${admBRL(a.salario)||"-"}</td><td><b>Escala</b>${v(a.escala)}</td></tr>
+ ${ADM_CONTR.reduce((r,x,i)=>(i%3?r[r.length-1].push(x):r.push([x]),r),[]).map(row=>`<tr>${row.map(([k,l])=>`<td><b>${l.replace(" *","")}</b>${v(c[k])}</td>`).join("")}</tr>`).join("")}</table></body></html>`); w.document.close(); }
+
+(function(){ if(document.getElementById("adm-css")) return; const s=document.createElement("style"); s.id="adm-css"; s.textContent=`
+.adm-etapas{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.adm-etapas button{flex:0 0 auto;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 14px;font:500 13px "DM Sans",sans-serif;color:var(--muted);cursor:pointer;display:flex;gap:8px;align-items:center}
+.adm-etapas button b{background:#eef3f5;color:#044B64;border-radius:999px;padding:0 8px;font-size:12px}.adm-etapas button.on{background:#044B64;color:#fff;border-color:#044B64}.adm-etapas button.on b{background:rgba(255,255,255,.2);color:#fff}
+.adm-it{display:grid;grid-template-columns:auto 2fr 1fr 1fr 1.3fr;gap:14px;align-items:center;padding:14px 18px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}.adm-it:hover{box-shadow:0 6px 20px rgba(4,75,100,.1)}
+.adm-it-n,.adm-it-d{display:flex;flex-direction:column;min-width:0}.adm-it-n b{font:700 15px "Urbanist",sans-serif}.adm-it-s{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.adm-venc{color:#b4532a}.adm-badge{background:#fdf3e0;color:#7a4f00;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+@media(max-width:900px){.adm-it{grid-template-columns:auto 1fr}.adm-it-d,.adm-it-s{grid-column:2}}
+.adm-cab{padding:18px 20px}.adm-cab-t{display:flex;gap:12px;align-items:center}.adm-cab-t h3{margin:0;font:700 20px "Urbanist",sans-serif}.adm-cab-t>div{flex:1}
+.adm-step{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:18px 0 14px}.adm-step>div{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;color:var(--muted);position:relative}
+.adm-step i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#eef3f5;color:#5b6770;font-style:normal;font-weight:700;z-index:1}
+.adm-step>div:not(:last-child)::after{content:"";position:absolute;top:15px;left:calc(50% + 18px);right:calc(-50% + 18px);height:2px;background:#e3eaee}
+.adm-step .ok i{background:#0f7a5c;color:#fff}.adm-step .on i{background:linear-gradient(135deg,#006789,#269A9E);color:#fff}.adm-step .on span{color:#044B64;font-weight:700}
+.adm-prox{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:#f3f6f7;border-radius:12px;padding:10px 14px}.adm-prox>div{display:flex;gap:8px;flex-wrap:wrap}
+.adm-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.adm-2>.card{margin:0}@media(max-width:900px){.adm-2{grid-template-columns:1fr}}
+.adm-res{padding:16px 18px;margin-bottom:12px}.adm-res h4{margin:0 0 10px;font:700 15px "Urbanist",sans-serif;color:#044B64}
+.adm-kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 16px}.adm-kv .lbl{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.adm-kv b{font-weight:600;font-size:14px;word-break:break-word}
+.adm-box{padding:16px 18px}.adm-pend{padding:14px 18px;grid-column:1/-1;background:#fdf8ef;border-color:#f0d9a8}.adm-pend ul{margin:6px 0 0;columns:2;font-size:13.5px}@media(max-width:700px){.adm-pend ul{columns:1}}
+.adm-sec{font:700 13px "Urbanist",sans-serif;color:#044B64;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 2px;padding-top:10px;border-top:1px solid var(--border)}
+.adm-sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px;color:var(--text);font-weight:500;margin-right:14px}.adm-sw input{display:none}.adm-sw span{width:36px;height:20px;border-radius:99px;background:#cfd9de;position:relative;transition:.2s;flex:0 0 auto}
+.adm-sw span::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s}.adm-sw input:checked+span{background:#066789}.adm-sw input:checked+span::after{left:18px}
+.adm-linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.adm-dias{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px;font-size:13px;font-weight:500;color:var(--text)}
+.adm-dg{border:1px solid var(--border);border-radius:12px;padding:8px 12px;margin-bottom:8px}.adm-dg summary{cursor:pointer;font-weight:700;color:#044B64}.adm-dg>div{padding-top:8px}
+.adm-doc{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed #e3eaee;font-size:13.5px;color:var(--text);font-weight:500}.adm-doc:last-child{border:0}.adm-ob{color:var(--muted);font-size:12px;white-space:nowrap}
+.adm-modelo{display:flex;gap:10px;align-items:center;background:#f3f6f7;border-radius:12px;padding:10px 12px;margin-bottom:6px}.adm-modelo span{font-weight:700;white-space:nowrap}
+.adm-mod{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 0}.adm-mod>div{flex:1;display:flex;flex-direction:column}
+.adm-dbloc{padding:12px 0;border-bottom:1px solid var(--border)}.adm-dbloc:last-of-type{border:0}.adm-dh{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.adm-arq{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f6f9fa;border-radius:10px;padding:8px 10px;margin-top:6px}.adm-arq-n{flex:1;min-width:180px;display:flex;flex-direction:column}.adm-arq-n small{color:var(--muted);font-size:11.5px}
+.adm-mot{width:100%;font-size:12.5px;color:#b4532a}.adm-anexa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}.adm-anexa select{max-width:280px}.adm-file{cursor:pointer}
+.adm-acoes-f{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}.adm-chk{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--text);font-weight:500}
+.adm-ev{display:grid;grid-template-columns:130px 1fr auto;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px}.adm-ul li{margin:6px 0}
+`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
