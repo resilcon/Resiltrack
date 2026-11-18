@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.20 (Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.20.1 (Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -5483,7 +5483,7 @@ async function precoCarregar(){
 
 function precoTeto(v){ return Math.ceil(Math.round((Number(v)||0)*100)/100); }
 function precoNichos(){ return [...new Set(PRECO_NICHOS.lista)].sort((a,b)=>a.localeCompare(b,"pt-BR")); }
-function precoVinculadas(n){ return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean).filter(a=>(PRECO_NICHOS.vinculos[a.chave]||[]).includes(n)); }
+function precoVinculadas(n){ if(!PRECO_DB) return []; return PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean).filter(a=>(PRECO_NICHOS.vinculos[a.chave]||[]).includes(n)); }
 // com nicho escolhido, mostra primeiro as tabelas vinculadas a ele; as outras continuam disponíveis
 function precoArqsDoNicho(n){ const todas=PRECO_ARQS.map(([k])=>PRECO_DB[k]).filter(Boolean); if(!n) return todas; const v=precoVinculadas(n); return [...v,...todas.filter(a=>!v.includes(a))]; }
 
@@ -7332,10 +7332,10 @@ async function simNova(tipo){ const [negs,nichos]=await Promise.all([simNegocios
    const persona=nicho&&typeof diagPersonaDoNicho==="function"&&PZ.D?((diagPersonaDoNicho(PZ.D,nicho)||{}).nome||""):"";
    const ng=neg||{}; const sim=await crmRpc("crm_salvar_simulacao",{p:{tipo,etapa:tipo==="avulso"?"Produtos":tipo==="diagnostico"?"Atividades/Dores":"Planos",oportunidade_id:ng.id||"",contato_id:ng.contato_id||"",
     cliente_nome:ng.contato_nome||ng.titulo||"",empresa_nome:ng.empresa_nome||"",documento:ng.cnpj||ng.documento||"",nicho,persona:tipo==="avulso"?"Produtos/Serviços avulsos":persona||nicho,dados:{}}});
-   closeModal(); simEntrar(sim,neg,true);
+   closeModal(); if(tipo!=="avulso") await precoCarregar(); simEntrar(sim,neg,true);
   }catch(e){ b.disabled=false; b.textContent="Avançar ›"; msg(""); crmToast(crmErro(e)); } }; }
 // abre uma simulação salva
-async function simAbrir(id){ try{ const s=await crmRpc("crm_simulacoes",{p:{id}}); const negs=await simNegocios(true); let neg=negs.find(o=>o.id===s.oportunidade_id)||null;
+async function simAbrir(id){ try{ await precoCarregar(); const s=await crmRpc("crm_simulacoes",{p:{id}}); const negs=await simNegocios(true); let neg=negs.find(o=>o.id===s.oportunidade_id)||null;
   if(!neg&&s.oportunidade_id){ try{ const f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:s.oportunidade_id}}); const o=(f.negocios||[]).find(x=>x.id===s.oportunidade_id); if(o){ neg={...o,contato_nome:(f.contato||{}).nome,empresa_nome:(f.contato||{}).empresa_nome}; negs.unshift(neg); } }catch(_){} }
   simEntrar(s,neg,false); }catch(e){ crmToast(crmErro(e)); } }
 function simEntrar(s,neg,nova){
