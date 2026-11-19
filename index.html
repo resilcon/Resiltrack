@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.37 (contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.39 (novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -851,7 +851,7 @@ let ATDDEP=[];     // override por atendente: [{atendente_id,departamento}]
 let ATDMAP={};     // atendente_id -> departamento (override)
 let ADMFIL="";     // busca de atendentes no painel admin
 const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento Contábil","Departamento Financeiro","Departamento Comercial","Departamento de Sucesso do Cliente","Departamento Tributário","Departamento Societário","Departamento Regulatório","Departamento Jurídico"];
-const MODULOS=[["financeiro","Mida$ financeiro (ver)"],["financeiro_editar","Mida$ financeiro (decidir cobrança)"],["comercial","Comercial (Hermes CRM)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris (gestão das TVs)"]];
+const MODULOS=[["financeiro","Mida$ Bank (ver)"],["financeiro_editar","Mida$ Bank (decidir cobrança)"],["comercial","Comercial (Hermes CRM)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris TV (gestão das TVs)"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
 try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
@@ -1133,7 +1133,7 @@ function allowedTabKeys(){
 }
 
 // ---------- navegação ----------
-const TABS_ALL = {dashboard:"Dashboard",relatorio:"Relatório Diário",detalhes:"Dados Detalhados",clientes:"Clientes",colaboradores:"Performance por Colaborador",contestacoes:"Contestações",setor:"Evolução Setor",tv:"Preview TV",financeiro:"Mida$",comercial:"Comercial",admin:"Admin"};
+const TABS_ALL = {dashboard:"Dashboard",relatorio:"Relatório Diário",detalhes:"Dados Detalhados",clientes:"Clientes",colaboradores:"Performance por Colaborador",contestacoes:"Contestações",setor:"Evolução Setor",tv:"Preview TV",financeiro:"Mida$ Bank",comercial:"Comercial",admin:"Admin"};
 function renderTabs(){
   const nav=document.getElementById("tabs"); nav.innerHTML="";
   const keys=allowedTabKeys();
@@ -1200,13 +1200,13 @@ function renderSide(){
       .map(([id,lab])=>`<button data-gsec="${id}">${lab}</button>`).join("")+`</div></div>`;
   }
   if(podeRH()){ const no=MODE.startsWith('rh_'), ab=srlAberto("rh");
-    h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}RH Assist${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    h+=`<button class="srl-item ${no?'on':''}" data-mode="rh_colab" ${no?`data-dobra="rh" aria-expanded="${ab}"`:""}>${_ICO_RH}Themis RH${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="rh"><div>`+RH_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
   if(podeKronos()){ const no=MODE.startsWith('kr_'), ab=srlAberto("kr");
-    h+=`<button class="srl-item ${no?'on':''}" data-mode="kr_painel" ${no?`data-dobra="kr" aria-expanded="${ab}"`:""}>${_ICO_KR}Kronos${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
+    h+=`<button class="srl-item ${no?'on':''}" data-mode="kr_painel" ${no?`data-dobra="kr" aria-expanded="${ab}"`:""}>${_ICO_KR}Kronos ID${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="kr"><div>`+KR_SECOES.map(([m,t])=>`<button data-mode="${m}" class="${MODE===m?'on':''}">${t}</button>`).join("")+`</div></div>`; }
-  if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Mida$</button>`;
-  if(podeModulo("iris")) h+=`<button class="srl-item ${MODE==='iris'?'on':''}" data-mode="iris">${_ICO_IRIS}Íris</button>`;
+  if(podeModulo("financeiro")) h+=`<button class="srl-item ${MODE==='financeiro'?'on':''}" data-mode="financeiro">${_ICO_FIN}Mida$ Bank</button>`;
+  if(podeModulo("iris")) h+=`<button class="srl-item ${MODE==='iris'?'on':''}" data-mode="iris">${_ICO_IRIS}Íris TV</button>`;
   { const mp=crmMenuPrincipal(), noCRM=MODE==='crm'||MODE.startsWith('crm_'); crmResumoTarefas();
     if(mp){ const ab=srlAberto("crm");
       h+=`<button class="srl-item ${noCRM?'on':''}" data-mode="${mp}" ${noCRM?`data-dobra="crm" aria-expanded="${ab}"`:""}>${_ICO_CRM}Hermes CRM${!noCRM&&CRM_TAR&&CRM_TAR.atrasadas?` <span class="crm-badge" title="Tarefas atrasadas">${CRM_TAR.atrasadas}</span>`:""}${noCRM?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
@@ -1598,7 +1598,7 @@ function _finLinha(snaps,campo,cor){
 }
 function viewFinanceiro(v){
   if(FIN===null){ if(!FINLOADING){ FINLOADING=true; loadFinanceiro(); }
-    v.innerHTML=`<div class="page-head"><h2>Mida$</h2><p>carregando inadimplência...</p></div>`; return; }
+    v.innerHTML=`<div class="page-head"><h2>Mida$ Bank</h2><p>carregando inadimplência...</p></div>`; return; }
   iniciarPollFin();
   const pendAntigos=(FIN.cmds||[]).filter(x=>x.status==="pendente"&&Date.now()-new Date(x.criado_em).getTime()>30*60*1000).length;
   const subs=[["resumo","Resumo"],["carteira","Carteira Omie"],["clientes","Clientes"],["reg","Regularizados"],["envios","Cobranças enviadas"],["abas","Mudanças de situação"]];
@@ -1643,7 +1643,7 @@ function viewFinanceiro(v){
     corpo=`<div class="card" style="margin-top:18px"><table><thead><tr><th>Quando</th><th>Cliente</th><th>De</th><th>Para</th><th>Motivo</th><th>Quem</th><th class="right">Em aberto</th></tr></thead><tbody>${
       hs.map(h=>`<tr><td class="num">${fmtDateTime(h.em)}</td><td class="r-name">${esc(h.nome)}</td><td>${FIN_ABAS[h.de]||h.de||"—"}</td><td>${FIN_ABAS[h.para]||h.para}</td><td>${esc(h.motivo||"")}</td><td>${esc(h.usuario||"")}</td><td class="right num">${brl(h.valor_em_aberto)}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhuma mudança registrada.</td></tr>`}</tbody></table></div>`;
   }
-  v.innerHTML=`<div class="page-head"><h2>Mida$</h2><p>Somente leitura. Dados do painel de inadimplência${ult?`, atualizados em ${fmtDateTime(ult)}`:""}. As decisões de cobrança viram pedidos que o servidor aplica em alguns minutos. <button class="btn-line" id="finRefresh" style="padding:3px 10px;font-size:12px;margin-left:6px">Atualizar</button> <span class="sub">tela atualizada em <span id="finAtu">${FINATU?fmtDateTime(FINATU):"agora"}</span></span></p></div>
+  v.innerHTML=`<div class="page-head"><h2>Mida$ Bank</h2><p>Somente leitura. Dados do painel de inadimplência${ult?`, atualizados em ${fmtDateTime(ult)}`:""}. As decisões de cobrança viram pedidos que o servidor aplica em alguns minutos. <button class="btn-line" id="finRefresh" style="padding:3px 10px;font-size:12px;margin-left:6px">Atualizar</button> <span class="sub">tela atualizada em <span id="finAtu">${FINATU?fmtDateTime(FINATU):"agora"}</span></span></p></div>
     ${pendAntigos?`<div class="notice" style="margin-top:12px;background:var(--warn-soft);color:var(--warn)">${pendAntigos} pedido(s) aguardando há mais de 30 minutos. O servidor pode estar parado: avise quem cuida do painel de inadimplência.</div>`:""}
     ${FINERR?`<div class="notice" style="margin-top:12px">Não consegui carregar os dados: ${esc(FINERR)}</div>`:""}
     <div class="subnav">${subs.map(([k,l])=>`<button data-fsub="${k}" class="${FSUB===k?"on":""}">${l}</button>`).join("")}</div>${corpo}`;
@@ -3172,7 +3172,7 @@ function finPanelEmpresa(emp){
     <div class="field"><div class="k">Maior atraso</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${f.maxAtraso} dias</div></div>
     <div class="field"><div class="k">Situação</div><div class="v" style="font-family:Urbanist,"DM Sans",sans-serif;font-weight:700;font-size:16px">${esc(FIN_ABAS[f.aba]||f.aba)}</div></div></div>
     <div class="sub" style="margin:8px 0">Cobrança automática ${f.ativos?"ligada":"desligada"} · ${f.cobrados} cobrança(s) enviada(s)${f.ult?" · última em "+fmtD(f.ult):""}${reg?` · ${reg} título(s) já regularizado(s)`:""}</div>
-    <button class="btn-line" data-openfin="${escAttr(f.cnpj)}">Abrir no Mida$</button></div>`;
+    <button class="btn-line" data-openfin="${escAttr(f.cnpj)}">Abrir no Mida$ Bank</button></div>`;
 }
 function omiePanelEmpresa(empId,emp){
   if(!crmVerFin()||!OMIE||!OMIE.ok) return "";
@@ -3626,7 +3626,7 @@ function openAcessoModal(ac){
         <div class="sub" style="margin-top:6px">Admin vê tudo e controla os acessos. Gestor vê só os departamentos marcados abaixo. Colaborador não usa este painel.</div></div>
       <div class="panel" id="acDepsPanel"><h4>Departamentos que enxerga (gestor)</h4><div class="tag-pick">${DEPARTAMENTOS.map(d=>`<button class="tag-opt ${deps.has(d)?'on':''}" data-dep="${escAttr(d)}">${esc(d)}</button>`).join("")}</div></div>
       <div class="panel"><h4>Módulos extras</h4><div class="tag-pick">${MODULOS.map(m=>`<button class="tag-opt ${perms.has(m[0])?'on':''}" data-perm="${escAttr(m[0])}">${esc(m[1])}</button>`).join("")}</div>
-        <div class="sub" style="margin-top:6px">Libera abas específicas por e-mail, tipo Mida$ pra Luana e Comercial pra Camila.</div></div>
+        <div class="sub" style="margin-top:6px">Libera abas específicas por e-mail, tipo Mida$ Bank pra Luana e Comercial pra Camila.</div></div>
       <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="acSalvar">Salvar</button></div>
     </div>`);
   let nivel=ac.nivel;
@@ -6116,10 +6116,16 @@ function ctRenderBloco(b,v,ctx,marcar){ ctx=ctx||{}; if(b.visible===false&&!ctx.
   case "info-garantias": h=tit(c.title)+`<div class="${va==="cards"?"ct-grid":""}">${(c.items||[]).map(i=>`<div class="${va==="cards"?"ct-card":"ct-item"}"><b>${T(i.title)}</b><p style="text-align:${i.textAlign||i.descriptionAlign||"left"}">${T(i.description)}</p></div>`).join("")}</div>`; break;
   case "pagamento-contrato": { const ks=[["Formas de pagamento",c.methods],["Vencimento",c.dueDate],...(c.campos||[]).map(x=>[x.label,x.value])].filter(x=>x[1]);
    h=tit(c.title)+(va==="lista"?`<dl class="ct-dl">${ks.map(([a,b2])=>`<div><dt>${T(a)}</dt><dd>${T(b2)}</dd></div>`).join("")}</dl>`:`<div class="ct-grid ct-kpis">${ks.map(([a,b2])=>`<div class="ct-card"><span>${T(a)}</span><b>${T(b2)}</b></div>`).join("")}</div>`)+(c.terms?`<p class="ct-obs">${T(c.terms)}</p>`:""); break; }
-  case "assinaturas": { const as=(c.assinantes&&c.assinantes.length)?c.assinantes:[{nome:c.contratante||"[CLIENTE_EMPRESA_NOME]",papel:"CONTRATANTE"},{nome:c.contratada||"[CONTABILIDADE_NOME]",papel:"CONTRATADA"}];
-   let nt=String(c.testemunhas==null?"0":c.testemunhas).trim().toLowerCase(); nt=/^s/.test(nt)?2:(parseInt(nt)||0);
-   const ts=Array.from({length:nt},(_,j)=>({nome:`Testemunha ${j+1}`,papel:"Nome e CPF"}));
-   h=`${c.local?`<p>${T(c.local)}</p>`:""}<div class="ct-ass-g ${va==="empilhado"?"um":""}">${[...as,...ts].map(a=>`<div><span></span>${T(a.nome)}<small>${T(a.papel)}</small></div>`).join("")}</div>`; break; }
+  case "assinaturas": { let nt=String(c.testemunhas==null?"2":c.testemunhas).trim().toLowerCase(); nt=/^n/.test(nt)?0:/^s/.test(nt)?2:(parseInt(nt)===0?0:(parseInt(nt)||2));
+   const linha=(papel,l1,l2,l3)=>`<div class="ct-ass-p"><div class="ct-ass-espaco"></div><span class="ct-ass-linha"></span><b>${l1}</b>${l2?`<small>${l2}</small>`:""}${l3?`<small>${l3}</small>`:""}<em>${papel}</em></div>`;
+   const pf=String(v.CLIENTE_EMPRESA_DOCUMENTO||"").replace(/\D/g,"").length===11||!v.CLIENTE_EMPRESA_NOME;
+   const contratante=pf?linha("CONTRATANTE",T("[CLIENTE_NOME]"),"CPF "+T("[CLIENTE_CPF]"),""):linha("CONTRATANTE",T("[CLIENTE_EMPRESA_NOME]"),"CNPJ "+T("[CLIENTE_EMPRESA_DOCUMENTO]"),"Representante: "+T("[CLIENTE_NOME]")+", CPF "+T("[CLIENTE_CPF]"));
+   const contratada=linha("CONTRATADA",T("[CONTABILIDADE_NOME]"),"CNPJ "+T("[CONTABILIDADE_CNPJ]"),"Representante: "+T("[CONTABILIDADE_RESPONSAVEL_NOME]")+", CPF "+T("[CONTABILIDADE_RESPONSAVEL_CPF]"));
+   const ts=Array.from({length:nt},(_,j)=>linha(`TESTEMUNHA ${j+1}`,"Nome: ______________________________","CPF: ____________________","")).join("");
+   css+="break-before:page;page-break-before:always;";
+   h=`<h2 style="text-align:center">${T(c.titulo||"Assinaturas")}</h2><p class="ct-ass-intro">${T(c.texto||"E, por estarem assim justas e contratadas, as partes assinam o presente instrumento por meio de assinatura eletrônica, que reconhecem como válida, juntamente com as testemunhas abaixo.")}</p>
+    <p class="ct-ass-local">${T(c.local||"[CONTABILIDADE_CIDADE], [DIA_ATUAL] de [MES_ATUAL] de [ANO_ATUAL].")}</p>
+    <div class="ct-ass-lista">${contratante}${contratada}</div>${nt?`<div class="ct-ass-lista ct-ass-test">${ts}</div>`:""}`; break; }
   case "rodape-contrato": { const it=[c.companyName,c.phone,c.email,c.website].filter(Boolean).map(T); css+="text-align:center;";
    h=va==="duas"?`<div class="ct-rod"><b>${it[0]||""}</b><br>${it.slice(1).join(" · ")}</div>`:`<div class="ct-rod">${it.join(" · ")}</div>`; break; }
   case "secao-conteudo": h=`<div class="${va==="destaque"?"ct-destaque":""}">${tit(c.title)}${c.text?`<div style="text-align:${c.textAlign||"left"}">${paras(c.text)}</div>`:""}${(c.bullets||[]).length?lista(c.bullets):""}</div>`; break;
@@ -6164,7 +6170,7 @@ h2{font-family:${f.tit};font-size:1.38em;line-height:1.25;margin:0 0 .75em;color
 .ct-clausula{margin-bottom:1em}.ct-clausula.lat{display:grid;grid-template-columns:34px 1fr;gap:12px}.ct-clausula.lat h3{margin-top:.2em}
 .ct-num{width:30px;height:30px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.85em;margin-top:.1em}
 .ct-item{margin-bottom:.9em}.ct-item p,.ct-card p{margin:.3em 0 0}.ct-obs{margin-top:1em!important;opacity:.85}
-.ct-ass-g{display:grid;grid-template-columns:1fr 1fr;gap:46px 34px;margin-top:2.4em}.ct-ass-g.um{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
+.ct-ass-intro{text-align:justify;line-height:1.6}.ct-ass-local{text-align:right;margin:1.4em 0 .4em}.ct-ass-lista{display:grid;grid-template-columns:1fr 1fr;gap:10px 48px;margin-top:1em}.ct-ass-test{margin-top:2.2em}.ct-ass-p{text-align:center;font-size:.86em;line-height:1.4;break-inside:avoid;page-break-inside:avoid}.ct-ass-espaco{height:80px}.ct-ass-linha{display:block;border-top:1px solid currentColor;margin-bottom:8px;opacity:.85}.ct-ass-p b{display:block}.ct-ass-p small{display:block;opacity:.8}.ct-ass-p em{display:block;font-style:normal;font-weight:700;letter-spacing:.12em;font-size:.82em;margin-top:6px;opacity:.75}.ct-ass-g{display:grid;grid-template-columns:1fr 1fr;gap:46px 34px;margin-top:2.4em}.ct-ass-g.um{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
 .ct-ass-g div{text-align:center;font-size:.88em}.ct-ass-g span{display:block;border-top:1px solid currentColor;margin-bottom:6px;opacity:.8}.ct-ass-g small{display:block;opacity:.7}
 .ct-rod{font-size:.8em;opacity:.9}
 .ct-destaque{border-left:4px solid var(--ac);padding-left:18px}
@@ -6178,14 +6184,15 @@ h2{font-family:${f.tit};font-size:1.38em;line-height:1.25;margin:0 0 .75em;color
 .ct-aviso{font-size:.78em;background:#fff6d6;color:#6b5200;border-radius:8px;padding:6px 10px;margin:-.3em 0 .8em}
 mark{background:#fff2a8;color:#7a5b00;padding:0 2px;border-radius:3px}
 @media print{.ct-fundo{background:#fff;padding:0}.doc{box-shadow:none;max-width:none}section.ct-b{box-shadow:none;break-inside:avoid-page;border-radius:0;margin:0}.ct-clausulas,.ct-livre,section.ct-texto-livre{break-inside:auto}.ct-clausula{break-inside:avoid}mark{background:none;color:inherit}.ct-aviso{display:none}}
-@media(max-width:640px){.ct-lista{columns:1}.ct-split,.ct-g2,.ct-ass-g{grid-template-columns:1fr}section.ct-b{padding-left:18px!important;padding-right:18px!important}}`; }
+@media(max-width:640px){.ct-lista{columns:1}.ct-split,.ct-g2,.ct-ass-g,.ct-ass-lista{grid-template-columns:1fr}section.ct-b{padding-left:18px!important;padding-right:18px!important}}`; }
 function ctBlocosDe(modelo){ if(modelo.tipo==="texto") return [{id:"txt",type:"texto-livre",visible:true,followsPreset:true,variant:"default",style:{padding:34},content:{html:modelo.html||""}}]; return modelo.blocos||[]; }
 function ctDocumento(modelo,v,ctx,marcar){ ctx=ctx||{}; const tema=ctTema(modelo), logo=ctLogo(modelo); const f=ctFontes(tema.fontPairId);
- const corpo=ctAdaptaEmpresa(ctBlocosDe(modelo).map(b=>ctRenderBloco(b,v,{...ctx,tema,logo},marcar)).join(""),v);
+ const blocos=ctBlocosDe(modelo).slice(); if(!ctx.canvas&&modelo.tipo!=="texto"&&!blocos.some(b=>b.type==="assinaturas"&&b.visible!==false)){ const ir=blocos.findIndex(b=>b.type==="rodape-contrato"&&b.visible!==false); const ass={id:"ass_auto",type:"assinaturas",visible:true,variant:"default",style:{padding:34},content:{}}; if(ir<0) blocos.push(ass); else blocos.splice(ir,0,ass); }
+ const corpo=ctAdaptaEmpresa(blocos.map(b=>ctRenderBloco(b,v,{...ctx,tema,logo},marcar)).join(""),v);
  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${ctEsc(ctTroca(modelo.nome,v))}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f.g}&display=swap"><style>html,body{margin:0;background:${tema.bgSecondary}}${ctCss(tema,logo)}
 .bar{position:sticky;top:0;background:${tema.primary};color:#fff;padding:10px;text-align:center;font:14px Arial,sans-serif;z-index:5}.bar button{margin-left:10px;padding:8px 16px;border:0;border-radius:999px;font-weight:700;cursor:pointer}@media print{.bar{display:none}html,body{background:#fff}}
-@page{margin:14mm 12mm}</style></head><body>${ctx.barra?`<div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div>`:""}<div class="ct-fundo"><div class="doc">${corpo}</div></div></body></html>`; }
+@page{margin:25mm 22mm 30mm 22mm}</style></head><body>${ctx.barra?`<div class="bar">Para salvar em PDF, use Imprimir e escolha "Salvar como PDF". <button onclick="print()">Imprimir ou salvar PDF</button></div>`:""}<div class="ct-fundo"><div class="doc">${corpo}</div></div></body></html>`; }
 
 // adapta os textos fixos do modelo à empresa contratada escolhida (v3.37): onde o modelo cita a Resilcon à mão,
 // troca pelo nome, site e e-mail da empresa. Só mexe no texto entre as tags (nunca em links de imagem).
@@ -7248,7 +7255,7 @@ async function asPdfDoHtml(html){ if(typeof html2pdf==="undefined") throw new Er
  const box=document.createElement("div"); box.style.cssText="position:fixed;left:0;top:0;width:760px;opacity:0;pointer-events:none;z-index:-1";
  box.innerHTML=`${links}<style>${css}</style><div class="as-doc" style="background:#fff;color:#111;width:760px">${d.body.innerHTML}</div>`; document.body.appendChild(box);
  try{ try{ await document.fonts.ready; }catch(_){} await Promise.all([...box.querySelectorAll("img")].map(im=>im.complete?0:new Promise(ok=>{ im.onload=im.onerror=ok; })));
-  const w=html2pdf().set({margin:[10,10,12,10],image:{type:"jpeg",quality:.92},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".ct-ass-g"]}}).from(box.querySelector(".as-doc")).toPdf();
+  const w=html2pdf().set({margin:[25,22,30,22],image:{type:"jpeg",quality:.92},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"],avoid:["tr",".ct-ass-g",".ct-ass-p",".ct-clausula"]}}).from(box.querySelector(".as-doc")).toPdf();
   const pdf=await w.get("pdf"); const paginas=pdf.internal.getNumberOfPages(); const uri=pdf.output("datauristring");
   return {base64:uri.slice(uri.indexOf(",")+1),paginas}; }
  finally{ box.remove(); } }
@@ -7552,12 +7559,12 @@ function rhNivelPill(n){ const [t,c]=RH_NIVEL[n]||RH_NIVEL.colaborador; return `
 const RHV_EXTRA={};
 async function rhView(v){
  if(RHV_EXTRA[MODE]) return RHV_EXTRA[MODE](v);
- const sec=MODE, tit={rh_colab:"Colaboradores",rh_org:"Organograma",rh_deps:"Departamentos e cargos"}[sec]||"RH Assist";
+ const sec=MODE, tit={rh_colab:"Colaboradores",rh_org:"Organograma",rh_deps:"Departamentos e cargos"}[sec]||"Themis RH";
  const sub={rh_colab:"Base de pessoas do escritório, puxada do Resiltrack. Clique em um nome para abrir a ficha.",rh_org:"Quem responde a quem. Clique em um card para abrir a ficha e em ▸ para ver a equipe de cada diretor.",rh_deps:"Estrutura usada no organograma, nos filtros e nos próximos módulos do RH."}[sec]||"";
  const btn=rhPodeEditar()&&sec==="rh_colab"?crmPri('id="rhNovo">+ Novo colaborador</button>'):"";
  v.innerHTML=crmHead(tit,sub,btn)+rhAbas(sec)+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
- try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist. Fale com o RH.</div></div>`:crmCaixaErro(e); return; }
+ try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH. Fale com o RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!==sec) return;
  if(rhPodeEditar()&&!v.querySelector("#rhNovo")&&sec==="rh_colab") v.querySelector(".crm-acoes").innerHTML=crmPri('id="rhNovo">+ Novo colaborador</button>');
  const nb=v.querySelector("#rhNovo"); if(nb) nb.onclick=()=>rhFicha(null);
@@ -7601,7 +7608,7 @@ function rhFicha(id){
  const gestores=C.filter(z=>z.id!==id&&!abaixo.has(z.id)&&z.status!=="desligado").map(z=>[z.id,z.nome+((rhPor(D.cargos,z.cargo_id)||{}).nome?" · "+rhPor(D.cargos,z.cargo_id).nome:"")]);
  const equipe=id?C.filter(z=>z.gestor_id===id&&z.status==="ativo"):[];
  const chips=id?`<span class="m-chip">${(RH_NIVEL[c.nivel]||RH_NIVEL.colaborador)[0]}</span>${d?`<span class="m-chip">${esc(d.nome)}</span>`:""}${c.status!=="ativo"?`<span class="m-chip">${(RH_STATUS[c.status]||[,""])[1]}</span>`:""}`:"";
- const m=crmModal("RH Assist",id?c.nome:"Novo colaborador",chips,`<div class="crm-form">
+ const m=crmModal("Themis RH",id?c.nome:"Novo colaborador",chips,`<div class="crm-form">
   <label class="crm-f crm-w2"><span>Nome completo *</span><input class="inp" id="rfNome" value="${escAttr(c.nome||"")}" ${dis}></label>
   <label class="crm-f"><span>E-mail corporativo</span><input class="inp" id="rfMail" type="email" value="${escAttr(c.email||"")}" ${dis}></label>
   <label class="crm-f"><span>Telefone</span><input class="inp" id="rfTel" inputmode="tel" value="${escAttr(c.telefone||"")}" ${dis}></label>
@@ -7677,7 +7684,7 @@ function rhDeps(box){
 async function rhSalvarSimples(p,msgEl,okEl,txt){ okEl.disabled=true; try{ await crmRpc("rh_salvar",{p}); await rhCarregar(true); closeModal(); crmToast(txt); rhView(document.getElementById("view")); }
  catch(e){ okEl.disabled=false; const s=String(e&&e.message||""); msgEl.textContent=s.includes("duplicate")?"Já existe um com esse nome.":s.includes("foreign key")?"Ainda tem gente vinculada. Desative em vez de excluir.":crmErro(e); } }
 function rhEditDep(id){ const D=RHD, d=id?rhPor(D.departamentos,id):{cor:"#066789",ativo:true,ordem:(D.departamentos||[]).length};
- const m=crmModal("RH Assist",id?d.nome:"Novo departamento","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome *</span><input class="inp" id="rdNome" value="${escAttr(d.nome||"")}"></label>
+ const m=crmModal("Themis RH",id?d.nome:"Novo departamento","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome *</span><input class="inp" id="rdNome" value="${escAttr(d.nome||"")}"></label>
   <label class="crm-f"><span>Responsável</span><select class="inp" id="rdResp">${crmOpt((D.colaboradores||[]).filter(c=>c.status==="ativo").map(c=>[c.id,c.nome]),d.responsavel_id,"Ninguém")}</select></label>
   <label class="crm-f"><span>Cor</span><input class="inp" id="rdCor" type="color" value="${escAttr(d.cor||"#066789")}" style="height:38px;padding:3px"></label>
   <label class="crm-f"><span>Ordem</span><input class="inp" id="rdOrd" type="number" value="${d.ordem||0}"></label>
@@ -7689,7 +7696,7 @@ function rhEditDep(id){ const D=RHD, d=id?rhPor(D.departamentos,id):{cor:"#06678
  const del=m.querySelector("#rdDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; } rhSalvarSimples({acao:"departamento",id,excluir:"sim"},msg,del,"Departamento excluído"); };
 }
 function rhEditCargo(id){ const D=RHD, g=id?rhPor(D.cargos,id):{nivel:"analista",ativo:true};
- const m=crmModal("RH Assist",id?g.nome:"Novo cargo","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome do cargo *</span><input class="inp" id="rcNome" value="${escAttr(g.nome||"")}" placeholder="Ex.: Analista Fiscal Pleno"></label>
+ const m=crmModal("Themis RH",id?g.nome:"Novo cargo","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome do cargo *</span><input class="inp" id="rcNome" value="${escAttr(g.nome||"")}" placeholder="Ex.: Analista Fiscal Pleno"></label>
   <label class="crm-f"><span>Nível</span><select class="inp" id="rcNiv">${crmOpt(Object.entries(RH_CARGO_NIVEL),g.nivel)}</select></label>
   <label class="crm-f"><span>Situação</span><select class="inp" id="rcAt">${crmOpt([["true","Ativo"],["false","Inativo"]],String(g.ativo!==false))}</select></label>
   <label class="crm-f crm-w2"><span>Descrição e responsabilidades</span><textarea class="inp" id="rcDesc" rows="3">${esc(g.descricao||"")}</textarea></label></div>
@@ -7790,7 +7797,7 @@ RHV_EXTRA.rh_ciclos=async function(v){
  if(RHA.sel) return rhaCiclo(v,RHA.sel);
  v.innerHTML=crmHead("Avaliação de desempenho","Ciclos de avaliação, no mesmo modelo do Cohros: gestor direto, autoavaliação e gestor indireto, com calibração e liberação de resultado.","")+rhAbas("rh_ciclos")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>{ RHA.sel=null; setMode(b.dataset.rhab); });
- let D; try{ await rhCarregar(); D=await rhaRpc("rh_aval_dados"); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ let D; try{ await rhCarregar(); D=await rhaRpc("rh_aval_dados"); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!=="rh_ciclos"||RHA.sel) return;
  const rh=D.eu&&D.eu.rh; if(rh) v.querySelector(".crm-acoes").innerHTML=crmPri('id="rhaNovo">+ Novo ciclo</button>');
  const L=D.ciclos||[], barra=(a,t)=>{ const p=t?Math.round(a/t*100):0; return `<div class="rha-bar"><i style="width:${p}%"></i></div><span class="sub">${a} de ${t}</span>`; };
@@ -8145,7 +8152,7 @@ RHV_EXTRA.rh_disc=async function(v){
  if(RHDISC.sel) return discRelatorio(v,RHDISC.sel);
  v.innerHTML=crmHead("Perfil comportamental","Teste DISC de 24 blocos. Cada pessoa escolhe, em cada bloco, a palavra que mais e a que menos a descreve. O relatório mostra o perfil, os traços e o gráfico do momento atual.","")+rhAbas("rh_disc")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>{ RHDISC.sel=null; setMode(b.dataset.rhab); });
- let D; try{ await rhCarregar(); D=await crmRpc("rh_disc_dados",{p:{}}); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ let D; try{ await rhCarregar(); D=await crmRpc("rh_disc_dados",{p:{}}); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!=="rh_disc"||RHDISC.sel) return; RHDISC.dados=D;
  const rh=D.eu&&D.eu.rh, U=D.ultimos||{}, C=(RHD.colaboradores||[]).filter(c=>c.status==="ativo");
  const com=C.filter(c=>U[c.id]), dom={D:0,I:0,S:0,C:0}; com.forEach(c=>{ const l=String(U[c.id].codigo||"")[0]; if(dom[l]!=null) dom[l]++; });
@@ -8235,7 +8242,7 @@ function discImprimir(c,t){ const css=[...document.querySelectorAll("style")].ma
  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Perfil comportamental · ${esc(c.nome)}</title><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@600;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
  <style>:root{--ink:#16313b;--ink-2:#34505a;--muted:#6b7f88;--border:#e1e8eb;--surface:#fff}body{font:14px/1.5 Inter,sans-serif;color:var(--ink);margin:24px;background:#fff}.card{border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;break-inside:avoid}.sub{color:var(--muted);font-size:12.5px}
  .rha-bar{height:8px;border-radius:99px;background:#e6eef1;overflow:hidden}.rha-bar i{display:block;height:100%;background:linear-gradient(90deg,#006789,#269A9E)}.disc-print-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font:700 13px Urbanist,sans-serif;color:#044B64;letter-spacing:.08em;text-transform:uppercase}
- ${css}@media print{body{margin:10mm}.disc-grid{grid-template-columns:1fr 1fr!important}}</style></head><body><div class="disc-print-top"><span>Resilcon · RH Assist</span><span>Perfil comportamental</span></div>${discRelHTML(c,t)}<script>setTimeout(()=>print(),600)<\/script></body></html>`);
+ ${css}@media print{body{margin:10mm}.disc-grid{grid-template-columns:1fr 1fr!important}}</style></head><body><div class="disc-print-top"><span>Resilcon · Themis RH</span><span>Perfil comportamental</span></div>${discRelHTML(c,t)}<script>setTimeout(()=>print(),600)<\/script></body></html>`);
  w.document.close(); }
 
 (function(){ const st=document.createElement("style"); st.textContent=`
@@ -8282,7 +8289,7 @@ const fpItensNomes=(itens,L)=>(itens||[]).map(i=>(L.find(x=>String(x.id)===Strin
 RHV_EXTRA.rh_feed=async function(v){
  v.innerHTML=crmHead("Feedbacks","Registro de feedbacks no formato FCA (fato, causa e ação), como no Cohros. O colaborador vê os feedbacks enviados na intranet e pode pedir um feedback por lá.","")+rhAbas("rh_feed")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
- let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!=="rh_feed") return;
  v.querySelector(".crm-acoes").innerHTML=crmPri('id="fbNovo">+ Dar feedback</button>'); v.querySelector("#fbNovo").onclick=()=>fbEditar(null,v);
  const F=D.feedbacks||[], S=D.solicitacoes||[], eu=D.eu&&D.eu.id, rh=D.eu&&D.eu.rh, hoje=new Date().toISOString().slice(0,10);
@@ -8351,7 +8358,7 @@ async function fbEditar(f,v,sol){ const novo=!f||!f.id; f=f||{tipo:""}; const ho
 RHV_EXTRA.rh_pdi=async function(v){
  v.innerHTML=crmHead("PDI","Plano de desenvolvimento individual: ações com carga horária, prazo e validação do gestor. Validação parada há mais de 15 dias passa para o RH.","")+rhAbas("rh_pdi")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
- let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ let D; try{ D=await fpCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!=="rh_pdi") return;
  v.querySelector(".crm-acoes").innerHTML=crmPri('id="pdNovo">+ Criar PDI</button>'); v.querySelector("#pdNovo").onclick=()=>pdiEditar(null,v);
  const A=(D.pdi||[]).filter(x=>x.status!=="cancelado"), cnt=s=>A.filter(x=>s.includes(x.situacao)).length;
@@ -8472,7 +8479,7 @@ async function pdiVer(x,v){ const s=PDI_SIT[x.situacao]||[x.situacao,"neutral"],
 
 // ================= KRONOS · controle de ponto (painel do dia, espelho, pendências e saldo do mês) =================
 // Lê as batidas do relógio de ponto (Control iD) gravadas no schema kronos. Tudo passa pela função public.kronos_dados,
-// com a mesma regra de acesso do RH Assist: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
+// com a mesma regra de acesso do Themis RH: RH vê todos, gestor vê a própria equipe. O CPF nunca vem para a tela.
 const KR_SECOES=[["kr_painel","Painel do dia"],["kr_espelho","Espelho de ponto"],["kr_pend","Pendências"],["kr_saldos","Saldo do mês"],["kr_ajustes","Ajustes"],["kr_registro","Forma de registro"],["kr_fiscal","Fiscalização"]];
 const _ICO_KR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
 const KR_SIT={trabalhando:["Trabalhando","good"],intervalo:["Em intervalo","warn"],saiu:["Saiu","neutro"],sem_registro:["Sem registro","neutro"],completo:["Completo","good"],pendente:["Batida faltando","crit"],nao_registra:["Não registra ponto","neutro"],apurado:["Apurado","good"],em_andamento:["Em andamento","good"],sem_batida:["",""]};
@@ -8484,7 +8491,7 @@ const krPill=s=>{ const [t,c]=KR_SIT[s]||[s,"neutro"]; return t?`<span class="kr
 const krSaldo=m=>m==null?"":`<span class="kr-sd ${m>0?"pos":m<0?"neg":""}">${m>0?"+":m<0?"−":""}${krHM(Math.abs(m))}</span>`;
 const krBatidas=b=>(b||[]).length?(b||[]).map((h,i)=>`<span class="kr-bat ${i%2?"sai":"ent"}" title="${i%2?"Saída":"Entrada"}">${esc(h)}</span>`).join(""):`<span class="sub">Nenhuma</span>`;
 const krTile=(lbl,val,cor)=>`<div class="tile"><div><div class="lbl">${lbl}</div><div class="val" ${cor?`style="color:var(--${cor})"`:""}>${val}</div></div></div>`;
-const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos. Fale com o RH.</div></div>`:crmCaixaErro(e);
+const krSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Kronos ID. Fale com o RH.</div></div>`:crmCaixaErro(e);
 function krAbas(at){ return `<div class="sim-abas"><div class="seg">${KR_SECOES.map(([m,t])=>`<button type="button" data-krab="${m}" class="${at===m?"on":""}">${t}</button>`).join("")}</div></div>`; }
 function krMoldura(v,sec,tit,sub,btns){
  if(KR.conv===undefined){ KR.conv=null; crmRpc("kronos_convencao",{p:{acao:"listar"}}).then(c=>{ KR.conv=c; const el=document.getElementById("krConvAviso"); if(el) el.outerHTML=krConvAviso(); }).catch(()=>{}); }
@@ -8562,7 +8569,7 @@ async function krEspelho(v){
   const dias=D.dias||[], com=dias.filter(d=>d.qtd>0), ap=dias.filter(d=>d.situacao==="apurado"), tot=com.reduce((a,d)=>a+(+d.minutos||0),0), pend=dias.filter(d=>d.pendente).length;
   const sld=ap.reduce((a,d)=>a+(+d.credito||0),0), semReg=dias.filter(d=>d.situacao==="sem_registro").length, E=D.escala;
   const escTxt=E?(E.registra_ponto===false?"Não registra ponto":(E.dias||[]).length?(E.dias||[]).map(x=>`${KR_DOW[x.dia_semana]} ${x.entrada} às ${x.saida}`).join(" · ")+` · intervalo de ${(E.dias[0]||{}).intervalo} min`:"Sem horários definidos"):"";
-  res.innerHTML=`${E?`<div class="kr-esc"><b>Escala:</b> ${esc(E.nome)}<div class="sub">${esc(escTxt)}</div></div>`:`<div class="kr-aviso">Este colaborador ainda não tem escala no Kronos. Sem escala não há previsto nem saldo.</div>`}
+  res.innerHTML=`${E?`<div class="kr-esc"><b>Escala:</b> ${esc(E.nome)}<div class="sub">${esc(escTxt)}</div></div>`:`<div class="kr-aviso">Este colaborador ainda não tem escala no Kronos ID. Sem escala não há previsto nem saldo.</div>`}
   <div class="tiles kr-tiles">${krTile("Dias apurados",ap.length)}${krTile("Horas trabalhadas",krHM(tot))}${krTile("Saldo do mês",krSaldo(sld)||"0h00")}${krTile("Batida faltando",pend,pend?"crit":"")}${krTile("Sem registro",semReg)}</div>
   <div class="card" style="padding:0;overflow-x:auto;margin-top:14px"><table><thead><tr><th>Dia</th><th>Batidas</th><th class="right">Previsto</th><th class="right">Trabalhado</th><th class="right">Saldo</th><th>Situação</th><th></th></tr></thead><tbody>
   ${dias.map(d=>{ const livre=d.tipo_dia==="folga"||d.tipo_dia==="feriado"; return `<tr class="${livre&&!d.qtd?"kr-fds":""}"><td style="white-space:nowrap"><b>${krDataBR(d.data)}</b> <span class="sub">${KR_DOW[d.dia_semana]||""}</span></td><td>${d.qtd?krBatidasAj(d.batidas,(AJ.dias||{})[String(d.data).slice(0,10)]):`<span class="sub">${d.feriado?esc("Feriado: "+d.feriado):d.tipo_dia==="folga"?"Folga":d.situacao==="sem_registro"?"Sem registro no relógio":""}</span>`}</td>
@@ -8677,7 +8684,7 @@ function krBatidasAj(b,aj){ const inc=new Set((aj&&aj.incluidas)||[]), des=(aj&&
  return (h||`<span class="sub">Nenhuma</span>`)+des.map(x=>`<span class="kr-bat kr-des" title="Desconsiderada pelo RH">${esc(x)}</span>`).join(""); }
 
 async function krAjusteDia(col,nome,data,depois){
- const m=crmModal("Kronos · ajuste de ponto",`${nome||"Colaborador"} · ${krDataBR(data)}`,"",`<div class="empty">Carregando…</div>`);
+ const m=crmModal("Kronos ID · ajuste de ponto",`${nome||"Colaborador"} · ${krDataBR(data)}`,"",`<div class="empty">Carregando…</div>`);
  m.classList.remove("prodm"); m.classList.add("rha-modal");
  let alterou=false;
  const fechar=()=>{ closeModal(); if(alterou&&depois) depois(); };
@@ -8780,7 +8787,7 @@ async function krFiscal(v){
    <div class="kf-bts"><button class="txt-btn crm-pri" data-kfx="marcacoes">Marcações (planilha)</button><button class="txt-btn" data-kfx="ajustes">Ajustes do RH (planilha)</button><button class="txt-btn" data-kfx="afd">AFD do relógio (.txt)</button><button class="txt-btn" data-kfx="tudo">Relatório completo (.json)</button></div>
    <p class="sub" id="kfMsg" style="margin-top:8px">O AFD aqui é o trecho do período, guardado a cada coleta. O arquivo oficial completo também pode ser tirado direto do relógio.</p>`
    :`<div class="empty">Só o RH exporta os registros.</div>`}</div></div>`;
- const form=c=>{ c=c||{}; const m=crmModal("Kronos · fiscalização",c.id?"Editar convenção":"Cadastrar convenção","",`<div class="crm-form">
+ const form=c=>{ c=c||{}; const m=crmModal("Kronos ID · fiscalização",c.id?"Editar convenção":"Cadastrar convenção","",`<div class="crm-form">
    <label class="crm-f crm-w2"><span>Sindicato ou acordo</span><input class="inp" id="kcS" value="${escAttr(c.sindicato||"")}" placeholder="Ex.: Sescon-SP / Sindicato dos empregados em empresas de serviços contábeis"></label>
    <label class="crm-f"><span>Número de registro (Mediador)</span><input class="inp" id="kcN" value="${escAttr(c.numero_registro||"")}" placeholder="Ex.: SP001234/2026"></label>
    <label class="crm-f"><span>Cláusula que autoriza o sistema alternativo</span><input class="inp" id="kcC" value="${escAttr(c.clausula||"")}" placeholder="Ex.: Cláusula 42ª"></label>
@@ -8829,7 +8836,7 @@ const iaData=d=>d?new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-dig
 RHV_EXTRA.rh_ia=async function(v){
  v.innerHTML=crmHead("Assistente de RH","Escolha uma pessoa da sua equipe. A IA lê avaliações, feedbacks, PDI e perfil comportamental e sugere como apoiar o desenvolvimento dela. São sugestões: a decisão é sua.","")+rhAbas("rh_ia")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
- try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o RH Assist.</div></div>`:crmCaixaErro(e); return; }
+ try{ await rhCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
  if(MODE!=="rh_ia") return;
  const rh=RHD.eu&&RHD.eu.rh, eu=RHD.eu&&RHD.eu.id;
  const P=(RHD.colaboradores||[]).filter(c=>c.status==="ativo"&&(rh||c.id!==eu)).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
@@ -8877,7 +8884,7 @@ function iaMostrar(v,r,quando,pergunta){ const out=v.querySelector("#iaRes"); if
   ${cv.objetivo||(cv.perguntas||[]).length?`<div class="card ia-sec"><h4>Próxima conversa individual</h4>${cv.objetivo?`<p><b>Objetivo:</b> ${esc(cv.objetivo)}</p>`:""}${cv.como_abordar?`<p><b>Como abordar:</b> ${esc(cv.como_abordar)}</p>`:""}
     ${(cv.perguntas||[]).length?`<ol class="ia-pq">${cv.perguntas.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}<button class="txt-btn" data-iacp>Copiar roteiro</button></div>`:""}
   ${(r.faltam_dados||[]).length?`<p class="sub ia-falta">Para uma análise melhor faltam: ${esc(r.faltam_dados.join("; "))}.</p>`:""}
-  <p class="sub ia-nota">Sugestão gerada por IA com base no que está registrado no RH Assist. Confira antes de usar.</p>`;
+  <p class="sub ia-nota">Sugestão gerada por IA com base no que está registrado no Themis RH. Confira antes de usar.</p>`;
  out.querySelectorAll("[data-iapdi]").forEach(b=>b.onclick=async()=>{ const s=r.sugestoes_pdi[+b.dataset.iapdi], col=RHIA.sel;
   let ids=[]; try{ const comps=await fpComps(col); ids=(s.itens||[]).map(n=>(comps.find(k=>crmNormTxt(k.nome)===crmNormTxt(n))||{}).id).filter(Boolean); }catch(_){}
   const pz=new Date(Date.now()+(+s.prazo_dias||30)*864e5).toISOString().slice(0,10), cm=Math.max(30,Math.round((+s.carga_horas||1)*60));
@@ -9327,7 +9334,7 @@ const IRIS_TIPOS={comunicado:"Comunicado",elogio:"Elogio",boas_vindas:"Boas-vind
 const irisHa=s=>{ if(!s) return "nunca"; const m=Math.max(0,Math.round((Date.now()-new Date(s).getTime())/60000)); return m<1?"agora há pouco":m<60?`há ${m} min`:m<1440?`há ${Math.floor(m/60)} h`:`há ${Math.floor(m/1440)} d`; };
 const irisLink=c=>new URL("tv?"+encodeURIComponent(c),location.href).href;
 const irisLinkCurto=c=>(location.host||"resiltrack.resilcon.com.br")+"/tv?"+c;
-const irisSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui a Íris. Peça a um administrador.</div></div>`:crmCaixaErro(e);
+const irisSemAcesso=e=>String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui a Íris TV. Peça a um administrador.</div></div>`:crmCaixaErro(e);
 const irisLocal=s=>{ if(!s) return ""; const d=new Date(s), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
 const irisISO=s=>s?new Date(s).toISOString():"";
 const irisSetoresTxt=s=>(s&&s.length)?s.map(esc).join(", "):"Todos os departamentos";
@@ -9339,7 +9346,7 @@ const irisMarcados=(m,nome)=>[...m.querySelectorAll(`input[name="${nome}"]:check
 async function irisView(v,silencioso){
  if(IRIS.timer){ clearTimeout(IRIS.timer); IRIS.timer=null; }
  if(!silencioso||!v.querySelector("#irisBox")){
-  v.innerHTML=crmHead("Íris","Gestão das TVs do escritório: o que cada tela mostra, os comunicados e a situação das fontes de dados.",`<button class="view-btn iris-al-btn" id="irisAlerta">Alerta urgente</button> <button class="view-btn ce-pri" id="irisNovo">Novo comunicado</button>`)+`<div id="irisAlBanner"></div>`+
+  v.innerHTML=crmHead("Íris TV","Gestão das TVs do escritório: o que cada tela mostra, os comunicados e a situação das fontes de dados.",`<button class="view-btn iris-al-btn" id="irisAlerta">Alerta urgente</button> <button class="view-btn ce-pri" id="irisNovo">Novo comunicado</button>`)+`<div id="irisAlBanner"></div>`+
    `<div class="sim-abas"><div class="seg">${[["telas","TVs"],["conteudos","Comunicados"],["fontes","Fontes de dados"]].map(([k,t])=>`<button type="button" data-irab="${k}" class="${IRIS.aba===k?"on":""}">${t}</button>`).join("")}</div></div><div id="irisBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
   v.querySelectorAll("[data-irab]").forEach(b=>b.onclick=()=>{ IRIS.aba=b.dataset.irab; irisView(v); });
   v.querySelector("#irisNovo").onclick=()=>irisConteudoForm(v,null);
@@ -9371,7 +9378,7 @@ function irisTelas(v,box){
  box.querySelector("#irisNovaTela").onclick=()=>irisTelaForm(v,null);
 }
 function irisTelaForm(v,t){ t=t||{nome:"",local:"",setores:[],mostra_fila:true,central:false,ativa:true,tema:"claro"};
- crmModal("Íris · TV",t.id?t.nome:"Nova TV","",`<div class="crm-form">
+ crmModal("Íris TV · TV",t.id?t.nome:"Nova TV","",`<div class="crm-form">
   <label class="crm-f"><span>Nome da TV</span><input id="itNome" maxlength="60" value="${escAttr(t.nome||"")}"></label>
   <label class="crm-f"><span>Onde fica</span><input id="itLocal" maxlength="60" value="${escAttr(t.local||"")}"></label>
   <label class="crm-f crm-w2"><span>Visual da tela</span><select id="itTema">${[["claro","Claro (fundo branco)"],["moldura","Moldura escura (lateral e fundo escuros, conteúdo em cartão branco)"],["escuro","Escuro (tudo escuro)"]].map(([k,n])=>`<option value="${k}" ${(t.tema||"claro")===k?"selected":""}>${n}</option>`).join("")}</select></label>
@@ -9405,7 +9412,7 @@ function irisConteudos(v,box){
 }
 function irisConteudoForm(v,c){ const novo=!c; c=c||{tipo:"comunicado",titulo:"",texto:"",setores:[],duracao_seg:12,prioridade:0,ativo:true,destaque:null,inicia_em:new Date().toISOString(),expira_em:""};
  const dq=c.destaque||{};
- crmModal("Íris · Comunicado",novo?"Novo comunicado":c.titulo,"",`<div class="crm-form">
+ crmModal("Íris TV · Comunicado",novo?"Novo comunicado":c.titulo,"",`<div class="crm-form">
   <label class="crm-f crm-w2"><span>Título (aparece grande na TV)</span><input id="icTit" maxlength="70" value="${escAttr(c.titulo||"")}"></label>
   <label class="crm-f crm-w2"><span>Texto (até 3 linhas ficam confortáveis de ler de longe)</span><textarea id="icTxt" rows="3" maxlength="260">${esc(c.texto||"")}</textarea></label>
   <label class="crm-f"><span>Tipo</span><select id="icTipo">${Object.entries(IRIS_TIPOS).map(([k,t])=>`<option value="${k}" ${c.tipo===k?"selected":""}>${t}</option>`).join("")}</select></label>
@@ -9439,10 +9446,10 @@ function irisAlertaBanner(v){
 }
 async function irisAlertaForm(v,pre){
  const d=IRIS.al||await irisAlertasCarregar();
- if(!d){ crmToast("O alerta urgente ainda não está ativo no banco. Rode o script da fase 4 da Íris."); return; }
+ if(!d){ crmToast("O alerta urgente ainda não está ativo no banco. Rode o script da fase 4 da Íris TV."); return; }
  const sons=d.sons||[], recentes=d.recentes||[], telas=((IRIS.d&&IRIS.d.telas)||[]).filter(t=>t.ativa);
  const a=Object.assign({titulo:"",texto:"",duracao_min:1,silencioso:false,som:"padrao",telas:null},pre||{});
- crmModal("Íris · Alerta urgente","Enviar alerta para as TVs","",`
+ crmModal("Íris TV · Alerta urgente","Enviar alerta para as TVs","",`
   <div class="iris-al-aviso">O alerta cobre a tela inteira das TVs e toca o som escolhido. Aparece em até 5 segundos.</div>
   ${recentes.length?`<div class="crm-f crm-w2" style="margin-bottom:12px"><span>Usados recentemente (clique para repetir)</span><div class="iris-al-rec">${recentes.map((r,i)=>`<button type="button" class="iris-al-chip" data-ialr="${i}">${esc(r.titulo)}</button>`).join("")}</div></div>`:""}
   <div class="crm-form">
@@ -9474,9 +9481,9 @@ async function irisAlertaForm(v,pre){
 }
 async function irisSonsForm(v){
  const d=await irisAlertasCarregar(); const sons=(d&&d.sons)||[];
- crmModal("Íris · Alerta urgente","Sons do alerta","",`
+ crmModal("Íris TV · Alerta urgente","Sons do alerta","",`
   <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Som</th><th></th></tr></thead><tbody>
-  ${sons.map(s=>`<tr><td><b>${esc(s.nome)}</b><div class="sub">${s.embutido?"Já vem na Íris":"Arquivo enviado"}</div></td><td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-isouv="${escAttr(s.chave)}">Ouvir</button>${s.embutido?"":` <button class="view-btn ghost" data-isdel="${escAttr(s.chave)}">Apagar</button>`}</td></tr>`).join("")}
+  ${sons.map(s=>`<tr><td><b>${esc(s.nome)}</b><div class="sub">${s.embutido?"Já vem na Íris TV":"Arquivo enviado"}</div></td><td class="right" style="white-space:nowrap"><button class="view-btn ghost" data-isouv="${escAttr(s.chave)}">Ouvir</button>${s.embutido?"":` <button class="view-btn ghost" data-isdel="${escAttr(s.chave)}">Apagar</button>`}</td></tr>`).join("")}
   </tbody></table></div>
   <div class="crm-form" style="margin-top:14px">
    <label class="crm-f"><span>Nome do novo som</span><input id="isNome" maxlength="40" placeholder="Ex.: iFood"></label>
@@ -9541,7 +9548,7 @@ function irisFontes(box){
 
 // ================= RH ASSIST · Admissão (modelo do Tangerino/Sólides) =================
 // Etapas: Pré-admissão > Aguardando documentação (candidato preenche pelo link seguro) > Aprovar documentos > Dados contratuais
-// > Aguardando assinatura (D4Sign ou contrato assinado anexado) > Concluída (cria o colaborador, liga escala e forma de registro no Kronos
+// > Aguardando assinatura (D4Sign ou contrato assinado anexado) > Concluída (cria o colaborador, liga escala e forma de registro no Kronos ID
 // e avisa o n8n para o onboarding). Só o RH acessa. Dados em rh.admissoes; arquivos no bucket privado rh-admissao.
 RH_SECOES.push(["rh_adm","Admissão"]);
 const ADM_FN="rh-admissao";
@@ -9581,7 +9588,7 @@ async function admDetalhe(id){ ADM.det=await crmRpc("rh_adm_dados",{p:{acao:"det
 const admDocNome=c=>((ADM.d&&ADM.d.doc_tipos||[]).find(t=>t.codigo===c)||{}).nome||({contrato:"Contrato e termos para assinar",contrato_assinado:"Contrato assinado",outros:"Outros"})[c]||c;
 
 RHV_EXTRA.rh_adm=async function(v){
- v.innerHTML=crmHead("Admissão","Do convite ao primeiro dia: o candidato preenche a ficha e envia os documentos pelo link seguro, o RH aprova, completa os dados contratuais e manda assinar. Ao concluir, a pessoa entra no RH Assist e no Kronos.","")+rhAbas("rh_adm")+`<div id="rhBox" style="margin-top:14px"><div class="card adm-box"><div class="empty">Carregando…</div></div></div>`;
+ v.innerHTML=crmHead("Admissão","Do convite ao primeiro dia: o candidato preenche a ficha e envia os documentos pelo link seguro, o RH aprova, completa os dados contratuais e manda assinar. Ao concluir, a pessoa entra no Themis RH e no Kronos ID.","")+rhAbas("rh_adm")+`<div id="rhBox" style="margin-top:14px"><div class="card adm-box"><div class="empty">Carregando…</div></div></div>`;
  v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
  try{ await rhCarregar(); await admCarregar(); }catch(e){ v.querySelector("#rhBox").innerHTML=`<div class="card adm-box"><div class="empty">${esc(admErro(e))}</div></div>`; return; }
  if(MODE!=="rh_adm") return;
@@ -9642,7 +9649,7 @@ function admCamposForm(a,soModelo){ const D=ADM.d, deps=D.departamentos||[], car
  <label class="crm-f"><span>Forma de pagamento</span><select class="inp" id="aPag">${crmOpt([["deposito","Depósito em conta"],["pix","PIX"],["outro","Outro"]],a.forma_pagamento,"Selecione")}</select></label>
  <div class="crm-f crm-w2 adm-linha">${sw("aAdi",a.adiantamento,"Adiantamento salarial")}<input class="inp" id="aAdiP" placeholder="% do adiantamento" style="max-width:170px" value="${escAttr(a.adiantamento_pct??"")}">
   ${sw("aExp",a.experiencia,"Contrato de experiência")}<input class="inp" id="aExpD" placeholder="Dias (ex.: 45)" style="max-width:130px" value="${escAttr(a.experiencia_dias??"")}"><input class="inp" id="aExpP" placeholder="Prorrogação (dias)" style="max-width:150px" value="${escAttr(a.experiencia_prorrogacao??"")}"></div>
- <div class="adm-sec crm-w2">Ponto (Kronos)</div>
+ <div class="adm-sec crm-w2">Ponto (Kronos ID)</div>
  <label class="crm-f"><span>Escala de trabalho</span><select class="inp" id="aEsc">${crmOpt(esc_.map(x=>[x.id,x.nome]),a.escala_id,"Selecione a escala")}</select></label>
  <div class="crm-f"><span>Forma de registro</span><div class="adm-linha">${sw("aRel",rp.relogio!==false,"Relógio do escritório")}${sw("aOnl",!!rp.online,"Ponto online")}</div>
   <div class="adm-dias">${[[1,"Seg"],[2,"Ter"],[3,"Qua"],[4,"Qui"],[5,"Sex"],[6,"Sáb"]].map(([n,t])=>`<label><input type="checkbox" data-dia="${n}" ${(rp.dias_online||[]).map(Number).includes(n)?"checked":""}> ${t}</label>`).join("")}<span class="sub">dias do ponto online</span></div></div>
@@ -9730,7 +9737,7 @@ function admTelaDetalhe(v){ const a=ADM.det, et=a.etapa, [pc,pt]=ADM_ETQ[et]||["
   contratuais:["Complete os dados contratuais do eSocial.",`<button class="txt-btn" id="adDev">Devolver ao candidato</button>`],
   assinatura:[{enviado:"Contrato na D4Sign esperando assinaturas.",assinado:"Contrato assinado. Pode concluir.",manual:"Contrato assinado anexado. Pode concluir.",cancelado:"Envio cancelado. Mande de novo ou anexe o contrato assinado."}[a.assinatura_status]||"Anexe o contrato e mande para assinar.",
    ["assinado","manual"].includes(a.assinatura_status)?crmPri('id="adConc">Concluir admissão</button>'):""],
-  concluida:[`Concluída em ${admDH(a.concluida_em)}. A pessoa já está no RH Assist e no Kronos.`,`<button class="txt-btn" id="adColab">Abrir ficha do colaborador</button>`],
+  concluida:[`Concluída em ${admDH(a.concluida_em)}. A pessoa já está no Themis RH e no Kronos ID.`,`<button class="txt-btn" id="adColab">Abrir ficha do colaborador</button>`],
   cancelada:[`Cancelada${a.cancelada_motivo?": "+esc(a.cancelada_motivo):""}.`,`<button class="txt-btn" id="adReab">Reabrir</button>`]}[et]||["",""];
  const abas=[["resumo","Resumo"],["ficha","Ficha do candidato"],["docs",`Documentos${avaliar?` (${avaliar})`:""}`],["contr","Dados contratuais"],["ass","Assinatura"],["hist","Histórico"]];
  v.querySelector("#rhBox").innerHTML=`<div class="card adm-cab"><div class="adm-cab-t"><span class="rh-av" style="--c:#066789">${esc(rhIni(a.nome))}</span><div><h3>${esc(a.nome)}</h3><span class="sub">${esc([a.cargo,a.departamento,a.modelo_contratacao].filter(Boolean).join(" · "))}</span></div><span class="pill ${pc}">${pt}</span></div>
@@ -9757,7 +9764,7 @@ function admAbaResumo(box,v){ const a=ADM.det, rp=a.registro_ponto||{}, pend=a.p
  box.innerHTML=`<div class="adm-2">${a.etapa!=="concluida"&&a.etapa!=="cancelada"&&pend.length?`<div class="card adm-pend"><b>O que falta na ficha e nos documentos (${pend.length})</b><ul>${pend.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>`:""}
   <div class="card adm-res"><h4>Candidato</h4><div class="adm-kv">${it("E-mail",esc(a.email))}${it("Celular",esc(a.telefone))}${it("Envio dos documentos até",admDt(a.prazo_docs))}${it("Data de admissão",admDt(a.data_admissao))}${it("Link gerado em",admDH(a.convite_em))}${it("Ficha enviada em",admDH(a.enviado_em))}</div></div>
   <div class="card adm-res"><h4>Contratação</h4><div class="adm-kv">${it("Cargo",esc(a.cargo))}${it("Departamento",esc(a.departamento))}${it("Gestor",esc(a.gestor))}${it("Salário",admBRL(a.salario)+(a.tipo_salario&&a.tipo_salario!=="mensal"?` (${a.tipo_salario})`:""))}${it("Modalidade",esc(RH_MOD[a.modalidade]||""))}${it("Experiência",a.experiencia?`${a.experiencia_dias||"?"} dias${a.experiencia_prorrogacao?` + ${a.experiencia_prorrogacao}`:""}`:"Não")}</div></div>
-  <div class="card adm-res"><h4>Ponto no Kronos</h4><div class="adm-kv">${it("Escala",esc(a.escala))}${it("Relógio",rp.relogio===false?"Não":"Sim")}${it("Ponto online",rp.online?"Sim, "+(rp.dias_online||[]).map(n=>["","seg","ter","qua","qui","sex","sáb"][n]).join(", "):"Não")}</div><p class="sub" style="margin:8px 0 0">Ligados automaticamente ao concluir, a partir da data de admissão.</p></div>
+  <div class="card adm-res"><h4>Ponto no Kronos ID</h4><div class="adm-kv">${it("Escala",esc(a.escala))}${it("Relógio",rp.relogio===false?"Não":"Sim")}${it("Ponto online",rp.online?"Sim, "+(rp.dias_online||[]).map(n=>["","seg","ter","qua","qui","sex","sáb"][n]).join(", "):"Não")}</div><p class="sub" style="margin:8px 0 0">Ligados automaticamente ao concluir, a partir da data de admissão.</p></div>
   ${a.observacao?`<div class="card adm-res"><h4>Recado para o candidato</h4><p style="margin:0">${esc(a.observacao)}</p></div>`:""}</div>`; }
 
 function admAbaFicha(box,v){ const a=ADM.det, f=a.ficha||{}, deps=a.dependentes||[];
@@ -9870,10 +9877,10 @@ function admDevolver(v){ const a=ADM.det, rec=(a.arquivos||[]).filter(x=>x.statu
  m.querySelector("#aOk").onclick=async()=>{ try{ const r=await admFn({acao:"devolver",id:a.id,motivo:m.querySelector("#dvM").value}); closeModal(); crmToast(r.avisado?"Devolvida e candidato avisado":"Devolvida. Avise o candidato pelo mesmo link."); await admCarregar(); RHV_EXTRA.rh_adm(v); }catch(e){ m.querySelector("#aMsg").textContent=admErro(e); } }; }
 
 function admConcluir(v){ const a=ADM.det;
- const m=crmModal("Admissão","Concluir admissão","",`<p>Ao concluir:</p><ul class="adm-ul"><li><b>${esc(a.nome)}</b> entra no RH Assist como colaborador ativo${a.cargo?` (${esc(a.cargo)})`:""}, com CPF, nascimento e salário na área restrita ao RH.</li>
-  <li>A escala ${a.escala?`<b>${esc(a.escala)}</b> `:""}e a forma de registro passam a valer no Kronos a partir de ${admDt(a.data_admissao)}.</li>
+ const m=crmModal("Admissão","Concluir admissão","",`<p>Ao concluir:</p><ul class="adm-ul"><li><b>${esc(a.nome)}</b> entra no Themis RH como colaborador ativo${a.cargo?` (${esc(a.cargo)})`:""}, com CPF, nascimento e salário na área restrita ao RH.</li>
+  <li>A escala ${a.escala?`<b>${esc(a.escala)}</b> `:""}e a forma de registro passam a valer no Kronos ID a partir de ${admDt(a.data_admissao)}.</li>
   <li>${ADM.d.config&&ADM.d.config.n8n_webhook?"O n8n recebe o aviso para o onboarding e os e-mails ao gestor e ao TI.":"O webhook do n8n não está configurado: gestor e TI não serão avisados automaticamente."}</li>
-  ${(a.contratuais||{}).email_corporativo?"":`<li class="adm-venc">Sem e-mail corporativo nos dados contratuais: o colaborador não vai conseguir entrar na intranet até alguém preencher o e-mail no RH Assist.</li>`}</ul>
+  ${(a.contratuais||{}).email_corporativo?"":`<li class="adm-venc">Sem e-mail corporativo nos dados contratuais: o colaborador não vai conseguir entrar na intranet até alguém preencher o e-mail no Themis RH.</li>`}</ul>
   <div class="rha-pe"><span class="sub" id="aMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="aOk">Concluir admissão</button>')}</div>`);
  m.classList.remove("prodm"); m.classList.add("rha-modal"); m.querySelector("[data-close2]").onclick=closeModal;
  m.querySelector("#aOk").onclick=async()=>{ const b=m.querySelector("#aOk"); b.disabled=true;
@@ -9932,17 +9939,17 @@ function admImprimir(){ const a=ADM.det, f=a.ficha||{}, c=a.contratuais||{}, w=w
 // Admin tem acesso total. Gestor e colaborador veem só os módulos marcados. "Departamentos" define o que o gestor enxerga nos dados.
 const ADM_MODS=[
  ["painel_gestor","Painel do Gestor","Indicadores e revisão diária dos departamentos"],
- ["rh","RH Assist","Ver colaboradores, organograma, avaliações e PDI da equipe"],
- ["rh_editar","RH Assist: gerenciar","Editar tudo do RH, inclusive salários, admissão e forma de registro do ponto"],
- ["kronos","Kronos","Painel do dia, espelho, pendências e saldos do ponto"],
+ ["rh","Themis RH","Ver colaboradores, organograma, avaliações e PDI da equipe"],
+ ["rh_editar","Themis RH: gerenciar","Editar tudo do RH, inclusive salários, admissão e forma de registro do ponto"],
+ ["kronos","Kronos ID","Painel do dia, espelho, pendências e saldos do ponto"],
  ["comercial","Hermes CRM","Funil de vendas, simulações e contratos"],
  ["comercial_gestor","Hermes CRM: gestor","Vê os negócios de toda a equipe comercial"],
- ["financeiro","Mida$","Ver o financeiro e a inadimplência"],
- ["financeiro_editar","Mida$: decidir","Decidir cobranças e confirmar pagamentos de indicação"],
+ ["financeiro","Mida$ Bank","Ver o financeiro e a inadimplência"],
+ ["financeiro_editar","Mida$ Bank: decidir","Decidir cobranças e confirmar pagamentos de indicação"],
  ["emails","Central de E-mails","Campanhas, réguas e envios"],
- ["iris","Íris","Gestão das TVs do escritório"]];
-const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris"};
-const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["RH Assist",["rh","rh_editar"]],["Kronos",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]]];
+ ["iris","Íris TV","Gestão das TVs do escritório"]];
+const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris TV"};
+const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["Themis RH",["rh","rh_editar"]],["Kronos ID",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$ Bank",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]]];
 // mantém a lista usada no modal antigo igual à nova
 MODULOS.splice(0,MODULOS.length,...ADM_MODS.map(([k,t])=>[k,t]));
 const ADM_SECOES=[["adm_acessos","Usuários e acessos"],["adm_deps","Departamentos e atendentes"]];
@@ -9982,7 +9989,7 @@ async function admAcessosView(v){
     ${ADM_MOD_GRUPOS.map(([,ks])=>ks.map(k=>`<td class="adma-c">${adm?`<span class="adma-tot" title="Admin tem acesso total">✓</span>`:`<input type="checkbox" data-mod="${k}" data-em="${escAttr(a.email)}" ${P.has(k)?"checked":""} aria-label="${escAttr((ADM_MODS.find(x=>x[0]===k)||[])[1]+" para "+(nm||a.email))}">`}</td>`).join("")).join("")}
     <td>${a.nivel==="gestor"?`<button class="txt-btn adma-dep" data-dep="${escAttr(a.email)}">${(a.departamentos||[]).length?esc((a.departamentos||[]).join(", ")):"Escolher"}</button>`:`<span class="sub">${adm?"todos":"-"}</span>`}</td>
     <td><button class="txt-btn crm-perigo adma-rm" data-rm="${escAttr(a.email)}" title="Remover acesso" aria-label="Remover acesso">✕</button></td></tr>`; }).join("")||`<tr><td colspan="20"><div class="empty">Ninguém com esse filtro.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">Passe o mouse no nome de cada coluna para ver o que ela libera. "RH Assist: gerenciar" é para o RH: dá acesso a salários, admissão e à forma de registro do ponto. Quem não está na lista entra só como colaborador, sem nenhum módulo.</p>`;
+  <p class="sub" style="margin-top:10px">Passe o mouse no nome de cada coluna para ver o que ela libera. "Themis RH: gerenciar" é para o RH: dá acesso a salários, admissão e à forma de registro do ponto. Quem não está na lista entra só como colaborador, sem nenhum módulo.</p>`;
   const qi=box.querySelector("#admaQ"); qi.oninput=()=>{ ADMA.q=qi.value; const p=qi.selectionStart; pinta(); const n=box.querySelector("#admaQ"); n.focus(); n.setSelectionRange(p,p); };
   box.querySelector("#admaF").onchange=e=>{ ADMA.f=e.target.value; pinta(); };
   box.querySelectorAll("[data-niv]").forEach(s=>s.onchange=()=>{ const a=ACESSOS.find(x=>x.email===s.dataset.niv); admaSalvar(a,{nivel:s.value},v); });
