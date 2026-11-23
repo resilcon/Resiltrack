@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.39 (novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.40 (Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -10033,6 +10033,125 @@ function admView(v){ if(MODE==="adm_deps"){ v.innerHTML=""; return viewAdmin(v);
 .adma-tot{color:#0f7a5c;font-weight:800}.adma-rm{padding:6px 10px}.adma-niv{min-width:120px}.adma-dep{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .adma-novo{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}.adma-novo label{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--text);font-weight:500}
 `; document.head.appendChild(s); })();
+
+// ================= THEMIS RH · BANCO DE TALENTOS (v3.40) =================
+// RH anexa currículos (vários de uma vez). A edge function rh-talentos guarda o arquivo (bucket privado rh-curriculos),
+// a IA lê e classifica por departamento e cargo do Themis RH, e o candidato entra em "Para revisar".
+// O RH confere e libera para o gestor do departamento, que vê só os liberados das áreas dele (rh.deps_visiveis).
+RH_SECOES.push(["rh_tal","Banco de talentos"]);
+let TAL={d:null,f:{q:"",st:"",dep:"",cg:"",or:""}};
+const TAL_ST={revisao:["warn","Para revisar"],liberado:["info","Com o gestor"],entrevista:["good","Entrevistar"],contratado:["good","Contratado"],descartado:["neutral","Descartado"]};
+const TAL_OR={upload:"Anexado",email:"E-mail",site:"Site",catho:"Catho",indeed:"Indeed",linkedin:"LinkedIn",indicacao:"Indicação",outro:"Outro"};
+async function talFn(body){ const {data,error}=await sb.functions.invoke("rh-talentos",{body}); if(error){ let m=error.message; try{ const j=await error.context.json(); m=j.erro||m; }catch(_){} throw new Error(m); } if(data&&data.erro) throw new Error(data.erro); return data; }
+const talB64=f=>new Promise((ok,er)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(",")[1]||""); r.onerror=()=>er(new Error("Não consegui ler "+f.name)); r.readAsDataURL(f); });
+const talAd=n=>n==null?"":`<span class="tal-ad ${n>=75?"a":n>=50?"m":"b"}" title="Aderência ao cargo indicado pela IA">${n}%</span>`;
+
+RHV_EXTRA.rh_tal=async function(v){
+ v.innerHTML=crmHead("Banco de talentos","Currículos recebidos pela Resilcon. A IA lê cada um e indica o departamento e o cargo. O RH confere e libera para o gestor da área.","")+rhAbas("rh_tal")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelectorAll("[data-rhab]").forEach(b=>b.onclick=()=>setMode(b.dataset.rhab));
+ try{ TAL.d=await crmRpc("rh_talentos_dados",{p:{}}); }catch(e){ v.querySelector("#rhBox").innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_tal") return;
+ if(TAL.d.rh&&!TAL._ini){ TAL._ini=1; if((TAL.d.candidatos||[]).some(c=>c.status==="revisao")) TAL.f.st="revisao"; }
+ talPinta(v); };
+
+function talPinta(v){ const D=TAL.d, F=TAL.f, rh=D.rh, L=D.candidatos||[];
+ const cnt=st=>L.filter(c=>c.status===st).length;
+ const q=crmNormTxt(F.q);
+ const vis=L.filter(c=>(!F.st||c.status===F.st)&&(!F.dep||c.departamento_id===F.dep)&&(!F.cg||c.cargo_id===F.cg)&&(!F.or||c.origem===F.or)
+  &&(!q||crmNormTxt([c.nome,c.email,c.cidade,c.cargo_sugerido,c.cargo_nome,c.departamento_nome,c.resumo,(c.dados&&c.dados.competencias||[]).join(" ")].join(" ")).includes(q)));
+ const kpi=(st,t)=>`<button type="button" class="tal-k ${F.st===st?"on":""}" data-talk="${st}"><b>${st?cnt(st):L.length}</b><span>${t}</span></button>`;
+ v.querySelector("#rhBox").innerHTML=`
+  <div class="tal-top">${rh?`<label class="tal-drop" id="talDrop"><input type="file" id="talArq" multiple accept=".pdf,.docx,.txt,image/*" hidden><b>Anexar currículos</b><span class="sub">PDF, Word (.docx), foto ou texto. Pode enviar vários de uma vez. A IA analisa e classifica cada um.</span></label>`:`<div class="card tal-info"><b>Candidatos para a sua área</b><p class="sub">Aqui aparecem os currículos que o RH liberou para os departamentos que você acompanha. Marque quem quer entrevistar.</p></div>`}
+   <div class="tal-ks">${kpi("","Todos")}${rh?kpi("revisao","Para revisar"):""}${kpi("liberado",rh?"Com o gestor":"Novos")}${kpi("entrevista","Entrevistar")}${kpi("contratado","Contratados")}</div></div>
+  <div id="talFila"></div>
+  <div class="filters crm-bar2" style="margin-top:12px"><div class="search" style="flex:1;min-width:200px"><input id="talQ" type="search" value="${escAttr(F.q)}" placeholder="Nome, cidade, cargo ou conhecimento (ex.: eSocial, SPED)" aria-label="Buscar candidato"></div>
+   <select class="fsel" id="talDep" aria-label="Departamento"><option value="">Todos os departamentos</option>${(D.departamentos||[]).map(d=>`<option value="${d.id}" ${F.dep===d.id?"selected":""}>${esc(d.nome)}</option>`).join("")}</select>
+   <select class="fsel" id="talCg" aria-label="Cargo"><option value="">Todos os cargos</option>${(D.cargos||[]).map(d=>`<option value="${d.id}" ${F.cg===d.id?"selected":""}>${esc(d.nome)}</option>`).join("")}</select>
+   ${rh?`<select class="fsel" id="talOr" aria-label="Origem"><option value="">Todas as origens</option>${Object.entries(TAL_OR).map(([k,t])=>`<option value="${k}" ${F.or===k?"selected":""}>${t}</option>`).join("")}</select>`:""}</div>
+  <div class="tal-lista">${vis.map(c=>{ const st=TAL_ST[c.status]||["neutral",c.status];
+   return `<button type="button" class="card tal-c" data-tal="${c.id}"><div class="tal-c1"><span class="rh-av">${esc(rhIni(c.nome||"?"))}</span><div><b>${esc(c.nome||"Sem nome")}</b><div class="sub">${esc([c.cidade&&(c.cidade+(c.uf?"/"+c.uf:"")),(c.dados&&c.dados.senioridade&&c.dados.senioridade!=="indefinida")?c.dados.senioridade:""].filter(Boolean).join(" · "))}</div></div>${talAd(c.aderencia)}</div>
+    <div class="tal-c2"><span class="pill ${st[0]}">${st[1]}</span>${c.departamento_nome?`<span class="pill neutral">${esc(c.departamento_nome)}</span>`:`<span class="pill warn">Sem departamento</span>`}</div>
+    <div class="tal-cg">${esc(c.cargo_nome||c.cargo_sugerido||"Cargo a definir")}${!c.cargo_nome&&c.cargo_sugerido?` <small>(sugestão da IA)</small>`:""}</div>
+    <p class="sub tal-r">${esc((c.resumo||"").slice(0,180))}${(c.resumo||"").length>180?"…":""}</p>
+    <div class="sub tal-rod">${esc(TAL_OR[c.origem]||c.origem)} · ${new Date(c.criado_em).toLocaleDateString("pt-BR")}</div></button>`; }).join("")
+   ||`<div class="card"><div class="empty">${L.length?"Nenhum candidato com esses filtros.":rh?"Nenhum currículo ainda. Anexe os primeiros no quadro acima.":"Nenhum candidato liberado para a sua área ainda."}</div></div>`}</div>`;
+ v.querySelectorAll("[data-talk]").forEach(b=>b.onclick=()=>{ F.st=b.dataset.talk; talPinta(v); });
+ const qi=v.querySelector("#talQ"); qi.oninput=()=>{ F.q=qi.value; const p=qi.selectionStart; talPinta(v); const n=v.querySelector("#talQ"); n.focus(); n.setSelectionRange(p,p); };
+ v.querySelector("#talDep").onchange=e=>{ F.dep=e.target.value; talPinta(v); }; v.querySelector("#talCg").onchange=e=>{ F.cg=e.target.value; talPinta(v); };
+ const ori=v.querySelector("#talOr"); if(ori) ori.onchange=e=>{ F.or=e.target.value; talPinta(v); };
+ v.querySelectorAll("[data-tal]").forEach(b=>b.onclick=()=>talFicha(b.dataset.tal,v));
+ const drop=v.querySelector("#talDrop"), arq=v.querySelector("#talArq");
+ if(drop){ arq.onchange=()=>{ talEnviar([...arq.files],v); arq.value=""; };
+  drop.addEventListener("dragover",e=>{ e.preventDefault(); drop.classList.add("on"); }); drop.addEventListener("dragleave",()=>drop.classList.remove("on"));
+  drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("on"); talEnviar([...e.dataTransfer.files],v); }); } }
+
+async function talEnviar(files,v){ files=files.filter(f=>/\.(pdf|docx|txt|jpe?g|png|webp)$/i.test(f.name)||/^image\//.test(f.type)); if(!files.length){ crmToast("Envie PDF, Word (.docx), imagem ou texto."); return; }
+ const box=v.querySelector("#talFila"); const linhas=files.map((f,i)=>({f,i,st:"Na fila",cls:""}));
+ const pinta=()=>{ box.innerHTML=`<div class="card tal-fila"><b>Analisando currículos</b>${linhas.map(l=>`<div class="tal-fl ${l.cls}"><span>${esc(l.f.name)}</span><span>${l.st}</span></div>`).join("")}</div>`; };
+ pinta(); let ok=0;
+ for(const l of linhas){
+  if(l.f.size>10*1024*1024){ l.st="Maior que 10 MB"; l.cls="erro"; pinta(); continue; }
+  l.st="Lendo com a IA…"; pinta();
+  try{ const r=await talFn({acao:"analisar",origem:"upload",arquivo:{nome:l.f.name,tipo:l.f.type,base64:await talB64(l.f)}});
+   l.st=r.sem_ia?"Guardado, mas a IA não leu. Classifique à mão.":`Pronto: ${r.nome}${r.duplicado?" (já havia currículo com esse e-mail)":""}`; l.cls=r.sem_ia||r.duplicado?"aviso":"ok"; ok++; }
+  catch(e){ l.st="Erro: "+(e.message||e); l.cls="erro"; }
+  pinta(); }
+ crmToast(`${ok} de ${files.length} currículo${files.length>1?"s":""} no banco, aguardando sua revisão`);
+ try{ TAL.d=await crmRpc("rh_talentos_dados",{p:{}}); }catch(_){}
+ TAL.f.st="revisao"; const fila=box.innerHTML; talPinta(v); const nb=v.querySelector("#talFila"); if(nb) nb.innerHTML=fila; }
+
+function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.id===id); if(!c) return; const d=c.dados||{};
+ const lst=(t,a)=>a&&a.length?`<h4 class="crm-h4">${t}</h4><ul class="tal-ul">${a.map(x=>`<li>${x}</li>`).join("")}</ul>`:"";
+ const st=TAL_ST[c.status]||["neutral",c.status];
+ const m=crmModal("Banco de talentos",c.nome||"Candidato",`<span class="pill ${st[0]}">${st[1]}</span>${c.aderencia!=null?`<span class="pill neutral">Aderência ${c.aderencia}%</span>`:""}`,`<div class="crm-2col"><div class="crm-colform">
+  <div class="panel"><h4>Indicação da IA</h4>
+   <p style="margin:0 0 6px"><b>${esc(c.departamento_nome||"Departamento a definir")}</b> · ${esc(c.cargo_nome||c.cargo_sugerido||"cargo a definir")}${!c.cargo_nome&&c.cargo_sugerido?" (sugestão livre)":""}</p>
+   ${c.justificativa?`<p class="sub" style="margin:0 0 8px">${esc(c.justificativa)}</p>`:""}
+   ${(c.alternativas||[]).length?`<p class="sub" style="margin:0">Também pode servir: ${(c.alternativas||[]).map(a=>esc([a.cargo,a.departamento].filter(Boolean).join(" em "))+(a.aderencia!=null?` (${a.aderencia}%)`:"")).join("; ")}</p>`:""}
+   ${rh?`<div class="crm-form" style="grid-template-columns:1fr 1fr;margin-top:10px">
+    <label class="crm-f"><span>Departamento</span><select class="inp" id="tDep"><option value="">A definir</option>${(D.departamentos||[]).map(x=>`<option value="${x.id}" ${x.id===c.departamento_id?"selected":""}>${esc(x.nome)}</option>`).join("")}</select></label>
+    <label class="crm-f"><span>Cargo</span><select class="inp" id="tCg"><option value="">A definir</option>${(D.cargos||[]).map(x=>`<option value="${x.id}" ${x.id===c.cargo_id?"selected":""}>${esc(x.nome)}</option>`).join("")}</select></label></div>`:""}</div>
+  <div class="panel"><h4>Perfil</h4><p style="margin:0">${esc(c.resumo||"")}</p>
+   ${lst("Experiências",(d.experiencias||[]).map(x=>`<b>${esc(x.cargo||"")}</b>${x.empresa?` · ${esc(x.empresa)}`:""}${x.periodo?` <small class="sub">(${esc(x.periodo)})</small>`:""}${x.atividades?`<br><small class="sub">${esc(x.atividades)}</small>`:""}`))}
+   ${lst("Formação",(d.formacao||[]).map(x=>`${esc(x.curso||"")}${x.instituicao?` · ${esc(x.instituicao)}`:""}${x.situacao?` <small class="sub">(${esc(x.situacao)}${x.ano?" "+esc(x.ano):""})</small>`:""}`))}
+   ${(d.competencias||[]).length?`<h4 class="crm-h4">Conhecimentos</h4><div class="tal-tags">${d.competencias.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+   ${lst("Pontos fortes",(d.pontos_fortes||[]).map(esc))}${lst("Pontos de atenção",(d.pontos_atencao||[]).map(esc))}
+   ${[d.idiomas&&d.idiomas.filter(Boolean).length?"Idiomas: "+d.idiomas.filter(Boolean).map(esc).join(", "):"",d.pretensao?"Pretensão: "+esc(d.pretensao):""].filter(Boolean).map(x=>`<p class="sub" style="margin:6px 0 0">${x}</p>`).join("")}</div>
+  </div><div class="crm-colline">
+  <div class="panel"><h4>Contato</h4><div class="crm-form" style="grid-template-columns:1fr">
+   ${rh?`<label class="crm-f"><span>Nome</span><input class="inp" id="tNome" value="${escAttr(c.nome||"")}"></label><label class="crm-f"><span>E-mail</span><input class="inp" id="tMail" value="${escAttr(c.email||"")}"></label>
+   <label class="crm-f"><span>Telefone</span><input class="inp" id="tTel" value="${escAttr(c.telefone||"")}"></label><label class="crm-f"><span>Cidade / UF</span><span style="display:flex;gap:6px"><input class="inp" id="tCid" value="${escAttr(c.cidade||"")}"><input class="inp" id="tUf" maxlength="2" style="width:60px" value="${escAttr(c.uf||"")}"></span></label>`
+   :`<p style="margin:0">${esc(c.email||"")}<br>${esc(c.telefone||"")}<br>${esc([c.cidade,c.uf].filter(Boolean).join("/"))}</p>`}
+   ${c.linkedin?`<a href="${escAttr(/^https?:/.test(c.linkedin)?c.linkedin:"https://"+c.linkedin)}" target="_blank" rel="noopener">Perfil no LinkedIn</a>`:""}</div>
+   ${c.arquivo_path?`<button type="button" class="view-btn ghost" id="tArq" style="margin-top:10px">Ver currículo original</button>`:""}</div>
+  ${rh?`<div class="panel"><h4>Anotações do RH</h4><textarea class="inp" id="tObs" rows="3" placeholder="Só o RH vê">${esc(c.obs||"")}</textarea>
+   <label class="crm-f" style="margin-top:8px"><span>Guardar até (LGPD)</span><input class="inp" type="date" id="tAte" value="${escAttr(c.guardar_ate||"")}"></label></div>`:""}
+  <div class="panel"><h4>Parecer do gestor</h4>${c.nota_gestor?`<p style="margin:0 0 6px">${esc(c.nota_gestor)}</p><p class="sub" style="margin:0 0 8px">${esc(crmNomeResp?crmNomeResp(c.gestor_por)||c.gestor_por||"":c.gestor_por||"")}</p>`:`<p class="sub" style="margin:0 0 8px">${c.status==="revisao"?"Aparece para o gestor depois que o RH liberar.":"Ainda sem parecer."}</p>`}
+   ${c.status!=="revisao"?`<textarea class="inp" id="tNota" rows="2" placeholder="Comentário para o RH (opcional)"></textarea><div class="crm-pe" style="justify-content:flex-start;gap:6px;margin-top:8px"><button class="view-btn" data-tg="entrevista">Quero entrevistar</button><button class="txt-btn" data-tg="descartado">Não tem o perfil</button></div>`:""}</div>
+  <div class="crm-pe" style="gap:8px">${rh?`<button class="txt-btn crm-perigo" id="tDel">Excluir</button><span style="flex:1"></span><select class="inp" id="tSt" style="width:auto">${Object.entries(TAL_ST).map(([k,[,t]])=>`<option value="${k}" ${k===c.status?"selected":""}>${t}</option>`).join("")}</select><button class="view-btn ghost" id="tSalvar">Salvar</button>${c.status==="revisao"?crmPri('id="tLib">Liberar para o gestor</button>'):""}`:""}</div>
+ </div></div>`);
+ const recarrega=async t=>{ closeModal(); if(t) crmToast(t); try{ TAL.d=await crmRpc("rh_talentos_dados",{p:{}}); }catch(_){} talPinta(v); };
+ const arq=m.querySelector("#tArq"); if(arq) arq.onclick=async()=>{ arq.disabled=true; const w=window.open("","_blank"); try{ const r=await talFn({acao:"url",id}); if(w) w.location=r.url; else location.href=r.url; }catch(e){ if(w) w.close(); crmToast(e.message); } arq.disabled=false; };
+ const dados=()=>({acao:"editar",id,nome:crmVal(m,"#tNome"),email:crmVal(m,"#tMail"),telefone:crmVal(m,"#tTel"),cidade:crmVal(m,"#tCid"),uf:crmVal(m,"#tUf"),departamento_id:crmVal(m,"#tDep"),cargo_id:crmVal(m,"#tCg"),obs:crmVal(m,"#tObs"),guardar_ate:crmVal(m,"#tAte"),status:crmVal(m,"#tSt")});
+ const sv=m.querySelector("#tSalvar"); if(sv) sv.onclick=async()=>{ sv.disabled=true; try{ await crmRpc("rh_talentos_salvar",{p:dados()}); recarrega("Candidato salvo"); }catch(e){ sv.disabled=false; crmToast(crmErro(e)); } };
+ const lib=m.querySelector("#tLib"); if(lib) lib.onclick=async()=>{ lib.disabled=true; try{ const p=dados(); delete p.status; await crmRpc("rh_talentos_salvar",{p}); await crmRpc("rh_talentos_salvar",{p:{acao:"liberar",id}}); recarrega(`Liberado para ${(D.departamentos.find(x=>x.id===p.departamento_id)||{}).nome||"o gestor"}`); }catch(e){ lib.disabled=false; crmToast(crmErro(e)); } };
+ m.querySelectorAll("[data-tg]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ await crmRpc("rh_talentos_salvar",{p:{acao:"gestor",id,status:b.dataset.tg,nota:crmVal(m,"#tNota")}}); recarrega(b.dataset.tg==="entrevista"?"Marcado para entrevista. O RH vai ver.":"Parecer registrado"); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
+ const del=m.querySelector("#tDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir de vez (o arquivo também)"; return; } try{ await talFn({acao:"excluir",id}); recarrega("Candidato excluído"); }catch(e){ crmToast(e.message); } }; }
+
+(function(){ const s=document.createElement("style"); s.textContent=`
+.tal-top{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr);gap:12px;align-items:stretch}
+.tal-drop{display:flex;flex-direction:column;justify-content:center;gap:4px;border:2px dashed #9cc3cf;border-radius:18px;padding:18px;cursor:pointer;background:var(--panel,#fff)}.tal-drop.on,.tal-drop:hover{border-color:#006789;background:#eef6f8}.tal-drop b{color:#066789;font-size:15px}
+.tal-info{padding:16px}.tal-info p{margin:4px 0 0}
+.tal-ks{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.tal-k{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--border,#dfe6e9);border-radius:14px;padding:12px;background:var(--panel,#fff);cursor:pointer;font:inherit;color:inherit;text-align:left}.tal-k b{font-size:22px}.tal-k span{font-size:12px;opacity:.75}.tal-k.on{border-color:#006789;box-shadow:0 0 0 3px rgba(0,103,137,.14)}
+.tal-fila{margin-top:12px;padding:14px}.tal-fl{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--border,#eef1f2);font-size:13px}.tal-fl.ok span:last-child{color:#1f7a5a}.tal-fl.erro span:last-child{color:#b42318}.tal-fl.aviso span:last-child{color:#b7791f}
+.tal-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.tal-c{display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;font:inherit;color:inherit;padding:14px;border:1px solid var(--border,#e3e8ea)}.tal-c:hover{border-color:#006789}
+.tal-c1{display:flex;align-items:center;gap:10px}.tal-c1>div{flex:1;min-width:0}.tal-c1 b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tal-c2{display:flex;flex-wrap:wrap;gap:6px}.tal-cg{font-weight:600;font-size:13.5px}.tal-cg small{font-weight:400;opacity:.7}.tal-r{margin:0;font-size:12.5px}.tal-rod{font-size:11.5px}
+.tal-ad{font-weight:700;font-size:12px;border-radius:999px;padding:3px 9px}.tal-ad.a{background:#e3f4ec;color:#1f7a5a}.tal-ad.m{background:#fff3dc;color:#9a6b00}.tal-ad.b{background:#f2f4f5;color:#5b6770}
+.tal-ul{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5}.tal-tags{display:flex;flex-wrap:wrap;gap:6px}.tal-tags span{background:#e3eef3;color:#066789;border-radius:999px;padding:3px 10px;font-size:12px}
+@media(max-width:760px){.tal-top{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
+
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
