@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.41 (Themis RH: trajeto do candidato até o escritório, anotações do RH visíveis ao gestor e navegação só pelo menu lateral · Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.42 (Hermes CRM: documentos do cliente em Contratos e na ficha, com aviso de validade · Themis RH: trajeto do candidato até o escritório, anotações do RH visíveis ao gestor, data de envio do currículo com filtro por período e navegação só pelo menu lateral · Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -9324,6 +9324,118 @@ async function negEmpLigar(m,preset){ const L=await negEmpLista(true); if(!m.isC
  const pre=preset&&preset.empresa_id&&L.find(x=>x.id===preset.empresa_id); usar(pre||null); }
 (function(){ const s=document.createElement("style"); s.textContent=`.neg-emp-info{display:block;margin-top:-4px}.neg-emp-info[data-tipo=ok]{color:#1f7a5a}.neg-emp-info[data-tipo=novo]{color:#066789}`; document.head.appendChild(s); })();
 
+// ================= DOCUMENTOS DO CLIENTE (Hermes CRM > Contratos e ficha do cliente) =================
+// Arquivos no bucket privado crm-documentos; registro em comercial.cliente_docs (RPCs crm_docs e crm_docs_salvar).
+// Sócios e certificado digital: só gestor do CRM e Financeiro (regra no banco). Aviso de validade 30 dias antes.
+const DOC_CAT={contrato:"Contrato",aditivo:"Aditivo",contrato_social:"Contrato social e alterações",cartao_cnpj:"Cartão CNPJ",certificado:"Certificado digital",alvara:"Alvarás e licenças",procuracao:"Procurações",socio:"Documentos dos sócios",fiscal:"Fiscal",trabalhista:"Trabalhista",outro:"Outros"};
+const DOC_RESTRITO=["socio","certificado"];
+let DOCS_RES=null, DOCS_RES_CARREGANDO=false;
+function docChaves(a){ const c=dig(a.cnpj); return [c.length>=11?c:"",a.gclick_empresa_id?"gclick:"+a.gclick_empresa_id:"",a.oportunidade_id?"neg:"+a.oportunidade_id:"",
+ !c&&!a.gclick_empresa_id&&!a.oportunidade_id&&a.cliente_nome?"nome:"+crmNormTxt(a.cliente_nome):""].filter(Boolean); }
+function docQtd(a){ const pc=(DOCS_RES&&DOCS_RES.por_chave)||{}; return docChaves(a).reduce((s,k)=>s+(+pc[k]||0),0); }
+async function docResumo(forcar){ if(DOCS_RES&&!forcar) return DOCS_RES; if(DOCS_RES_CARREGANDO) return null; DOCS_RES_CARREGANDO=true;
+ try{ DOCS_RES=await crmRpc("crm_docs",{p:{resumo:true}}); }catch(_){ DOCS_RES={por_chave:{},vencendo:[],erro:true}; } DOCS_RES_CARREGANDO=false; return DOCS_RES; }
+function docDias(v){ if(!v) return null; return Math.round((new Date(v+"T12:00:00")-new Date(new Date().toDateString()+" 12:00:00"))/864e5); }
+function docValPill(v){ const d=docDias(v); if(d==null) return ""; if(d<0) return `<span class="pill crit">Vencido em ${crmData(v+"T12:00")}</span>`; if(d<=30) return `<span class="pill warn">Vence em ${d===0?"hoje":d+(d===1?" dia":" dias")}</span>`; return `<span class="pill neutral">Válido até ${crmData(v+"T12:00")}</span>`; }
+function docTam(n){ n=+n||0; return n>1048576?(n/1048576).toFixed(1).replace(".",",")+" MB":Math.max(1,Math.round(n/1024))+" KB"; }
+function docAdivinha(nome,podeSoc){ const t=crmNormTxt(nome);
+ if(/\.(pfx|p12)$/.test(t)||/certificad/.test(t)) return podeSoc?"certificado":"outro";
+ if(/aditivo/.test(t)) return "aditivo"; if(/contrato social|alteracao contratual|consolida|estatuto/.test(t)) return "contrato_social";
+ if(/cartao cnpj|comprovante de inscricao|cnpj/.test(t)) return "cartao_cnpj"; if(/alvara|licenca|avcb|vigilancia|crf|cnes/.test(t)) return "alvara";
+ if(/procura/.test(t)) return "procuracao"; if(/\b(rg|cpf|cnh)\b|identidade|comprovante de (residencia|endereco)/.test(t)) return podeSoc?"socio":"outro";
+ if(/contrato/.test(t)) return "contrato"; if(/sped|das|dctf|guia|darf|nota fiscal|nf-?e/.test(t)) return "fiscal"; if(/folha|fgts|esocial|admiss/.test(t)) return "trabalhista"; return "outro"; }
+const docNomeSeguro=n=>String(n||"arquivo").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w.-]+/g,"_").slice(-80)||"arquivo";
+
+function docPainelHTML(){ return `<div class="panel doc-painel" style="margin-top:12px"><h4>Documentos do cliente</h4><div class="doc-box"><p class="sub" style="margin:0">Carregando documentos…</p></div></div>`; }
+// desenha os documentos dentro de "box" (elemento) para o cliente "a" ({cnpj,gclick_empresa_id,oportunidade_id,cliente_nome})
+async function docCarregar(box,a,aoMudar){
+ const chaves=docChaves(a); if(!chaves.length){ box.innerHTML=`<p class="sub" style="margin:0">Cadastre o CNPJ do cliente para guardar documentos.</p>`; return; }
+ let r; try{ r=await crmRpc("crm_docs",{p:{chaves}}); }catch(e){ box.innerHTML=crmCaixaErro(e); return; }
+ const docs=r.docs||[], podeSoc=!!r.pode_socio, cats=Object.keys(DOC_CAT).filter(k=>podeSoc||!DOC_RESTRITO.includes(k));
+ const grupos=Object.keys(DOC_CAT).map(k=>[k,docs.filter(d=>d.categoria===k)]).filter(([,l])=>l.length);
+ box.innerHTML=`<label class="doc-drop"><input type="file" multiple hidden><b>Adicionar documentos</b><span class="sub">Arraste ou clique. PDF, imagem, Word, Excel, XML, certificado (.pfx). Até 25 MB cada.</span></label>
+  <div class="doc-fila"></div>
+  ${grupos.map(([k,l])=>`<div class="doc-grupo"><div class="doc-gt">${esc(DOC_CAT[k])}${DOC_RESTRITO.includes(k)?` <small class="sub">restrito a gestor e Financeiro</small>`:""}</div>
+   ${l.map(d=>`<div class="doc-it" data-doc="${d.id}"><div class="doc-ic">${esc((String(d.arquivo_nome||"").split(".").pop()||"doc").slice(0,4).toUpperCase())}</div>
+    <div class="doc-tx"><b>${esc(d.titulo)}</b><div class="sub">${esc(d.arquivo_nome||"")} · ${docTam(d.tamanho)} · ${crmData(d.criado_em)}${d.criado_por?" · "+esc(crmNomeResp?crmNomeResp(d.criado_por)||d.criado_por:d.criado_por):""}</div>${d.descricao?`<div class="sub">${esc(d.descricao)}</div>`:""}</div>
+    <div class="doc-ac">${docValPill(d.validade)}<button class="view-btn ghost" data-dabrir="${d.id}">Abrir</button><button class="txt-btn" data-deditar="${d.id}">Editar</button></div></div>`).join("")}</div>`).join("")
+  ||`<p class="sub" style="margin:10px 0 0">Nenhum documento guardado ainda.</p>`}
+  ${podeSoc?"":`<p class="sub" style="margin:10px 0 0;font-size:11.5px">Documentos dos sócios e certificados digitais ficam visíveis só para o gestor do CRM e o Financeiro.</p>`}`;
+ const recarrega=()=>{ docResumo(true).then(()=>aoMudar&&aoMudar()); docCarregar(box,a,aoMudar); };
+ const inp=box.querySelector(".doc-drop input"), drop=box.querySelector(".doc-drop"), fila=box.querySelector(".doc-fila");
+ const prepara=files=>{ files=[...files]; if(!files.length) return; const grandes=files.filter(f=>f.size>26214400); files=files.filter(f=>f.size<=26214400);
+  if(grandes.length) crmToast(`${grandes.length} arquivo(s) passam de 25 MB e ficaram de fora.`); if(!files.length) return;
+  fila.innerHTML=`<div class="doc-novos">${files.map((f,i)=>`<div class="doc-novo" data-i="${i}"><div class="sub" style="grid-column:1/-1"><b>${esc(f.name)}</b> · ${docTam(f.size)}</div>
+    <label class="crm-f"><span>Tipo</span><select class="inp" data-cat>${cats.map(k=>`<option value="${k}" ${docAdivinha(f.name,podeSoc)===k?"selected":""}>${esc(DOC_CAT[k])}</option>`).join("")}</select></label>
+    <label class="crm-f"><span>Nome do documento</span><input class="inp" data-tit value="${escAttr(f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "))}"></label>
+    <label class="crm-f"><span>Validade (se tiver)</span><input class="inp" type="date" data-val></label>
+    <label class="crm-f"><span>Observação</span><input class="inp" data-desc placeholder="Sem senhas aqui"></label></div>`).join("")}
+   <div class="crm-pe" style="gap:8px"><span style="flex:1"></span><button class="txt-btn" data-dcanc>Cancelar</button>${crmPri(`data-dok>Guardar ${files.length} documento(s)</button>`)}</div></div>`;
+  fila.querySelector("[data-dcanc]").onclick=()=>{ fila.innerHTML=""; inp.value=""; };
+  fila.querySelector("[data-dok]").onclick=async ev=>{ const b=ev.currentTarget; b.disabled=true; let ok=0, erros=[];
+   for(const [i,f] of files.entries()){ const el=fila.querySelector(`[data-i="${i}"]`); b.textContent=`Enviando ${i+1} de ${files.length}…`;
+    const path=`${chaves[0].replace(/[^\w.-]+/g,"_")}/${crypto.randomUUID()}_${docNomeSeguro(f.name)}`;
+    const up=await sb.storage.from("crm-documentos").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false});
+    if(up.error){ erros.push(`${f.name}: ${up.error.message}`); continue; }
+    try{ await crmRpc("crm_docs_salvar",{p:{acao:"criar",chave:chaves[0],cnpj:a.cnpj||"",gclick_empresa_id:a.gclick_empresa_id||"",oportunidade_id:a.oportunidade_id||"",cliente_nome:a.cliente_nome||"",
+      categoria:el.querySelector("[data-cat]").value,titulo:el.querySelector("[data-tit]").value,validade:el.querySelector("[data-val]").value,descricao:el.querySelector("[data-desc]").value,
+      arquivo_path:path,arquivo_nome:f.name,arquivo_tipo:f.type||"",tamanho:f.size}}); ok++; }
+    catch(e){ erros.push(`${f.name}: ${crmErro(e)}`); sb.storage.from("crm-documentos").remove([path]).catch(()=>{}); } }
+   if(erros.length) crmToast(`${ok} guardado(s). Não deu certo: ${erros.join("; ").slice(0,300)}`); else crmToast(`${ok} documento(s) guardado(s)`);
+   recarrega(); };
+ };
+ inp.onchange=()=>prepara(inp.files);
+ drop.ondragover=e=>{ e.preventDefault(); drop.classList.add("on"); }; drop.ondragleave=()=>drop.classList.remove("on");
+ drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove("on"); prepara(e.dataTransfer.files); };
+ box.querySelectorAll("[data-dabrir]").forEach(b=>b.onclick=async()=>{ const d=docs.find(x=>x.id===b.dataset.dabrir); const w=window.open("","_blank");
+  const {data,error}=await sb.storage.from("crm-documentos").createSignedUrl(d.arquivo_path,120,/\.(pfx|p12|xml|xlsx?|docx?|zip)$/i.test(d.arquivo_nome||"")?{download:d.arquivo_nome}:undefined);
+  if(error){ if(w) w.close(); crmToast("Não consegui abrir o arquivo."); return; } if(w) w.location=data.signedUrl; else location.href=data.signedUrl; });
+ box.querySelectorAll("[data-deditar]").forEach(b=>b.onclick=()=>{ const d=docs.find(x=>x.id===b.dataset.deditar), it=b.closest(".doc-it");
+  it.insertAdjacentHTML("afterend",`<div class="doc-novo doc-ed"><label class="crm-f"><span>Tipo</span><select class="inp" data-cat>${cats.map(k=>`<option value="${k}" ${d.categoria===k?"selected":""}>${esc(DOC_CAT[k])}</option>`).join("")}</select></label>
+   <label class="crm-f"><span>Nome do documento</span><input class="inp" data-tit value="${escAttr(d.titulo)}"></label>
+   <label class="crm-f"><span>Validade</span><input class="inp" type="date" data-val value="${escAttr(d.validade||"")}"></label>
+   <label class="crm-f"><span>Observação</span><input class="inp" data-desc value="${escAttr(d.descricao||"")}" placeholder="Sem senhas aqui"></label>
+   <div class="crm-pe" style="grid-column:1/-1;gap:8px"><button class="txt-btn crm-perigo" data-dexc>Excluir</button><span style="flex:1"></span><button class="txt-btn" data-dcanc>Cancelar</button>${crmPri("data-dsalv>Salvar</button>")}</div></div>`);
+  const ed=it.nextElementSibling; b.disabled=true;
+  ed.querySelector("[data-dcanc]").onclick=()=>{ ed.remove(); b.disabled=false; };
+  ed.querySelector("[data-dsalv]").onclick=async ev=>{ ev.currentTarget.disabled=true; try{ await crmRpc("crm_docs_salvar",{p:{acao:"editar",id:d.id,categoria:ed.querySelector("[data-cat]").value,titulo:ed.querySelector("[data-tit]").value,validade:ed.querySelector("[data-val]").value,descricao:ed.querySelector("[data-desc]").value}}); crmToast("Documento atualizado"); recarrega(); }catch(e){ ev.currentTarget.disabled=false; crmToast(crmErro(e)); } };
+  const ex=ed.querySelector("[data-dexc]"); ex.onclick=async()=>{ if(ex.dataset.ok!=="1"){ ex.dataset.ok="1"; ex.textContent="Clique de novo para excluir de vez"; return; }
+   try{ const r2=await crmRpc("crm_docs_salvar",{p:{acao:"excluir",id:d.id}}); if(r2&&r2.arquivo_path) await sb.storage.from("crm-documentos").remove([r2.arquivo_path]); crmToast("Documento excluído"); recarrega(); }catch(e){ crmToast(crmErro(e)); } }; });
+}
+function docModal(a,aoMudar){ const m=crmModal("Documentos do cliente",a.cliente_nome||"Cliente",a.cnpj?crmChip(esc(fmtCnpj(a.cnpj))):"",`<div class="doc-box"><p class="sub" style="margin:0">Carregando documentos…</p></div>`);
+ docCarregar(m.querySelector(".doc-box"),a,aoMudar); }
+
+// Contratos: botão Documentos em cada linha e aviso de validade
+const _crmContrPintaSemDocs=crmContrPinta;
+crmContrPinta=function(v){ _crmContrPintaSemDocs(v); const box=v.querySelector("#crmBox"); if(!box) return;
+ if(!DOCS_RES){ docResumo().then(r=>{ if(r&&MODE==="crm_contratos") crmContrPinta(v); }); return; }
+ const l=crmLinhasContrato(), alvoDe=x=>({cnpj:x.cnpj,cliente_nome:x.nome,gclick_empresa_id:x.tipo==="gclick"?x.id:"",oportunidade_id:x.tipo==="novo"?x.id:""});
+ box.querySelectorAll("tbody [data-ctx]").forEach(b=>{ const [tipo,id]=b.dataset.ctx.split(/:(.*)/); const x=l.find(y=>y.tipo===tipo&&y.id===id); if(!x) return; const n=docQtd(alvoDe(x));
+  const d=document.createElement("button"); d.className="view-btn ghost"; d.textContent=n?`Documentos (${n})`:"Documentos"; d.onclick=()=>docModal(alvoDe(x),()=>crmContrPinta(v)); b.before(d); });
+ const ven=(DOCS_RES.vencendo||[]); if(ven.length){ const venc=ven.filter(d=>docDias(d.validade)<0).length;
+  const av=document.createElement("details"); av.className="card ce-pad doc-aviso"; av.innerHTML=`<summary><b>Documentos com validade</b> <span class="pill ${venc?"crit":"warn"}">${ven.length}</span><span class="sub"> · ${[venc?venc+" vencido(s)":"",ven.length-venc?(ven.length-venc)+" vencendo nos próximos 30 dias":""].filter(Boolean).join(" e ")}</span></summary>
+   ${ven.map((d,i)=>`<div class="ce-row"><div style="min-width:0"><button class="crm-link r-name" data-dven="${i}">${esc(d.cliente_nome||"Cliente")}</button><div class="sub">${esc(DOC_CAT[d.categoria]||d.categoria)} · ${esc(d.titulo)}</div></div>${docValPill(d.validade)}</div>`).join("")}`;
+  const ref=box.querySelector(".filters"); if(ref) ref.before(av); else box.prepend(av);
+  av.querySelectorAll("[data-dven]").forEach(b=>b.onclick=()=>{ const d=ven[+b.dataset.dven], ch=d.chave;
+   const a=/^\d{11,14}$/.test(ch)?{cnpj:ch}:ch.startsWith("gclick:")?{gclick_empresa_id:ch.slice(7)}:ch.startsWith("neg:")?{oportunidade_id:ch.slice(4)}:{};
+   if(!a.cnpj&&!a.gclick_empresa_id&&!a.oportunidade_id){ a.cliente_nome=d.cliente_nome; } a.cliente_nome=d.cliente_nome; docModal(a,()=>crmContrPinta(v)); }); }
+};
+// ficha do cliente G-Click: quadro de documentos na coluna da direita
+const _crmFichaClienteSemDocs=crmFichaCliente;
+crmFichaCliente=async function(gid){ await _crmFichaClienteSemDocs(gid); const emp=EMPRESAS[gid]||{}; const col=modal.querySelector(".crm-colline"); if(!col||modal.querySelector(".doc-painel")) return;
+ col.insertAdjacentHTML("afterbegin",docPainelHTML()); docCarregar(modal.querySelector(".doc-painel .doc-box"),{gclick_empresa_id:gid,cnpj:emp.cnpj,cliente_nome:emp.apelido||emp.nome},()=>{}); };
+
+(function(){ const s=document.createElement("style"); s.textContent=`
+.doc-drop{display:flex;flex-direction:column;gap:3px;border:2px dashed #9cc3cf;border-radius:14px;padding:14px;cursor:pointer}.doc-drop.on,.doc-drop:hover{border-color:#006789;background:#eef6f8}.doc-drop b{color:#066789}
+.doc-novos{margin-top:10px;display:flex;flex-direction:column;gap:10px}.doc-novo{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:12px;border:1px solid var(--border,#e3e8ea);border-radius:12px;background:var(--panel,#fff)}
+.doc-ed{margin:6px 0 10px}
+.doc-grupo{margin-top:14px}.doc-gt{font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;opacity:.8;margin-bottom:6px}
+.doc-it{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border,#eef1f2)}.doc-ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;background:#e3eef3;color:#066789;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.doc-tx{flex:1;min-width:0}.doc-tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.doc-tx .sub{font-size:11.5px;overflow-wrap:anywhere}
+.doc-ac{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.doc-aviso{margin-top:16px}.doc-aviso summary{cursor:pointer}
+@media(max-width:700px){.doc-it{flex-wrap:wrap}.doc-ac{width:100%;justify-content:flex-start}}`; document.head.appendChild(s); })();
+
 // ================= ÍRIS · gestão das TVs do escritório =================
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
 // Tudo passa pelas funções public.iris_* (admin do Resiltrack ou permissão "iris"). A TV em si roda em iris.html, sem login.
@@ -10039,7 +10151,7 @@ function admView(v){ if(MODE==="adm_deps"){ v.innerHTML=""; return viewAdmin(v);
 // a IA lê e classifica por departamento e cargo do Themis RH, e o candidato entra em "Para revisar".
 // O RH confere e libera para o gestor do departamento, que vê só os liberados das áreas dele (rh.deps_visiveis).
 RH_SECOES.push(["rh_tal","Banco de talentos"]);
-let TAL={d:null,f:{q:"",st:"",dep:"",cg:"",or:""}};
+let TAL={d:null,f:{q:"",st:"",dep:"",cg:"",or:"",tp:""}};
 const TAL_ST={revisao:["warn","Para revisar"],liberado:["info","Com o gestor"],entrevista:["good","Entrevistar"],contratado:["good","Contratado"],descartado:["neutral","Descartado"]};
 const TAL_OR={upload:"Anexado",email:"E-mail",site:"Site",catho:"Catho",indeed:"Indeed",linkedin:"LinkedIn",indicacao:"Indicação",outro:"Outro"};
 async function talFn(body){ const {data,error}=await sb.functions.invoke("rh-talentos",{body}); if(error){ let m=error.message; try{ const j=await error.context.json(); m=j.erro||m; }catch(_){} throw new Error(m); } if(data&&data.erro) throw new Error(data.erro); return data; }
@@ -10054,11 +10166,17 @@ RHV_EXTRA.rh_tal=async function(v){
  if(TAL.d.rh&&!TAL._ini){ TAL._ini=1; if((TAL.d.candidatos||[]).some(c=>c.status==="revisao")) TAL.f.st="revisao"; }
  talPinta(v); };
 
+const TAL_TP=[["","Enviado em qualquer data"],["7","Últimos 7 dias"],["30","Últimos 30 dias"],["90","Últimos 3 meses"],["180","Últimos 6 meses"],["365","Último ano"],["+365","Há mais de 1 ano"]];
+function talEnvio(c){ const r=c.dados&&c.dados.recebido_em; return r?new Date(r+"T12:00:00"):new Date(c.criado_em); }
+function talDias(c){ return Math.floor((Date.now()-talEnvio(c).getTime())/864e5); }
+function talNoPeriodo(c,tp){ if(!tp) return true; const d=talDias(c); return tp[0]==="+"?d>+tp.slice(1):d<=+tp; }
+function talDataBR(d){ return isNaN(d)?"":d.toLocaleDateString("pt-BR"); }
+function talHa(d){ const n=Math.floor((Date.now()-d.getTime())/864e5); if(isNaN(n)) return ""; if(n<=0) return "(hoje)"; if(n===1) return "(ontem)"; if(n<60) return `(há ${n} dias)`; const m=Math.round(n/30.4); return m<24?`(há ${m} meses)`:`(há ${Math.floor(n/365)} anos)`; }
 function talPinta(v){ const D=TAL.d, F=TAL.f, rh=D.rh, L=D.candidatos||[];
  const cnt=st=>L.filter(c=>c.status===st).length;
  const q=crmNormTxt(F.q);
- const vis=L.filter(c=>(!F.st||c.status===F.st)&&(!F.dep||c.departamento_id===F.dep)&&(!F.cg||c.cargo_id===F.cg)&&(!F.or||c.origem===F.or)
-  &&(!q||crmNormTxt([c.nome,c.email,c.cidade,c.cargo_sugerido,c.cargo_nome,c.departamento_nome,c.resumo,(c.dados&&c.dados.competencias||[]).join(" ")].join(" ")).includes(q)));
+ const vis=L.filter(c=>(!F.st||c.status===F.st)&&(!F.dep||c.departamento_id===F.dep)&&(!F.cg||c.cargo_id===F.cg)&&(!F.or||c.origem===F.or)&&talNoPeriodo(c,F.tp)
+  &&(!q||crmNormTxt([c.nome,c.email,c.cidade,c.cargo_sugerido,c.cargo_nome,c.departamento_nome,c.resumo,(c.dados&&c.dados.competencias||[]).join(" ")].join(" ")).includes(q))).sort((a,b)=>talEnvio(b)-talEnvio(a));
  const kpi=(st,t)=>`<button type="button" class="tal-k ${F.st===st?"on":""}" data-talk="${st}"><b>${st?cnt(st):L.length}</b><span>${t}</span></button>`;
  v.querySelector("#rhBox").innerHTML=`
   <div class="tal-top">${rh?`<label class="tal-drop" id="talDrop"><input type="file" id="talArq" multiple accept=".pdf,.docx,.txt,image/*" hidden><b>Anexar currículos</b><span class="sub">PDF, Word (.docx), foto ou texto. Pode enviar vários de uma vez. A IA analisa e classifica cada um.</span></label>`:`<div class="card tal-info"><b>Candidatos para a sua área</b><p class="sub">Aqui aparecem os currículos que o RH liberou para os departamentos que você acompanha. Marque quem quer entrevistar.</p></div>`}
@@ -10067,17 +10185,18 @@ function talPinta(v){ const D=TAL.d, F=TAL.f, rh=D.rh, L=D.candidatos||[];
   <div class="filters crm-bar2" style="margin-top:12px"><div class="search" style="flex:1;min-width:200px"><input id="talQ" type="search" value="${escAttr(F.q)}" placeholder="Nome, cidade, cargo ou conhecimento (ex.: eSocial, SPED)" aria-label="Buscar candidato"></div>
    <select class="fsel" id="talDep" aria-label="Departamento"><option value="">Todos os departamentos</option>${(D.departamentos||[]).map(d=>`<option value="${d.id}" ${F.dep===d.id?"selected":""}>${esc(d.nome)}</option>`).join("")}</select>
    <select class="fsel" id="talCg" aria-label="Cargo"><option value="">Todos os cargos</option>${(D.cargos||[]).map(d=>`<option value="${d.id}" ${F.cg===d.id?"selected":""}>${esc(d.nome)}</option>`).join("")}</select>
+   <select class="fsel" id="talTp" aria-label="Enviado em">${TAL_TP.map(([k,t])=>`<option value="${k}" ${(F.tp||"")===k?"selected":""}>${t}</option>`).join("")}</select>
    ${rh?`<select class="fsel" id="talOr" aria-label="Origem"><option value="">Todas as origens</option>${Object.entries(TAL_OR).map(([k,t])=>`<option value="${k}" ${F.or===k?"selected":""}>${t}</option>`).join("")}</select>`:""}</div>
   <div class="tal-lista">${vis.map(c=>{ const st=TAL_ST[c.status]||["neutral",c.status];
    return `<button type="button" class="card tal-c" data-tal="${c.id}"><div class="tal-c1"><span class="rh-av">${esc(rhIni(c.nome||"?"))}</span><div><b>${esc(c.nome||"Sem nome")}</b><div class="sub">${esc([c.cidade&&(c.cidade+(c.uf?"/"+c.uf:"")),(c.dados&&c.dados.senioridade&&c.dados.senioridade!=="indefinida")?c.dados.senioridade:"",talTrajCurto(c.dados&&c.dados.trajeto)].filter(Boolean).join(" · "))}</div></div>${talAd(c.aderencia)}</div>
     <div class="tal-c2"><span class="pill ${st[0]}">${st[1]}</span>${c.departamento_nome?`<span class="pill neutral">${esc(c.departamento_nome)}</span>`:`<span class="pill warn">Sem departamento</span>`}</div>
     <div class="tal-cg">${esc(c.cargo_nome||c.cargo_sugerido||"Cargo a definir")}${!c.cargo_nome&&c.cargo_sugerido?` <small>(sugestão da IA)</small>`:""}</div>
     <p class="sub tal-r">${esc((c.resumo||"").slice(0,180))}${(c.resumo||"").length>180?"…":""}</p>
-    <div class="sub tal-rod">${esc(TAL_OR[c.origem]||c.origem)} · ${new Date(c.criado_em).toLocaleDateString("pt-BR")}</div></button>`; }).join("")
+    <div class="tal-rod"><span class="tal-env" title="Data em que o currículo foi enviado">Enviado em ${talDataBR(talEnvio(c))} <small>${talHa(talEnvio(c))}</small></span><span class="sub">${esc(TAL_OR[c.origem]||c.origem)}</span></div></button>`; }).join("")
    ||`<div class="card"><div class="empty">${L.length?"Nenhum candidato com esses filtros.":rh?"Nenhum currículo ainda. Anexe os primeiros no quadro acima.":"Nenhum candidato liberado para a sua área ainda."}</div></div>`}</div>`;
  v.querySelectorAll("[data-talk]").forEach(b=>b.onclick=()=>{ F.st=b.dataset.talk; talPinta(v); });
  const qi=v.querySelector("#talQ"); qi.oninput=()=>{ F.q=qi.value; const p=qi.selectionStart; talPinta(v); const n=v.querySelector("#talQ"); n.focus(); n.setSelectionRange(p,p); };
- v.querySelector("#talDep").onchange=e=>{ F.dep=e.target.value; talPinta(v); }; v.querySelector("#talCg").onchange=e=>{ F.cg=e.target.value; talPinta(v); };
+ v.querySelector("#talTp").onchange=e=>{ F.tp=e.target.value; talPinta(v); }; v.querySelector("#talDep").onchange=e=>{ F.dep=e.target.value; talPinta(v); }; v.querySelector("#talCg").onchange=e=>{ F.cg=e.target.value; talPinta(v); };
  const ori=v.querySelector("#talOr"); if(ori) ori.onchange=e=>{ F.or=e.target.value; talPinta(v); };
  v.querySelectorAll("[data-tal]").forEach(b=>b.onclick=()=>talFicha(b.dataset.tal,v));
  const drop=v.querySelector("#talDrop"), arq=v.querySelector("#talArq");
@@ -10119,7 +10238,7 @@ function talTrajHTML(t,temEnd){ const bt=(x)=>`<button type="button" class="txt-
 function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.id===id); if(!c) return; const d=c.dados||{};
  const lst=(t,a)=>a&&a.length?`<h4 class="crm-h4">${t}</h4><ul class="tal-ul">${a.map(x=>`<li>${x}</li>`).join("")}</ul>`:"";
  const st=TAL_ST[c.status]||["neutral",c.status];
- const m=crmModal("Banco de talentos",c.nome||"Candidato",`<span class="pill ${st[0]}">${st[1]}</span>${c.aderencia!=null?`<span class="pill neutral">Aderência ${c.aderencia}%</span>`:""}`,`<div class="crm-2col"><div class="crm-colform">
+ const m=crmModal("Banco de talentos",c.nome||"Candidato",`<span class="pill ${st[0]}">${st[1]}</span><span class="pill neutral">Enviado em ${talDataBR(talEnvio(c))}</span>${c.aderencia!=null?`<span class="pill neutral">Aderência ${c.aderencia}%</span>`:""}`,`<div class="crm-2col"><div class="crm-colform">
   <div class="panel"><h4>Indicação da IA</h4>
    <p style="margin:0 0 6px"><b>${esc(c.departamento_nome||"Departamento a definir")}</b> · ${esc(c.cargo_nome||c.cargo_sugerido||"cargo a definir")}${!c.cargo_nome&&c.cargo_sugerido?" (sugestão livre)":""}</p>
    ${c.justificativa?`<p class="sub" style="margin:0 0 8px">${esc(c.justificativa)}</p>`:""}
@@ -10143,6 +10262,7 @@ function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.
    ${c.arquivo_path?`<button type="button" class="view-btn ghost" id="tArq" style="margin-top:10px">Ver currículo original</button>`:""}</div>
   <div class="panel" style="margin-top:12px"><h4>Trajeto até o escritório</h4><div id="tTraj">${talTrajHTML(d.trajeto,d.endereco||c.cidade)}</div></div>
   ${rh?`<div class="panel"><h4>Anotações do RH</h4><textarea class="inp" id="tObs" rows="3" placeholder="O gestor do departamento também vê estas anotações">${esc(c.obs||"")}</textarea>
+   <label class="crm-f" style="margin-top:8px"><span>Currículo enviado em</span><input class="inp" type="date" id="tRec" value="${escAttr(d.recebido_em||String(c.criado_em||"").slice(0,10))}"></label>
    <label class="crm-f" style="margin-top:8px"><span>Guardar até (LGPD)</span><input class="inp" type="date" id="tAte" value="${escAttr(c.guardar_ate||"")}"></label></div>`
    :c.obs?`<div class="panel"><h4>Anotações do RH</h4><p style="margin:0;white-space:pre-wrap">${esc(c.obs)}</p></div>`:""}
   <div class="panel"><h4>Parecer do gestor</h4>${c.nota_gestor?`<p style="margin:0 0 6px">${esc(c.nota_gestor)}</p><p class="sub" style="margin:0 0 8px">${esc(crmNomeResp?crmNomeResp(c.gestor_por)||c.gestor_por||"":c.gestor_por||"")}</p>`:`<p class="sub" style="margin:0 0 8px">${c.status==="revisao"?"Aparece para o gestor depois que o RH liberar.":"Ainda sem parecer."}</p>`}
@@ -10151,7 +10271,7 @@ function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.
  </div></div>`);
  const recarrega=async t=>{ closeModal(); if(t) crmToast(t); try{ TAL.d=await crmRpc("rh_talentos_dados",{p:{}}); }catch(_){} talPinta(v); };
  const arq=m.querySelector("#tArq"); if(arq) arq.onclick=async()=>{ arq.disabled=true; const w=window.open("","_blank"); try{ const r=await talFn({acao:"url",id}); if(w) w.location=r.url; else location.href=r.url; }catch(e){ if(w) w.close(); crmToast(e.message); } arq.disabled=false; };
- const dados=()=>({acao:"editar",id,nome:crmVal(m,"#tNome"),email:crmVal(m,"#tMail"),telefone:crmVal(m,"#tTel"),cidade:crmVal(m,"#tCid"),uf:crmVal(m,"#tUf"),departamento_id:crmVal(m,"#tDep"),cargo_id:crmVal(m,"#tCg"),obs:crmVal(m,"#tObs"),endereco:crmVal(m,"#tEnd"),guardar_ate:crmVal(m,"#tAte"),status:crmVal(m,"#tSt")});
+ const dados=()=>({acao:"editar",id,nome:crmVal(m,"#tNome"),email:crmVal(m,"#tMail"),telefone:crmVal(m,"#tTel"),cidade:crmVal(m,"#tCid"),uf:crmVal(m,"#tUf"),departamento_id:crmVal(m,"#tDep"),cargo_id:crmVal(m,"#tCg"),obs:crmVal(m,"#tObs"),endereco:crmVal(m,"#tEnd"),recebido_em:crmVal(m,"#tRec"),guardar_ate:crmVal(m,"#tAte"),status:crmVal(m,"#tSt")});
  const sv=m.querySelector("#tSalvar"); if(sv) sv.onclick=async()=>{ sv.disabled=true; try{ await crmRpc("rh_talentos_salvar",{p:dados()}); recarrega("Candidato salvo"); }catch(e){ sv.disabled=false; crmToast(crmErro(e)); } };
  const lib=m.querySelector("#tLib"); if(lib) lib.onclick=async()=>{ lib.disabled=true; try{ const p=dados(); delete p.status; await crmRpc("rh_talentos_salvar",{p}); await crmRpc("rh_talentos_salvar",{p:{acao:"liberar",id}}); recarrega(`Liberado para ${(D.departamentos.find(x=>x.id===p.departamento_id)||{}).nome||"o gestor"}`); }catch(e){ lib.disabled=false; crmToast(crmErro(e)); } };
  m.querySelectorAll("[data-tg]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ await crmRpc("rh_talentos_salvar",{p:{acao:"gestor",id,status:b.dataset.tg,nota:crmVal(m,"#tNota")}}); recarrega(b.dataset.tg==="entrevista"?"Marcado para entrevista. O RH vai ver.":"Parecer registrado"); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
@@ -10171,7 +10291,7 @@ function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.
 .tal-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
 .tal-c{display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;font:inherit;color:inherit;padding:14px;border:1px solid var(--border,#e3e8ea)}.tal-c:hover{border-color:#006789}
 .tal-c1{display:flex;align-items:center;gap:10px}.tal-c1>div{flex:1;min-width:0}.tal-c1 b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tal-c2{display:flex;flex-wrap:wrap;gap:6px}.tal-cg{font-weight:600;font-size:13.5px}.tal-cg small{font-weight:400;opacity:.7}.tal-r{margin:0;font-size:12.5px}.tal-rod{font-size:11.5px}
+.tal-c2{display:flex;flex-wrap:wrap;gap:6px}.tal-cg{font-weight:600;font-size:13.5px}.tal-cg small{font-weight:400;opacity:.7}.tal-r{margin:0;font-size:12.5px}.tal-rod{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;border-top:1px solid var(--border,#eef1f2);padding-top:8px;margin-top:auto}.tal-env{font-weight:600;color:#066789}.tal-env small{font-weight:400;opacity:.75}
 .tal-ad{font-weight:700;font-size:12px;border-radius:999px;padding:3px 9px}.tal-ad.a{background:#e3f4ec;color:#1f7a5a}.tal-ad.m{background:#fff3dc;color:#9a6b00}.tal-ad.b{background:#f2f4f5;color:#5b6770}
 .tal-ul{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5}.tal-tags{display:flex;flex-wrap:wrap;gap:6px}.tal-tags span{background:#e3eef3;color:#066789;border-radius:999px;padding:3px 10px;font-size:12px}
 .tal-tj{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.tal-tj div{background:#eef6f8;border-radius:12px;padding:10px}.tal-tj b{display:block;font-size:18px;color:#066789}.tal-tj span{font-size:11.5px;opacity:.75}
