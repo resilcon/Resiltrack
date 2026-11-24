@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.44 (Hermes CRM: funil de clientes com cards e etapas editáveis, menu Ações dos funis, contrato assinado leva o cliente para Clientes e para a intranet · Hermes CRM: movimentação de clientes da intranet na ficha do cliente · Hermes CRM: documentos do cliente em Contratos e na ficha, com aviso de validade · Themis RH: trajeto do candidato até o escritório, anotações do RH visíveis ao gestor, data de envio do currículo com filtro por período e navegação só pelo menu lateral · Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.45 (Hermes CRM: apresentação de onboarding gerada na simulação com os dados do cliente · Hermes CRM: funil de clientes com cards e etapas editáveis, menu Ações dos funis, contrato assinado leva o cliente para Clientes e para a intranet · Hermes CRM: movimentação de clientes da intranet na ficha do cliente · Hermes CRM: documentos do cliente em Contratos e na ficha, com aviso de validade · Themis RH: trajeto do candidato até o escritório, anotações do RH visíveis ao gestor, data de envio do currículo com filtro por período e navegação só pelo menu lateral · Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
   </div>
 </div>
 
@@ -5593,6 +5593,7 @@ function precoPintar(v){
     <button class="view-btn ghost" id="prPdf" ${S.cesta.length?"":"disabled"}>Gerar proposta</button>
     <button class="view-btn ghost" id="prContrato" ${S.cesta.length?"":"disabled"}>Gerar contrato</button>
     <button class="view-btn ghost" id="prApres" title="PowerPoint da Resilcon com o nome do cliente e os planos deste simulador">Gerar apresentação</button>
+    <button class="view-btn ghost" id="prOnb" title="PowerPoint de onboarding com os dados que o Hermes CRM já tem deste cliente">Gerar onboarding</button>
     <button class="view-btn ce-pri" id="prSalvar" ${S.cesta.length&&S.negocio?"":"disabled"} title="${S.negocio?"":"Escolha o negócio no topo"}">Salvar no negócio</button></div>
   </div>
  </div>`;
@@ -5676,7 +5677,7 @@ function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox
  box.querySelector("#prObs").oninput=e=>{ S.obs=e.target.value; };
  box.querySelector("#prVal").oninput=e=>{ S.validade=Math.max(1,+e.target.value||15); };
  box.querySelector("#prLimpar").onclick=()=>{ const neg=S.negocio, lista=S.negLista; PRECO_ST={arq:S.arq,nicho:S.nicho,negocio:neg,negLista:lista,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15}; re(); };
- box.querySelector("#prApres").onclick=()=>apresAbrir(); simLigarBanner(box,re); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>cliGarantir({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},()=>{ re(); ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(precoTotais().extrasM.concat(precoTotais().extrasU))}}); }); precoLigarAdicionais(box,re);
+ box.querySelector("#prApres").onclick=()=>apresAbrir(); box.querySelector("#prOnb").onclick=()=>onbAbrir(); simLigarBanner(box,re); box.querySelector("#prDiag").onclick=()=>diagAbrir(re); box.querySelector("#prPdf").onclick=()=>precoProposta(); box.querySelector("#prContrato").onclick=()=>cliGarantir({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},()=>{ re(); ctGerar({negocio:S.negocio,proposta:{cesta:S.cesta,extras:Object.values(precoTotais().extrasM.concat(precoTotais().extrasU))}}); }); precoLigarAdicionais(box,re);
  box.querySelector("#prSalvar").onclick=ev=>precoSalvarNegocio(ev.currentTarget);
 }
 
@@ -10501,6 +10502,89 @@ function talFicha(id,v){ const D=TAL.d, rh=D.rh, c=(D.candidatos||[]).find(x=>x.
 .tal-tj{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.tal-tj div{background:#eef6f8;border-radius:12px;padding:10px}.tal-tj b{display:block;font-size:18px;color:#066789}.tal-tj span{font-size:11.5px;opacity:.75}
 @media(max-width:760px){.tal-top{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
 
+
+// ================= Hermes CRM · ONBOARDING DO CLIENTE (v3.45): PowerPoint de onboarding com os dados do CRM =================
+const ONB_PASTA="onboarding";
+const ONB_PERG=[["Segmento e atividade","O que a empresa vende ou presta de serviço?"],["Regime tributário","Simples Nacional, Lucro Presumido ou Lucro Real?"],["Porte","Faturamento médio mensal, número de colaboradores e de CNPJs."],["Responsável interno","Quem vai falar com a Resilcon no dia a dia?"],["Sistemas","Usa ERP, emissor de notas, banco digital? Quais?"],["Contabilidade anterior","Como foi a experiência e o que não pode se repetir?"],["Motivação","O que levou você a contratar a Resilcon agora?"]];
+async function onbModelo(){ const {data,error}=await sb.storage.from("crm-arquivos").list(ONB_PASTA,{limit:100,sortBy:{column:"created_at",order:"desc"}});
+ if(error) throw error; const f=(data||[]).find(x=>/\.pptx$/i.test(x.name)); return f?`${ONB_PASTA}/${f.name}`:null; }
+async function onbEnviarModelo(file){ if(!/\.pptx$/i.test(file.name)) throw new Error("Envie o arquivo .pptx do modelo de onboarding.");
+ const path=`${ONB_PASTA}/modelo-${new Date().toISOString().replace(/[:.]/g,"-")}.pptx`;
+ const {error}=await sb.storage.from("crm-arquivos").upload(path,file,{contentType:"application/vnd.openxmlformats-officedocument.presentationml.presentation"}); if(error) throw error; return path; }
+const onbData=d=>{ if(!d) return ""; const x=new Date(String(d).length<=10?d+"T12:00":d); return isNaN(x)?"":x.toLocaleDateString("pt-BR"); };
+const onbJunta=a=>{ a=a.filter(Boolean); return a.length<2?(a[0]||""):a.slice(0,-1).join(", ")+" e "+a[a.length-1]; };
+// junta tudo o que o Hermes CRM já sabe do cliente: negócio, contato, simulador, diagnóstico, contratos e tarefas
+async function onbDados(){ const S=PRECO_ST, neg=S.negocio; let f=null, cl=null, o=neg||null;
+ if(neg&&neg.id){ try{ f=await crmRpc("crm_dados",{p_secao:"ficha",p_param:{negocio:neg.id}}); }catch(_){}
+  try{ cl=await cliCarregar(neg); }catch(_){} o=(f&&(f.negocios||[]).find(x=>x.id===neg.id))||neg; }
+ const c=(o&&o.campos)||{}, I=o?crmCardInfo(o):{}, prop=c.proposta||{};
+ let sim=null; try{ sim=apresDadosSimulador(); }catch(_){}
+ // respostas dos critérios do simulador (número de colaboradores, CNPJs, sistemas...) pelo nome
+ const crit={}; try{ const A=PRECO_DB[S.arq]; Object.entries(S.resp.crit||{}).forEach(([k,v])=>{ const cr=A&&A.P.criterios.find(x=>x.id===k); if(v!==""&&v!=null) crit[(cr&&cr.nome)||k]=v; }); }catch(_){}
+ Object.entries(((prop.cesta||[])[0]||{}).respostas?.crit||{}).forEach(([k,v])=>{ if(!(k in crit)&&v!==""&&v!=null) crit[k]=v; });
+ const achaCrit=re=>{ const k=Object.keys(crit).find(n=>re.test(n)); return k?{nome:k,valor:crit[k]}:null; };
+ const fatTxt=(sim&&sim.faturamento)||(()=>{ const r=((prop.cesta||[])[0]||{}).respostas||{}; const n=precoNum(r.faturamento); return n?precoMoeda(n):""; })();
+ const colab=achaCrit(/funcion|colaborad|empregad/i), cnpjs=achaCrit(/cnpj|filia|estabelec|empresas/i), sist=achaCrit(/sistema|erp|software/i);
+ const simNao=v=>v===true||/^(sim|s|true|1)$/i.test(String(v));
+ // diagnóstico (metas e dores) e estratégia de IA, do simulador ou salvos no negócio
+ let dg=null; try{ await pzCarregar(); dg=diagParaApresentacao(S.diag||prop.diagnostico||null); }catch(_){}
+ const metas=(dg&&dg.metas)||[], dores=(dg&&dg.dores)||[];
+ const R=[];
+ R[0]=[I.nicho||S.nicho||"",I.atividade||(sim&&sim.atividade)||""].map(x=>String(x||"").trim()).filter((x,i,a)=>x&&a.findIndex(y=>y.toLowerCase()===x.toLowerCase())===i).join(" · ");
+ R[1]=I.tributacao||(sim&&sim.regime)||"";
+ R[2]=[fatTxt?`Faturamento de ${fatTxt} por mês`:"",colab?`${colab.valor} colaborador${+colab.valor===1?"":"es"}`:"",cnpjs&&!simNao(cnpjs.valor)?`${cnpjs.valor} CNPJ${+cnpjs.valor===1?"":"s"}`:""].filter(Boolean).join(" · ");
+ R[3]=cl&&cl.nome?[cl.nome+(cl.cargo?`, ${cl.cargo}`:""),cliFmtTel(cl.telefone)||cl.email].filter(Boolean).join(" · "):"";
+ R[4]=c.sistemas||c.erp||(sist?(simNao(sist.valor)?sist.nome:String(sist.valor)):"");
+ R[5]=c.contabilidade_anterior||c.contabilidade||"";
+ R[6]=metas.length?"Quer "+onbJunta(metas.slice(0,2).map(m=>String(m.nome||"").toLowerCase())):dores.length?"Resolver "+onbJunta(dores.slice(0,2).map(d=>String(d.nome||"").toLowerCase())):(c.motivo||"");
+ const m0=metas[0];
+ const objetivo=m0?`${m0.nome}${m0.det?` ${m0.det}`:""}`:"";
+ // prazo: 3 meses depois da assinatura do contrato deste negócio
+ const ks=[...((f&&f.contratos)||[]),...((typeof CRMD!=="undefined"&&CRMD.contr)||[])].filter(k=>o&&k.oportunidade_id===o.id&&k.status!=="cancelado");
+ const ass=ks.map(k=>k.assinado_em||(k.status==="assinado"?k.inicio:"")).filter(Boolean).sort()[0];
+ let prazo="3 meses após a assinatura do contrato";
+ if(ass){ const d=new Date(ass+"T12:00"); d.setMonth(d.getMonth()+3); prazo=`${d.toLocaleDateString("pt-BR")} (3 meses após a assinatura)`; }
+ // próxima reunião: tarefa pendente de reunião deste negócio
+ const tars=[...((f&&f.tarefas)||[]),...(((typeof CRMD!=="undefined"&&CRMD.tarPorNeg&&o&&CRMD.tarPorNeg[o.id])?[CRMD.tarPorNeg[o.id]]:[]))].filter(t=>t&&t.status!=="concluida"&&t.vence_em&&(t.tipo==="reuniao"||/reuni|onboard|kick/i.test(t.titulo||""))).sort((a,b)=>String(a.vence_em).localeCompare(String(b.vence_em)));
+ const t0=tars[0]; let prox="";
+ if(t0){ const d=new Date(t0.vence_em); if(!isNaN(d)) prox=`${d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}${String(t0.vence_em).length>10?", às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}`; }
+ return {empresa:(cl&&cl.razao)||(o&&(o.empresa_nome||o.titulo))||"",resp:R.map(x=>String(x||"").trim()),objetivo,prazo,prox,temAss:!!ass}; }
+// troca os campos {{...}} do modelo
+async function onbMontar(zip,d){ const n=d.resp.filter(Boolean).length;
+ const V={EMPRESA_CAPA:String(d.empresa||"").toUpperCase().slice(0,60),PRAZO:d.prazo,PROX_REUNIAO:d.prox||"[dd/mm, às hh:mm]",
+  OBJETIVO:d.objetivo||"[Escreva aqui o objetivo combinado com o cliente]",
+  OBJETIVO_SUB:d.objetivo?"Objetivo levantado no diagnóstico comercial. Confirme com o cliente e ajuste se precisar.":"Exemplo: em 90 dias, ter a contabilidade 100% em dia e receber o primeiro relatório gerencial com o lucro real da empresa.",
+  NG_STATUS:n?`Já sabemos ${n} de ${ONB_PERG.length} respostas pelo comercial. Vamos só confirmar e completar o que falta.`:"Vamos preencher juntos durante a reunião."};
+ ONB_PERG.forEach((p,i)=>{ const r=d.resp[i]; V[`NGA_${i+1}`]=r?(r.length>110?r.slice(0,108).trim()+"…":r):""; V[`NGQ_${i+1}`]=r?"":p[1]; });
+ for(const f of Object.keys(zip.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))){ let x=await zip.file(f).async("string"); if(!x.includes("{{")) continue;
+  x=x.replace(/\{\{([A-Z0-9_]+)\}\}/g,(m,k)=>k in V?apresXml(V[k]):""); zip.file(f,x); }
+ return zip; }
+async function onbAbrir(){ let d; crmToast("Buscando os dados do cliente…");
+ try{ d=await onbDados(); }catch(err){ crmToast(crmErro(err)); return; }
+ let modelo=null; try{ modelo=await onbModelo(); }catch(_){}
+ const n=d.resp.filter(Boolean).length;
+ const m=crmModal("Simulador de planos","Gerar apresentação de onboarding","",`<p class="sub" style="margin:0 0 6px">O onboarding sai com o nome do cliente na capa e com as respostas que o Hermes CRM já tem no slide "Conhecendo o seu negócio". ${n} de ${ONB_PERG.length} respostas encontradas. O que ficar vazio continua com a pergunta no slide, para preencher na reunião.</p>
+  <div class="crm-form"><label class="crm-f crm-w2"><span>Empresa do cliente (capa)</span><input class="inp" id="obEmp" value="${escAttr(d.empresa)}" placeholder="Nome que aparece na capa"></label>
+   ${ONB_PERG.map((p,i)=>`<label class="crm-f crm-w2"><span>${esc(p[0])}${d.resp[i]?"":' <small class="sub">· a confirmar</small>'}</span><input class="inp" data-obr="${i}" value="${escAttr(d.resp[i])}" placeholder="${escAttr(p[1])}"></label>`).join("")}
+   <label class="crm-f crm-w2"><span>Objetivo do onboarding</span><input class="inp" id="obObj" value="${escAttr(d.objetivo)}" placeholder="Ex.: em 90 dias, contabilidade em dia e primeiro relatório gerencial"></label>
+   <label class="crm-f"><span>Próxima reunião</span><input class="inp" id="obProx" value="${escAttr(d.prox)}" placeholder="dd/mm, às hh:mm"></label>
+   <label class="crm-f"><span>Prazo de conclusão</span><input class="inp" id="obPrazo" value="${escAttr(d.prazo)}"></label></div>
+  <div class="ce-note">${modelo?`Modelo usado: ${esc(modelo.split("/").pop())}.`:`Ainda não há modelo do onboarding no Hermes CRM. Envie uma vez o arquivo "Modelo Onboarding Resilcon (CRM).pptx" e ele fica salvo para todos.`}
+   <label class="txt-btn" style="cursor:pointer;margin-left:6px">${modelo?"Trocar modelo":"Enviar modelo"}<input type="file" id="obArq" accept=".pptx" hidden></label></div>
+  <div class="crm-pe"><span class="sub" id="obMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="obOk">Gerar onboarding</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const msg=t=>{ m.querySelector("#obMsg").textContent=t||""; };
+ m.querySelector("#obArq").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; msg("Enviando o modelo…"); try{ modelo=await onbEnviarModelo(f); msg("Modelo salvo."); m.querySelector(".ce-note").firstChild.textContent=`Modelo usado: ${modelo.split("/").pop()}. `; }catch(err){ msg(""); crmToast(crmErro(err)); } };
+ m.querySelector("#obOk").onclick=async ev=>{ const b=ev.currentTarget; if(!modelo){ crmToast("Envie o modelo do onboarding primeiro."); return; }
+  const empresa=crmVal(m,"#obEmp"); if(!empresa){ crmToast("Informe o nome da empresa do cliente."); return; }
+  const dd={empresa,resp:[...m.querySelectorAll("[data-obr]")].map(i=>i.value.trim()),objetivo:crmVal(m,"#obObj"),prox:crmVal(m,"#obProx"),prazo:crmVal(m,"#obPrazo")||"3 meses após a assinatura do contrato"};
+  b.disabled=true; msg("Montando a apresentação…");
+  try{ const JSZip=await apresCarregaJSZip(); const {data,error}=await sb.storage.from("crm-arquivos").download(modelo); if(error) throw error;
+   const zip=await JSZip.loadAsync(await data.arrayBuffer()); await onbMontar(zip,dd);
+   const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.presentationml.presentation",compression:"DEFLATE"});
+   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Onboarding Resilcon - ${empresa.replace(/[\\/:*?"<>|]+/g,"")}.pptx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),20000);
+   closeModal(); crmToast("Onboarding gerado. Abra no PowerPoint e use a pauta para navegar."); }
+  catch(err){ b.disabled=false; msg(""); crmToast(crmErro(err)); } }; }
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
