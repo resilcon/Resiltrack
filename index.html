@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.45 (Hermes CRM: apresentação de onboarding gerada na simulação com os dados do cliente · Hermes CRM: funil de clientes com cards e etapas editáveis, menu Ações dos funis, contrato assinado leva o cliente para Clientes e para a intranet · Hermes CRM: movimentação de clientes da intranet na ficha do cliente · Hermes CRM: documentos do cliente em Contratos e na ficha, com aviso de validade · Themis RH: trajeto do candidato até o escritório, anotações do RH visíveis ao gestor, data de envio do currículo com filtro por período e navegação só pelo menu lateral · Themis RH: banco de talentos com IA · novos nomes: Íris TV, Mida$ Bank, Themis RH e Kronos ID · contratos: margens maiores para assinatura digital e página de assinaturas · contratos: cláusulas citam a empresa escolhida · contratos: botões da contratada com logo na capa e troca de dados · contratada entre Resilcon, TEVAT e BAADV · contratos: botão Salvar mostra Salvando e Salvo · Kronos: fiscalização, convenção coletiva e exportação · Kronos: ajustes de ponto pelo RH · Admin: usuários e acessos por módulo · Kronos: forma de registro e ponto online · RH: admissão digital com link seguro e D4Sign · Hermes CRM: empresa no cadastro de negócio · Hermes CRM: vincular simulação a um cliente cadastrado · Hermes CRM e Mida$: novos nomes do CRM e do Financeiro · CRM: busca de CNPJ na Receita · Íris: alerta urgente, link curto e visual por TV · CRM: descontos e acréscimos na simulação · Íris: gestão das TVs · Kronos: painel do dia, espelho e pendências · CRM: dados do cliente na simulação e na proposta, assinaturas, valores adicionais, IA no contato)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.48 (Hermes CRM: ajustes entram no preço dos planos com botão Adicionar valor, e textos das linhas do plano editáveis)</footer>
   </div>
 </div>
 
@@ -4135,7 +4135,7 @@ function crmAposSalvar(){ delete CRMD.contatos; delete CRMD.empresas; if(MODE.st
 // ================= FUNIL =================
 async function crmVFunil(v){
  const funis=CRMB.funis||[]; if(!funis.some(f=>f.id===CRMF.funil)) CRMF.funil="vendas";
- v.innerHTML=crmHead("Funil de vendas","Leads de Atração a Decisão. Clientes do G-Click em Retenção, Lealdade e Indicação.",
+ v.innerHTML=crmHead("Funil de vendas","Leads de Atração a Decisão. Clientes andam sozinhos de Retenção a Pronto para indicação pelos atendimentos.",
    `<button class="txt-btn" id="crmBtnInd">Registrar indicação</button>${crmPri('id="crmBtnNovo">Novo negócio</button>')}`)+`<div id="crmAmp"></div><div id="crmBar"></div><div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#crmBtnNovo").onclick=()=>crmFichaNegocio(null);
  v.querySelector("#crmBtnInd").onclick=()=>crmNovaIndicacao();
@@ -5611,8 +5611,10 @@ function precoTabela(R,S,ativs,fat){
  const cap=t=>{ t=String(t||"").toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); };
  const sub=["Essencial","Mais completo","Consultivo","Premium"];
  const col=(i,html,extra)=>`<div class="pt-c ${i===iDest?"pt-dest":""} ${extra||""}">${html}</div>`;
- const cols=R.planos.map((p,i)=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
+ const cols=R.planos.map((p,i)=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=ajPlanoCalc(S.arq,p.id,aj!=null&&aj!==""?precoNum(aj):base).final;
   const [int,dec]=precoMoeda(final).replace("R$","").trim().split(","); return {p,i,base,aj,final,int,dec}; });
+ S._planos=R.planos.map(p=>({id:p.id,nome:p.nome.split(" - ")[0]}));
+ const ajs=ajNoPlano(S.arq);
  const ok='<svg viewBox="0 0 24 24" width="18" height="18" aria-label="Incluso"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
  const no='<svg viewBox="0 0 24 24" width="16" height="16" aria-label="Não incluso"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
  const corNome=c=>{ const h=String(c||"").replace("#",""); if(!/^[0-9a-f]{6}$/i.test(h)) return "#7fd0ea"; const [r,g,b]=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); return (0.299*r+0.587*g+0.114*b)<110?"#e8f1f4":"#"+h; };
@@ -5620,9 +5622,10 @@ function precoTabela(R,S,ativs,fat){
   <div class="pt-l pt-titulo"><span>Planos</span><b>${esc(PRECO_DB[S.arq].nome)}</b></div>
   ${cols.map(c=>col(c.i,`${c.i===iDest?`<span class="pt-selo">${escolhido?"Escolhido":"Recomendado"}</span>`:""}<b class="pt-nome" style="--pc:${escAttr(corNome(c.p.cor))}">${esc(c.p.nome.split(" - ")[0])}</b><span class="pt-sub">${esc(c.p.nome.split(" - ")[1]||sub[c.i]||"")}</span>`,"pt-cab")).join("")}
   <div class="pt-l pt-precorot">Mensalidade</div>
-  ${cols.map(c=>col(c.i,semFat?`<span class="pt-vazio">Informe o faturamento</span>`:`<div class="pt-preco"><small>R$</small><b>${c.int}</b><sup>,${c.dec}</sup><em>/mês</em></div>${c.aj!=null&&c.aj!==""?`<span class="pt-tab">tabela ${precoMoeda(c.base)}</span>`:""}`,"pt-precocel")).join("")}
-  ${itens.map((it,r)=>`<div class="pt-l ${r%2?"pt-z":""}">${esc(cap(it.nome))}</div>${cols.map(c=>col(c.i,tem(c.p,it.k)?`<span class="pt-ok">${ok}</span>`:`<span class="pt-no">${no}</span>`,r%2?"pt-z":"")).join("")}`).join("")}
-  <div class="pt-l pt-acoesrot"><button class="txt-btn" id="ptCalc">${S.verCalc?"Esconder o cálculo":"Ver como chegamos nos valores"}</button></div>
+  ${cols.map(c=>col(c.i,semFat?`<span class="pt-vazio">Informe o faturamento</span>`:`<div class="pt-preco"><small>R$</small><b>${c.int}</b><sup>,${c.dec}</sup><em>/mês</em></div>${c.final!==c.base?`<span class="pt-tab">tabela ${precoMoeda(c.base)}</span>`:""}`,"pt-precocel")).join("")}
+  ${itens.map((it,r)=>`<div class="pt-l ${r%2?"pt-z":""} ${S.editTxt?"pt-led":""}">${S.editTxt?`<input class="pt-txt" data-ptxt="${escAttr(it.k)}" value="${escAttr(ptTexto(S.arq,it.nome))}" aria-label="Texto da linha">${(S.textos||{})[S.arq+":"+it.k]!=null?`<button type="button" class="pt-txtv" data-ptxtv="${escAttr(it.k)}" title="Voltar ao texto original" aria-label="Voltar ao texto original">↺</button>`:""}`:esc(ptTexto(S.arq,it.nome))}</div>${cols.map(c=>col(c.i,tem(c.p,it.k)?`<span class="pt-ok">${ok}</span>`:`<span class="pt-no">${no}</span>`,r%2?"pt-z":"")).join("")}`).join("")}
+  ${ajs.map(([k,x],r)=>`<div class="pt-l pt-ajrot ${(itens.length+r)%2?"pt-z":""}">${esc(ajRotulo(x))}<small>${x.tipo==="desconto"?"desconto no plano":"somado no plano"}</small></div>${cols.map(c=>col(c.i,x.plano==="todos"||x.plano===c.p.id?`<span class="pt-ajv ${x.tipo==="desconto"?"des":""}">${ajValorTxt(x)}</span>`:`<span class="pt-no">${no}</span>`,(itens.length+r)%2?"pt-z":"")).join("")}`).join("")}
+  <div class="pt-l pt-acoesrot"><button class="txt-btn" id="ptCalc">${S.verCalc?"Esconder o cálculo":"Ver como chegamos nos valores"}</button><button class="txt-btn" id="ptTxtEd">${S.editTxt?"Concluir edição dos textos":"Editar textos das linhas"}</button></div>
   ${cols.map(c=>{ const na=S.cesta.find(x=>x.arq===S.arq&&x.planoId===c.p.id); return col(c.i,`<button class="pt-btn ${na?"on":""}" data-escolher="${c.p.id}" ${semFat?"disabled":""}>${na?"Escolhido ✓":"Escolher"}</button>`,"pt-acao"); }).join("")}
  </div></div>
  ${S.verCalc?`<div class="pt-calc">${cols.map(c=>`<div class="card ce-pad"><h4 style="margin:0 0 8px">${esc(c.p.nome)}</h4>${c.p.linhas.map(l=>`<div class="ce-row"><span>${esc(l.rotulo)}</span><b class="num">${precoMoeda(l.valor)}</b></div>`).join("")||`<p class="sub">Nada somado ainda.</p>`}
@@ -5702,7 +5705,7 @@ async function precoSalvarNegocio(b){ const S=PRECO_ST; if(!S.negocio||!S.cesta.
 function precoProposta(){ const S=PRECO_ST, t=precoTotais(); const hoje=new Date(); const val=new Date(hoje.getTime()+S.validade*864e5);
  const cli=S.negocio?(S.negocio.contato_nome||S.negocio.empresa_nome||S.negocio.titulo):"";
  const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
- const cap=s=>{ s=String(s||""); return s.charAt(0)+s.slice(1).toLowerCase(); };
+ const cap=s=>{ s=String(s||""); return /[a-zà-ú]/.test(s)?s:s.charAt(0)+s.slice(1).toLowerCase(); };
  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta Resilcon${cli?" · "+e(cli):""}</title>
 <style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#f3f6f8}.pg{max-width:820px;margin:0 auto;background:#fff;min-height:100vh}
 .hero{background:#0b1a20;background-image:radial-gradient(120% 120% at 0% 0%,#006789 0%,rgba(0,103,137,.3) 45%,rgba(11,26,32,0) 75%);color:#fff;padding:36px 44px}
@@ -6673,8 +6676,8 @@ function apresDadosSimulador(){ const S=PRECO_ST, A=PRECO_DB[S.arq], P=A.P;
  const ativ=P.atividades.find(a=>a.chave===S.resp.atividade); const fat=precoNum(S.resp.faturamento);
  const R=precoCalcular(P,{faturamento:fat,tributacao:S.resp.tributacao,atividade:S.resp.atividade,crit:S.resp.crit});
  const naCesta=new Set(S.cesta.filter(c=>c.arq===S.arq).map(c=>c.planoId));
- const planos=R.planos.map(p=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const final=aj!=null&&aj!==""?precoNum(aj):base;
-  return {id:p.id,nome:p.nome,valor:final,de:final<base?base:null,itens:(p.inclusos||[]).map(x=>x.nome),recomendado:naCesta.has(p.id)}; });
+ const planos=R.planos.map(p=>{ const base=precoTeto(p.total); const aj=S.ajuste[S.arq+":"+p.id]; const rr=ajPlanoCalc(S.arq,p.id,aj!=null&&aj!==""?precoNum(aj):base), final=rr.final;
+  return {id:p.id,nome:p.nome,valor:final,de:final<base?base:null,itens:[...(p.inclusos||[]).map(x=>ptTexto(S.arq,x.nome)),...rr.itens.filter(i=>i.x.tipo!=="desconto"&&String(i.x.nome||"").trim()).map(i=>String(i.x.nome).trim())],recomendado:naCesta.has(p.id)}; });
  return {produto:A.nome,atividade:ativ?apresCap(ativ.nome):"",regime:S.resp.tributacao||"",faturamento:fat?precoMoeda(fat):"",validade:S.validade,planos,
   empresa:S.negocio?(S.negocio.empresa_nome||S.negocio.titulo||""):"",semFat:P.atividades.length&&!fat,diag:(typeof diagParaApresentacao==="function"?diagParaApresentacao(S.diag):null)}; }
 async function apresAbrir(){ const S=PRECO_ST; try{ await pzCarregar(); }catch(_){} const d=apresDadosSimulador();
@@ -7406,7 +7409,7 @@ async function simAbrir(id){ try{ await precoCarregar(); const s=await crmRpc("c
 function simEntrar(s,neg,nova){
  if(s.tipo==="avulso") return simAvulso(s,neg);
  const d=s.dados||{}; const lista=PRECO_ST.negLista;
- PRECO_ST={arq:d.arq||PRECO_ST.arq,nicho:d.nicho||s.nicho||"",negocio:neg,negLista:lista,resp:d.resp||{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:d.ajuste||{},cesta:d.cesta||[],extras:d.extras||{},
+ PRECO_ST={arq:d.arq||PRECO_ST.arq,nicho:d.nicho||s.nicho||"",negocio:neg,negLista:lista,resp:d.resp||{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:d.ajuste||{},textos:d.textos||{},cesta:d.cesta||[],extras:d.extras||{},
   parcelas:d.parcelas||1,obs:d.obs||"",busca:"",validade:d.validade||15,...(d.diag?{diag:d.diag}:{}),sim:{id:s.id,numero:s.numero,tipo:s.tipo,etapa:s.etapa}};
  if(!PRECO_ST.diag&&neg&&neg.campos&&neg.campos.proposta&&neg.campos.proposta.diagnostico) PRECO_ST.diag=neg.campos.proposta.diagnostico;
  if(PRECO_ST.nicho&&typeof precoEscolherNicho==="function") precoEscolherNicho(PRECO_ST.nicho);
@@ -7417,7 +7420,7 @@ async function simSalvarSimulador(quieto){ const S=PRECO_ST; if(!S.sim) return; 
  const n=S.negocio||{};
  const r=await crmRpc("crm_salvar_simulacao",{p:{id:S.sim.id,etapa:S.sim.etapa||(S.cesta.length?"Planos":"Info. contábeis"),oportunidade_id:n.id||"",contato_id:n.contato_id||"",cliente_nome:n.contato_nome||n.titulo||"",empresa_nome:n.empresa_nome||"",
   nicho:S.nicho||"",persona:(S.diag&&S.diag.persona)||S.nicho||"",valor_mensal:t.mensal||"",valor_unico:t.avulso||"",
-  dados:{arq:S.arq,nicho:S.nicho,resp:S.resp,ajuste:S.ajuste,cesta:S.cesta.map(({linhas,...c})=>c),extras:S.extras,parcelas:S.parcelas,obs:S.obs,validade:S.validade,diag:S.diag||null}}});
+  dados:{arq:S.arq,nicho:S.nicho,resp:S.resp,ajuste:S.ajuste,textos:S.textos||{},cesta:S.cesta.map(({linhas,...c})=>c),extras:S.extras,parcelas:S.parcelas,obs:S.obs,validade:S.validade,diag:S.diag||null}}});
  S.sim.etapa=r.etapa; if(!quieto) crmToast(`Simulação ${simNum(S.sim.numero)} salva`); return r; }
 function simBanner(){ const S=PRECO_ST; if(!S.sim) return "";
  return `<div class="sim-banner"><div><b>Simulação ${simNum(S.sim.numero)}</b> · ${esc(SIM_TIPOS[S.sim.tipo]||"")}${S.negocio?` · ${esc(S.negocio.titulo)}`:""}<div class="sub">As mudanças ficam salvas quando você clica em Salvar simulação ou em Salvar no negócio.</div></div>
@@ -9043,7 +9046,7 @@ async function precoProposta(){ const S=PRECO_ST; try{ await ctConfig(); }catch(
  cliGarantir({negocio:S.negocio,simId:S.sim&&S.sim.id,nicho:S.nicho,aoTrocarNegocio:n=>{ S.negocio=n; }},(cl)=>{ precoPropostaGerar(cl); precoPintar(document.getElementById("view")); }); }
 function precoPropostaGerar(cl){ const S=PRECO_ST, t=precoTotais(); const hoje=new Date(); const val=new Date(hoje.getTime()+S.validade*864e5);
  const B=cliPropostaBlocos(cl), e=B.e, cli=cl.razao||cl.nome;
- const cap=s=>{ s=String(s||""); return s.charAt(0)+s.slice(1).toLowerCase(); };
+ const cap=s=>{ s=String(s||""); return /[a-zà-ú]/.test(s)?s:s.charAt(0)+s.slice(1).toLowerCase(); };
  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Proposta Resilcon · ${e(cli)}</title>
 <style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#f3f6f8}.pg{max-width:820px;margin:0 auto;background:#fff;min-height:100vh}
 .hero{background:#0b1a20;background-image:radial-gradient(120% 120% at 0% 0%,#006789 0%,rgba(0,103,137,.3) 45%,rgba(11,26,32,0) 75%);color:#fff;padding:36px 44px}
@@ -9640,6 +9643,246 @@ crmFunilPinta=function(v){ crmSincFases();
 .crm-acoes-m button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:10px;font:inherit;color:inherit;cursor:pointer}.crm-acoes-m button:hover{background:#eef6f8}.crm-acoes-sep{height:1px;background:var(--border,#e3e8ea);margin:4px 6px}
 .fe-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}.fe-row{display:flex;align-items:center;gap:6px}.fe-row .inp{flex:1}.fe-cor{width:10px;height:28px;border-radius:4px;flex:0 0 auto}
 .fe-aviso{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fff4e6;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}`; document.head.appendChild(s); })();
+
+// ================= Hermes CRM · FUNIL DE CLIENTES AUTOMÁTICO, SENSÍVEIS E FONTES (v3.46) =================
+// A etapa de cada cliente sai sozinha dos atendimentos analisados no Resiltrack (RPC crm_clientes_saude):
+// Retenção, Lealdade, Pronto para indicação, Indicou e Atenção (sensíveis da intranet, risco de troca, insatisfação, pendência).
+// Fonte do lead: filtro por grupo (Minato SDR, Marketing, Indicação) e funil de indicações separado.
+const CRM_SAUDE_ET=[["retencao","Retenção"],["lealdade","Lealdade"],["pronto","Pronto para indicação"],["indicou","Indicou"],["atencao","Atenção"]];
+Object.assign(CRM_ETAPA_COR,{retencao:"#7B5BA6",lealdade:"#1c7ed6",pronto:"#0ca678",indicou:"#a37a00",atencao:"#c92a2a"});
+crmEtapasClientes=function(){ return CRM_SAUDE_ET; };
+Object.assign(CRM_ORIG,{minato:"Minato (SDR)",seo:"SEO (Google orgânico)",geo:"GEO (busca por IA)",google_ads:"Google Ads",meta_ads:"Meta Ads",instagram:"Instagram",linkedin:"LinkedIn",marketing:"Ação de marketing"});
+const CRM_FONTE_GR={minato:{nome:"Minato (SDR)",tem:o=>o.origem==="minato"||/minato/i.test(String((o.campos||{}).sdr||""))},
+ mkt:{nome:"Marketing (site, SEO, GEO, anúncios)",tem:o=>["formulario","site","seo","geo","google_ads","meta_ads","instagram","linkedin","marketing","whatsapp","evento"].includes(o.origem)},
+ ind:{nome:"Indicação (clientes e parceiros)",tem:o=>["indicacao","indicacao_parceiro"].includes(o.origem)||!!o.indicado_por_nome}};
+crmFiltraNeg=function(l){ const q=CRMF.q.toLowerCase(), g=String(CRMF.origem||"").startsWith("g:")?CRM_FONTE_GR[CRMF.origem.slice(2)]:null;
+ return l.filter(o=>(!CRMF.resp||(CRMF.resp==="_sem"?!o.responsavel_email:o.responsavel_email===CRMF.resp))&&(!CRMF.origem||(g?g.tem(o):o.origem===CRMF.origem))
+  &&(!q||[o.titulo,o.contato_nome,o.contato_email,o.empresa_nome,o.cnpj,o.indicado_por_nome].join(" ").toLowerCase().includes(q))); };
+
+// saúde dos clientes (cache de 5 minutos)
+function crmSaudeCarrega(v){ const S=CRMD.saudeInfo||{}; if(S.carregando||(S.em&&Date.now()-S.em<300000)) return;
+ CRMD.saudeInfo={carregando:true};
+ Promise.all([crmRpc("crm_clientes_saude",{}).catch(e=>({__erro:crmErro(e)})),crmRpc("crm_sensiveis_lista",{}).catch(()=>[])]).then(([s,l])=>{
+  CRMD.saude=s&&!s.__erro?s:{}; CRMD.sensLista=l||[]; CRMD.saudeInfo={em:Date.now(),erro:s&&s.__erro};
+  if(MODE==="crm_funil") crmFunilPinta(v||document.getElementById("view")); });
+}
+crmClientesFase=function(){ const S=CRMD.saude||{}, ind=(CRMD.cli&&CRMD.cli.indicacoes)||{};
+ return crmEmpresasGclick().map(c=>{ const h=S[c.id]||{}; return {...c,saude:h,fase:h.etapa||"retencao",ind:ind[c.id]||{total:0,ganhas:0}}; }); };
+
+const crmNota=n=>n==null?"":String(n).replace(".",",");
+function crmMotivoSaude(c){ const h=c.saude||{}, n=h.n180||0, sat=h.sat||0, nota=h.nota;
+ if(c.novo) return "Fechou agora no Hermes CRM. Entra no cálculo quando tiver atendimentos.";
+ if(c.fase==="atencao"){ const r=[]; if((h.sens||[]).length) r.push("cliente sensível na intranet"); if(h.risco==="provavel") r.push("risco provável de troca de contabilidade");
+  if((h.insat||0)>=2) r.push(`${h.insat} atendimentos insatisfeitos`); if(h.pend_fin) r.push("título em atraso no financeiro"); else if(h.sinal_fin) r.push("ponto de atenção no financeiro");
+  const t=r.join(", "); return t?t.charAt(0).toUpperCase()+t.slice(1)+".":"Precisa de atenção."; }
+ if(c.fase==="indicou") return `Indicou ${h.indicacoes||1} vez${(h.indicacoes||1)>1?"es":""} nos últimos 12 meses.`;
+ if(c.fase==="pronto") return "Satisfeito, nota alta e sem risco. Bom momento para pedir indicação.";
+ const falta=[]; const alvo=c.fase==="lealdade"?{sat:3,nota:9}:{sat:2,nota:8};
+ if(!n) return "Sem atendimento analisado nos últimos 180 dias.";
+ if(sat<alvo.sat) falta.push(`${alvo.sat-sat} atendimento${alvo.sat-sat>1?"s":""} satisfeito${alvo.sat-sat>1?"s":""}`);
+ if(nota==null||nota<alvo.nota) falta.push(`nota média ${alvo.nota}+`);
+ if((h.insat||0)>0) falta.push("nenhum insatisfeito");
+ if(c.fase==="lealdade"&&h.risco) falta.push("sem risco de troca");
+ if(c.fase==="lealdade"&&h.desde&&crmDias(h.desde)<180) falta.push("6 meses de casa");
+ return falta.length?`Para ${c.fase==="lealdade"?"pedir indicação":"Lealdade"}: falta ${falta.join(", ")}.`:"";
+}
+function crmCardSaude(c,cor){ const h=c.saude||{}, sens=h.sens||[], mv=c.mov||{};
+ const sc=h.score, scCor=sc==null?"#868e96":sc>=75?"#0ca678":sc>=50?"#e8a317":"#c92a2a";
+ const ult=h.ultimo?crmDias(h.ultimo):null;
+ const k=(c.ks||[]).find(x=>x.status==="assinado"), valor=(k&&+k.valor_mensal)||+c.contrato_valor||0;
+ const stats=h.n180?`<div class="cs-st"><span title="Nota média dos atendimentos (180 dias)"><b>${crmNota(h.nota)||"-"}</b> nota</span><span title="Atendimentos analisados (180 dias)"><b>${h.n180}</b> atend.</span><span title="Satisfeitos"><b style="color:#0ca678">${h.sat||0}</b> satisf.</span>${h.insat?`<span title="Insatisfeitos"><b style="color:#c92a2a">${h.insat}</b> insatisf.</span>`:""}</div>`:"";
+ return `<div class="kcard crm-card ccard cs-card ${sens.length?"cs-sens":""}" data-cli3="${escAttr(c.chave)}" style="--c:${cor}">
+  <div class="cs-top"><div class="ccard-tit cs-tit">${esc(c.apelido||c.nome||"Cliente")}</div>${sc!=null?`<span class="cs-sc" style="--s:${scCor}" title="Saúde do cliente de 0 a 100">${sc}</span>`:""}</div>
+  <div class="cs-bds">${sens.length?`<span class="ccard-bd cs-bd-s" title="${escAttr(sens.map(s=>s.problema||s.instrucoes||"").filter(x=>x&&x!==".").join(" | ")||"Cliente sensível na intranet")}">SENSÍVEL</span>`:""}${h.risco?`<span class="ccard-bd" style="background:${h.risco==="provavel"?"#c92a2a":"#e8a317"}">RISCO ${h.risco==="provavel"?"PROVÁVEL":"POSSÍVEL"}</span>`:""}${c.novo?`<span class="ccard-bd">NOVO</span>`:""}${mv.tipo==="saida"?`<span class="ccard-bd" style="background:#495057">SAÍDA</span>`:""}</div>
+  ${c.cnpj?`<div class="cs-sub num">${esc(fmtCnpj(c.cnpj))}</div>`:""}
+  ${stats}
+  <div class="cs-mot">${esc(crmMotivoSaude(c))}</div>
+  ${sens.length?sens.slice(0,1).map(s=>{ const t=[s.problema,s.instrucoes].map(x=>String(x||"").trim()).filter(x=>x&&x!==".")[0]; return t?`<div class="cs-sensbox">${esc(t.length>140?t.slice(0,140)+"…":t)}</div>`:""; }).join(""):""}
+  ${c.fase==="pronto"?`<button class="view-btn ghost cs-ped" data-pedir="${escAttr(c.chave)}">Pedir indicação</button>`:""}
+  <div class="ccard-pe cs-pe"><span class="sub">${ult!=null?`último atend. ${ult===0?"hoje":ult===1?"ontem":`há ${ult}d`}`:"sem atendimento recente"}</span>${valor?`<span class="kmini">${brl(valor)}/mês</span>`:""}</div></div>`;
+}
+crmQuadroClientes=function(box,cli,v){
+ crmSaudeCarrega(v);
+ if(!CRMD.cliExtra){ CRMD.cliExtra={carregando:true};
+  Promise.all([crmRpc("crm_clientes_novos",{}).catch(()=>[]),crmRpc("crm_movimentacoes",{p:{todas:true}}).catch(()=>[])]).then(([nv,mv])=>{ CRMD.cliExtra={novos:nv||[],mov:mv||[]}; if(MODE==="crm_funil"&&CRMF.lado==="clientes") crmFunilPinta(v); }); }
+ const X=CRMD.cliExtra.novos?CRMD.cliExtra:{novos:[],mov:[]};
+ const movPor={}; (X.mov||[]).forEach(m=>{ if(!m.gclick_empresa_id) return; const a=movPor[m.gclick_empresa_id]; const dt=x=>String(x.data_movimento||x.inicio_atividades||x.criado_em||""); if(!a||dt(m)>dt(a)) movPor[m.gclick_empresa_id]=m; });
+ const busca=crmContratosPorCliente(CRMD.contr);
+ const lista=[...cli.map(c=>({...c,chave:c.id,ks:busca(c.id,c.cnpj),mov:movPor[c.id]})),
+  ...(X.novos||[]).map(n=>({...n,novo:true,fase:"retencao",saude:{},ks:(CRMD.contr||[]).filter(k=>k.oportunidade_id===n.oportunidade_id),ind:{total:0,ganhas:0}}))];
+ const q=crmNormTxt(CRMF.q||""); let l=lista.filter(c=>!q||crmNormTxt([c.nome,c.apelido,c.razao,c.cnpj,dig(c.cnpj),c.contato_nome].join(" ")).includes(q));
+ if(CRMF.soSens) l=l.filter(c=>((c.saude||{}).sens||[]).length||c.fase==="atencao");
+ const S=CRMD.saudeInfo||{};
+ if(!cli.length&&!(X.novos||[]).length){ box.innerHTML=`<div class="card"><div class="empty">Os clientes do G-Click ainda não carregaram. Volte em alguns segundos.</div></div>`; return; }
+ const semV=(CRMD.sensLista||[]).filter(s=>!s.gclick_empresa_id);
+ const ord={pronto:(a,b)=>(b.saude.score||0)-(a.saude.score||0),lealdade:(a,b)=>(b.saude.score||0)-(a.saude.score||0),indicou:(a,b)=>(b.saude.indicacoes||0)-(a.saude.indicacoes||0),
+  atencao:(a,b)=>(((b.saude.sens||[]).length?1:0)-((a.saude.sens||[]).length?1:0))||((a.saude.score??100)-(b.saude.score??100)),
+  retencao:(a,b)=>((b.saude.n180||0)-(a.saude.n180||0))||(b.saude.score||0)-(a.saude.score||0)};
+ box.innerHTML=`${S.carregando?`<div class="cs-aviso sub">Calculando a saúde dos clientes pelos atendimentos…</div>`:S.erro?`<div class="cs-aviso warn">Não deu para calcular a saúde agora (${esc(S.erro)}). Todos aparecem em Retenção.</div>`:""}
+ <div class="kanban crm-kanban">${CRM_SAUDE_ET.map(([id,nome])=>{ const its=l.filter(c=>c.fase===id).sort(ord[id]); const lim=CRMF.lim["s_"+id]||40; const cor=CRM_ETAPA_COR[id];
+  const nSens=id==="atencao"?its.filter(c=>(c.saude.sens||[]).length).length:0;
+  return `<div class="kcol" style="--cc:${cor}"><div class="kcol-h"><span class="kcol-nome">${esc(nome)}</span><span class="kcol-n">${its.length}</span></div>
+  ${id==="atencao"&&(nSens||semV.length)?`<div class="crm-col-soma sub">${nSens} sensíve${nSens===1?"l":"is"}${semV.length?` · <button class="crm-link" id="csSemV">${semV.length} sem cliente vinculado</button>`:""}</div>`:""}
+  <div class="kcol-body">${its.slice(0,lim).map(c=>crmCardSaude(c,cor)).join("")||`<div class="crm-vazio sub">${S.carregando?"Calculando…":"Ninguém nesta etapa"}</div>`}
+  ${its.length>lim?`<button class="view-btn ghost" data-maiss="${id}">Mostrar mais ${its.length-lim}</button>`:""}</div></div>`; }).join("")}</div>`;
+ box.querySelectorAll("[data-cli3]").forEach(c=>c.onclick=e=>{ if(e.target.closest("[data-nogo],[data-pedir]")) return; const ch=c.dataset.cli3; if(String(ch).startsWith("neg:")) crmFichaNegocio(ch.slice(4)); else crmFichaCliente(ch); });
+ box.querySelectorAll("[data-pedir]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const c=lista.find(x=>String(x.chave)===b.dataset.pedir); crmTarefaModal(null,{gclick_empresa_id:c.id,tipo:"indicacao",titulo:"Pedir indicação para "+(c.apelido||c.nome)},()=>crmVFunil(v)); });
+ box.querySelectorAll("[data-maiss]").forEach(b=>b.onclick=()=>{ CRMF.lim["s_"+b.dataset.maiss]=(CRMF.lim["s_"+b.dataset.maiss]||40)+120; crmFunilPinta(v); });
+ const sv=box.querySelector("#csSemV"); if(sv) sv.onclick=()=>crmSensVincular(v);
+};
+function crmSensVincular(v){
+ const cli=crmEmpresasGclick(), rot=c=>`${c.nome} · ${fmtCnpj(c.cnpj)}`;
+ const m=crmModal("Hermes CRM","Clientes sensíveis da intranet","",`<div class="cs-vbox"></div>`); m.classList.remove("prodm"); const box=m.querySelector(".cs-vbox");
+ const pinta=()=>{ const l=CRMD.sensLista||[];
+  box.innerHTML=`<p class="sub" style="margin:0 0 10px">Os clientes marcados como sensíveis na intranet chegam aqui sozinhos e vão para a coluna Atenção. Quando o nome não bate com o G-Click, vincule à mão.</p>
+  ${l.map(s=>`<div class="cs-vli"><div><b>${esc(s.empresa||s.cliente||"")}</b>${s.cliente&&s.empresa&&s.cliente.trim()!==s.empresa.trim()?` <span class="sub">${esc(s.cliente)}</span>`:""} ${s.gclick_empresa_id?`<span class="pill good">Vinculado</span>`:`<span class="pill warn">Sem cliente</span>`}</div>
+   <div class="mov-vinc"><input class="inp" list="csCliL" data-sv="${s.id}" placeholder="${s.gclick_empresa_id?"Trocar o cliente":"Buscar o cliente pelo nome ou CNPJ"}" style="flex:1;min-width:220px"><button class="view-btn ghost" data-sok="${s.id}">Vincular</button>${s.gclick_empresa_id?`<button class="txt-btn" data-sdes="${s.id}">Desvincular</button>`:""}</div></div>`).join("")||`<div class="empty">Nenhum cliente sensível ativo.</div>`}
+  <datalist id="csCliL">${cli.map(c=>`<option value="${escAttr(rot(c))}" data-id="${escAttr(c.id)}"></option>`).join("")}</datalist>`;
+  const salva=async(id,cliente)=>{ try{ await crmRpc("crm_sensivel_vincular",{p:{id,cliente}}); const x=(CRMD.sensLista||[]).find(y=>y.id===id); if(x) x.gclick_empresa_id=cliente||null; crmToast(cliente?"Vinculado":"Vínculo removido"); CRMD.saudeInfo={}; pinta(); crmSaudeCarrega(v); }catch(e){ crmToast(crmErro(e)); } };
+  box.querySelectorAll("[data-sok]").forEach(b=>b.onclick=()=>{ const val=box.querySelector(`[data-sv="${b.dataset.sok}"]`).value; const op=[...box.querySelectorAll("#csCliL option")].find(o=>o.value===val); if(!op){ crmToast("Escolha o cliente na lista."); return; } salva(b.dataset.sok,op.dataset.id); });
+  box.querySelectorAll("[data-sdes]").forEach(b=>b.onclick=()=>salva(b.dataset.sdes,"")); };
+ pinta();
+}
+function crmRegrasClientes(){
+ const m=crmModal("Hermes CRM","Como o funil de clientes anda sozinho","",`<div class="cs-regras">
+  <p>A etapa de cada cliente é recalculada toda vez que você abre o funil, com os atendimentos analisados no Resiltrack nos últimos 180 dias.</p>
+  <p><b style="color:${CRM_ETAPA_COR.atencao}">Atenção</b>: marcado como sensível na intranet, risco provável de troca de contabilidade, 2 ou mais atendimentos insatisfeitos, ou pendência no financeiro.</p>
+  <p><b style="color:${CRM_ETAPA_COR.indicou}">Indicou</b>: fez pelo menos uma indicação nos últimos 12 meses.</p>
+  <p><b style="color:${CRM_ETAPA_COR.pronto}">Pronto para indicação</b>: 3 ou mais atendimentos satisfeitos, nenhum insatisfeito, nota média 9 ou mais, sem risco de troca e com 6 meses de casa.</p>
+  <p><b style="color:${CRM_ETAPA_COR.lealdade}">Lealdade</b>: 2 ou mais satisfeitos, nenhum insatisfeito, nota média 8 ou mais e sem risco provável.</p>
+  <p><b style="color:${CRM_ETAPA_COR.retencao}">Retenção</b>: todos os outros, inclusive quem não teve atendimento analisado.</p>
+  <p class="sub">A nota de saúde (0 a 100) soma a nota média, os satisfeitos e desconta insatisfeitos, risco de troca e pendência financeira.</p></div>`);
+ m.classList.remove("prodm");
+}
+const _crmFunilPintaSemSaude=crmFunilPinta;
+crmFunilPinta=function(v){
+ if(CRMF.lado==="clientes"||CRMF.funil==="vendas") crmSaudeCarrega(v);
+ _crmFunilPintaSemSaude(v);
+ const bar=v.querySelector("#crmBar .filters"); if(!bar) return;
+ const so=bar.querySelector("#crmOrig");
+ if(so){ const orig=[...new Set((CRMD.neg||[]).map(o=>o.origem).filter(Boolean))].sort((a,b)=>(CRM_ORIG[a]||a).localeCompare(CRM_ORIG[b]||b));
+  const gr=Object.entries(CRM_FONTE_GR).map(([k,g])=>[`g:${k}`,g.nome]);
+  so.setAttribute("aria-label","Fonte"); so.title="Fonte do lead";
+  so.innerHTML=`<option value="">Todas as fontes</option><optgroup label="Grupos">${crmOpt(gr,CRMF.origem)}</optgroup><optgroup label="Origem exata">${crmOpt(orig.map(o=>[o,CRM_ORIG[o]||o]),CRMF.origem)}</optgroup>`; }
+ if(CRMF.lado==="clientes"){
+  const ac=bar.querySelector(".crm-acoes"); if(ac) ac.remove();
+  const t=document.createElement("label"); t.className="cs-tog"; t.innerHTML=`<input type="checkbox" id="csSoSens" ${CRMF.soSens?"checked":""}> Só sensíveis e atenção`;
+  t.querySelector("input").onchange=e=>{ CRMF.soSens=e.target.checked; crmFunilPinta(v); }; bar.appendChild(t);
+  const r=document.createElement("button"); r.className="txt-btn"; r.textContent="Como funciona"; r.onclick=crmRegrasClientes; bar.appendChild(r);
+  if(crmPodeFunil()){ const n=document.createElement("button"); n.className="txt-btn"; n.textContent="+ Novo funil"; n.onclick=()=>crmFunilNovo(v); bar.appendChild(n); }
+ }
+};
+const _crmFunilRecarregaSemSaude=crmFunilRecarrega;
+crmFunilRecarrega=async function(v,ir){ CRMD.saudeInfo={}; return _crmFunilRecarregaSemSaude(v,ir); };
+(function(){ const s=document.createElement("style"); s.textContent=`
+.cs-card{cursor:pointer}.cs-card.cs-sens{box-shadow:inset 3px 0 0 #c92a2a}
+.cs-top{display:flex;align-items:flex-start;gap:8px}.cs-tit{flex:1;text-align:left!important;margin:0}
+.cs-sc{flex:none;min-width:30px;height:22px;border-radius:999px;background:color-mix(in srgb,var(--s) 14%,transparent);color:var(--s);font:700 11.5px/22px inherit;text-align:center;padding:0 6px}
+.cs-bds{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 0}.cs-bds:empty{display:none}.cs-bd-s{background:#c92a2a}
+.cs-sub{font-size:11px;opacity:.7;margin-top:3px}
+.cs-st{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px;font-size:11.5px}.cs-st b{font-size:13px}
+.cs-mot{margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--ink-2,#4a4d63)}.cs-mot:empty{display:none}
+.cs-sensbox{margin-top:6px;background:#fff5f5;color:#8a1c1c;border-radius:8px;padding:6px 8px;font-size:11.5px;line-height:1.4}
+.cs-ped{margin-top:8px;width:100%;padding:6px 10px;font-size:12px}
+.cs-pe{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px}
+.cs-aviso{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:#eef6f8;font-size:13px}.cs-aviso.warn{background:#fff4e6}
+.cs-tog{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;cursor:pointer}
+.cs-vli{padding:10px 0;border-bottom:1px solid var(--border,#e3e8ea)}.cs-regras p{margin:0 0 10px;line-height:1.5}`; document.head.appendChild(s); })();
+
+// ================= Hermes CRM · AJUSTES NO VALOR DENTRO DO PLANO (v3.47) =================
+// Cada acréscimo ou desconto livre pode entrar no preço dos planos (todos ou um só) ou ficar como linha separada.
+// O ajuste só conta depois do botão "Adicionar valor" / "Aplicar desconto" (x.ok). Ajustes antigos (sem x.ok) continuam valendo.
+function ajNoPlano(arq){ return Object.entries(PRECO_ST.extras||{}).filter(([k,x])=>k.startsWith("livre:")&&x.plano&&x.ok!==false&&x.arqPlano===arq&&precoNum(x.valor)>0); }
+function ajPlanoCalc(arq,pid,base){ const L=ajNoPlano(arq).filter(([,x])=>x.plano==="todos"||x.plano===pid); let v=base; const itens=[];
+ L.filter(([,x])=>x.tipo!=="desconto").forEach(([k,x])=>{ const t=ajTotal(x,base); v+=t; itens.push({k,x,t}); });
+ const sub=v; L.filter(([,x])=>x.tipo==="desconto").forEach(([k,x])=>{ const t=ajTotal(x,sub); v+=t; itens.push({k,x,t}); });
+ return {final:Math.max(0,Math.round(v*100)/100),itens}; }
+function ajRecalcCesta(){ const S=PRECO_ST; (S.cesta||[]).forEach(c=>{ const aj=(S.ajuste||{})[c.arq+":"+c.planoId]; const tab=c.tabela!=null?c.tabela:c.valor;
+  const base=aj!=null&&aj!==""?precoNum(aj):tab; const r=ajPlanoCalc(c.arq,c.planoId,base); c.valor=r.final;
+  if(!c.inclusosBase) c.inclusosBase=(c.inclusos||[]).slice();
+  c.inclusos=[...c.inclusosBase.map(n=>ptTexto(c.arq,n)),...r.itens.filter(i=>i.x.tipo!=="desconto"&&String(i.x.nome||"").trim()).map(i=>String(i.x.nome).trim())];
+  c.ajustesPlano=r.itens.map(i=>({nome:ajRotulo(i.x),valor:Math.round(i.t*100)/100})); }); }
+const _precoPintarSemAj=precoPintar;
+precoPintar=function(v){ try{ ajRecalcCesta(); }catch(_){} return _precoPintarSemAj(v); };
+precoTotais=function(){ const S=PRECO_ST; const ent=Object.entries(S.extras);
+ const fixos=ent.filter(([k])=>!k.startsWith("livre:")).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
+ const livres=ent.filter(([k,s])=>k.startsWith("livre:")&&!s.plano&&s.ok!==false&&precoNum(s.valor)>0);
+ const acr=livres.filter(([,s])=>s.tipo!=="desconto"), des=livres.filter(([,s])=>s.tipo==="desconto");
+ const planos=S.cesta.reduce((s,c)=>s+c.valor,0);
+ const mk=([k,s],base)=>({...s,k,livre:true,desconto:s.tipo==="desconto",nome:ajRotulo(s),total:ajTotal(s,base)});
+ const aM=acr.filter(([,s])=>s.cobranca==="mensal").map(e=>mk(e,planos)), aU=acr.filter(([,s])=>s.cobranca!=="mensal").map(e=>mk(e,0));
+ const baseM=planos+fixos.filter(e=>e.cobranca==="mensal").reduce((s,e)=>s+e.total,0)+aM.reduce((s,e)=>s+e.total,0);
+ const baseU=fixos.filter(e=>e.cobranca!=="mensal").reduce((s,e)=>s+e.total,0)+aU.reduce((s,e)=>s+e.total,0);
+ const dM=des.filter(([,s])=>s.cobranca==="mensal").map(e=>mk(e,baseM)), dU=des.filter(([,s])=>s.cobranca!=="mensal").map(e=>mk(e,baseU));
+ const extrasM=[...fixos.filter(e=>e.cobranca==="mensal"),...aM,...dM], extrasU=[...fixos.filter(e=>e.cobranca!=="mensal"),...aU,...dU];
+ const mensal=Math.max(0,planos+extrasM.reduce((s,e)=>s+e.total,0)), avulso=Math.max(0,extrasU.reduce((s,e)=>s+e.total,0));
+ return {extrasM,extrasU,mensal,avulso,descontoM:-dM.reduce((s,e)=>s+e.total,0),descontoU:-dU.reduce((s,e)=>s+e.total,0)}; };
+function ajOndeTxt(x){ const S=PRECO_ST; if(!x.plano) return x.cobranca==="mensal"?"linha separada, todo mês":"linha separada, uma vez";
+ if(x.plano==="todos") return "em todos os planos"; const p=(S._planos||[]).find(p=>p.id===x.plano); return "só no "+(p?p.nome:"plano escolhido"); }
+function ajValorTxt(x,tot){ const v=precoNum(x.valor)||0; const s=x.tipo==="desconto"?"− ":"+ ";
+ if(x.modo==="pct") return s+String(x.valor).replace(/\s/g,"")+"%"; if(x.plano) return s+precoMoeda(v)+"/mês";
+ const t=tot!=null?Math.abs(tot):v; return s+precoMoeda(t)+(x.cobranca==="mensal"?"/mês":""); }
+precoAdicionaisHTML=function(){ const S=PRECO_ST; const L=Object.entries(S.extras).filter(([k])=>k.startsWith("livre:")); const t=precoTotais();
+ const tot=Object.fromEntries([...t.extrasM,...t.extrasU].filter(e=>e.livre).map(e=>[e.k,e.total])); const pl=S._planos||[];
+ return `<div class="card ce-pad"><h3>Ajustes no valor</h3><p class="sub" style="margin:0 0 10px">Dê um desconto (em R$ ou %, com condição se quiser) ou some um valor que não está na tabela. Escolha se ele entra no preço dos planos ou fica como linha separada e clique em Adicionar.</p>
+  ${L.map(([k,x])=>{ const d=x.tipo==="desconto";
+   if(x.ok!==false) return `<div class="aj-pronto ${d?"aj-des":"aj-acr"}"><div class="aj-ptx"><b>${esc(ajRotulo(x))}</b><span class="sub">${esc(ajOndeTxt(x))}</span></div>
+    <b class="num aj-res">${ajValorTxt(x,tot[k])}</b><button type="button" class="txt-btn" data-ajed="${k}">Editar</button><button type="button" class="crm-x" data-adr="${k}" aria-label="Remover">✕</button></div>`;
+   return `<div class="aj-lin ${d?"aj-des":"aj-acr"}"><div class="aj-top">
+    <select class="inp" data-ajt="${k}" aria-label="Tipo"><option value="acrescimo" ${!d?"selected":""}>+ Acréscimo</option><option value="desconto" ${d?"selected":""}>− Desconto</option></select>
+    <input class="inp" data-adn="${k}" value="${escAttr(x.nome||"")}" placeholder="${d?"Descrição, ex.: Desconto de pontualidade":"Descrição, ex.: Regularização de pendências"}" aria-label="Descrição">
+    <button type="button" class="crm-x" data-adr="${k}" aria-label="Remover">✕</button></div>
+   <div class="aj-bot"><div class="aj-val"><input class="inp" data-adv="${k}" value="${escAttr(x.valor||"")}" placeholder="0,00" inputmode="decimal" aria-label="Valor">
+    <select class="inp" data-ajm="${k}" aria-label="Valor em"><option value="valor" ${x.modo!=="pct"?"selected":""}>R$</option><option value="pct" ${x.modo==="pct"?"selected":""}>%</option></select></div>
+    <select class="inp" data-ajp="${k}" aria-label="Onde entra"><option value="todos" ${x.plano==="todos"?"selected":""}>No preço de todos os planos</option>${pl.map(p=>`<option value="${escAttr(p.id)}" ${x.plano===p.id?"selected":""}>Só no plano ${esc(p.nome)}</option>`).join("")}<option value="" ${!x.plano?"selected":""}>Fora do plano (linha separada)</option></select>
+    ${x.plano?`<span class="sub aj-mes">todo mês</span>`:`<select class="inp" data-adc="${k}" aria-label="Cobrança"><option value="mensal" ${x.cobranca==="mensal"?"selected":""}>${d?"Na mensalidade":"Todo mês"}</option><option value="avulso" ${x.cobranca!=="mensal"?"selected":""}>${d?"Nos serviços avulsos":"Uma vez"}</option></select>`}</div>
+   ${d?`<input class="inp aj-cond" data-ajc="${k}" value="${escAttr(x.cond||"")}" placeholder="Condição (opcional), ex.: pagamento até o dia 5 ou válido nos 3 primeiros meses" aria-label="Condição do desconto">`:""}
+   <div class="aj-acao"><button type="button" class="view-btn ce-pri" data-ajok="${k}">${d?"Aplicar desconto":"Adicionar valor"}</button></div></div>`; }).join("")}
+  ${t.descontoM||t.descontoU?`<p class="sub" style="margin:2px 0 10px">Desconto fora dos planos: ${t.descontoM?precoMoeda(t.descontoM)+"/mês":""}${t.descontoM&&t.descontoU?" e ":""}${t.descontoU?precoMoeda(t.descontoU)+" nos avulsos":""}.</p>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="view-btn ghost" id="prAdDes">− Dar desconto</button><button type="button" class="view-btn ghost" id="prAdAdd">+ Novo acréscimo</button></div></div>`; };
+precoLigarAdicionais=function(box,re){ const S=PRECO_ST; const x=k=>S.extras[k];
+ const novo=tipo=>{ const k="livre:"+Date.now().toString(36); S.extras[k]={nome:"",valor:"",cobranca:"mensal",qtd:1,arq:"livre",livre:true,tipo,modo:tipo==="desconto"?"pct":"valor",cond:"",plano:"todos",arqPlano:S.arq,ok:false}; re();
+  setTimeout(()=>{ const n=document.querySelector(`[data-adv="${k}"]`); if(n) n.focus(); },0); };
+ const a=box.querySelector("#prAdAdd"); if(a) a.onclick=()=>novo("acrescimo");
+ const d=box.querySelector("#prAdDes"); if(d) d.onclick=()=>novo("desconto");
+ const ok=k=>{ const e=x(k); if(!e) return; const v=precoNum(e.valor)||0;
+  if(!(v>0)){ crmToast("Preencha o valor antes de adicionar."); const n=box.querySelector(`[data-adv="${k}"]`); if(n) n.focus(); return; }
+  if(e.modo==="pct"&&v>100){ crmToast("O percentual vai até 100%."); return; }
+  if(e.plano){ e.cobranca="mensal"; e.arqPlano=S.arq; }
+  e.ok=true; re(); crmToast(e.tipo==="desconto"?"Desconto aplicado":"Valor adicionado"+(e.plano?" ao plano":"")); };
+ box.querySelectorAll("[data-ajok]").forEach(b=>b.onclick=()=>ok(b.dataset.ajok));
+ box.querySelectorAll("[data-ajed]").forEach(b=>b.onclick=()=>{ const e=x(b.dataset.ajed); if(e){ e.ok=false; if(e.plano===undefined) e.plano=""; re(); } });
+ box.querySelectorAll("[data-adn]").forEach(i=>i.oninput=()=>{ if(x(i.dataset.adn)) x(i.dataset.adn).nome=i.value; });
+ box.querySelectorAll("[data-ajc]").forEach(i=>i.oninput=()=>{ if(x(i.dataset.ajc)) x(i.dataset.ajc).cond=i.value; });
+ box.querySelectorAll("[data-adv]").forEach(i=>{ precoLigarMascara(i,v=>{ if(x(i.dataset.adv)) x(i.dataset.adv).valor=v; }); i.addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); i.blur(); ok(i.dataset.adv); } }); });
+ box.querySelectorAll("[data-adc]").forEach(i=>i.onchange=()=>{ if(x(i.dataset.adc)){ x(i.dataset.adc).cobranca=i.value; re(); } });
+ box.querySelectorAll("[data-ajp]").forEach(i=>i.onchange=()=>{ const e=x(i.dataset.ajp); if(e){ e.plano=i.value; e.arqPlano=S.arq; if(e.plano) e.cobranca="mensal"; re(); } });
+ box.querySelectorAll("[data-ajt]").forEach(i=>i.onchange=()=>{ const e=x(i.dataset.ajt); if(e){ e.tipo=i.value; if(i.value!=="desconto") e.modo="valor"; re(); } });
+ box.querySelectorAll("[data-ajm]").forEach(i=>i.onchange=()=>{ const e=x(i.dataset.ajm); if(e){ e.modo=i.value; re(); } });
+ box.querySelectorAll("[data-adr]").forEach(b=>b.onclick=()=>{ delete S.extras[b.dataset.adr]; re(); }); };
+(function(){ const s=document.createElement("style"); s.textContent=`
+.aj-lin .aj-bot{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 150px}
+.aj-mes{padding:0 6px}.aj-acao{display:flex;justify-content:flex-end}
+.aj-pronto{display:flex;align-items:center;gap:10px;border:1px solid var(--line,#e3e8ea);border-left:3px solid #269A9E;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.aj-pronto.aj-des{border-left-color:#E0A23B}.aj-ptx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.aj-ptx .sub{font-size:12px}
+.pt-ajv{font:600 12.5px/1.2 inherit;white-space:nowrap}.pt-ajv.des{color:#E0A23B}.pt-l.pt-ajrot{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}.pt-ajrot small{display:block;opacity:.7;font-size:11px}
+@media(max-width:640px){.aj-lin .aj-bot{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
+
+// textos das linhas do plano editáveis por simulação (S.textos["arq:CHAVE"]); vazio volta ao original
+function ptChave(x){ return String(x||"").trim().toUpperCase().replace(/\s+/g," "); }
+function ptTexto(arq,nome){ const t=(PRECO_ST.textos||{})[arq+":"+ptChave(nome)]; if(t!=null&&String(t).trim()) return String(t).trim(); const s=String(nome||"").toLowerCase(); return s.charAt(0).toUpperCase()+s.slice(1); }
+const _precoLigarSemTxt=precoLigar;
+precoLigar=function(v,R,A){ _precoLigarSemTxt(v,R,A); const S=PRECO_ST, box=v.querySelector("#crmBox"); if(!box) return;
+ const b=box.querySelector("#ptTxtEd"); if(b) b.onclick=()=>{ S.editTxt=!S.editTxt; precoPintar(v); if(S.editTxt){ const i=v.querySelector(".pt-txt"); if(i) i.focus(); } };
+ box.querySelectorAll("[data-ptxt]").forEach(i=>{ const k=S.arq+":"+i.dataset.ptxt;
+  i.oninput=()=>{ S.textos=S.textos||{}; const t=i.value; if(t.trim()) S.textos[k]=t; else delete S.textos[k]; };
+  i.onchange=()=>{ const f=i.dataset.ptxt; precoPintar(v); const n=v.querySelector(`[data-ptxt="${CSS.escape(f)}"]`); if(n&&document.activeElement===document.body) n.focus(); };
+  i.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); const l=[...box.querySelectorAll("[data-ptxt]")]; const j=l.indexOf(i); i.dispatchEvent(new Event("change")); const nx=v.querySelectorAll("[data-ptxt]")[j+1]; if(nx) nx.focus(); } }; });
+ box.querySelectorAll("[data-ptxtv]").forEach(x=>x.onclick=()=>{ delete (S.textos||{})[S.arq+":"+x.dataset.ptxtv]; precoPintar(v); }); };
+(function(){ const s=document.createElement("style"); s.textContent=`
+.pt-l.pt-led{gap:6px}.pt-txt{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:inherit;font:inherit;padding:6px 8px}
+.pt-txt:focus{outline:2px solid #7fd0ea;outline-offset:1px}.pt-txtv{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;font-size:15px;padding:2px 4px}
+.pt-acoesrot{flex-direction:column;align-items:flex-start;gap:6px}`; document.head.appendChild(s); })();
 
 // ================= ÍRIS · gestão das TVs do escritório =================
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
