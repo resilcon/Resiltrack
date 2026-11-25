@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.51 (Hermes CRM: campo de faturamento do simulador não perde mais o que é digitado)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.52 (Escritório Virtual no menu, abaixo de Atendimentos)</footer>
   </div>
 </div>
 
@@ -854,7 +854,7 @@ const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento 
 const MODULOS=[["financeiro","Mida$ Bank (ver)"],["financeiro_editar","Mida$ Bank (decidir cobrança)"],["comercial","Comercial (Hermes CRM)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris TV (gestão das TVs)"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
-try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="escritorio"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
@@ -1140,7 +1140,7 @@ function renderTabs(){
   if(!keys.includes(TAB)) TAB=keys[0]||"dashboard";
   keys.forEach(k=>{ const b=el("button",k===TAB?"on":"",TABS_ALL[k]||k); b.onclick=()=>{TAB=k;render();}; nav.appendChild(b); });
 }
-function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE.startsWith("adm_")||MODE==="iris"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
+function render(){ renderSide(); const v=document.getElementById("view"); const _w=v.closest(".wrap"); if(_w) _w.classList.toggle("wide",MODE==="crm"||MODE.startsWith("crm_")||MODE.startsWith("rh_")||MODE.startsWith("kr_")||MODE.startsWith("adm_")||MODE==="iris"||MODE==="escritorio"||MODE==="ce_funil"||MODE==="ce_envios"||MODE==="ce_contatos"||(MODE==="atendimentos"&&TAB==="colaboradores"));
   const tabsEl=document.getElementById("tabs");
   if(MODE==="gestor" && podeGestorMod()){ tabsEl.classList.add("hidden"); viewGestor(v); return; }
   if(MODE==="financeiro" && podeModulo("financeiro")){ tabsEl.classList.add("hidden"); viewFinanceiro(v); return; }
@@ -1151,6 +1151,8 @@ function render(){ renderSide(); const v=document.getElementById("view"); const 
   if(MODE.startsWith("kr_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE.startsWith("adm_") && isAdmin()){ tabsEl.classList.add("hidden"); admView(v); return; }
   if(MODE.startsWith("adm_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  if(MODE==="escritorio" && podeEscritorio()){ tabsEl.classList.add("hidden"); escView(v); return; }
+  if(MODE==="escritorio"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="iris" && podeModulo("iris")){ tabsEl.classList.add("hidden"); irisView(v); return; }
   if(MODE==="iris"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
@@ -1193,6 +1195,7 @@ function renderSide(){
   { const ks=MODE==='atendimentos'?allowedTabKeys():[], temSub=ks.length>1, ab=srlAberto("atend");
     h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos" ${temSub?`data-dobra="atend" aria-expanded="${ab}"`:""}>${_ICO_ATEND}Atendimentos${temSub?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(temSub) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="atend"><div>`+ks.map(k=>`<button data-atab="${k}" class="${k===TAB?'on':''}">${TABS_ALL[k]||k}</button>`).join("")+`</div></div>`; }
+  if(podeEscritorio()) h+=`<button class="srl-item ${MODE==='escritorio'?'on':''}" data-mode="escritorio">${_ICO_ESC}Escritório Virtual</button>`;
   if(podeGestorMod()){ const no=MODE==='gestor', ab=srlAberto("gestor");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="gestor" ${no?`data-dobra="gestor" aria-expanded="${ab}"`:""}>${_ICO_GESTOR}Painel do Gestor${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="gestor"><div>`+
@@ -10561,9 +10564,11 @@ const ADM_MODS=[
  ["financeiro","Mida$ Bank","Ver o financeiro e a inadimplência"],
  ["financeiro_editar","Mida$ Bank: decidir","Decidir cobranças e confirmar pagamentos de indicação"],
  ["emails","Central de E-mails","Campanhas, réguas e envios"],
- ["iris","Íris TV","Gestão das TVs do escritório"]];
-const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris TV"};
-const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["Themis RH",["rh","rh_editar"]],["Kronos ID",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$ Bank",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]]];
+ ["iris","Íris TV","Gestão das TVs do escritório"],
+ ["escritorio","Escritório Virtual","Ver o escritório em pixel: presença, salas, recepção, comunicados e troféus"],
+ ["escritorio_editar","Escritório Virtual: editar","Editar projetos, ferramentas, colaboradores e lançamentos do escritório"]];
+const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris TV",escritorio:"Ver",escritorio_editar:"Editar"};
+const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["Themis RH",["rh","rh_editar"]],["Kronos ID",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$ Bank",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]],["Escritório Virtual",["escritorio","escritorio_editar"]]];
 // mantém a lista usada no modal antigo igual à nova
 MODULOS.splice(0,MODULOS.length,...ADM_MODS.map(([k,t])=>[k,t]));
 const ADM_SECOES=[["adm_acessos","Usuários e acessos"],["adm_deps","Departamentos e atendentes"]];
@@ -10882,6 +10887,21 @@ async function onbAbrir(){ let d; crmToast("Buscando os dados do cliente…");
    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Onboarding Resilcon - ${empresa.replace(/[\\/:*?"<>|]+/g,"")}.pptx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),20000);
    closeModal(); crmToast("Onboarding gerado. Abra no PowerPoint e use a pauta para navegar."); }
   catch(err){ b.disabled=false; msg(""); crmToast(crmErro(err)); } }; }
+
+// ================= ESCRITÓRIO VIRTUAL (v3.52) =================
+// O escritório em pixel (presença, salas, recepção, comunicados, troféus, projetos e ferramentas) roda em escritorio.html,
+// na mesma pasta deste index, e lê/grava em escritorio.docs pelas funções public.escritorio_* do Supabase.
+// Acesso: admin, ou permissões "escritorio" (ver) e "escritorio_editar" (editar) no painel Admin.
+const _ICO_ESC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="7" y="11" width="4" height="4"/><rect x="13" y="11" width="4" height="4"/><path d="M10.5 21v-3h3v3"/></svg>';
+function podeEscritorio(){ return isAdmin() || podeModulo("escritorio") || podeModulo("escritorio_editar"); }
+function escView(v){
+  try{ window.__RT_SB=sb; }catch(e){}
+  const ja=v.querySelector("iframe.esc-frame"); if(ja) return;
+  v.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 10px;flex-wrap:wrap">
+      <div><h2 style="margin:0;font-size:20px">Escritório Virtual</h2><div style="color:var(--muted);font-size:13px">Presença da equipe, salas, recepção, comunicados e troféus, ao vivo.</div></div>
+      <a class="view-btn" href="escritorio.html" target="_blank" rel="noopener">Abrir em tela cheia</a></div>
+    <iframe class="esc-frame" src="escritorio.html" title="Escritório Virtual" style="width:100%;height:calc(100vh - 150px);min-height:560px;border:1px solid var(--border);border-radius:12px;background:#0c0f16;display:block"></iframe>`;
+}
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
