@@ -58,10 +58,14 @@
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pedidoInstalar=e;botaoInstalar();});
   function botaoInstalar(){quandoPronto(()=>{const tools=document.querySelector('.tools');if(!tools||document.getElementById('b-app'))return;
     const solo=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(solo)return;
-    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);if(!pedidoInstalar&&!ios)return;
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(window.top!==window){// dentro do Resiltrack: o app precisa ser instalado a partir da página própria
+      const b=document.createElement('button');b.className='btn';b.id='b-app';b.type='button';b.textContent='Abrir como app';b.title='Abre o Escritório Virtual numa aba própria, de onde dá para instalar com o ícone do Escritório';
+      b.onclick=()=>{const u=new URL('escritorio.html',location.href).href;const w=window.open(u,'_blank');if(!w)location.href=u;};tools.insertBefore(b,tools.firstChild);return;}
+    if(!pedidoInstalar&&!ios)return;
     const b=document.createElement('button');b.className='btn';b.id='b-app';b.type='button';b.textContent='Instalar app';b.title='Salvar o Escritório Virtual como aplicativo neste aparelho';
     b.onclick=async()=>{if(pedidoInstalar){pedidoInstalar.prompt();const r=await pedidoInstalar.userChoice;if(r&&r.outcome==='accepted')b.remove();pedidoInstalar=null;}
-      else alert('No iPhone ou iPad: toque em Compartilhar e depois em "Adicionar à Tela de Início".');};
+      else alert('No iPhone ou iPad: no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Faça isso nesta página (escritorio.html), não na página do Resiltrack, para o ícone do Escritório aparecer.');};
     tools.insertBefore(b,tools.firstChild);});}
   if(window.top===window&&'serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('escritorio-sw.js',{scope:'./escritorio'}).catch(()=>{});});}
   quandoPronto(()=>setTimeout(botaoInstalar,1500));
@@ -548,7 +552,13 @@ td a:hover,.feed a:hover{text-decoration:underline}
   .dr-h{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.dr-h::-webkit-scrollbar{display:none}
   .dr-h .tab{flex:none}
   #dr-x{position:sticky;right:0;flex:none;margin-left:auto;box-shadow:-10px 0 12px var(--panel);z-index:1}
-  .dlg{max-height:100svh}
+  #dlg{width:100vw;height:100svh;max-height:100svh;margin:0;border-radius:0;border:0;padding:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  #dlg .dlg{height:100%;max-height:none}
+  .dlg-h{flex:none;padding:10px 14px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+  .dlg-h h2{font-size:17px;min-width:0}
+  .dlg-h #dlg-x{flex:none}
+  .dlg-b{padding:12px 14px}
+  .dlg-f{flex:none;padding:10px 14px}
   .dlg-b{grid-template-columns:minmax(0,1fr)}
   .toasts{left:12px;right:12px;max-width:none}
 }
