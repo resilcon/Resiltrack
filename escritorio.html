@@ -1,4 +1,125 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><link rel="manifest" href="escritorio.webmanifest"><meta name="theme-color" content="#0c0f16"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Escritório"><link rel="apple-touch-icon" href="escritorio-icon-192.png"><link rel="icon" type="image/png" href="escritorio-icon-192.png"><style>:root{box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>/* Escritório Virtual no Resiltrack: troca o banco do Claude (window.claude.use('db'/'user')) pelo Supabase do Resiltrack.
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><link rel="manifest" href="escritorio.webmanifest"><meta name="theme-color" content="#0c0f16"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Escritório"><link rel="apple-touch-icon" href="escritorio-icon-192.png"><link rel="icon" type="image/png" href="escritorio-icon-192.png"><style>:root{box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>/* Tela de Notificações do Escritório Virtual (só no Resiltrack). Usa a RPC public.escritorio_notif. */
+(function(){
+  const TIPOS=[['abertura','Abertura do dia','8h05 · quem está na escala, ausências avisadas, G-Click e números do dia anterior'],
+    ['banco','Banco de horas fora do limite','8h10 · quem passou do limite no mês, uma vez por pessoa'],
+    ['produtividade','Queda de produtividade','9h20 · departamento abaixo do mínimo ou caindo em relação aos dias anteriores'],
+    ['desfalque','Equipe desfalcada','9h35 · presença abaixo do mínimo ou gente sem ponto e sem aviso'],
+    ['fechamento','Fechamento do dia','18h05 · quem veio, atendimentos e G-Click do dia']];
+  const LIM=[['presenca_min','Presença mínima','%'],['prod_min','Produtividade mínima','%'],['prod_queda','Queda que vira alerta','p.p.'],['banco_h','Banco de horas acima de','h']];
+  const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const b64u=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0));};
+  const solo=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const suporta=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  let sb=null,D=null,dlg=null,minha=null;
+  const css=`#esc-notif{width:min(760px,calc(100vw - 24px));max-height:calc(100svh - 32px)}#esc-notif .nt{display:flex;flex-direction:column;max-height:calc(100svh - 34px)}
+  #esc-notif .nt-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line,#283044)}#esc-notif .nt-h h2{margin:0;font-family:var(--f-pixel,inherit);font-size:19px}
+  #esc-notif .nt-b{overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:14px}#esc-notif section{background:var(--panel-2,#1a2030);border:1px solid var(--line,#283044);border-radius:12px;padding:12px 14px}
+  #esc-notif h3{margin:0 0 8px;font-size:14px}#esc-notif .nt-row{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line,#283044)}#esc-notif .nt-row:first-of-type{border-top:0}
+  #esc-notif .nt-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex:none;accent-color:#f2b84b}#esc-notif .nt-row b{display:block;font-size:13.5px}#esc-notif .nt-row small{color:var(--fg-3,#8a94a8);font-size:12px}
+  #esc-notif .nt-lim{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}#esc-notif .nt-lim label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--fg-3,#8a94a8)}
+  #esc-notif .nt-lim span{display:flex;align-items:center;gap:4px}#esc-notif input[type=number]{width:100%;font:inherit;padding:7px 8px;border-radius:8px;border:1px solid var(--line-2,#323c55);background:#0c0f16;color:inherit}
+  #esc-notif .nt-dep{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px}#esc-notif .tag{font-size:10.5px;color:#a8f0c2;background:#143223;border-radius:999px;padding:1px 7px;margin-left:4px}
+  #esc-notif .nt-st{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}#esc-notif .nt-ok{color:#4fd27f;font-weight:700}#esc-notif .nt-no{color:#f2b84b;font-weight:700}
+  #esc-notif .nt-prev{white-space:pre-wrap;font-size:12.5px;background:#0c0f16;border-radius:8px;padding:8px 10px;margin-top:6px}#esc-notif .nt-hist{font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+  #esc-notif .nt-hist div{border-left:3px solid #f2b84b;padding:2px 8px}#esc-notif .nt-hist small{color:var(--fg-3,#8a94a8)}#esc-notif .nt-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line,#283044)}
+  #esc-notif .nt-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#esc-notif .nt-msg{font-size:12.5px;color:var(--fg-3,#8a94a8)}
+  @media (max-width:760px),(max-height:540px) and (max-width:1100px){#esc-notif{width:100vw;height:100svh;max-height:100svh;margin:0;border-radius:0;border:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}#esc-notif .nt{height:100%;max-height:none}#esc-notif .nt-lim{grid-template-columns:1fr 1fr}#esc-notif .nt-dep{grid-template-columns:1fr}}`;
+  async function rpc(p){const{data,error}=await sb.rpc('escritorio_notif',{p});if(error)throw new Error(error.message);return data;}
+  async function minhaInscricao(){try{if(!suporta())return null;const reg=await navigator.serviceWorker.getRegistration('./escritorio');return reg?await reg.pushManager.getSubscription():null;}catch(e){return null;}}
+  function msg(t){const m=dlg.querySelector('#nt-msg');if(m)m.textContent=t;}
+  function estadoAparelho(){
+    if(!suporta())return`<span class="nt-no">Este navegador não recebe notificações.</span>${ios?' <small>No iPhone, instale o app na Tela de Início (iOS 16.4 ou mais novo) e abra por lá.</small>':''}`;
+    if(ios&&!solo())return`<span class="nt-no">No iPhone as notificações só funcionam com o app instalado.</span> <small>Toque em Compartilhar e "Adicionar à Tela de Início", depois abra o Escritório por lá.</small>`;
+    if(Notification.permission==='denied')return`<span class="nt-no">Notificações bloqueadas neste navegador.</span> <small>Libere nas configurações do site ou do celular e volte aqui.</small>`;
+    return minha?`<span class="nt-ok">Este aparelho recebe as notificações.</span>`:`<span class="nt-no">Este aparelho ainda não recebe.</span>`;}
+  function render(){
+    const pr=D.prefs,pad=new Set(pr.deptosPadrao||[]),sel=new Set(pr.deptos||[]);
+    dlg.querySelector('.nt-b').innerHTML=`
+      <section><div class="nt-st"><div>${estadoAparelho()}</div><div class="nt-btns" style="margin:0">${suporta()&&!(ios&&!solo())&&Notification.permission!=='denied'?(minha?'<button type="button" class="btn" id="nt-off">Desligar neste aparelho</button><button type="button" class="btn" id="nt-teste">Enviar teste</button>':'<button type="button" class="btn gold" id="nt-on">Ligar neste aparelho</button>'):''}</div></div>
+        <div class="nt-msg" id="nt-msg">${D.aparelhos.length?`Aparelhos ligados na sua conta: ${D.aparelhos.length}.`:'Nenhum aparelho ligado na sua conta ainda.'}</div></section>
+      <section><label class="nt-row"><input type="checkbox" id="nt-ativo" ${pr.ativo?'checked':''}><span><b>Receber notificações</b><small>Desligue para pausar tudo sem perder suas escolhas. Só em dias úteis; feriados não têm aviso.</small></span></label></section>
+      <section><h3>O que você quer receber</h3>${TIPOS.map(([k,n,d])=>`<label class="nt-row"><input type="checkbox" data-tipo="${k}" ${pr.tipos[k]?'checked':''}><span><b>${n}</b><small>${d}</small></span><button type="button" class="btn" data-prev="${k}" style="margin-left:auto;padding:5px 10px;font-size:12px">Prévia</button></label><div class="nt-prev" data-prevbox="${k}" hidden></div>`).join('')}</section>
+      <section><h3>Limites dos alertas</h3><div class="nt-lim">${LIM.map(([k,n,u])=>`<label>${n}<span><input type="number" min="0" max="${k==='banco_h'?200:100}" step="1" data-lim="${k}" value="${esc(pr.limites[k])}"> ${u}</span></label>`).join('')}</div></section>
+      <section><h3>Departamentos</h3><p class="nt-msg" style="margin:0 0 8px">Marcados com <span class="tag">seu</span> vêm do organograma do Themis RH. Marque outros se quiser acompanhar.</p>
+        <div class="nt-dep">${D.deptos.map(d=>`<label class="nt-row"><input type="checkbox" data-dep="${d.id}" ${sel.has(d.id)?'checked':''}><span><b>${esc(d.nome)}${pad.has(d.id)?'<span class="tag">seu</span>':''}</b></span></label>`).join('')}</div>
+        ${pr.personalizado?'<div class="nt-btns"><button type="button" class="btn" id="nt-padrao">Voltar ao padrão do organograma</button></div>':''}</section>
+      <section><h3>Últimas notificações</h3><div class="nt-hist">${D.historico.length?D.historico.map(h=>`<div><b>${esc(h.titulo)}</b> <small>${new Date(h.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${h.enviado_em?'':' · aguardando envio'}</small><br>${esc(h.corpo).replace(/\n/g,'<br>')}</div>`).join(''):'<small>Nenhuma ainda.</small>'}</div></section>`;
+    const q=s=>dlg.querySelector(s);
+    const on=q('#nt-on');if(on)on.onclick=ligar;
+    const off=q('#nt-off');if(off)off.onclick=desligar;
+    const ts=q('#nt-teste');if(ts)ts.onclick=async()=>{try{await rpc({acao:'teste'});msg('Teste enviado. Deve chegar em alguns segundos.');}catch(e){msg(e.message);}};
+    const pd=q('#nt-padrao');if(pd)pd.onclick=()=>salvar(true);
+    dlg.querySelectorAll('[data-prev]').forEach(b=>b.onclick=async ev=>{ev.preventDefault();const k=b.dataset.prev,box=q(`[data-prevbox="${k}"]`);box.hidden=false;box.textContent='Montando…';
+      try{const r=await rpc({acao:'previa',tipo:k});const it=(r.previa||[])[0];box.textContent=it?it.titulo+'\n'+it.corpo:'Nada para avisar agora com os seus departamentos e limites.';}catch(e){box.textContent=e.message;}});}
+  function coletar(padrao){const pr=D.prefs,tipos={},limites={};
+    dlg.querySelectorAll('[data-tipo]').forEach(i=>tipos[i.dataset.tipo]=i.checked);
+    dlg.querySelectorAll('[data-lim]').forEach(i=>{if(i.value!=='')limites[i.dataset.lim]=String(Math.max(0,+i.value||0));});
+    const deps=[...dlg.querySelectorAll('[data-dep]')].filter(i=>i.checked).map(i=>i.dataset.dep);
+    const igualPadrao=deps.length===(pr.deptosPadrao||[]).length&&deps.every(d=>pr.deptosPadrao.includes(d));
+    const p={acao:'salvar',ativo:dlg.querySelector('#nt-ativo').checked,tipos,limites};if(!padrao&&!igualPadrao)p.deptos=deps;return p;}
+  async function salvar(padrao){const bt=dlg.querySelector('#nt-salvar');bt.disabled=true;
+    try{D=await rpc(coletar(padrao));render();msg('Preferências salvas.');}catch(e){msg('Não salvou: '+e.message);}bt.disabled=false;}
+  async function ligar(){try{
+      const perm=await Notification.requestPermission();if(perm!=='granted'){msg('Sem permissão, o aparelho não recebe notificações.');render();return;}
+      let reg=await navigator.serviceWorker.getRegistration('./escritorio');if(!reg)reg=await navigator.serviceWorker.register('escritorio-sw.js',{scope:'./escritorio'});
+      await navigator.serviceWorker.ready;
+      minha=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(D.vapid)});
+      const j=minha.toJSON();D=await rpc({acao:'inscrever',endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,agente:navigator.userAgent.slice(0,200)});
+      await rpc({acao:'teste'});render();msg('Pronto. Mandamos uma notificação de teste para este aparelho.');
+    }catch(e){msg('Não deu para ligar: '+(e.message||e));}}
+  async function desligar(){try{if(minha){const ep=minha.endpoint;await minha.unsubscribe().catch(()=>{});D=await rpc({acao:'cancelar',endpoint:ep});}minha=null;render();msg('Este aparelho não recebe mais notificações.');}catch(e){msg(e.message);}}
+  async function abrir(){
+    if(window.top!==window){const u=new URL('escritorio.html?notif=1',location.href).href;const w=window.open(u,'_blank');if(!w)location.href=u;return;}
+    if(!dlg){const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+      dlg=document.createElement('dialog');dlg.id='esc-notif';dlg.innerHTML=`<div class="nt"><div class="nt-h"><h2>Notificações</h2><button type="button" class="btn" id="nt-x">Fechar</button></div><div class="nt-b"><p class="nt-msg">Carregando…</p></div><div class="nt-f"><button type="button" class="btn gold" id="nt-salvar">Salvar preferências</button></div></div>`;
+      document.body.appendChild(dlg);dlg.querySelector('#nt-x').onclick=()=>dlg.close();dlg.querySelector('#nt-salvar').onclick=()=>salvar(false);}
+    dlg.showModal();
+    try{[D,minha]=await Promise.all([rpc({acao:'ler'}),minhaInscricao()]);render();}catch(e){dlg.querySelector('.nt-b').innerHTML=`<p class="nt-msg">Não carregou: ${esc(e.message)}</p>`;}}
+  window.__ESC_NOTIF={iniciar(cli){sb=cli;
+    const tools=document.querySelector('.tools');if(!tools||document.getElementById('b-notif'))return;
+    const b=document.createElement('button');b.className='ib';b.id='b-notif';b.type='button';b.title='Notificações';b.setAttribute('aria-label','Notificações');
+    b.innerHTML='<svg class="i" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg>';b.onclick=abrir;
+    tools.insertBefore(b,tools.querySelector('#b-app')?tools.querySelector('#b-app').nextSibling:tools.firstChild);
+    if(/[?&]notif=1/.test(location.search))setTimeout(abrir,600);},abrir};
+})();
+
+/* Perfil do colaborador: dados do Themis RH, Kronos ID e atendimentos (RPC public.escritorio_perfil). Só no Resiltrack. */
+(function(){
+  const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const n1=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const dt=s=>s?String(s).slice(0,10).split('-').reverse().join('/'):'';
+  const hm=m=>m==null?'–':(m<0?'-':'+')+Math.floor(Math.abs(m)/60)+'h'+String(Math.abs(m)%60).padStart(2,'0');
+  const SIT={apurado:'Completo',em_andamento:'Trabalhando agora',pendente:'Batida faltando',sem_batida:'Sem batida hoje',sem_registro:'Sem registro',sem_escala:'Sem escala'};
+  let css=false;
+  function estilo(){if(css)return;css=true;const s=document.createElement('style');s.textContent=`.pf-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.pf-c{background:var(--panel-2,#1a2030);border:1px solid var(--line,#283044);border-radius:12px;padding:10px 12px;min-width:0}
+  .pf-c h4{margin:0 0 6px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7fc8ff}.pf-l{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0;border-top:1px solid var(--line,#283044)}.pf-l:first-of-type{border-top:0}
+  .pf-l span{color:var(--fg-3,#8a94a8)}.pf-l b{text-align:right;font-weight:600}.pf-x{font-size:12px;color:var(--fg-2,#c4cbdb);margin-top:6px}.pf-x div{padding:3px 0;border-top:1px dashed var(--line,#283044)}.pf-up,.pf-l b .pf-up{color:#4fd27f}.pf-dn,.pf-l b .pf-dn{color:#ff8a80}
+  @media (max-width:900px){.pf-g{grid-template-columns:1fr}}`;document.head.appendChild(s);}
+  window.__ESC_PERFIL=async function(c,el){
+    const sb=window.__ESC_PERFIL_SB;if(!sb||!el)return;estilo();
+    el.hidden=false;el.innerHTML='<div class="hint">Buscando dados do Themis RH, Kronos ID e atendimentos…</div>';
+    const{data:d,error}=await sb.rpc('escritorio_perfil',{p:{ref:c._id,intranet:c.intranetId||null,supabase:c.supabaseId||null,nome:c.nome}});
+    if(error||!d||d.erro){el.innerHTML=`<div class="hint">${esc(d&&d.erro||'Dados das outras plataformas indisponíveis agora.')}</div>`;return;}
+    const T=d.themis||{},K=d.kronos||{},A=d.atend||{};
+    const linha=(r,v)=>v==null||v===''?'':`<div class="pf-l"><span>${r}</span><b>${v}</b></div>`;
+    const delta=(a,b)=>a!=null&&b!=null&&a!==b?` <small class="${a>b?'pf-up':'pf-dn'}">${a>b?'▲':'▼'}</small>`:'';
+    el.innerHTML=`<div class="pf-g">
+      <div class="pf-c"><h4>Themis RH</h4>${linha('Cargo',esc(T.cargo))}${linha('Gestor',esc(T.gestor))}${linha('Admissão',T.admissao?dt(T.admissao)+(T.tempo?` · ${esc(T.tempo)}`:''):'')}${linha('Modalidade',esc(T.modalidade))}
+        ${linha('Perfil DISC',esc(T.disc))}${T.avaliacao?linha('Última avaliação',`${n1(T.avaliacao.nota)} <small>${esc(T.avaliacao.ciclo)}</small>`):''}
+        ${T.feedbacks?linha('Feedbacks (90 dias)',`${T.feedbacks.qtd}${T.feedbacks.ultimo?` <small>último: ${esc(T.feedbacks.ultimo.tipo)} em ${dt(T.feedbacks.ultimo.data)}</small>`:''}`):''}
+        ${T.pdi?linha('PDI',`${T.pdi.abertas} em aberto${T.pdi.atrasadas?` · <span class="pf-dn">${T.pdi.atrasadas} atrasada(s)</span>`:''}`):''}
+        ${T.restrito?'':'<div class="pf-x"><div>Avaliação, feedback e PDI aparecem só para quem é gestor dessa pessoa ou do RH.</div></div>'}</div>
+      <div class="pf-c"><h4>Kronos ID · ponto</h4>${K.hoje?linha('Hoje',`${esc(SIT[K.hoje.situacao]||K.hoje.situacao||'–')}${K.hoje.batidas&&K.hoje.batidas.length?` <small>${K.hoje.batidas.map(esc).join(' · ')}</small>`:''}`):linha('Hoje','sem escala')}
+        ${linha('Banco no mês',K.mes?`<span class="${(K.mes.saldo||0)<0?'pf-dn':'pf-up'}">${hm(K.mes.saldo)}</span>`:'–')}${K.mes&&K.mes.pendentes?linha('Dias com batida faltando',K.mes.pendentes):''}
+        ${K.mes&&K.mes.atrasos?linha('Atrasos no mês',K.mes.atrasos):''}${linha('Escala',esc(K.escala))}${linha('Registro',esc(K.modo))}</div>
+      <div class="pf-c"><h4>Atendimentos</h4>${linha('Este mês',A.mes?`${A.mes.qtd} · nota ${n1(A.mes.nota)}${delta(A.mes.nota,A.ant&&A.ant.nota)}`:'0')}${linha('Mês passado',A.ant?`${A.ant.qtd} · nota ${n1(A.ant.nota)}`:'0')}
+        ${A.riscos?linha('Sinais de risco no mês',`<span class="pf-dn">${A.riscos}</span>`):''}
+        ${A.ultimos&&A.ultimos.length?`<div class="pf-x">${A.ultimos.map(u=>`<div>${dt(u.data)} · ${esc(u.cliente||'cliente')} · nota ${n1(u.nota)}${u.assunto?`<br><small>${esc(u.assunto)}</small>`:''}</div>`).join('')}</div>`:''}</div></div>`;
+  };
+})();
+
+/* Escritório Virtual no Resiltrack: troca o banco do Claude (window.claude.use('db'/'user')) pelo Supabase do Resiltrack.
    Lê e grava em escritorio.docs pelas funções public.escritorio_docs / escritorio_gravar / escritorio_acesso.
    A sessão é a mesma do Resiltrack (mesmo domínio, mesmo localStorage). */
 (function(){
@@ -77,7 +198,7 @@
     const{data:ses}=await sb.auth.getSession();if(!ses||!ses.session){if(pai){aviso('Entre no Resiltrack para abrir o Escritório Virtual.');throw new Error('sem sessão');}await telaLogin();}
     const{data:a,error:ea}=await sb.rpc('escritorio_acesso');if(ea)throw erro(ea);acesso=a||{};
     if(!acesso.ver){aviso('Você ainda não tem acesso ao Escritório Virtual. Peça para um administrador liberar no painel Admin do Resiltrack.');throw new Error('sem acesso');}
-    await buscar();await gclick();timer=setInterval(()=>{if(!document.hidden)puxar();},POLL);document.addEventListener('visibilitychange',()=>{if(!document.hidden)puxar();});
+    await buscar();await gclick();quandoPronto(()=>{try{window.__ESC_NOTIF&&window.__ESC_NOTIF.iniciar(sb);}catch(e){console.warn(e);}try{window.__ESC_PERFIL_SB=sb;}catch(e){}});timer=setInterval(()=>{if(!document.hidden)puxar();},POLL);document.addEventListener('visibilitychange',()=>{if(!document.hidden)puxar();});
   })();
   window.__ESCRITORIO_RT={pronto,puxar,get acesso(){return acesso;}};
   window.claude={use:async n=>{try{await pronto;}catch(e){return null;}return n==='db'?DB:n==='user'?USER:null;}};
@@ -2672,6 +2793,7 @@ function fichaCol(id){
     <div style="color:${PRES_COR[sv]};font-weight:600;margin-top:4px">${rr?esc(`${PRES_TXT[sv]} com ${rr.cliente||'cliente'}${rr.inicio?' desde '+rr.inicio:''}${rr.fim?' até '+rr.fim:''} · `):''}${esc(PRES_TXT[p])}${p==='Ausente'&&c.motivo?' · '+esc(c.motivo):''}${p==='Ausente'&&c.retorno?' · volta em '+fmtDate(c.retorno):''}</div>
     <div class="hint">Padrão: ${esc(c.padrao||'Presencial')}${c.userId?' · conta do Claude vinculada':''}</div></div></div>
   ${blocoResiltrack(c)}
+  <div class="wide" id="perfil-plat" hidden></div>
   ${blocoMesa(c)}
   ${pode?`<div class="wide"><div class="field"><label>Status de hoje</label><div class="seg" id="seg">${['Presencial','Home office','Saiu','Ausente'].map(k=>`<button type="button" data-k="${k}" aria-pressed="${p===k}">${PRES_TXT[k]}</button>`).join('')}</div></div></div>
   <div class="field" id="f-mot-w" ${p==='Ausente'?'':'hidden'}><label for="f-mot">Motivo da ausência</label><select id="f-mot">${MOTIVOS.map(m=>`<option ${c.motivo===m?'selected':''}>${m}</option>`).join('')}</select></div>
@@ -2688,6 +2810,7 @@ function fichaCol(id){
   <div class="dlg-f"><div>${pode?(c.desligado?'<button type="button" class="btn" id="fc-reat">Reativar colaborador</button>':'<button type="button" class="btn" id="fc-dsl">Registrar desligamento</button>'):''}${pode&&!c.desligado?'<button type="button" class="btn" id="fc-edit">Editar cadastro</button><button type="button" class="btn" id="fc-vis2">Editar personagem</button>':''}${pode&&myId&&!c.userId&&!cols().some(x=>x.userId===myId)?'<button type="button" class="btn" id="fc-eu">Sou eu</button>':''}</div>
   <div>${c.userId&&c.userId===myId&&pode?'<button type="button" class="btn gold" id="fc-log">+ Registrar atividade</button>':''}</div></div>`;
   $('dlg-x').onclick=()=>$('dlg').close();
+  try{if(window.__ESC_PERFIL)window.__ESC_PERFIL(c,$('perfil-plat'));}catch(e){}
   $('dlg-form').onsubmit=e=>e.preventDefault();
   $('dlg-form').querySelectorAll('[data-bpcol]').forEach(b=>b.onclick=()=>fichaDepDet(depOf(c),'bancoPessoa',b.dataset.bpcol));
   const seg=$('seg');
