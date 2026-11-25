@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><style>:root{box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>/* Escritório Virtual no Resiltrack: troca o banco do Claude (window.claude.use('db'/'user')) pelo Supabase do Resiltrack.
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><link rel="manifest" href="escritorio.webmanifest"><meta name="theme-color" content="#0c0f16"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Escritório"><link rel="apple-touch-icon" href="escritorio-icon-192.png"><link rel="icon" type="image/png" href="escritorio-icon-192.png"><style>:root{box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>/* Escritório Virtual no Resiltrack: troca o banco do Claude (window.claude.use('db'/'user')) pelo Supabase do Resiltrack.
    Lê e grava em escritorio.docs pelas funções public.escritorio_docs / escritorio_gravar / escritorio_acesso.
    A sessão é a mesma do Resiltrack (mesmo domínio, mesmo localStorage). */
 (function(){
@@ -20,7 +20,9 @@
       if(!mud.has(r.colecao))mud.set(r.colecao,[]);const d=r.removido?{}:r.dados;mud.get(r.colecao).push({type:tipo,doc:{id:r.id,exists:!r.removido,data:()=>clone(d)}});});
     if(mud.size)avisar(mud);}
   async function buscar(){const{data,error}=await sb.rpc('escritorio_docs',{p_desde:cursor});if(error)throw erro(error);aplicar(data||[]);}
-  async function puxar(){try{await buscar();}catch(e){console.warn('Escritório: falha ao atualizar',e);}}
+  let gcUlt=0;async function gclick(){if(Date.now()-gcUlt<120000)return;gcUlt=Date.now();try{const{data,error}=await sb.rpc('escritorio_gclick');if(error||!data)return;
+    colMap('config').set('gclick',{d:data,v:0});avisar(new Map([['config',[{type:'modified',doc:{id:'gclick',exists:true,data:()=>clone(data)}}]]]));}catch(e){}}
+  async function puxar(){try{await buscar();}catch(e){console.warn('Escritório: falha ao atualizar',e);}gclick();}
   async function gravar(c,id,body,modo){const{error}=await sb.rpc('escritorio_gravar',{p_colecao:c,p_id:id,p_dados:body==null?null:clone(body),p_modo:modo});if(error)throw erro(error);await puxar();}
   const docRef=(c,id)=>({id,path:c+'/'+id,
     update:b=>gravar(c,id,b,'update'),set:b=>gravar(c,id,b,'set'),delete:()=>gravar(c,id,null,'delete'),
@@ -34,14 +36,44 @@
   const USER={id:async()=>acesso&&acesso.uid,me:async()=>({id:acesso&&acesso.uid,name:acesso&&acesso.email||''}),isOwner:async()=>!!(acesso&&acesso.admin),
     canEdit:async()=>!!(acesso&&acesso.admin),can:async n=>n==='data.write'?!!(acesso&&acesso.editar):null,profiles:async ids=>({}),search:async()=>[]};
   function aviso(t){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;display:grid;place-items:center;background:#0c0f16;color:#eef1f7;font:600 16px system-ui;z-index:99;text-align:center;padding:24px';d.textContent=t;document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(d));if(document.body)document.body.appendChild(d);}
+  const quandoPronto=f=>{if(document.body)f();else document.addEventListener('DOMContentLoaded',f);};
+  // tela de entrada própria do app (mesmo login do Resiltrack)
+  function telaLogin(){return new Promise(res=>quandoPronto(()=>{
+    const d=document.createElement('div');d.id='esc-login';
+    d.style.cssText='position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#1b2336,#0c0f16 70%);color:#eef1f7;font-family:"IBM Plex Sans",system-ui,sans-serif;padding:20px';
+    d.innerHTML=`<form style="width:min(360px,100%);background:#141924;border:1px solid #283044;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <img src="escritorio-icon-192.png" alt="" style="width:64px;height:64px;border-radius:14px;align-self:center;image-rendering:pixelated">
+      <div style="text-align:center"><b style="font-family:'Pixelify Sans',monospace;font-size:22px">Escritório Virtual</b><div style="color:#aab3c7;font-size:13px;margin-top:2px">Entre com o seu login do Resiltrack</div></div>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#aab3c7">E-mail<input name="e" type="email" autocomplete="username" required style="font:inherit;font-size:15px;padding:10px 12px;border-radius:9px;border:1px solid #323c55;background:#0c0f16;color:#eef1f7"></label>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#aab3c7">Senha<input name="s" type="password" autocomplete="current-password" required style="font:inherit;font-size:15px;padding:10px 12px;border-radius:9px;border:1px solid #323c55;background:#0c0f16;color:#eef1f7"></label>
+      <div id="esc-err" style="color:#ff8a80;font-size:13px;min-height:18px"></div>
+      <button style="font:inherit;font-weight:700;font-size:15px;padding:11px;border-radius:10px;border:0;background:#f2b84b;color:#251a02;cursor:pointer">Entrar</button></form>`;
+    document.body.appendChild(d);const f=d.querySelector('form'),er=d.querySelector('#esc-err');f.e.focus();
+    f.onsubmit=async ev=>{ev.preventDefault();er.textContent='';const bt=f.querySelector('button');bt.disabled=true;bt.textContent='Entrando…';
+      const{error}=await sb.auth.signInWithPassword({email:f.e.value.trim(),password:f.s.value});
+      if(error){er.textContent=/invalid/i.test(error.message)?'E-mail ou senha incorretos.':error.message;bt.disabled=false;bt.textContent='Entrar';return;}
+      d.remove();res();};}));}
+  // app instalável: service worker e botão "Instalar app"
+  let pedidoInstalar=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pedidoInstalar=e;botaoInstalar();});
+  function botaoInstalar(){quandoPronto(()=>{const tools=document.querySelector('.tools');if(!tools||document.getElementById('b-app'))return;
+    const solo=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(solo)return;
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);if(!pedidoInstalar&&!ios)return;
+    const b=document.createElement('button');b.className='btn';b.id='b-app';b.type='button';b.textContent='Instalar app';b.title='Salvar o Escritório Virtual como aplicativo neste aparelho';
+    b.onclick=async()=>{if(pedidoInstalar){pedidoInstalar.prompt();const r=await pedidoInstalar.userChoice;if(r&&r.outcome==='accepted')b.remove();pedidoInstalar=null;}
+      else alert('No iPhone ou iPad: toque em Compartilhar e depois em "Adicionar à Tela de Início".');};
+    tools.insertBefore(b,tools.firstChild);});}
+  if(window.top===window&&'serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('escritorio-sw.js',{scope:'./escritorio'}).catch(()=>{});});}
+  quandoPronto(()=>setTimeout(botaoInstalar,1500));
+  window.addEventListener('appinstalled',()=>{const b=document.getElementById('b-app');if(b)b.remove();});
   const pronto=(async()=>{
     if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase não carregou');
     let pai=null;try{pai=window.parent&&window.parent!==window?window.parent.__RT_SB:null;}catch(e){pai=null;}
     sb=pai||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-    const{data:ses}=await sb.auth.getSession();if(!ses||!ses.session){aviso('Entre no Resiltrack para abrir o Escritório Virtual.');throw new Error('sem sessão');}
+    const{data:ses}=await sb.auth.getSession();if(!ses||!ses.session){if(pai){aviso('Entre no Resiltrack para abrir o Escritório Virtual.');throw new Error('sem sessão');}await telaLogin();}
     const{data:a,error:ea}=await sb.rpc('escritorio_acesso');if(ea)throw erro(ea);acesso=a||{};
     if(!acesso.ver){aviso('Você ainda não tem acesso ao Escritório Virtual. Peça para um administrador liberar no painel Admin do Resiltrack.');throw new Error('sem acesso');}
-    await buscar();timer=setInterval(()=>{if(!document.hidden)puxar();},POLL);document.addEventListener('visibilitychange',()=>{if(!document.hidden)puxar();});
+    await buscar();await gclick();timer=setInterval(()=>{if(!document.hidden)puxar();},POLL);document.addEventListener('visibilitychange',()=>{if(!document.hidden)puxar();});
   })();
   window.__ESCRITORIO_RT={pronto,puxar,get acesso(){return acesso;}};
   window.claude={use:async n=>{try{await pronto;}catch(e){return null;}return n==='db'?DB:n==='user'?USER:null;}};
@@ -474,10 +506,72 @@ td a:hover,.feed a:hover{text-decoration:underline}
   .split{grid-template-columns:minmax(0,1fr)}
   .dlg-b{grid-template-columns:minmax(0,1fr)}
 }
-@media (max-width:2100px){#acc-custo{display:none}}
-@media (max-width:2000px){#stats2{display:none}}
-@media (max-width:1300px){#acc-claude{display:none}}
+@media (max-width:2300px){#stats2{display:none}}
+.kpis .st span{display:flex;align-items:center;gap:4px}.kpis .st small{font-size:10.5px;font-weight:700}.kpis .st small.up{color:var(--ok)}.kpis .st small.down{color:var(--bad)}.kpis .st.bad b{color:var(--bad)}.kpis .st b.sm{font-size:17px}.kpis button.st{background:none;border:0;border-left:1px solid var(--line);color:inherit;text-align:left;cursor:pointer;font:inherit}.kpis button.st:hover{background:var(--panel-2)}
 @media (prefers-reduced-motion:reduce){.zz{animation:none}.chev{transition:none}}
+
+/* ===== celular: vertical e horizontal ===== */
+.kfaixa{display:contents}
+.kpis .kmob{display:none}
+@media (max-width:760px),(max-height:540px) and (max-width:1100px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"side brand alert" "kpi kpi kpi" "tools tools tools";gap:8px;align-items:center;padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:8px;overflow:visible}
+  #b-side{grid-area:side}
+  .brand{grid-area:brand;min-width:0}.brand b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kfaixa{display:contents}
+  #kpis{grid-area:kpi}
+  #stats,#stats2{display:none!important}
+  #alertbox{grid-area:alert}.alert{margin:0;padding:3px 10px}.alert b{font-size:17px}
+  #alertbox:empty{display:none}
+  .kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));max-width:none!important;border-radius:12px;overflow:hidden}
+  .kpis .kmob{display:flex}
+  .kpis .st,.kpis button.st{border-left:0;border-top:1px solid var(--line);padding:6px 8px;min-width:0;justify-content:flex-start}
+  .kpis .st:nth-child(-n+4){border-top:0}
+  .kpis .st:not(:nth-child(4n+1)){border-left:1px solid var(--line)}
+  .kpis .st b{font-size:18px}.kpis .st b.sm{font-size:14px}
+  .kpis .st span{font-size:10px;line-height:1.15;white-space:normal;flex-wrap:wrap}
+  .kpis .st{position:relative}.kpis .st small{position:absolute;top:5px;right:6px;font-size:9.5px}
+  .tools{grid-area:tools;margin:0;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start}
+  .tools::-webkit-scrollbar{display:none}
+  .ib{width:42px;min-height:42px}
+  #b-rt{display:none}
+  .app,.app.noside,.app.sidemini{display:block;position:relative;height:calc(100svh - var(--toph,150px));min-height:0}
+  .mapwrap{position:absolute;inset:0;height:auto;min-height:0}
+  .vp{touch-action:pan-x pan-y;overscroll-behavior:contain}
+  .side,.app.noside .side,.app.sidemini .side{display:flex!important;position:fixed;z-index:25;top:var(--toph,150px);bottom:0;left:0;width:min(360px,86vw);padding:14px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-bottom:max(14px,env(safe-area-inset-bottom,0px));border:0;border-right:1px solid var(--line-2);overflow-y:auto;transform:translateX(-105%);transition:transform .22s ease;box-shadow:12px 0 40px rgba(0,0,0,.55);align-items:stretch}
+  .app.sideopen .side{transform:none}
+  .app.sidemini .side>:not(#side-rail){display:revert!important}
+  #side-rail{display:none!important}
+  .app.sideopen::after{content:"";position:fixed;inset:var(--toph,150px) 0 0 0;background:rgba(3,5,10,.45);z-index:24}
+  dialog{max-width:100vw;max-height:100svh}
+  #drawer,#drawer.wide{width:100vw;height:100svh;margin:0;border-radius:0;border:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .dr-h{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.dr-h::-webkit-scrollbar{display:none}
+  .dr-h .tab{flex:none}
+  #dr-x{position:sticky;right:0;flex:none;margin-left:auto;box-shadow:-10px 0 12px var(--panel);z-index:1}
+  .dlg{max-height:100svh}
+  .dlg-b{grid-template-columns:minmax(0,1fr)}
+  .toasts{left:12px;right:12px;max-width:none}
+}
+@media (max-width:380px){.kpis .st b{font-size:16px}.kpis .st b.sm{font-size:12.5px}.kpis .st,.kpis button.st{padding:5px 6px}}
+/* celular deitado: tudo numa linha só, mapa ocupa o resto */
+@media (max-height:540px) and (max-width:1100px) and (orientation:landscape){
+  .top{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding-top:6px;padding-bottom:6px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  .brand{display:none}
+  .alert{padding:2px 9px}.alert b{font-size:15px}.alert span{font-size:10px}
+  #b-app{padding:7px 9px;font-size:12px}
+  .kfaixa{flex:1 1 auto;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;min-width:0}
+  .kfaixa::-webkit-scrollbar{display:none}
+  .kpis{display:flex!important;flex:none;border-radius:10px}
+  .kpis .st,.kpis button.st{border-top:0!important;border-left:1px solid var(--line)!important;padding:3px 10px;flex:none}
+  .kpis .st:first-child{border-left:0!important}
+  .kpis .st b{font-size:16px}.kpis .st b.sm{font-size:14px}
+  .kpis .st span{white-space:nowrap;font-size:10px}
+  .tools{flex:0 1 auto;max-width:34vw}
+  .ib{width:36px;min-height:36px}
+  .bl-t{display:none}
+  .btn{padding:7px 11px}
+}
+@media (max-width:520px){.bl-t{display:none}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -506,14 +600,15 @@ td a:hover,.feed a:hover{text-decoration:underline}
 <header class="top">
   <button class="ib" id="b-side" type="button" title="Mostrar ou esconder a lista" aria-label="Mostrar ou esconder a lista"><svg class="i"><use href="#i-side"/></svg></button>
   <div class="brand"><b>Escritório Resilcon</b><span class="live" id="live">Conectando</span></div>
+  <div class="kfaixa" id="kfaixa">
   <div class="sbox" id="stats"></div>
   <div class="sbox" id="stats2"></div>
   <div id="alertbox"></div>
-  <div class="acc" id="acc-claude"></div>
-  <div class="acc" id="acc-custo"></div>
+  <div class="sbox kpis" id="kpis"></div>
+  </div>
   <div class="tools">
     <button class="btn" id="b-rt" type="button" hidden title="Copia todos os dados deste escritório para o Escritório Virtual do Resiltrack">Enviar ao Resiltrack</button>
-    <button class="btn gold" id="b-log" type="button">+ Registrar atividade</button>
+    <button class="btn gold" id="b-log" type="button" title="Registrar atividade">+<span class="bl-t"> Registrar atividade</span></button>
     <button class="ib" type="button" data-tab="colaboradores" title="Colaboradores" aria-label="Colaboradores"><svg class="i"><use href="#i-users"/></svg></button>
     <button class="ib" type="button" data-tab="projetos" title="Projetos" aria-label="Projetos"><svg class="i"><use href="#i-folder"/></svg></button>
     <button class="ib" type="button" data-tab="ferramentas" title="Ferramentas e IAs" aria-label="Ferramentas e IAs"><svg class="i"><use href="#i-server"/></svg></button>
@@ -1857,17 +1952,31 @@ function renderTop(){
   const pend=pendencias().length;
   $('alertbox').innerHTML=pend?`<button class="alert" type="button" id="st-pend"><b>${pend}</b><span>precisa de você</span></button>`:'';
   const sp=$('st-pend');if(sp)sp.onclick=()=>abrir('pendencias');
-  const sem=S.atividades.filter(a=>a.data&&daysAgo(a.data)<=6),hrs=sem.reduce((s,a)=>s+(Number(a.horas)||0),0);
-  const mes=S.atividades.filter(a=>a.data&&daysAgo(a.data)<=29),hrsM=mes.reduce((s,a)=>s+(Number(a.horas)||0),0);
-  $('acc-claude').innerHTML=`<span class="lg" style="background:#d97757">C</span><div><div class="tt">Claude Team</div>
-    <div class="ln"><span>7 dias</span>${bars(sem.length,20)}<span class="v">${sem.length} reg · ${hrs.toLocaleString('pt-BR')} h</span></div>
-    <div class="ln"><span>30 dias</span>${bars(mes.length,60)}<span class="v">${mes.length} reg · ${hrsM.toLocaleString('pt-BR')} h</span></div></div>`;
-  const cF=S.ferramentas.filter(f=>f.status!=='Cancelada').reduce((s,f)=>s+(mensal(f)||0),0),cA=S.apis.filter(a=>a.status!=='Desativada').reduce((s,a)=>s+(mensal(a)||0),0);
-  $('acc-custo').innerHTML=`<span class="lg" style="background:#4c8df6;font-size:15px">R$</span><div><div class="tt">Custo mensal</div>
-    <div class="ln"><span>Ferram.</span>${bars(cF,cF+cA)}<span class="v" style="color:var(--fg)">${esc(BRL.format(cF))}</span></div>
-    <div class="ln"><span>APIs</span>${bars(cA,cF+cA)}<span class="v" style="color:var(--fg)">${esc(BRL.format(cA))}</span></div></div>`;
+  renderKpis();
   $('b-log').disabled=!(dbState==='ok'&&canWrite&&myId);
 }
+
+/* ---- KPIs da barra de cima ---- */
+let GCLICK={};
+function kpiMes(){const h=todayISO(),m=h.slice(0,7),dia=h.slice(8,10),dt=new Date(h+'T12:00:00');dt.setDate(1);dt.setMonth(dt.getMonth()-1);const ma=dt.toISOString().slice(0,7);
+  const soma=(pref,ate)=>{let q=0,sn=0,t=0,pr=0;Object.values(DIAP||{}).forEach(d=>{const k=String(d.d||'');if(!k.startsWith(pref)||(ate&&k.slice(8,10)>ate))return;
+    Object.values(d.a||{}).forEach(v=>{q+=+v[0]||0;sn+=+v[1]||0;});Object.values(d.wm||{}).forEach(v=>{t+=+v[0]||0;pr+=+v[1]||0;});});return{q,nota:q?sn/q:null,prod:t?pr/t*100:null};};
+  return{atual:soma(m),ant:soma(ma,dia)};}
+const kDelta=(a,b,suf='',casas=0)=>{if(a==null||b==null||!isFinite(a)||!isFinite(b))return'';const d=a-b;if(Math.abs(d)<(casas?0.05:0.5))return'';return`<small class="${d>0?'up':'down'}" title="Comparado com o mesmo período do mês passado">${d>0?'▲':'▼'}${Math.abs(d).toLocaleString('pt-BR',{maximumFractionDigits:casas,minimumFractionDigits:casas})}${suf}</small>`;};
+function renderKpis(){const el=$('kpis');if(!el)return;
+  const{atual:A,ant:P}=kpiMes(),fmtN=(v,c=1)=>v==null?'–':v.toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c});
+  const eco=economiaProjetos().filter(e=>e.real).reduce((s,e)=>s+(+e.eco||0),0);
+  const cF=S.ferramentas.filter(f=>f.status!=='Cancelada').reduce((s,f)=>s+(mensal(f)||0),0),cA=S.apis.filter(a=>a.status!=='Desativada').reduce((s,a)=>s+(mensal(a)||0),0);
+  const k0=v=>BRL.format(v).replace(/,\d\d$/,''),G=GCLICK||{},gOk=G.atrasadas!=null,gTit=G.atualizadoEm?` · atualizado ${String(G.atualizadoEm).replace('T',' ').slice(0,16)}`:'';
+  const presN=cols().filter(c=>presenca(c)==='Presencial').length;
+  el.innerHTML=`<div class="st ok kmob" title="Colaboradores no escritório agora"><b>${presN}</b><span>no escritório</span></div><div class="st" title="Atendimentos avaliados no mês (Resiltrack)"><b>${(A.q||0).toLocaleString('pt-BR')}</b><span>atendimentos no mês ${kDelta(A.q,P.q)}</span></div>
+    <div class="st ok" title="Nota final média dos atendimentos avaliados no mês"><b>${fmtN(A.nota)}</b><span>nota média ${kDelta(A.nota,P.nota,'',1)}</span></div>
+    <div class="st info" title="Tempo produtivo sobre o tempo total no Work Monitor, no mês"><b>${A.prod==null?'–':Math.round(A.prod)+'%'}</b><span>produtividade ${kDelta(A.prod,P.prod,' p.p.')}</span></div>
+    <button class="st ${gOk&&G.atrasadas>0?'bad':''}" type="button" data-kgo="gclick" title="Tarefas do G-Click em aberto com vencimento já passado${gTit}"><b>${gOk?(+G.atrasadas).toLocaleString('pt-BR'):'–'}</b><span>tarefas atrasadas</span></button>
+    <button class="st warn" type="button" data-kgo="gclick" title="Tarefas do G-Click em aberto que vencem hoje${gTit}"><b>${gOk?(+G.hoje||0).toLocaleString('pt-BR'):'–'}</b><span>vencem hoje</span></button>
+    <button class="st ok" type="button" data-kgo="projetos" title="Economia por mês com ferramentas substituídas por projetos da equipe (no ar ou concluídos)"><b class="sm">${k0(eco)}</b><span>economia/mês</span></button>
+    <button class="st" type="button" data-kgo="ferramentas" title="Ferramentas ${BRL.format(cF)} + APIs ${BRL.format(cA)} por mês"><b class="sm">${k0(cF+cA)}</b><span>custo/mês</span></button>`;
+  el.querySelectorAll('[data-kgo]').forEach(b=>b.onclick=()=>{const g=b.dataset.kgo;if(g==='projetos'){ui.projView='acomp';abrir('projetos');}else if(g==='ferramentas')abrir('ferramentas');else toast(`G-Click: ${gOk?G.atrasadas+' tarefas atrasadas e '+(G.hoje||0)+' vencendo hoje':'sem dados ainda'}${gTit}. Os números vêm do Resiltrack.`);});}
 
 /* ===== lateral ===== */
 const ICON={'Chat':'i-chat','Projeto do Claude':'i-folder','Cowork':'i-pen','Claude Code':'i-pen','Artifact ou página':'i-book','Conector (Teams, Drive...)':'i-plug'};
@@ -2666,7 +2775,15 @@ new ResizeObserver(()=>fitWorld()).observe($('vp'));
 new ResizeObserver(()=>document.documentElement.style.setProperty('--toph',document.querySelector('.top').offsetHeight+'px')).observe(document.querySelector('.top'));
 if(NATAL)$('mapwrap').style.background='#e4eef1';
 $('dlg').addEventListener('close',()=>$('dlg').classList.remove('wide2'));
-$('b-side').onclick=()=>setSideMini(!ui.sideMini);
+const PHONE=()=>matchMedia('(max-width:760px),(max-height:540px) and (max-width:1100px)').matches;
+$('b-side').onclick=()=>{if(PHONE())$('app').classList.toggle('sideopen');else setSideMini(!ui.sideMini);};
+$('app').addEventListener('pointerdown',e=>{if(PHONE()&&$('app').classList.contains('sideopen')&&!e.target.closest('.side'))$('app').classList.remove('sideopen');},true);
+/* pinça para aproximar no celular */
+(()=>{const vp=$('vp');let d0=0,z0=1,cx=0,cy=0;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  vp.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);z0=zoom;const r=vp.getBoundingClientRect();cx=((e.touches[0].clientX+e.touches[1].clientX)/2-r.left+vp.scrollLeft)/vp.scrollWidth;cy=((e.touches[0].clientY+e.touches[1].clientY)/2-r.top+vp.scrollTop)/vp.scrollHeight;}},{passive:true});
+  vp.addEventListener('touchmove',e=>{if(e.touches.length!==2||!d0)return;e.preventDefault();const nz=Math.min(6,Math.max(.6,z0*dist(e.touches)/d0));if(Math.abs(nz-zoom)<.01)return;zoom=nz;
+    const r=vp.getBoundingClientRect(),mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;fitWorld();vp.scrollLeft=cx*vp.scrollWidth-mx;vp.scrollTop=cy*vp.scrollHeight-my;},{passive:false});
+  vp.addEventListener('touchend',e=>{if(e.touches.length<2)d0=0;},{passive:true});})();
 if(ui.sideMini)$('app').classList.add('sidemini');
 /* ===== acompanhamento de projetos: parados, prazos, histórico e custo ===== */
 const PARADO_DIAS=3,TESTE_MESES=1,ATIVOS_ST=['Em andamento'],DEV_ST=['Ideia','Em andamento','Em teste'];
@@ -3021,9 +3138,10 @@ document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/
 /* ---- cópia dos dados para o Resiltrack (Supabase, tabela escritorio.docs) ---- */
 async function enviarResiltrack(){
   const bt=$('b-rt');if(bt.disabled)return;
-  if(!confirm('Copiar todos os dados deste escritório para o Escritório Virtual do Resiltrack? O que já estiver lá com o mesmo id é substituído.'))return;
+  if(!bt.dataset.armado){bt.dataset.armado='1';bt.textContent='Clique de novo para confirmar o envio';bt.classList.add('gold');toast('Vai copiar todos os dados do escritório para o Resiltrack. Clique de novo no botão para confirmar.');setTimeout(()=>{if(bt.dataset.armado&&!bt.disabled){delete bt.dataset.armado;bt.textContent='Enviar ao Resiltrack';bt.classList.remove('gold');}},8000);return;}
+  delete bt.dataset.armado;bt.classList.remove('gold');bt.textContent='Conectando ao Supabase…';
   let mcp=null;try{mcp=await window.claude.use('mcp');}catch(e){}
-  if(!mcp){toast('Este navegador não liberou o conector do Supabase. Abra a Central no claude.ai e tente de novo.');return;}
+  if(!mcp){bt.textContent='Enviar ao Resiltrack';toast('O conector do Supabase não ficou disponível aqui. Abra a Central pelo claude.ai no navegador, confira se o conector Supabase está ligado e tente de novo.');return;}
   const rows=[],tira=o=>{const x={...o};delete x._id;return x;};
   ['projetos','ferramentas','apis','atividades','membros','colaboradores','paginas','campanhas','recepcao'].forEach(c=>(S[c]||[]).forEach(d=>rows.push({c,i:d._id,d:tira(d)})));
   Object.entries(DIAP||{}).forEach(([i,d])=>rows.push({c:'deptodia',i,d}));Object.entries(DIAR||{}).forEach(([i,d])=>rows.push({c:'restritodia',i,d}));
@@ -3035,7 +3153,7 @@ async function enviarResiltrack(){
       const q=`insert into escritorio.docs(colecao,id,dados,atualizado_por) select x.c,x.i,x.d,'central-claude' from jsonb_to_recordset($${tag}$${corpo}$${tag}$::jsonb) as x(c text,i text,d jsonb) on conflict (colecao,id) do update set dados=excluded.dados,removido=false,versao=escritorio.docs.versao+1,atualizado_em=clock_timestamp(),atualizado_por=excluded.atualizado_por`;
       await mcp.callTool('Supabase','execute_sql',{project_id:'aumfhrqrnudmprvmvesb',query:q});ok+=lotes[k].length;}
     toast(`${ok} registros enviados ao Resiltrack.`);bt.textContent='Enviado ao Resiltrack';}
-  catch(e){toast(`Parou depois de ${ok} registros: ${e&&(e.code||e.message)||'erro'}. Pode clicar de novo, o que já foi não duplica.`);bt.textContent='Enviar ao Resiltrack';}
+  catch(e){console.error('Envio ao Resiltrack',e);toast(`Parou depois de ${ok} registros: ${e&&(e.code||'')} ${e&&e.message||''}. Pode clicar de novo, o que já foi não duplica.`);bt.textContent='Enviar ao Resiltrack';}
   finally{bt.disabled=false;}
 }
 $('b-rt').onclick=enviarResiltrack;
@@ -3073,6 +3191,7 @@ document.fonts?.ready?.then(()=>renderAll());
   let firstCfg=true;
   db.doc('config/recepcao').onSnapshot(s=>{RECEP_SYNC=s.exists?{entradas:[],saidas:[],sensiveis:[],...s.data()}:{entradas:[],saidas:[],sensiveis:[]};upd();},()=>{});
   db.doc('config/trofeus').onSnapshot(s=>{TROFEUS=s.exists?{top:[],...s.data()}:{top:[]};upd();},()=>{});
+  db.doc('config/gclick').onSnapshot(s=>{GCLICK=s.exists?s.data():{};upd();},()=>{});
   db.doc('config/comunicados').onSnapshot(s=>{COMUN=s.exists?{itens:[],parabens:[],...s.data()}:{itens:[],parabens:[]};upd();},()=>{});
   db.doc('config/aniversarios').onSnapshot(s=>{ANIV=s.exists?{hoje:[],proximos:[],...s.data()}:{hoje:[],proximos:[]};upd();},()=>{});
   db.doc('config/escritorio').onSnapshot(s=>{cfg=s.exists?{setores:[],coordenador:null,...s.data()}:{setores:[],coordenador:null};if(firstCfg){firstCfg=false;done();}upd();resolveNames();},()=>{});

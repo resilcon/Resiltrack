@@ -1,0 +1,18 @@
+{
+  "name": "Escritório Virtual · Resilcon",
+  "short_name": "Escritório",
+  "description": "O escritório da Resilcon em pixel: presença da equipe, recepção, comunicados, troféus e projetos.",
+  "lang": "pt-BR",
+  "id": "escritorio.html",
+  "start_url": "escritorio.html",
+  "scope": "./escritorio",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c0f16",
+  "theme_color": "#0c0f16",
+  "icons": [
+    {"src": "escritorio-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "escritorio-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "escritorio-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
