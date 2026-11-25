@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.52 (Escritório Virtual no menu, abaixo de Atendimentos)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.53 (Escritório Virtual no menu, abaixo de Atendimentos)</footer>
   </div>
 </div>
 
@@ -1498,11 +1498,7 @@ function blocosHTML(){
   return `<div class="gsec">
     <details class="acc" id="g-pessoas"><summary><span class="acc-ic">${_ICO_PEOPLE}</span>Pessoas<span class="acc-cta">férias, avaliações e produtividade</span></summary>
       <div class="acc-body"><div class="intg">
-        ${_intgCard("Cohros","Provisão de férias","Saldo e provisão de férias de cada colaborador, para planejar a escala sem furos.")}
-        ${_intgCard("Cohros","Avaliações","Avaliações de desempenho e feedbacks registrados, ligados a cada pessoa do time.")}
-        ${_intgCard("Tangerino","Ponto e férias","Marcações de ponto, banco de horas e período de férias, direto do controle de ponto.")}
-        ${_intgCard("Workmonitor","Produtividade","Tempo produtivo e uso de sistemas por colaborador, leitura de capacidade operacional via API.")}
-      </div></div>
+      </div><div id="g-pessoas-rt"><div class="sub">Abra para carregar férias, avaliações, ponto e produtividade.</div></div></div>
     </details>
     <details class="acc" id="g-clientes"><summary><span class="acc-ic">${_ICO_CLI}</span>Clientes<span class="acc-cta">${totalCli} na base</span></summary>
       <div class="acc-body">
@@ -2479,12 +2475,12 @@ function _pGrafico(dias){
   for(let h=0;h<=Math.ceil(mx/60);h+=2){ const y=H-pad-(h*60/mx)*(H-pad-8); s+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="currentColor" opacity=".12"/><text x="${pad-4}" y="${y+3}" font-size="9" text-anchor="end" fill="currentColor" opacity=".6">${h}h</text>`; }
   dias.forEach((x,i)=>{ const cx=pad+step*i+step/2; [[x.p,"#066789",-1],[x.w,"#94a3b8",0],[x.g,"#d97706",1]].forEach(([v,c,o])=>{ const h=(v/mx)*(H-pad-8); s+=`<rect x="${cx+o*(bw+1)-bw/2}" y="${H-pad-h}" width="${bw}" height="${h}" fill="${c}" rx="1.5"><title>${_fd(x.data)}: ${_hm0(v)}</title></rect>`; });
     if(dias.length<=16||i%2===0) s+=`<text x="${cx}" y="${H-9}" font-size="9" text-anchor="middle" fill="currentColor" opacity=".7">${_fd2(x.data)}</text>`; });
-  return s+`</svg><div class="plegend"><span><b style="background:#066789"></b>Ponto (Tangerino)</span><span><b style="background:#94a3b8"></b>Work Monitor</span><span><b style="background:#d97706"></b>G-Click</span></div>`; }
+  return s+`</svg><div class="plegend"><span><b style="background:#066789"></b>Ponto (Kronos ID)</span><span><b style="background:#94a3b8"></b>Work Monitor</span><span><b style="background:#d97706"></b>G-Click</span></div>`; }
 function _pTabela(dias){
   return `<div style="overflow:auto;max-height:300px"><table class="ptbl"><thead><tr><th>Data</th><th>Ponto</th><th>Work Monitor</th><th>G-Click</th><th>Produtividade</th><th>Classificação</th></tr></thead><tbody>${[...dias].reverse().map(x=>`<tr><td>${_fd(x.data)}</td><td>${_hm0(x.p)}</td><td>${_hm0(x.w)}</td><td>${_hm0(x.g)}</td><td>${_fp(x.pg)}</td><td>${_clsBadge(x.cl)}</td></tr>`).join("")}</tbody></table></div>`; }
 function _pComparativo(a){
   const mx=Math.max(a.p,a.w,a.g,1);
-  return `${_pBarra("Ponto (Tangerino)",a.p,mx,a.p?"100%":"")}${_pBarra("Work Monitor",a.w,mx,_fp(_pc(a.w,a.p)))}${_pBarra("G-Click",a.g,mx,_fp(_pc(a.g,a.p)))}
+  return `${_pBarra("Ponto (Kronos ID)",a.p,mx,a.p?"100%":"")}${_pBarra("Work Monitor",a.w,mx,_fp(_pc(a.w,a.p)))}${_pBarra("G-Click",a.g,mx,_fp(_pc(a.g,a.p)))}
   <div class="pgrid3" style="margin-top:10px">${[["Work Monitor vs Ponto",a.w,a.p],["G-Click vs Ponto",a.g,a.p],["G-Click vs Work Monitor",a.g,a.w]].map(([l,x,y])=>_pTile(l,_hmS(x-y),_fp(_pc(x,y)))).join("")}</div>`; }
 function _pDia(a,ant,r){
   const x=a.dias[0]; if(!x) return '<div class="sub" style="padding:18px 0">Sem registros neste dia.</div>';
@@ -2506,7 +2502,7 @@ function _pPeriodo(a,ant,modo,r){
   const A=ant&&ant.nT?ant:null, n=a.neo;
   const melhor=[...a.trab].filter(x=>x.pg!=null).sort((x,y)=>y.pg-x.pg)[0], pior=[...a.trab].filter(x=>x.pg!=null).sort((x,y)=>x.pg-y.pg)[0];
   const cl=Object.entries(a.cls).sort((x,y)=>y[1]-x[1]);
-  return _pSec("Resumo do período",`<div class="pgrid4">${_pTile("Dias trabalhados",a.nT,`de ${a.dias.length} dia(s) com registro`)}${_pTile("Ponto (Tangerino)",_hm0(a.p),`média ${_hm0(a.p/nT)} por dia<br>${dlt(a.p/nT,A&&A.p/A.nT)}`)}${_pTile("Work Monitor",_hm0(a.w),`média ${_hm0(a.w/nT)} por dia<br>${dlt(a.w/nT,A&&A.w/A.nT)}`)}${_pTile("G-Click",_hm0(a.g),`média ${_hm0(a.g/nT)} por dia<br>${dlt(a.g/nT,A&&A.g/A.nT)}`)}</div>`)
+  return _pSec("Resumo do período",`<div class="pgrid4">${_pTile("Dias trabalhados",a.nT,`de ${a.dias.length} dia(s) com registro`)}${_pTile("Ponto (Kronos ID)",_hm0(a.p),`média ${_hm0(a.p/nT)} por dia<br>${dlt(a.p/nT,A&&A.p/A.nT)}`)}${_pTile("Work Monitor",_hm0(a.w),`média ${_hm0(a.w/nT)} por dia<br>${dlt(a.w/nT,A&&A.w/A.nT)}`)}${_pTile("G-Click",_hm0(a.g),`média ${_hm0(a.g/nT)} por dia<br>${dlt(a.g/nT,A&&A.g/A.nT)}`)}</div>`)
   +_pSec("Comparativo Ponto x WorkMonitor x G-Click",_pComparativo(a))
   +_pSec("Produtividade no Work Monitor",`<div class="pbig">${_fp(a.prodMed)} <small>média diária</small></div>${_pStack(n.prod,n.neu,n.imp)}`)
   +_pSec("Classificação dos dias",`<div class="pcls">${cl.map(([k,v])=>`<div>${_clsBadge(k)}<b>${v}</b><span class="sub">${_fp(v/a.dias.length*100)}</span></div>`).join("")}</div>`)
@@ -2587,7 +2583,7 @@ function viewColaboradores(v){
     <select class="fsel" id="clSort">
       <option value="score_desc" ${srt==='score_desc'?'selected':''}>Ordenar: maior score</option>
       <option value="gc_desc" ${srt==='gc_desc'?'selected':''}>Ordenar: mais horas G-Click</option>
-      <option value="tg_desc" ${srt==='tg_desc'?'selected':''}>Ordenar: mais horas Tangerino</option>
+      <option value="tg_desc" ${srt==='tg_desc'?'selected':''}>Ordenar: mais horas de ponto</option>
       <option value="wm_desc" ${srt==='wm_desc'?'selected':''}>Ordenar: mais horas Work Monitor</option>
       <option value="media_desc" ${srt==='media_desc'?'selected':''}>Ordenar: maior média</option>
       <option value="media_asc" ${srt==='media_asc'?'selected':''}>Ordenar: menor média</option>
@@ -2599,9 +2595,9 @@ function viewColaboradores(v){
   <div class="legend" style="margin-bottom:12px"><span><span class="dot" style="background:var(--crit)"></span> Crítico &lt; 70%</span><span><span class="dot" style="background:var(--warn)"></span> Atenção 70–85%</span><span><span class="dot" style="background:var(--good)"></span> Na meta ≥ 85%</span></div>
   <div class="filters" style="margin-bottom:10px"><div class="seg" id="wmModo"><button data-wm="dia" class="${WMPER.modo==='dia'?'on':''}">Dia</button><button data-wm="7" class="${WMPER.modo==='7'?'on':''}">7 dias</button><button data-wm="30" class="${WMPER.modo==='30'?'on':''}">30 dias</button></div>
     <input type="date" id="wmDia" class="fsel" value="${escAttr(WMPER.dia)}" title="Último dia do período">
-    <span class="sub">${WMLOADING||!WM?'Carregando G-Click, Tangerino e Work Monitor...':(WMERR?'<span style="color:var(--crit)">Não consegui ler os dados de produtividade: '+esc(WMERR)+'</span>':`Horas ${WMPER.modo==='dia'?'do dia '+fmtD(WM.fim):'por dia trabalhado, de '+fmtD(WM.ini)+' a '+fmtD(WM.fim)} · fonte: Dashboard Gestores`)}</span></div>
+    <span class="sub">${WMLOADING||!WM?'Carregando G-Click, Kronos ID e Work Monitor...':(WMERR?'<span style="color:var(--crit)">Não consegui ler os dados de produtividade: '+esc(WMERR)+'</span>':`Horas ${WMPER.modo==='dia'?'do dia '+fmtD(WM.fim):'por dia trabalhado, de '+fmtD(WM.ini)+' a '+fmtD(WM.fim)} · fonte: Dashboard Gestores`)}</span></div>
   <div class="card perf-card"><div class="perf-head"><div class="pi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 5"/></svg></div><div><b>Performance por Colaborador</b><span>Score, ranking, notas e produtividade por colaborador</span></div></div>
-  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th><th>Gestor</th>${th("gc_desc","G-Click","center")}${th("tg_desc","Tangerino","center")}${th("wm_desc","Work Monitor","center")}${th("score_desc","Score","center")}<th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center">Canal</th><th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
+  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th><th>Gestor</th>${th("gc_desc","G-Click","center")}${th("tg_desc","Ponto","center")}${th("wm_desc","Work Monitor","center")}${th("score_desc","Score","center")}<th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center">Canal</th><th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
     rows.length?rows.map(r=>`<tr><td><div class="perf-colab"><span class="kav" style="background:${_corNome(r.nome)};width:30px;height:30px;font-size:11px">${esc(_iniciais(r.nome))}</span><div><button class="link-name" ${r.semAtend?'data-prod':'data-col'}="${escAttr(r.semAtend?r.nome:String(r.key))}">${esc(r.nome)}</button>${r.ativo===false?'<div class="sub">inativo</div>':''}${r.semAtend?'<div class="sub">sem atendimentos no Resiltrack</div>':''}</div></div></td>
       <td class="sub hide-md">${esc(r.setor||'—')}</td>
       <td class="sub gestorc">${esc((r.w&&r.w.gestor)||"—")}</td>
@@ -3374,9 +3370,7 @@ function _operacaoColabHTML(key){
   return `<div class="panel"><h4>Operação</h4>
     ${gclickBox}
     <div class="intg" style="margin-top:12px">
-      ${_intgCard("Tangerino","Ponto e banco de horas","Marcações de ponto e saldo de banco de horas deste colaborador.")}
-      ${_intgCard("Workmonitor","Produtividade","Tempo produtivo e uso de sistemas deste colaborador, via API do Workmonitor.")}
-    </div></div>`;
+    </div><div class="gp-op" style="margin-top:12px" data-gpkey="${escAttr(String(key||""))}" data-gpnome="${escAttr(at?(at.atendente_nome||at.atendente||""):"")}"></div></div>`;
 }
 function openColaborador(key){
   const R=colaboradorReport(key); if(!R)return;
@@ -10902,6 +10896,91 @@ function escView(v){
       <a class="view-btn" href="escritorio.html" target="_blank" rel="noopener">Abrir em tela cheia</a></div>
     <iframe class="esc-frame" src="escritorio.html" title="Escritório Virtual" style="width:100%;height:calc(100vh - 150px);min-height:560px;border:1px solid var(--border);border-radius:12px;background:#0c0f16;display:block"></iframe>`;
 }
+
+// ================= PAINEL DO GESTOR · KRONOS ID E THEMIS RH NO LUGAR DE TANGERINO E COHROS (v3.53) =================
+// Pessoas (férias, avaliações, ponto e produtividade) e o quadro Operação do colaborador passam a ler public.gestor_pessoas,
+// que respeita o organograma do Themis RH (gestor vê a própria equipe; admin vê todos). Horas de ponto do painel vêm do Kronos ID (view vw_resumo_diario).
+let GP=null,GPLOAD=false,GPERR="",GPDEP="",GPORD="dep";
+const _gpN1=v=>v==null?"–":Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const _gpN2=v=>v==null?"–":Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const _gpHm=m=>m==null?"–":(m<0?"-":"+")+Math.floor(Math.abs(m)/60)+"h"+String(Math.abs(m)%60).padStart(2,"0");
+const _gpD=s=>s?String(s).slice(8,10)+"/"+String(s).slice(5,7):"";
+const _gpDA=s=>s?String(s).slice(8,10)+"/"+String(s).slice(5,7)+"/"+String(s).slice(0,4):"";
+const _GP_SIT={apurado:"completo",em_andamento:"trabalhando",pendente:"batida faltando",sem_batida:"sem batida",sem_registro:"sem registro",sem_escala:"sem escala"};
+function _gpFerias(f){ if(!f) return '<span class="sub">–</span>';
+  if(f.hoje) return `<span class="pill warn">De férias</span>${f.volta?`<div class="sub">volta ${_gpD(f.volta)}</div>`:""}`;
+  if(f.proximas) return `<b>${_gpD(f.proximas.inicio)} a ${_gpD(f.proximas.fim)}</b><div class="sub">${f.proximas.dias} dia(s) marcados</div>`;
+  return f.concessivo_limite?`<span class="sub">Tirar até ${_gpDA(f.concessivo_limite)}</span>`:'<span class="sub">Sem férias marcadas</span>'; }
+function _gpTile(l,v,s,cor){ return `<div class="tile"><div><div class="lbl">${esc(l)}</div><div class="val num"${cor?` style="color:${cor}"`:""}>${v}</div>${s?`<div class="sub">${s}</div>`:""}</div></div>`; }
+async function gpCarregar(forcar){
+  if(GPLOAD||(GP&&!forcar)) return gpPintar(); GPLOAD=true; GPERR=""; gpPintar();
+  try{ const {data,error}=await sb.rpc("gestor_pessoas",{p:{}}); if(error) throw error; GP=data||{pessoas:[]}; }
+  catch(e){ GPERR=e.message||String(e); }
+  GPLOAD=false; gpPintar();
+}
+function gpPintar(){
+  const box=document.getElementById("g-pessoas-rt"); if(!box) return;
+  if(GPLOAD&&!GP){ box.innerHTML='<div class="sub">Carregando férias, avaliações, ponto e produtividade do Themis RH, Kronos ID e Work Monitor...</div>'; return; }
+  if(GPERR){ box.innerHTML=`<div class="sub" style="color:var(--crit)">Não consegui ler os dados: ${esc(GPERR)}</div>`; return; }
+  if(!GP) return;
+  const P=(GP.pessoas||[]), deps=[...new Set(P.map(p=>p.departamento).filter(Boolean))];
+  let L=P.filter(p=>!GPDEP||p.departamento===GPDEP);
+  const ord={dep:(a,b)=>0,saldo:(a,b)=>Math.abs(b.saldo||0)-Math.abs(a.saldo||0),nota:(a,b)=>(a.nota??99)-(b.nota??99),prod:(a,b)=>(a.prod??999)-(b.prod??999),ferias:(a,b)=>String(a.ferias&&a.ferias.proximas?a.ferias.proximas.inicio:(a.ferias&&a.ferias.hoje?"0":"9")).localeCompare(String(b.ferias&&b.ferias.proximas?b.ferias.proximas.inicio:(b.ferias&&b.ferias.hoje?"0":"9")))};
+  L=L.slice().sort(ord[GPORD]||ord.dep);
+  const emF=L.filter(p=>p.ferias&&p.ferias.hoje).length, prox=L.filter(p=>p.ferias&&p.ferias.proximas).length;
+  const notas=L.filter(p=>p.nota!=null), mNota=notas.length?notas.reduce((s,p)=>s+ +p.nota,0)/notas.length:null;
+  const acima=L.filter(p=>(p.saldo||0)>=600).length, abaixo=L.filter(p=>(p.saldo||0)<=-600).length;
+  const pr=L.filter(p=>p.prod!=null), mProd=pr.length?pr.reduce((s,p)=>s+ +p.prod,0)/pr.length:null;
+  box.innerHTML=`<div class="filters" style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select class="fsel" id="gpDep"><option value="">Toda a equipe (${P.length})</option>${deps.map(d=>`<option ${d===GPDEP?"selected":""}>${esc(d)}</option>`).join("")}</select>
+      <select class="fsel" id="gpOrd">${[["dep","Ordenar por departamento"],["ferias","Próximas férias"],["saldo","Maior banco de horas"],["nota","Menor nota na avaliação"],["prod","Menor produtividade"]].map(o=>`<option value="${o[0]}" ${GPORD===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select>
+      <button class="btn ghost" id="gpAtual" type="button">Atualizar</button>
+      <span class="sub">Equipe pelo organograma do Themis RH · ponto do Kronos ID · mês atual</span></div>
+    <div class="cx" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+      ${_gpTile("Férias",emF+" hoje",`${prox} com férias marcadas nos próximos 45 dias`)}
+      ${_gpTile("Avaliação",_gpN2(mNota),esc(GP.ciclo||"sem ciclo com notas"))}
+      ${_gpTile("Banco de horas",`${acima} / ${abaixo}`,"acima de +10h / abaixo de -10h no mês",acima+abaixo?"var(--warn)":"")}
+      ${_gpTile("Produtividade",mProd==null?"–":_gpN1(mProd)+"%","média no Work Monitor no mês")}
+    </div>
+    <div style="overflow-x:auto"><table class="perf-tbl"><thead><tr><th>Colaborador</th><th class="hide-md">Departamento</th><th>Férias</th><th class="center">Avaliação</th><th class="center hide-md">Feedbacks / PDI</th><th class="center">Banco no mês</th><th class="center hide-md">Ponto hoje</th><th class="center">Produtividade</th></tr></thead><tbody>
+    ${L.length?L.map(p=>{const dn=p.nota!=null&&p.notaAnt!=null?(p.nota>p.notaAnt?'<small style="color:var(--good)"> ▲</small>':(p.nota<p.notaAnt?'<small style="color:var(--crit)"> ▼</small>':"")):"";
+      const sc=(p.saldo||0)>=600||(p.saldo||0)<=-600?"var(--warn)":((p.saldo||0)<0?"var(--crit)":"var(--good)");
+      return `<tr><td><b>${esc(p.nome)}</b><div class="sub">${esc(p.cargo||"")}</div></td><td class="sub hide-md">${esc(p.departamento||"–")}</td><td>${_gpFerias(p.ferias)}</td>
+        <td class="center">${p.nota==null?'<span class="sub">–</span>':`<b>${_gpN2(p.nota)}</b>${dn}`}</td>
+        <td class="center hide-md">${p.feedbacks} fb · ${p.pdiAbertas} PDI${p.pdiAtrasadas?` <span class="pill crit">${p.pdiAtrasadas} atrasada(s)</span>`:""}</td>
+        <td class="center">${p.saldo==null?'<span class="sub">–</span>':`<b style="color:${sc}">${_gpHm(p.saldo)}</b>`}${p.pendentes?`<div class="sub">${p.pendentes} dia(s) com batida faltando</div>`:""}</td>
+        <td class="center hide-md sub">${esc(_GP_SIT[p.situacaoHoje]||"–")}</td>
+        <td class="center">${p.prod==null?'<span class="sub">–</span>':`<b>${_gpN1(p.prod)}%</b><div class="sub">${_gpN1(p.horasWm)}h ativas</div>`}</td></tr>`;}).join(""):'<tr><td colspan="8" class="sub">Nenhum colaborador na sua equipe pelo organograma do Themis RH.</td></tr>'}
+    </tbody></table></div>
+    <div class="sub" style="margin-top:8px">Férias marcadas vêm das ausências lançadas na intranet; "Tirar até" é o fim do período concessivo calculado pela admissão no Themis RH (confira com o DP antes de decidir). Avaliação: nota geral do último ciclo com notas${GP.cicloAnterior?`, seta comparando com ${esc(GP.cicloAnterior)}`:""}.</div>`;
+  const d=document.getElementById("gpDep"); if(d) d.onchange=()=>{GPDEP=d.value;gpPintar();};
+  const o=document.getElementById("gpOrd"); if(o) o.onchange=()=>{GPORD=o.value;gpPintar();};
+  const a=document.getElementById("gpAtual"); if(a) a.onclick=()=>gpCarregar(true);
+}
+// quadro Operação do colaborador
+async function gpOperacao(el){
+  if(!el||el.dataset.ok) return; el.dataset.ok="1";
+  el.innerHTML='<div class="sub">Buscando ponto no Kronos ID e produtividade no Work Monitor...</div>';
+  try{
+    const {data:d,error}=await sb.rpc("gestor_pessoas",{p:{atendente:el.dataset.gpkey||"",nome:el.dataset.gpnome||""}}); if(error) throw error;
+    if(!d||d.erro){ el.innerHTML=`<div class="sub">${esc(d&&d.erro||"Sem dados.")}</div>`; return; }
+    const K=d.kronos||{},M=K.mes||{},W=d.prod||{},T=d.themis||{},H=K.hoje;
+    el.innerHTML=`<div class="cx" style="grid-template-columns:repeat(4,1fr)">
+        ${_gpTile("Banco de horas no mês",_gpHm(M.saldo),`${M.pendentes||0} dia(s) com batida faltando · ${M.atrasos||0} atraso(s)`,(M.saldo||0)<0?"var(--crit)":"var(--good)")}
+        ${_gpTile("Ponto hoje",esc(_GP_SIT[H&&H.situacao]||"sem escala"),H&&H.batidas&&H.batidas.length?H.batidas.map(esc).join(" · "):esc(K.escala||""))}
+        ${_gpTile("Produtividade no mês",W.pct==null?"–":_gpN1(W.pct)+"%",W.horas!=null?`${_gpN1(W.horas)}h ativas em ${W.dias} dia(s)`:"sem Work Monitor")}
+        ${_gpTile("Férias",T.ferias&&T.ferias.hoje?"De férias":(T.ferias&&T.ferias.proximas?_gpD(T.ferias.proximas.inicio):"–"),T.ferias&&T.ferias.proximas?`${T.ferias.proximas.dias} dia(s) marcados`:(T.ferias&&T.ferias.concessivo_limite?"tirar até "+_gpDA(T.ferias.concessivo_limite):""))}
+      </div>
+      <div class="cx" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+        ${_gpTile("Avaliação (Themis RH)",T.avaliacao?_gpN2(T.avaliacao.nota):"–",T.avaliacao?esc(T.avaliacao.ciclo):"sem avaliação")}
+        ${_gpTile("Feedbacks (90 dias)",T.feedbacks?T.feedbacks.qtd:"–",T.feedbacks&&T.feedbacks.ultimo?`último: ${esc(T.feedbacks.ultimo.tipo)} em ${_gpDA(T.feedbacks.ultimo.data)}`:"")}
+        ${_gpTile("PDI",T.pdi?T.pdi.abertas+" em aberto":"–",T.pdi&&T.pdi.atrasadas?`${T.pdi.atrasadas} atrasada(s)`:"",T.pdi&&T.pdi.atrasadas?"var(--crit)":"")}
+      </div><div class="sub" style="margin-top:8px">${esc([T.cargo,T.gestor?"gestor: "+T.gestor:"",K.modo,T.tempo?"na Resilcon há "+T.tempo:""].filter(Boolean).join(" · "))}</div>`;
+  }catch(e){ el.innerHTML=`<div class="sub" style="color:var(--crit)">Não consegui ler: ${esc(e.message||String(e))}</div>`; }
+}
+document.addEventListener("toggle",e=>{ if(e.target&&e.target.id==="g-pessoas"&&e.target.open) gpCarregar(); },true);
+new MutationObserver(()=>{ const b=document.getElementById("g-pessoas-rt"); if(b&&!b.dataset.pint){ b.dataset.pint="1"; const det=document.getElementById("g-pessoas"); if(GP) gpPintar(); else if(det&&det.open) gpCarregar(); }
+  document.querySelectorAll(".gp-op:not([data-ok])").forEach(gpOperacao); }).observe(document.documentElement,{childList:true,subtree:true});
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
