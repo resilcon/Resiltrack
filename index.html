@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.48 (Hermes CRM: ajustes entram no preço dos planos com botão Adicionar valor, e textos das linhas do plano editáveis)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.50 (Hermes CRM: formulário de novo negócio mais simples e simulação encontra negócios de todos os funis)</footer>
   </div>
 </div>
 
@@ -4320,11 +4320,7 @@ async function crmFichaNegocio(id,preset){
    if(x.recorrencia==="unico") u+=t; else if(x.recorrencia==="anual") m+=t/12; else m+=t; }); return {m,u}; };
  const fechado=["ganha","perdida"].includes(o.etapa);
  const chips=o.id?[crmChip(esc(crmEtapaNome(o.funil_id,o.etapa))),o.valor_mensal?crmChip(brl(o.valor_mensal)+"/mês"):"",o.origem==="indicacao"?crmChip("Indicação"+(o.indicado_por_nome?" de "+esc(o.indicado_por_nome):"")):"",o.motivo_perda?crmChip("Motivo: "+esc(o.motivo_perda)):""].join(""):"";
- const m=crmModal(`${esc(fun.nome)}${o.id?" · criado em "+crmData(o.criado_em):""}`,o.id?o.titulo:"Novo negócio",chips,`
-  ${o.id?`<div class="crm-etapas">${(fun.etapas||[]).map(e=>`<button class="crm-et ${o.etapa===e.id?"on":""}" style="--c:${CRM_ETAPA_COR[e.id]||"var(--accent)"}" data-et="${e.id}">${esc(e.nome)}</button>`).join("")}
-   <span style="flex:1"></span>${fechado?`<button class="view-btn" data-et="${(fun.etapas[0]||{}).id}">Reabrir</button>`:`<button class="view-btn crm-ganho" data-et="ganha">Ganhou</button><button class="view-btn ghost" data-perdeu>Perdeu</button>`}</div>`:""}
-  <div class="crm-2col"><div class="crm-colform">
-   <div class="panel"><h4>Negócio</h4><div class="crm-form">
+ const NEG_FORM_EDITAR=o.id?`<div class="panel"><h4>Negócio</h4><div class="crm-form">
     <label class="crm-f crm-w2"><span>Título</span><input class="inp" id="nTit" value="${escAttr(o.titulo||"")}" placeholder="Ex.: Contabilidade e BPO fiscal"></label>
     ${!o.id?negEmpHTML():""}
     <label class="crm-f crm-w2"><span>Contato</span><input class="inp" id="nCont" list="nContL" value="${escAttr(contTxt(cont))}" placeholder="Busque pelo nome, empresa ou e-mail"><datalist id="nContL">${contOpts}</datalist></label>
@@ -4337,7 +4333,12 @@ async function crmFichaNegocio(id,preset){
     <label class="crm-f"><span>Previsão de fechamento</span><input class="inp" id="nPrev" type="date" value="${escAttr(o.previsao_fechamento||"")}"></label>
     <label class="crm-f"><span>Tema</span><input class="inp" id="nTema" value="${escAttr(o.tema||"")}" placeholder="Ex.: reforma_tributaria"></label>
     <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="nObs" style="min-height:64px">${esc(o.obs||"")}</textarea></label>
-   </div>${crmCamposHTML("negocio",o.campos)}</div>
+   </div>${crmCamposHTML("negocio",o.campos)}</div>`:"";
+ const m=crmModal(`${esc(fun.nome)}${o.id?" · criado em "+crmData(o.criado_em):""}`,o.id?o.titulo:"Novo negócio",chips,`
+  ${o.id?`<div class="crm-etapas">${(fun.etapas||[]).map(e=>`<button class="crm-et ${o.etapa===e.id?"on":""}" style="--c:${CRM_ETAPA_COR[e.id]||"var(--accent)"}" data-et="${e.id}">${esc(e.nome)}</button>`).join("")}
+   <span style="flex:1"></span>${fechado?`<button class="view-btn" data-et="${(fun.etapas[0]||{}).id}">Reabrir</button>`:`<button class="view-btn crm-ganho" data-et="ganha">Ganhou</button><button class="view-btn ghost" data-perdeu>Perdeu</button>`}</div>`:""}
+  <div class="crm-2col"><div class="crm-colform">
+   ${o.id?NEG_FORM_EDITAR:negNovoFormHTML(o,fun,contOpts)}
    ${o.id&&cont?crmClientePainelHTML(cont,ficha.empresa):""}
    <div class="panel"><h4>Serviços e valores</h4>${serv.length?"":`<p class="sub" style="margin:4px 0 8px">Cadastre os serviços em Configurações para montar a proposta. Enquanto isso, informe os valores abaixo.</p>`}
     <div style="overflow-x:auto"><table class="crm-itens"><thead><tr><th>Serviço</th><th>Valor</th><th>Cobrança</th><th>Qtd</th><th>Desc. %</th><th></th></tr></thead><tbody id="nItens"></tbody></table></div>
@@ -4358,7 +4359,7 @@ async function crmFichaNegocio(id,preset){
  pintaItens();
  const add=m.querySelector("#nAddIt"); if(add) add.onclick=()=>{ itens.push({qtd:1,recorrencia:"mensal"}); pintaItens(); };
  const recarregar=()=>{ crmFichaNegocio(o.id); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); };
- if(!o.id) negEmpLigar(m,preset);
+ if(!o.id){ negEmpLigar(m,preset); negNovoLigar(m); }
  if(o.id){ const ia=m.querySelector("#nIA"); if(ia) ia.onclick=()=>crmCopiloto(m,o,cont,()=>crmFichaNegocio(o.id)); const np=m.querySelector("#nProp"); if(np) np.onclick=()=>precoAbrirNegocio({...o,contato_nome:cont&&(cont.nome||cont.email)}); const nc=m.querySelector("#nContr"); if(nc) nc.onclick=()=>cliGarantir({negocio:o},()=>ctGerar({negocio:o})); if(cont) crmLigarAcoesContato(m,cont,o.id,()=>crmFichaNegocio(o.id));
   crmLigarLinha(m,()=>crmFichaNegocio(o.id)); crmLigarTarefas(m,tars,()=>crmFichaNegocio(o.id)); crmLigarContratos(m,ks,()=>crmFichaNegocio(o.id)); }
  const vc=m.querySelector("#nVerCont"); if(vc) vc.onclick=()=>crmFichaContato(o.contato_id);
@@ -4368,7 +4369,8 @@ async function crmFichaNegocio(id,preset){
   try{ await crmRpc("crm_mover_negocio",{p_id:o.id,p_etapa:et}); crmToast(et==="ganha"?"Negócio ganho. O contato agora é cliente.":"Etapa atualizada"); recarregar(); }catch(e){ crmToast(crmErro(e)); } });
  const pd=m.querySelector("[data-perdeu]"); if(pd) pd.onclick=()=>crmPerda(o,()=>{ if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); });
  m.querySelector("#nSalvar").onclick=async ev=>{ const b=ev.currentTarget;
-  const titulo=crmVal(m,"#nTit"); if(!titulo){ crmToast("Informe o título do negócio."); return; }
+  let titulo=crmVal(m,"#nTit"); if(!titulo&&!o.id) titulo=crmVal(m,"#nEmp").replace(/ · \d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,"")||crmVal(m,"#ncNome")||crmVal(m,"#nCont").split(" · ")[0];
+  if(!titulo){ crmToast(o.id?"Informe o título do negócio.":"Informe a empresa, o contato ou um título para o negócio."); return; }
   const ct=crmVal(m,"#nCont"); const op=[...m.querySelectorAll("#nContL option")].find(x=>x.value===ct); let contato_id=op?op.dataset.id:(ct===contTxt(cont)&&cont?cont.id:null);
   if(ct&&!contato_id){ crmToast("Escolha um contato da lista ou cadastre um novo abaixo."); return; }
   b.disabled=true; b.textContent="Salvando…";
@@ -4382,8 +4384,10 @@ async function crmFichaNegocio(id,preset){
    const nid=await crmRpc("crm_salvar_negocio",{p:{id:o.id||null,funil_id:o.funil_id,titulo,contato_id,...(empresa_id?{empresa_id}:{}),etapa:o.id?undefined:crmVal(m,"#nEt"),responsavel:crmVal(m,"#nResp"),origem:crmVal(m,"#nOrig"),
      previsao_fechamento:crmVal(m,"#nPrev"),tema:crmVal(m,"#nTema"),obs:crmVal(m,"#nObs"),campos:crmCamposLer(m,o.campos),
      itens:itens.filter(x=>x.servico_id||x.valor).map(x=>({servico_id:x.servico_id||null,nome:x.nome||((serv.find(s=>s.id===x.servico_id)||{}).nome)||"",valor:x.valor,qtd:x.qtd||1,desconto:x.desconto||0,recorrencia:x.recorrencia||"mensal"})),
-     valor_mensal:crmVal(m,"#nVm"),valor_unico:crmVal(m,"#nVu"),indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:o.indicado_por_nome}});
-   crmToast("Negócio salvo"); delete CRMD.contatos; crmFichaNegocio(nid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view"));
+     valor_mensal:crmVal(m,"#nVm"),valor_unico:crmVal(m,"#nVu"),indicado_por_empresa_id:o.indicado_por_empresa_id,indicado_por_nome:crmVal(m,"#nIndPor")||o.indicado_por_nome}});
+   const orgN=crmVal(m,"#nOrig"), foiInd=["indicacao","indicacao_parceiro"].includes(orgN)&&(o.funil_id||"vendas")==="vendas"&&((CRMB&&CRMB.funis)||[]).some(f=>f.id==="indicacao"&&f.ativo!==false);
+   if(foiInd&&MODE==="crm_funil"){ CRMF.funil="indicacao"; CRMF.lado="leads"; }
+   crmToast(foiInd?"Negócio salvo no Funil de indicações (origem indicação)":"Negócio salvo"); delete CRMD.contatos; crmFichaNegocio(nid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view"));
   }catch(e){ b.disabled=false; b.textContent="Salvar"; const msg=String(e.message||""); if(msg.startsWith("email_existente")){ crmToast("Já existe um contato com esse e-mail. Busque-o no campo Contato."); } else crmToast(crmErro(e)); } };
 }
 
@@ -4815,7 +4819,7 @@ async function crmVTarefas(v){
  v.querySelector("#crmTarNova").onclick=()=>crmTarefaModal(null,{},()=>crmVTarefas(v));
  v.querySelector("#crmOutlook").onclick=()=>crmOutlookModal();
  try{ const [t,neg,ta]=await Promise.all([crmRpc("crm_tarefas",{p:{escopo:CRMT.escopo,abertas:!CRMT.feitas,responsavel:CRMT.escopo==="todas"&&CRMT.resp?CRMT.resp:null}}),
-    crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}).catch(()=>[]),CRMT.escopo==="todas"?Promise.resolve(null):crmRpc("crm_tarefas",{p:{escopo:podeGestorCRM()?"todas":"minhas"}}).catch(()=>[])]);
+    crmNegTodosFunis().catch(()=>[]),CRMT.escopo==="todas"?Promise.resolve(null):crmRpc("crm_tarefas",{p:{escopo:podeGestorCRM()?"todas":"minhas"}}).catch(()=>[])]);
   CRMD.tar=t; const tp={}; (ta||t||[]).forEach(x=>{ if(x.status!=="pendente"||!x.oportunidade_id) return; const a=tp[x.oportunidade_id]; if(!a||(x.vence_em||"9")<(a.vence_em||"9")) tp[x.oportunidade_id]=x; });
   CRMD.prior=CRMT.feitas?[]:crmPrioridades(neg,tp,CRMT.escopo!=="todas"||!!CRMT.resp).filter(x=>!CRMT.resp||x.o.responsavel_email===CRMT.resp);
   if(MODE==="crm_tarefas") crmTarPinta(v); }
@@ -4906,7 +4910,7 @@ function crmLigarContratos(root,lista,recarregar){
 async function crmVContratos(v){
  v.innerHTML=crmHead("Contratos","Contrato de prestação de serviço de cada cliente. Em vermelho, quem ainda não tem contrato assinado.",`<button class="txt-btn" id="crmSincCart" title="Cadastra no Hermes CRM os clientes novos do G-Click, coloca no funil de clientes e liga os contatos do WhatsApp">Atualizar carteira do G-Click</button>`)+`<div id="crmBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
  v.querySelector("#crmSincCart").onclick=ev=>crmSincronizarCarteira(ev.currentTarget,()=>crmVContratos(v));
- try{ const [k,neg]=await Promise.all([crmRpc("crm_contratos",{p:{}}),podeVendas()?crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}).catch(()=>[]):Promise.resolve([])]);
+ try{ const [k,neg]=await Promise.all([crmRpc("crm_contratos",{p:{}}),podeVendas()?crmNegTodosFunis().catch(()=>[]):Promise.resolve([])]);
   CRMD.contr=k; CRMD.ganhos=(neg||[]).filter(o=>o.etapa==="ganha"); if(MODE==="crm_contratos") crmContrPinta(v); }
  catch(e){ v.querySelector("#crmBox").innerHTML=crmCaixaErro(e); }
 }
@@ -5504,7 +5508,7 @@ async function crmVPrecos(v){ try{ pzCarregar().catch(()=>{}); }catch(_){}
  v.innerHTML=crmHead("Simulador de planos","Monte a proposta com a mesma tabela de preços da ferramenta comercial da Resilcon. Os valores mudam na hora conforme as respostas.",simNovaBtn())+simAbas("crm_precos")+`<div id="crmBox"><div class="card"><div class="empty">Carregando a tabela de preços…</div></div></div>`;
  simLigarTopo(v);
  try{ await precoCarregar(); }catch(e){ v.querySelector("#crmBox").innerHTML=`<div class="card"><div class="empty">${esc(e.message||String(e))}</div></div>`; return; }
- if(!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } }
+ if(!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmNegTodosFunis()||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } }
  if(PRECO_ST.negocio&&!PRECO_ST.negLista.find(x=>x.id===PRECO_ST.negocio.id)) PRECO_ST.negLista.unshift(PRECO_ST.negocio);
  if(MODE!=="crm_precos") return;
  precoPintar(v);
@@ -5884,7 +5888,7 @@ const CT_EMPRESAS=[
 async function ctGerar(opts){
  let lista=[]; try{ lista=(await ctIndice()).filter(m=>m.tipo!=="config"&&m.ativo!==false); }catch(e){ crmToast(crmErro(e)); return; }
  const cfg0=await ctConfig(); let empAt=CT_EMPRESAS.find(x=>x.id===opts.empresa)||CT_EMPRESAS[0]; let ajusteEmp={}; const cfgDe=()=>({...cfg0,...empAt.v,...ajusteEmp,_EMPRESA:empAt.rot,_EMPRESA_ID:empAt.id,_LOGO:CT_LOGOS[empAt.logo]||""}); let cfg=cfgDe();
- let negs=[]; try{ negs=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}}))||[]; }catch(_){}
+ let negs=[]; try{ negs=(await crmNegTodosFunis())||[]; }catch(_){}
  const st={modelo:opts.modelo||(lista.find(m=>/b[aá]sico$/i.test(m.nome))||lista[0]||{}).chave,negocio:opts.negocio?opts.negocio.id:"",proposta:opts.proposta||null,cli:{},inicio:new Date().toISOString().slice(0,10),fim:"",oNeg:null,contato:null};
  const f=new Date(); f.setFullYear(f.getFullYear()+1); f.setDate(f.getDate()-1); st.fim=f.toISOString().slice(0,10);
  const m=crmModal("Contratos","Gerar contrato","",`<div class="ct-ed ct-ger">
@@ -7333,7 +7337,7 @@ function simLigarTopo(v){ v.querySelectorAll("[data-simab]").forEach(b=>b.onclic
  const fecha=e=>{ if(e&&mn.contains(e.target)) return; mn.hidden=true; bt.setAttribute("aria-expanded","false"); document.removeEventListener("click",fecha,true); };
  bt.onclick=e=>{ e.stopPropagation(); const ab=mn.hidden; mn.hidden=!ab; bt.setAttribute("aria-expanded",String(ab)); if(ab) setTimeout(()=>document.addEventListener("click",fecha,true)); };
  mn.querySelectorAll("[data-simnv]").forEach(b=>b.onclick=()=>{ fecha(); simNova(b.dataset.simnv); }); }
-async function simNegocios(force){ if(force||!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:"vendas"}})||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } } return PRECO_ST.negLista; }
+async function simNegocios(force){ if(force||!PRECO_ST.negLista){ try{ PRECO_ST.negLista=(await crmNegTodosFunis()||[]).filter(o=>o.etapa!=="ganha"&&o.etapa!=="perdida"); }catch(_){ PRECO_ST.negLista=[]; } } return PRECO_ST.negLista; }
 
 // ---------- listagem ----------
 async function crmVSimulacoes(v){
@@ -9883,6 +9887,55 @@ precoLigar=function(v,R,A){ _precoLigarSemTxt(v,R,A); const S=PRECO_ST, box=v.qu
 .pt-l.pt-led{gap:6px}.pt-txt{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:inherit;font:inherit;padding:6px 8px}
 .pt-txt:focus{outline:2px solid #7fd0ea;outline-offset:1px}.pt-txtv{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;font-size:15px;padding:2px 4px}
 .pt-acoesrot{flex-direction:column;align-items:flex-start;gap:6px}`; document.head.appendChild(s); })();
+
+// ================= Hermes CRM · FORMULÁRIO DE NOVO NEGÓCIO MAIS SIMPLES (v3.50) =================
+// Três blocos: 1) cliente (empresa e contato, com cadastro de contato novo que abre sozinho), 2) negócio (etapa, responsável, origem agrupada,
+// quem indicou e aviso de funil), 3) mais informações opcionais (fechado). Título opcional: usa o nome da empresa ou do contato.
+async function crmNegTodosFunis(){ const fs=((typeof CRMB!=="undefined"&&CRMB&&CRMB.funis)||[]).filter(f=>f.id!=="clientes"&&f.ativo!==false).map(f=>f.id);
+ const ids=[...new Set(["vendas","indicacao",...fs])]; const r=await Promise.all(ids.map(id=>crmRpc("crm_dados",{p_secao:"negocios",p_param:{funil:id}}).catch(()=>[])));
+ const vist=new Set(); return r.flat().filter(o=>o&&o.id&&!vist.has(o.id)&&vist.add(o.id)); }
+const CRM_ORIG_GR=[["Prospecção",["minato","manual","whatsapp","base_cliente"]],["Marketing",["formulario","site","seo","geo","google_ads","meta_ads","instagram","linkedin","marketing","evento"]],["Indicação",["indicacao","indicacao_parceiro"]],["Importação",["planilha","importacao"]]];
+function crmOrigOpts(sel){ const usados=new Set(); let html=CRM_ORIG_GR.map(([g,l])=>{ const it=l.filter(k=>CRM_ORIG[k]); it.forEach(k=>usados.add(k)); return `<optgroup label="${g}">${crmOpt(it.map(k=>[k,CRM_ORIG[k]]),sel)}</optgroup>`; }).join("");
+ const resto=Object.keys(CRM_ORIG).filter(k=>!usados.has(k)&&(k!=="lista_comprada"||sel==="lista_comprada")); if(resto.length) html+=`<optgroup label="Outros">${crmOpt(resto.map(k=>[k,CRM_ORIG[k]]),sel)}</optgroup>`; return html; }
+function negNovoFormHTML(o,fun,contOpts){
+ return `<div class="panel nn-bloco"><h4><span class="nn-n">1</span> Quem é o cliente</h4><div class="crm-form">
+   ${negEmpHTML()}
+   <label class="crm-f crm-w2"><span>Contato (pessoa com quem você fala)</span><input class="inp" id="nCont" list="nContL" placeholder="Busque pelo nome, empresa ou e-mail" autocomplete="off"><datalist id="nContL">${contOpts}</datalist></label>
+   <div class="crm-w2 nn-novoc"><button type="button" class="txt-btn" id="ncAbre">+ Cadastrar contato novo</button><span class="sub" id="ncDica"></span></div>
+   <div class="crm-w2 crm-form nn-cform" id="ncForm" hidden>
+    <label class="crm-f"><span>Nome</span><input class="inp" id="ncNome" placeholder="Nome da pessoa"></label><label class="crm-f"><span>Cargo</span><input class="inp" id="ncCargo" placeholder="Ex.: Sócio"></label>
+    <label class="crm-f"><span>WhatsApp ou telefone</span><input class="inp" id="ncTel" inputmode="tel" placeholder="(11) 99999-9999"></label><label class="crm-f"><span>E-mail</span><input class="inp" id="ncEmail" type="email" placeholder="opcional"></label></div>
+  </div></div>
+  <div class="panel nn-bloco"><h4><span class="nn-n">2</span> Sobre o negócio</h4><div class="crm-form">
+   <label class="crm-f"><span>De onde veio</span><select class="inp" id="nOrig">${crmOrigOpts(o.origem)}</select></label>
+   <label class="crm-f" id="nIndW" hidden><span>Quem indicou</span><input class="inp" id="nIndPor" value="${escAttr(o.indicado_por_nome||"")}" placeholder="Nome do cliente ou parceiro"></label>
+   <label class="crm-f"><span>Etapa</span><select class="inp" id="nEt">${crmOpt((fun.etapas||[]).map(e=>[e.id,e.nome]),o.etapa)}</select></label>
+   <label class="crm-f"><span>Responsável</span><select class="inp" id="nResp">${crmRespOpts(o.responsavel_email)}<option value="_rodizio">Distribuir pelo rodízio</option></select></label>
+   <label class="crm-f"><span>Previsão de fechamento</span><input class="inp" id="nPrev" type="date" value="${escAttr(o.previsao_fechamento||"")}"></label>
+   <label class="crm-f"><span>Título (opcional)</span><input class="inp" id="nTit" value="${escAttr(o.titulo||"")}" placeholder="Se ficar vazio, usa o nome da empresa"></label>
+   <p class="sub crm-w2 nn-aviso" id="nFunAviso" hidden>Negócios de indicação vão para o <b>Funil de indicações</b>.</p>
+   <label class="crm-f crm-w2"><span>Observações</span><textarea class="inp" id="nObs" style="min-height:56px" placeholder="O que o cliente precisa, combinados, próximos passos">${esc(o.obs||"")}</textarea></label>
+  </div></div>
+  <details class="panel nn-bloco nn-mais"><summary><span class="nn-n">3</span> Mais informações <span class="sub">(opcional: nicho, tributação, temperatura, SDR, etiqueta, tema)</span></summary>
+   <div class="crm-form" style="margin-top:10px"><label class="crm-f"><span>Tema</span><input class="inp" id="nTema" value="${escAttr(o.tema||"")}" placeholder="Ex.: reforma_tributaria"></label></div>
+   ${crmCamposHTML("negocio",o.campos)}</details>`; }
+function negNovoLigar(m){
+ const f=m.querySelector("#ncForm"), ab=m.querySelector("#ncAbre"), dica=m.querySelector("#ncDica"), ct=m.querySelector("#nCont");
+ const abre=(nome)=>{ f.hidden=false; ab.textContent="Cancelar contato novo"; if(nome&&!/@/.test(nome)) m.querySelector("#ncNome").value=nome; else if(nome) m.querySelector("#ncEmail").value=nome;
+  ct.value=""; ct.disabled=true; ct.placeholder="Cadastrando um contato novo abaixo"; m.querySelector("#ncNome").focus(); };
+ const fecha=()=>{ f.hidden=true; ab.textContent="+ Cadastrar contato novo"; ct.disabled=false; ct.placeholder="Busque pelo nome, empresa ou e-mail"; dica.textContent=""; f.querySelectorAll("input").forEach(i=>i.value=""); };
+ ab.onclick=()=>f.hidden?abre(""):fecha();
+ ct.addEventListener("change",()=>{ const v=ct.value.trim(); if(!v) return; const ok=[...m.querySelectorAll("#nContL option")].some(x=>x.value===v);
+  if(!ok){ abre(v); dica.textContent="Não achei esse contato. Complete os dados para cadastrar."; } });
+ const org=m.querySelector("#nOrig"), iw=m.querySelector("#nIndW"), av=m.querySelector("#nFunAviso");
+ const vInd=()=>{ const ind=["indicacao","indicacao_parceiro"].includes(org.value); iw.hidden=!ind; av.hidden=!(ind&&(CRMF.funil||"vendas")==="vendas"&&((CRMB&&CRMB.funis)||[]).some(x=>x.id==="indicacao"&&x.ativo!==false)); };
+ org.onchange=vInd; vInd();
+}
+(function(){ const s=document.createElement("style"); s.textContent=`
+.nn-bloco h4,.nn-mais summary{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-weight:700}.nn-mais summary{cursor:pointer;margin:0;flex-wrap:wrap}.nn-mais summary .sub{font-weight:400;font-size:12.5px}
+.nn-n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent,#269A9E);color:#fff;font-size:12px;flex:none}
+.nn-novoc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:-4px}.nn-cform{background:#f3f8f9;border-radius:12px;padding:10px}
+.nn-aviso{margin:0;padding:8px 10px;border-radius:10px;background:#fff8e6}`; document.head.appendChild(s); })();
 
 // ================= ÍRIS · gestão das TVs do escritório =================
 // Painel para quem cuida das TVs: quais telas estão no ar, o que cada uma enxerga, os comunicados e a situação das fontes.
