@@ -517,9 +517,10 @@ td a:hover,.feed a:hover{text-decoration:underline}
 /* ===== celular: vertical e horizontal ===== */
 .kfaixa{display:contents}
 .kpis .kmob{display:none}
+.top .brand,#alertbox,#b-log{display:none!important}
 @media (max-width:760px),(max-height:540px) and (max-width:1100px){
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-  .top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"side brand alert" "kpi kpi kpi" "tools tools tools";gap:8px;align-items:center;padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:8px;overflow:visible}
+  .top{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"side tools" "kpi kpi";gap:8px;align-items:center;padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:8px;overflow:visible}
   #b-side{grid-area:side}
   .brand{grid-area:brand;min-width:0}.brand b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .kfaixa{display:contents}
