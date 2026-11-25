@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.50 (Hermes CRM: formulário de novo negócio mais simples e simulação encontra negócios de todos os funis)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.51 (Hermes CRM: campo de faturamento do simulador não perde mais o que é digitado)</footer>
   </div>
 </div>
 
@@ -5480,6 +5480,7 @@ CRM_ICO.preco='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 `; document.head.appendChild(st); })();
 const PRECO_ARQS=[["plano_resilcon","Plano Resilcon"],["ctb","Contábil: serviço, comércio e indústria"],["low_ticket","Planos contábeis low ticket"],["credito_estoque_st","Crédito de estoque ST"],["pjm","PJ / MEI"],["bps","BPO: empresas de serviços"],["bpc","BPO: empresas de comércio"]];
 const PRECO_FN="https://aumfhrqrnudmprvmvesb.supabase.co/functions/v1/precificacao";
+let PRECO_RENDER=false; // true enquanto o simulador se redesenha (o campo perde o foco sem a pessoa ter saído dele)
 let PRECO_DB=null; // {chave:{nome,P,nichos}}
 let PRECO_NICHOS={lista:[],vinculos:{}}; // nichos da 4C e as tabelas vinculadas a cada um
 let PRECO_ST={arq:"plano_resilcon",nicho:"",negocio:null,resp:{faturamento:"",tributacao:"",atividade:"",crit:{}},ajuste:{},cesta:[],extras:{},parcelas:1,obs:"",busca:"",validade:15};
@@ -5644,7 +5645,7 @@ function precoMascara(v){ v=String(v==null?"":v); const temVirg=v.includes(",");
 function precoMascaraFim(v){ v=precoMascara(v); if(!v) return v; if(!v.includes(",")) return v+",00"; const [i,d]=v.split(","); return i+","+(d+"00").slice(0,2); }
 function precoValorTxt(n){ return (Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function precoLigarMascara(el,salvar){ if(!el) return; el.addEventListener("input",()=>{ const m=precoMascara(el.value); if(m!==el.value){ el.value=m; try{ el.setSelectionRange(m.length,m.length); }catch(_){} } salvar(el.value); });
- el.addEventListener("blur",()=>{ const m=precoMascaraFim(el.value); if(m!==el.value){ el.value=m; salvar(m); } }); }
+ el.addEventListener("blur",()=>{ if(PRECO_RENDER||!el.isConnected) return; const m=precoMascaraFim(el.value); if(m!==el.value){ el.value=m; salvar(m); } }); }
 
 function precoTotais(){ const S=PRECO_ST; const ex=Object.entries(S.extras).map(([k,s])=>({...s,k,total:(precoNum(s.valor)||0)*(Number(s.qtd)||1)}));
  const extrasM=ex.filter(e=>e.cobranca==="mensal"), extrasU=ex.filter(e=>e.cobranca!=="mensal");
@@ -5652,9 +5653,9 @@ function precoTotais(){ const S=PRECO_ST; const ex=Object.entries(S.extras).map(
  return {extrasM,extrasU,mensal,avulso:extrasU.reduce((s,e)=>s+e.total,0)}; }
 
 function precoLigar(v,R,A){ const S=PRECO_ST; const box=v.querySelector("#crmBox"); const re=()=>precoPintar(v);
- let t=null; const reLento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement; const id=f&&f.id, ds=f&&f.dataset?{...f.dataset}:null, pos=f&&f.selectionStart; re();
+ let t=null; const reLento=()=>{ clearTimeout(t); t=setTimeout(()=>{ const f=document.activeElement; const id=f&&f.id, ds=f&&f.dataset?{...f.dataset}:null, noFim=f&&f.value!=null&&f.selectionStart===String(f.value).length, pos=f&&f.selectionStart; PRECO_RENDER=true; try{ re(); }finally{ PRECO_RENDER=false; }
    let n=id?box.querySelector("#"+id):null; if(!n&&ds){ const k=Object.keys(ds)[0]; if(k) n=box.querySelector(`[data-${k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase())}="${ds[k]}"]`); }
-   if(n&&n.focus){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },350); };
+   if(n&&n.focus){ n.focus(); try{ const p2=noFim?String(n.value).length:pos; n.setSelectionRange(p2,p2); }catch(_){} } },900); };
  box.querySelector("#prNeg").onchange=e=>{ S.negocio=(S.negLista||[]).find(o=>o.id===e.target.value)||null; { const dgs=S.negocio&&S.negocio.campos&&(S.negocio.campos.proposta||{}).diagnostico; if(dgs) S.diag=dgs; else if(S.negocio) delete S.diag; } const nn=S.negocio&&S.negocio.campos&&(S.negocio.campos.nicho||(S.negocio.campos.proposta||{}).nicho); if(nn) precoEscolherNicho(nn); re(); };
  const inN=box.querySelector("#prNicho"); inN.onchange=()=>{ const v=inN.value.trim(); const ach=precoNichos().find(n=>n.toLowerCase()===v.toLowerCase());
   if(v&&!ach){ inN.value=S.nicho; crmToast("Escolha um nicho da lista, ou cadastre um novo em Vincular nichos."); return; } precoEscolherNicho(ach||""); re(); };
