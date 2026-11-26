@@ -929,6 +929,29 @@
   .gh-fill b{font-family:"Urbanist",sans-serif;font-size:18px;font-weight:600;color:#0B4F45;line-height:1}.gh-fill span{font-size:10.5px;color:#0B4F45;opacity:.8}
   @media(max-width:1100px){ .gpage .gp-hero{grid-row:auto} }
   @media(max-width:640px){ .gpage .gp-hero{grid-column:auto;min-height:420px} .gh-glass{grid-template-columns:1fr} .gh-bars{height:130px} .gh-nums b{font-size:28px} }
+
+  /* Themis RH · Vagas (v3.63) */
+  .vg-aviso{padding:14px 18px;margin-bottom:12px;background:var(--accent-soft);border-color:transparent;font-size:13px}
+  .vg-fs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.vg-f{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font:600 12.5px "DM Sans",sans-serif;color:var(--ink-2);cursor:pointer}.vg-f.on{background:#0F1F47;color:#fff;border-color:#0F1F47}
+  .vg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .vg-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:20px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s}
+  .vg-card:hover,.vg-card:focus-visible{box-shadow:0 10px 28px rgba(15,31,71,.12);transform:translateY(-1px)}.vg-card b{font-family:"Urbanist",sans-serif;font-size:18px;color:#0F1F47}
+  .vg-ch{display:flex;justify-content:space-between;align-items:center}.vg-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.vg-tags i{font-style:normal;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-deep)}
+  .vg-ed{display:flex;flex-direction:column;gap:14px}.vg-card2{padding:20px 22px;border-radius:20px}
+  .vg-sh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}.vg-sh h3{font-size:20px;color:#0F1F47}.vg-sh h4{margin:0;font-size:15px;color:#0F1F47}
+  .vg-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.vg-g label,.vg-l2{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2)}.vg-l2{grid-column:span 2}
+  .vg-ck{display:flex;gap:6px;align-items:center;font-weight:500;font-size:12px}.vg-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}.vg-acts .sub{flex:1;min-width:200px}
+  .vg-sec{margin-top:16px}.vg-li{display:flex;flex-direction:column;gap:6px}.vg-it{display:flex;gap:8px;align-items:center}.vg-it .inp{flex:1}
+  .vg-dot{width:8px;height:8px;border-radius:50%;background:#269A9E;flex:none}.vg-x{border:0;background:none;color:var(--muted);cursor:pointer;width:30px;height:30px;border-radius:50%}.vg-x:hover{background:var(--crit-soft);color:var(--crit)}
+  .vg-add{margin-top:6px}.vg-bens{display:flex;flex-wrap:wrap;gap:8px}.vg-ben{display:flex;gap:7px;align-items:center;padding:7px 12px;border-radius:999px;border:1px solid var(--border);font-size:12.5px;cursor:pointer;background:var(--surface)}.vg-ben.on{background:#DDF3EE;border-color:#8EE3CC;color:#0B4F45;font-weight:600}
+  .vg-h4{margin:18px 0 10px;font-size:15px;color:#0F1F47}
+  .vg-artes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;align-items:start}
+  .vg-arte{margin:0;display:flex;flex-direction:column;gap:6px}.vg-cv{width:100%;height:auto;border-radius:14px;box-shadow:0 6px 20px rgba(15,31,71,.18)}
+  .vg-arte figcaption{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--ink-2)}
+  .vg-2c{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .vb-row{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}.vb-row>div{flex:1}.vb-novo{display:grid;grid-template-columns:1fr 1.3fr auto;gap:8px;margin-top:14px}
+  @media(max-width:900px){ .vg-g{grid-template-columns:1fr 1fr} .vg-2c{grid-template-columns:1fr} .vb-novo{grid-template-columns:1fr} }
+  @media(max-width:560px){ .vg-g{grid-template-columns:1fr} .vg-l2{grid-column:auto} }
 </style>
 </head>
 <body>
@@ -968,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.62 (Olimpo: visual liquid glass e detalhe de cada KPI)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.63 (Themis RH: vagas com IA, artes para redes sociais e texto para a Catho)</footer>
   </div>
 </div>
 
@@ -11565,6 +11588,222 @@ iaPainel=async function(v){ await _iaPainelSemU1(v); const t=v.querySelector(".i
 .u1-onda span:nth-child(2){animation-delay:.15s}.u1-onda span:nth-child(3){animation-delay:.3s}.u1-onda span:nth-child(4){animation-delay:.45s}.u1-onda span:nth-child(5){animation-delay:.6s}
 @keyframes u1o{0%,100%{height:6px}50%{height:26px}}
 @media(prefers-reduced-motion:reduce){.u1-onda span{animation:none;height:14px}}`; document.head.appendChild(s); })();
+
+
+// ================= THEMIS RH · VAGAS E DIVULGAÇÃO (v3.63) =================
+// O gestor abre a vaga, a IA (edge function rh-vagas) monta o anúncio com os benefícios cadastrados pelo RH,
+// o gestor edita, acrescenta ou apaga e publica. Ao publicar, a IA escreve os textos de divulgação e o navegador desenha
+// as artes nas cores da Resilcon (feed 4:5, story 9:16 e carrossel de 4 telas), além da legenda e do texto para a Catho.
+// Banco: public.rh_vagas (SQL 41). A Catho não tem API no plano da Resilcon: o texto sai pronto para colar.
+RH_SECOES.push(["rh_vagas","Vagas e divulgação"]);
+let VG={d:null,ed:null,f:"ativas"};
+const VG_REG=[["clt","CLT"],["estagio","Estágio"],["pj","PJ"],["temporario","Temporário"],["aprendiz","Jovem aprendiz"]];
+const VG_MOD=[["presencial","Presencial"],["hibrido","Híbrido"],["remoto","Remoto"]];
+const VG_NIV=[["","Nível"],["Estágio","Estágio"],["Auxiliar","Auxiliar"],["Assistente","Assistente"],["Analista júnior","Analista júnior"],["Analista pleno","Analista pleno"],["Analista sênior","Analista sênior"],["Coordenação","Coordenação"],["Gestão","Gestão"]];
+const VG_ST={rascunho:["warn","Rascunho"],publicada:["good","Publicada"],encerrada:["neutral","Encerrada"]};
+const VG_CAND="Envie seu currículo para rh@resilcon.com.br com o nome da vaga no assunto.";
+const vgNome=(L,v)=>(L.find(x=>x[0]===v)||[v,v])[1];
+async function vgFn(body){ const {data,error}=await sb.functions.invoke("rh-vagas",{body}); if(error){ let m=error.message; try{ const j=await error.context.json(); m=j.erro||m; }catch(_){} if(String(m).includes("404")) m="A função rh-vagas ainda não foi publicada no Supabase."; throw new Error(m); } if(data&&data.erro) throw new Error(data.erro); return data; }
+async function vgCarregar(){ VG.d=await crmRpc("rh_vagas",{p:{acao:"listar"}}); }
+
+RHV_EXTRA.rh_vagas=async function(v){
+ v.innerHTML=crmHead("Vagas e divulgação","O gestor abre a vaga, a IA monta o anúncio e as artes para as redes sociais. Você revisa, edita e publica.","")+rhAbas("rh_vagas")+`<div id="rhBox" style="margin-top:14px"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ try{ await vgCarregar(); }catch(e){ const m=String(e&&e.message||""); v.querySelector("#rhBox").innerHTML=m.includes("sem_permissao")?`<div class="card"><div class="empty">Seu acesso ainda não inclui o Themis RH.</div></div>`:m.includes("rh_vagas")?`<div class="card"><div class="empty">Falta rodar o SQL 41 (vagas) no Supabase.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_vagas") return;
+ if(VG.ed) vgEditor(v); else vgLista(v); };
+
+function vgLista(v){ const D=VG.d, L=D.vagas||[];
+ const vis=L.filter(x=>VG.f==="todas"||(VG.f==="ativas"?x.status!=="encerrada":x.status===VG.f));
+ v.querySelector(".crm-acoes").innerHTML=`${D.rh?`<button class="txt-btn" id="vgBen">Benefícios da Resilcon (${(D.beneficios||[]).filter(b=>b.ativo).length})</button>`:""}${(D.departamentos||[]).length?crmPri('id="vgNova">+ Nova vaga</button>'):""}`;
+ const tab=(k,t)=>`<button class="vg-f ${VG.f===k?"on":""}" data-vgf="${k}">${t}</button>`;
+ v.querySelector("#rhBox").innerHTML=`${!(D.beneficios||[]).filter(b=>b.ativo).length?`<div class="card vg-aviso">${D.rh?"Cadastre os benefícios da Resilcon em <b>Benefícios da Resilcon</b>. A IA só coloca nas vagas os benefícios dessa lista.":"O RH ainda não cadastrou os benefícios da Resilcon. As vagas saem sem benefícios até isso ser feito."}</div>`:""}
+  <div class="vg-fs">${tab("ativas","Abertas e rascunhos")}${tab("publicada","Publicadas")}${tab("rascunho","Rascunhos")}${tab("encerrada","Encerradas")}${tab("todas","Todas")}</div>
+  ${vis.length?`<div class="vg-grid">${vis.map(x=>{ const st=VG_ST[x.status]||["neutral",x.status];
+   return `<button class="vg-card" data-vga="${x.id}"><div class="vg-ch"><span class="pill ${st[0]}">${st[1]}</span><span class="sub">${new Date(x.criado_em).toLocaleDateString("pt-BR")}</span></div>
+    <b>${esc(x.titulo)}</b><span class="sub">${esc(x.departamento_nome||"")}</span>
+    <span class="vg-tags"><i>${esc(vgNome(VG_REG,x.regime))}</i><i>${esc(vgNome(VG_MOD,x.modalidade))}</i>${x.quantidade>1?`<i>${x.quantidade} vagas</i>`:""}${x.divulgacao&&x.divulgacao.chamada?"<i>Artes prontas</i>":""}</span></button>`; }).join("")}</div>`
+   :`<div class="card"><div class="empty">Nenhuma vaga aqui.${(D.departamentos||[]).length?" Clique em + Nova vaga para começar.":""}</div></div>`}`;
+ v.querySelectorAll("[data-vgf]").forEach(b=>b.onclick=()=>{ VG.f=b.dataset.vgf; vgLista(v); });
+ v.querySelectorAll("[data-vga]").forEach(b=>b.onclick=()=>{ VG.ed=JSON.parse(JSON.stringify(L.find(x=>x.id===b.dataset.vga))); vgEditor(v); });
+ const nb=v.querySelector("#vgNova"); if(nb) nb.onclick=()=>{ VG.ed={titulo:"",departamento_id:(D.departamentos[0]||{}).id||"",cargo_id:"",nivel:"",regime:"clt",modalidade:"presencial",quantidade:1,horario:"",local:"Jardim Colonial, São Paulo/SP",salario:"",mostrar_salario:false,
+   resumo:"",atividades:[],requisitos:[],desejaveis:[],beneficios:(D.beneficios||[]).filter(b=>b.ativo).map(b=>b.nome),como_candidatar:VG_CAND,observacoes:"",divulgacao:{},status:"rascunho"}; vgEditor(v); };
+ const bb=v.querySelector("#vgBen"); if(bb) bb.onclick=()=>vgBeneficios(v);
+}
+
+// ---------- benefícios (RH) ----------
+function vgBeneficios(v){ const L=(VG.d.beneficios||[]).filter(b=>b.ativo);
+ crmModal("Themis RH","Benefícios da Resilcon","",`<p class="sub" style="margin:0 0 12px">A IA só coloca nas vagas os benefícios desta lista, com estes nomes. Escreva como deve aparecer no anúncio, por exemplo "Vale-refeição de R$ 35 por dia".</p>
+  <div id="vbL">${L.map(b=>`<div class="vb-row"><div><b>${esc(b.nome)}</b>${b.descricao?`<div class="sub">${esc(b.descricao)}</div>`:""}</div><button class="txt-btn" data-vbe="${b.id}">Editar</button><button class="txt-btn crm-perigo" data-vbx="${b.id}">Tirar</button></div>`).join("")||`<div class="empty" style="padding:10px">Nenhum benefício cadastrado.</div>`}</div>
+  <div class="vb-novo"><input class="inp" id="vbN" placeholder="Nome do benefício (ex.: Vale-transporte)"><input class="inp" id="vbD" placeholder="Detalhe opcional (ex.: para estagiários, a partir de 3 meses)"><input type="hidden" id="vbId">${crmPri('id="vbOk">Adicionar</button>')}</div>`);
+ const m=modal, sal=async(p)=>{ try{ await crmRpc("rh_vagas",{p:{acao:"beneficio_salvar",...p}}); await vgCarregar(); vgBeneficios(v); }catch(e){ crmToast(crmErro(e)); } };
+ m.querySelector("#vbOk").onclick=()=>sal({bid:m.querySelector("#vbId").value,nome:m.querySelector("#vbN").value,descricao:m.querySelector("#vbD").value});
+ m.querySelector("#vbN").onkeydown=e=>{ if(e.key==="Enter") m.querySelector("#vbOk").click(); };
+ m.querySelectorAll("[data-vbx]").forEach(b=>b.onclick=()=>sal({excluir:b.dataset.vbx}));
+ m.querySelectorAll("[data-vbe]").forEach(b=>b.onclick=()=>{ const x=L.find(y=>y.id===b.dataset.vbe); m.querySelector("#vbN").value=x.nome; m.querySelector("#vbD").value=x.descricao||""; m.querySelector("#vbId").value=x.id; m.querySelector("#vbOk").textContent="Salvar"; m.querySelector("#vbN").focus(); });
+ const fechar=()=>{ if(MODE==="rh_vagas"&&!VG.ed) vgLista(v); }; m.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",fechar));
+}
+
+// ---------- editor da vaga ----------
+function vgListaEd(k,titulo,dica){ const L=VG.ed[k]||[];
+ return `<div class="vg-sec"><div class="vg-sh"><h4>${titulo}</h4><span class="sub">${dica}</span></div><div class="vg-li" data-vgl="${k}">${L.map((t,i)=>`<div class="vg-it"><span class="vg-dot"></span><input class="inp" data-vgi="${k}:${i}" value="${escAttr(t)}"><button class="vg-x" data-vgx="${k}:${i}" title="Apagar" aria-label="Apagar">✕</button></div>`).join("")}</div>
+  <button class="txt-btn vg-add" data-vgadd="${k}">+ Adicionar</button></div>`; }
+function vgEditor(v){ const D=VG.d, E=VG.ed, novo=!E.id, st=VG_ST[E.status]||["neutral",E.status];
+ const deps=D.departamentos||[], bens=(D.beneficios||[]).filter(b=>b.ativo);
+ v.querySelector(".crm-acoes").innerHTML=`<button class="txt-btn" id="vgVolta">‹ Todas as vagas</button>`;
+ v.querySelector("#rhBox").innerHTML=`<div class="vg-ed">
+  <div class="card vg-card2"><div class="vg-sh"><h3>${novo?"Nova vaga":esc(E.titulo)}</h3>${novo?"":`<span class="pill ${st[0]}">${st[1]}</span>`}</div>
+   <div class="vg-g">
+    <label class="vg-l2">Título da vaga<input class="inp" id="vgT" list="vgCargos" value="${escAttr(E.titulo)}" placeholder="Ex.: Assistente Fiscal"><datalist id="vgCargos">${(D.cargos||[]).map(c=>`<option value="${escAttr(c.nome)}">`).join("")}</datalist></label>
+    <label>Departamento<select class="inp" data-vgc="departamento_id">${crmOpt(deps.map(d=>[d.id,d.nome]),E.departamento_id)}</select></label>
+    <label>Cargo no Themis RH<select class="inp" data-vgc="cargo_id">${crmOpt((D.cargos||[]).map(c=>[c.id,c.nome]),E.cargo_id,"Nenhum (só o título)")}</select></label>
+    <label>Nível<select class="inp" data-vgc="nivel">${crmOpt(VG_NIV.slice(1),E.nivel,"Escolha")}</select></label>
+    <label>Regime<select class="inp" data-vgc="regime">${crmOpt(VG_REG,E.regime)}</select></label>
+    <label>Modalidade<select class="inp" data-vgc="modalidade">${crmOpt(VG_MOD,E.modalidade)}</select></label>
+    <label>Quantidade<input class="inp" type="number" min="1" max="50" data-vgc="quantidade" value="${E.quantidade||1}"></label>
+    <label>Horário<input class="inp" data-vgc="horario" value="${escAttr(E.horario||"")}" placeholder="Ex.: segunda a sexta, 8h às 17h48"></label>
+    <label>Local<input class="inp" data-vgc="local" value="${escAttr(E.local||"")}"></label>
+    <label>Salário ou bolsa<input class="inp" data-vgc="salario" value="${escAttr(E.salario||"")}" placeholder="Ex.: R$ 2.400"><span class="vg-ck"><input type="checkbox" data-vgc="mostrar_salario" ${E.mostrar_salario?"checked":""}> mostrar no anúncio</span></label>
+   </div>
+   <label class="vg-l2" style="margin-top:12px">O que a IA precisa saber sobre a vaga<textarea class="inp" rows="3" data-vgc="observacoes" placeholder="Ex.: vai cuidar da apuração do Simples e do Lucro Presumido de 40 empresas, precisa saber Questor, vaga por aumento de demanda.">${esc(E.observacoes||"")}</textarea></label>
+   <div class="vg-acts"><span class="sub" id="vgMsg">A IA monta resumo, atividades, requisitos e benefícios. Você edita tudo depois.</span>${crmPri('id="vgIA">'+((E.atividades||[]).length?"Gerar de novo com IA":"Gerar anúncio com IA")+'</button>')}</div>
+  </div>
+  <div class="card vg-card2">
+   <div class="vg-sec"><div class="vg-sh"><h4>Sobre a vaga</h4><span class="sub">2 ou 3 frases</span></div><textarea class="inp" rows="3" data-vgc="resumo">${esc(E.resumo||"")}</textarea></div>
+   ${vgListaEd("atividades","O que a pessoa vai fazer","comece cada item com um verbo")}
+   ${vgListaEd("requisitos","Requisitos","o que é obrigatório")}
+   ${vgListaEd("desejaveis","Diferenciais","o que conta a favor, mas não é obrigatório")}
+   <div class="vg-sec"><div class="vg-sh"><h4>Benefícios</h4><span class="sub">da lista do RH</span></div>
+    ${bens.length?`<div class="vg-bens">${bens.map(b=>`<label class="vg-ben ${(E.beneficios||[]).includes(b.nome)?"on":""}"><input type="checkbox" data-vgb="${escAttr(b.nome)}" ${(E.beneficios||[]).includes(b.nome)?"checked":""}>${esc(b.nome)}</label>`).join("")}</div>`:`<div class="sub">O RH ainda não cadastrou os benefícios.</div>`}</div>
+   <div class="vg-sec"><div class="vg-sh"><h4>Como se candidatar</h4><span class="sub">os currículos do rh@ entram sozinhos no Banco de talentos</span></div><textarea class="inp" rows="2" data-vgc="como_candidatar">${esc(E.como_candidatar||VG_CAND)}</textarea></div>
+   <div class="vg-acts">${novo?"":`<button class="txt-btn crm-perigo" id="vgDel">Excluir</button>`}${E.status==="publicada"?`<button class="txt-btn" id="vgEnc">Encerrar vaga</button>`:E.status==="encerrada"?`<button class="txt-btn" id="vgReab">Reabrir</button>`:""}<span style="flex:1"></span>
+    <button class="txt-btn" id="vgSalvar">Salvar rascunho</button>${crmPri('id="vgPub">'+(E.status==="publicada"?"Atualizar divulgação":"Publicar e gerar divulgação")+'</button>')}</div>
+  </div>
+  <div id="vgDiv"></div></div>`;
+ const B=v.querySelector("#rhBox");
+ v.querySelector("#vgVolta").onclick=()=>{ VG.ed=null; vgLista(v); };
+ B.querySelector("#vgT").oninput=e=>{ E.titulo=e.target.value; const c=(D.cargos||[]).find(x=>crmNormTxt(x.nome)===crmNormTxt(e.target.value)); if(c&&!E.cargo_id){ E.cargo_id=c.id; B.querySelector('[data-vgc="cargo_id"]').value=c.id; } };
+ B.querySelectorAll("[data-vgc]").forEach(i=>{ const k=i.dataset.vgc; i.oninput=i.onchange=()=>{ E[k]=i.type==="checkbox"?i.checked:i.type==="number"?+i.value:i.value; }; });
+ const ligaListas=()=>{
+  B.querySelectorAll("[data-vgi]").forEach(i=>i.oninput=()=>{ const [k,n]=i.dataset.vgi.split(":"); E[k][+n]=i.value; });
+  B.querySelectorAll("[data-vgi]").forEach(i=>i.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); B.querySelector(`[data-vgadd="${i.dataset.vgi.split(":")[0]}"]`).click(); } });
+  B.querySelectorAll("[data-vgx]").forEach(b=>b.onclick=()=>{ const [k,n]=b.dataset.vgx.split(":"); E[k].splice(+n,1); redesenha(k); });
+  B.querySelectorAll("[data-vgadd]").forEach(b=>b.onclick=()=>{ const k=b.dataset.vgadd; (E[k]=E[k]||[]).push(""); redesenha(k); const ins=B.querySelectorAll(`[data-vgl="${k}"] input`); if(ins.length) ins[ins.length-1].focus(); }); };
+ const redesenha=k=>{ const sec=B.querySelector(`[data-vgl="${k}"]`).closest(".vg-sec"); const tit={atividades:["O que a pessoa vai fazer","comece cada item com um verbo"],requisitos:["Requisitos","o que é obrigatório"],desejaveis:["Diferenciais","o que conta a favor, mas não é obrigatório"]}[k];
+  const t=document.createElement("div"); t.innerHTML=vgListaEd(k,tit[0],tit[1]); sec.replaceWith(t.firstElementChild); ligaListas(); };
+ ligaListas();
+ B.querySelectorAll("[data-vgb]").forEach(c=>c.onchange=()=>{ const n=c.dataset.vgb; E.beneficios=(E.beneficios||[]).filter(x=>x!==n); if(c.checked) E.beneficios.push(n); c.closest(".vg-ben").classList.toggle("on",c.checked); });
+ const msg=t=>{ B.querySelector("#vgMsg").textContent=t; };
+ const limpa=()=>["atividades","requisitos","desejaveis"].forEach(k=>E[k]=(E[k]||[]).map(x=>String(x).trim()).filter(Boolean));
+ const salvar=async()=>{ limpa(); const r=await crmRpc("rh_vagas",{p:{acao:"salvar",id:E.id||null,vaga:E}}); E.id=r.id; return r; };
+ B.querySelector("#vgIA").onclick=async ev=>{ const b=ev.target; if(!E.titulo.trim()) return msg("Informe o título da vaga.");
+  if((E.atividades||[]).length&&b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Isso troca o texto atual. Clique de novo"; return; }
+  b.disabled=true; msg("A IA está montando o anúncio. Leva uns 20 segundos…");
+  try{ const r=await vgFn({acao:"gerar",vaga:E}); const g=r.sugestao; Object.assign(E,{titulo:g.titulo||E.titulo,resumo:g.resumo,atividades:g.atividades,requisitos:g.requisitos,desejaveis:g.desejaveis,beneficios:g.beneficios.length?g.beneficios:E.beneficios});
+   if(g.horario&&!E.horario) E.horario=g.horario; vgEditor(v); crmToast("Anúncio montado. Confira e ajuste o que quiser."); }
+  catch(e){ b.disabled=false; msg(crmErro(e)); } };
+ B.querySelector("#vgSalvar").onclick=async ev=>{ const b=ev.target; b.disabled=true; try{ await salvar(); await vgCarregar(); crmToast("Rascunho salvo"); vgEditor(v); }catch(e){ b.disabled=false; crmToast(crmErro(e)); } };
+ B.querySelector("#vgPub").onclick=async ev=>{ const b=ev.target; limpa();
+  if(!E.resumo||!(E.atividades||[]).length||!(E.requisitos||[]).length){ crmToast("Preencha o resumo, as atividades e os requisitos (ou gere com a IA)."); return; }
+  b.disabled=true; b.textContent="Gerando a divulgação…";
+  try{ await salvar(); const r=await vgFn({acao:"divulgacao",vaga:E}); E.divulgacao=r.divulgacao; await salvar();
+   if(E.status!=="publicada"){ await crmRpc("rh_vagas",{p:{acao:"status",id:E.id,status:"publicada"}}); E.status="publicada"; }
+   await vgCarregar(); crmToast("Vaga publicada. As artes e a legenda estão prontas."); vgEditor(v); setTimeout(()=>{ const d=document.getElementById("vgDiv"); if(d) d.scrollIntoView({behavior:"smooth"}); },200); }
+  catch(e){ b.disabled=false; b.textContent="Publicar e gerar divulgação"; crmToast(crmErro(e)); } };
+ const stt=async s=>{ try{ await crmRpc("rh_vagas",{p:{acao:"status",id:E.id,status:s}}); E.status=s; await vgCarregar(); vgEditor(v); }catch(e){ crmToast(crmErro(e)); } };
+ const en=B.querySelector("#vgEnc"); if(en) en.onclick=()=>stt("encerrada");
+ const re=B.querySelector("#vgReab"); if(re) re.onclick=()=>stt("publicada");
+ const dl=B.querySelector("#vgDel"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir"; return; }
+  try{ await crmRpc("rh_vagas",{p:{acao:"excluir",id:E.id}}); VG.ed=null; await vgCarregar(); vgLista(v); }catch(e){ crmToast(crmErro(e)); } };
+ if(E.divulgacao&&E.divulgacao.chamada) vgDivulgacao(v);
+}
+
+// ---------- divulgação: artes, legenda e Catho ----------
+function vgDivulgacao(v){ const E=VG.ed, Dv=E.divulgacao, box=document.getElementById("vgDiv"); if(!box) return;
+ const slug=crmNormTxt(E.titulo).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"vaga";
+ box.innerHTML=`<div class="card vg-card2"><div class="vg-sh"><h3>Divulgação</h3><span class="sub">gerada pela IA em ${new Date(Dv.gerado_em||Date.now()).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span></div>
+  <div class="vg-g" style="margin-top:6px"><label class="vg-l2">Chamada da arte<input class="inp" id="vdC" value="${escAttr(Dv.chamada||"")}"></label>
+   ${[0,1,2].map(i=>`<label>Destaque ${i+1}<input class="inp" data-vdd="${i}" value="${escAttr((Dv.destaques||[])[i]||"")}"></label>`).join("")}</div>
+  <div class="vg-acts"><span class="sub">Mudou algum texto? As artes se atualizam ao clicar em Redesenhar.</span><button class="txt-btn" id="vdRe">Redesenhar</button><button class="txt-btn" id="vdSv">Salvar textos</button></div>
+  <h4 class="vg-h4">Artes</h4>
+  <div class="vg-artes" id="vdArtes"><div class="empty">Desenhando…</div></div>
+  <div class="vg-acts"><span style="flex:1"></span>${crmPri('id="vdTudo">Baixar todas as artes</button>')}</div>
+  <div class="vg-2c">
+   <div><h4 class="vg-h4">Legenda (Instagram e LinkedIn)</h4><textarea class="inp" rows="12" id="vdLeg">${esc((Dv.legenda||"")+(Dv.hashtags?"\n\n"+Dv.hashtags:""))}</textarea><div class="vg-acts"><span style="flex:1"></span><button class="txt-btn" data-vdcp="vdLeg">Copiar legenda</button></div></div>
+   <div><h4 class="vg-h4">Texto para a Catho</h4><textarea class="inp" rows="12" id="vdCat">${esc(Dv.catho_texto||"")}</textarea>
+    <div class="vg-acts"><a class="txt-btn" href="https://www.catho.com.br/area-recrutador-v2/" target="_blank" rel="noopener">Abrir a Catho</a><span style="flex:1"></span><button class="txt-btn" data-vdcp="vdCat">Copiar texto</button></div>
+    <p class="sub" style="margin:6px 0 0">A Catho não tem integração no plano da Resilcon: cole este texto em Criar vaga. Se preferir, peça ao Claude para publicar esta vaga na Catho e trazer os candidatos para o Banco de talentos.</p>
+    <label class="vg-l2" style="margin-top:10px">Link da vaga na Catho<input class="inp" id="vdUrl" value="${escAttr(E.catho_url||"")}" placeholder="cole aqui depois de publicar"></label></div>
+  </div></div>`;
+ const pegaTextos=()=>{ Dv.chamada=box.querySelector("#vdC").value.trim(); Dv.destaques=[...box.querySelectorAll("[data-vdd]")].map(i=>i.value.trim()).filter(Boolean);
+  const leg=box.querySelector("#vdLeg").value; Dv.legenda=leg; Dv.hashtags=""; Dv.catho_texto=box.querySelector("#vdCat").value; E.catho_url=box.querySelector("#vdUrl").value.trim(); };
+ const desenha=async()=>{ const A=box.querySelector("#vdArtes"); A.innerHTML=""; const lista=await vgArtes(E);
+  lista.forEach(({nome,cv})=>{ const d=document.createElement("figure"); d.className="vg-arte"+(cv.height>1500?" st":""); cv.className="vg-cv"; d.appendChild(cv);
+   const f=document.createElement("figcaption"); f.innerHTML=`<span>${esc(nome)}</span>`; const bt=document.createElement("button"); bt.className="txt-btn"; bt.textContent="Baixar";
+   bt.onclick=()=>vgBaixar(cv,`vaga-${slug}-${crmNormTxt(nome).replace(/[^a-z0-9]+/g,"-")}.png`); f.appendChild(bt); d.appendChild(f); A.appendChild(d); }); box._artes=lista; };
+ desenha();
+ box.querySelector("#vdRe").onclick=()=>{ pegaTextos(); desenha(); };
+ box.querySelector("#vdSv").onclick=async()=>{ pegaTextos(); try{ await crmRpc("rh_vagas",{p:{acao:"salvar",id:E.id,vaga:E}}); crmToast("Textos salvos"); desenha(); }catch(e){ crmToast(crmErro(e)); } };
+ box.querySelector("#vdTudo").onclick=async()=>{ for(const a of (box._artes||[])){ vgBaixar(a.cv,`vaga-${slug}-${crmNormTxt(a.nome).replace(/[^a-z0-9]+/g,"-")}.png`); await new Promise(r=>setTimeout(r,450)); } };
+ box.querySelectorAll("[data-vdcp]").forEach(b=>b.onclick=async()=>{ const t=box.querySelector("#"+b.dataset.vdcp).value; try{ await navigator.clipboard.writeText(t); crmToast("Copiado"); }catch(_){ box.querySelector("#"+b.dataset.vdcp).select(); document.execCommand("copy"); crmToast("Copiado"); } });
+}
+function vgBaixar(cv,nome){ cv.toBlob(b=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),15000); },"image/png"); }
+
+// ---------- desenho das artes (canvas, sem biblioteca) ----------
+let VG_LOGO=null;
+function vgLogo(){ if(VG_LOGO) return VG_LOGO; VG_LOGO=new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=SIM_LOGO_BRANCO; }); return VG_LOGO; }
+function vgRR(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+function vgTexto(c,t,x,y,maxW,lh,maxL){ const ws=String(t||"").split(/\s+/).filter(Boolean); let l="", n=0;
+ for(let i=0;i<ws.length;i++){ const tt=l?l+" "+ws[i]:ws[i]; if(c.measureText(tt).width>maxW&&l){ n++; if(n===maxL){ let s=l; while(c.measureText(s+"…").width>maxW&&s) s=s.slice(0,-1); c.fillText(s+"…",x,y); return y+lh; } c.fillText(l,x,y); y+=lh; l=ws[i]; } else l=tt; }
+ if(l){ c.fillText(l,x,y); y+=lh; } return y; }
+function vgFundo(c,W,H,seed,peq){ const g=c.createLinearGradient(0,0,W,H); g.addColorStop(0,"#0F1F47"); g.addColorStop(.55,"#0B3D63"); g.addColorStop(1,"#066789"); c.fillStyle=g; c.fillRect(0,0,W,H);
+ const blob=(x,y,r,cor)=>{ const rg=c.createRadialGradient(x,y,0,x,y,r); rg.addColorStop(0,cor); rg.addColorStop(1,"rgba(0,0,0,0)"); c.fillStyle=rg; c.fillRect(0,0,W,H); };
+ blob(W*.95,H*.08,W*.75,"rgba(38,154,158,.55)"); blob(W*.05,H*.95,W*.7,"rgba(140,222,196,.28)"); blob(W*.5,H*.55,W*.5,"rgba(6,103,137,.35)");
+ // esferas de vidro, como no painel
+ let s=seed||7; const rnd=()=>{ s=(s*9301+49297)%233280; return s/233280; };
+ const N=26; const P=[]; for(let i=0;i<N;i++){ const t=rnd(); P.push(peq?[W*(.66+t*.36)+(rnd()-.5)*W*.08, H*(.16-t*.14)+(rnd()-.5)*H*.05, Math.max(8, W*.05*Math.exp(-((t-.5)**2)/.07)*(.5+rnd()*.6))]
+   :[W*(.52+t*.5)+(rnd()-.5)*W*.12, H*(.30-t*.28)+(rnd()-.5)*H*.10, Math.max(10, W*.085*Math.exp(-((t-.5)**2)/.07)*(.5+rnd()*.6))]); }
+ P.sort((a,b)=>a[2]-b[2]).forEach(([x,y,r])=>{ const sg=c.createRadialGradient(x-r*.35,y-r*.4,r*.05,x,y,r); sg.addColorStop(0,"#FFFFFF"); sg.addColorStop(.12,"#D9FBF1"); sg.addColorStop(.32,"#8EE3CC"); sg.addColorStop(.62,"#2FA79F"); sg.addColorStop(.88,"#066789"); sg.addColorStop(1,"#0A3550");
+  c.save(); c.shadowColor="rgba(0,20,40,.35)"; c.shadowBlur=r*.6; c.shadowOffsetY=r*.25; c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fillStyle=sg; c.fill(); c.restore(); }); }
+function vgVidro(c,x,y,w,h,r){ c.save(); vgRR(c,x,y,w,h,r); const g=c.createLinearGradient(x,y,x+w,y+h); g.addColorStop(0,"rgba(255,255,255,.22)"); g.addColorStop(1,"rgba(255,255,255,.08)"); c.fillStyle=g; c.fill();
+ c.lineWidth=2; c.strokeStyle="rgba(255,255,255,.45)"; c.stroke(); c.restore(); }
+function vgPilula(c,x,y,txt,tam,cor,fundo){ c.font=`700 ${tam}px "DM Sans",sans-serif`; const w=c.measureText(txt).width+tam*1.6, h=tam*2.1;
+ c.save(); vgRR(c,x,y,w,h,h/2); c.fillStyle=fundo||"rgba(255,255,255,.16)"; c.fill(); c.lineWidth=2; c.strokeStyle="rgba(255,255,255,.5)"; c.stroke(); c.fillStyle=cor||"#fff"; c.textBaseline="middle"; c.fillText(txt,x+tam*.8,y+h/2+1); c.restore(); return w; }
+function vgCandidatar(E){ const t=E.como_candidatar||VG_CAND; const m=t.match(/[\w.+-]+@[\w.-]+\.\w+/); return {email:m?m[0]:"", texto:t}; }
+async function vgArtes(E){ try{ await Promise.all(['700 80px "Urbanist"','500 40px "Urbanist"','400 30px "DM Sans"','700 30px "DM Sans"'].map(f=>document.fonts.load(f))); }catch(_){}
+ const logo=await vgLogo(), Dv=E.divulgacao||{}, sl=Dv.slides||{}, cand=vgCandidatar(E);
+ const info=[vgNome(VG_REG,E.regime),vgNome(VG_MOD,E.modalidade),(E.local||"").split(",")[0]].filter(Boolean).join("  ·  ");
+ const novo=(W,H)=>{ const cv=document.createElement("canvas"); cv.width=W; cv.height=H; return [cv,cv.getContext("2d")]; };
+ const topo=(c,W,pag)=>{ if(logo){ const h=58, w=logo.width*h/logo.height; c.drawImage(logo,72,72,w,h); } if(pag){ c.font='600 28px "DM Sans",sans-serif'; c.fillStyle="rgba(255,255,255,.75)"; c.textAlign="right"; c.fillText(pag,W-72,c.canvas.height-60); c.textAlign="left"; } };
+ const capa=(W,H)=>{ const [cv,c]=novo(W,H); vgFundo(c,W,H,11); topo(c,W); const st=H>1500;
+  let y=st?H*.40:H*.38; vgPilula(c,72,y,"VAGA ABERTA",30,"#0B4F45","#9BE7CF"); y+=st?130:118;
+  c.fillStyle="#fff"; c.font=`700 ${st?118:108}px "Urbanist",sans-serif`; c.textBaseline="alphabetic"; y=vgTexto(c,Dv.chamada||E.titulo,72,y+30,W-144,st?124:112,3);
+  c.font='500 40px "Urbanist",sans-serif'; c.fillStyle="#9BE7CF"; y=vgTexto(c,info,72,y+18,W-144,50,2);
+  y+=st?40:26; let x=72; c.textBaseline="alphabetic";
+  (Dv.destaques||[]).slice(0,3).forEach(d=>{ c.font='700 30px "DM Sans",sans-serif'; const w=c.measureText(d).width+48; if(x+w>W-72){ x=72; y+=82; } vgPilula(c,x,y,d,30); x+=w+16; });
+  const ph=st?300:250, py=H-ph-(st?160:72); vgVidro(c,72,py,W-144,ph,36);
+  c.fillStyle="rgba(255,255,255,.8)"; c.font='600 30px "DM Sans",sans-serif'; c.textBaseline="alphabetic"; c.fillText("Como se candidatar",112,py+68);
+  c.fillStyle="#fff"; c.font='700 50px "Urbanist",sans-serif'; c.fillText(cand.email||"Fale com o RH da Resilcon",112,py+138);
+  c.font='400 28px "DM Sans",sans-serif'; c.fillStyle="rgba(255,255,255,.85)"; vgTexto(c,cand.email?`Coloque "${E.titulo}" no assunto do e-mail.`:cand.texto,112,py+192,W-224,38,2);
+  if(st){ c.font='600 30px "DM Sans",sans-serif'; c.fillStyle="rgba(255,255,255,.7)"; c.textAlign="center"; c.fillText("resilcon.com.br",W/2,H-80); c.textAlign="left"; }
+  return cv; };
+ const listaSlide=(pag,titulo,itens,fim)=>{ const W=1080,H=1350, [cv,c]=novo(W,H); vgFundo(c,W,H,pag.length*7+itens.length,true); topo(c,W,pag);
+  c.font='500 38px "DM Sans",sans-serif'; const linhas=itens.slice(0,6).reduce((n,t)=>n+(c.measureText(t).width>W-300?2:1),0);
+  c.font='700 86px "Urbanist",sans-serif'; const tl=c.measureText(titulo).width>W-144?2:1;
+  const phD=60+linhas*48+itens.slice(0,6).length*34+40, bloco=96+tl*92+20+phD, area0=260, area1=H-(fim?260:130);
+  let y0=Math.max(area0, area0+((area1-area0)-bloco)/2);
+  c.fillStyle="#9BE7CF"; c.font='600 34px "DM Sans",sans-serif'; c.textBaseline="alphabetic"; c.fillText(E.titulo,72,y0+40);
+  c.fillStyle="#fff"; c.font='700 86px "Urbanist",sans-serif'; let y=vgTexto(c,titulo,72,y0+136,W-144,92,2);
+  const py=y+20, ph=Math.min(H-py-(fim?250:130), phD); vgVidro(c,72,py,W-144,ph,40); y=py+86;
+  itens.slice(0,6).forEach(t=>{ c.save(); c.beginPath(); c.arc(132,y-12,22,0,Math.PI*2); c.fillStyle="#9BE7CF"; c.fill(); c.strokeStyle="#0B4F45"; c.lineWidth=5; c.lineCap="round"; c.lineJoin="round";
+   c.beginPath(); c.moveTo(121,y-12); c.lineTo(129,y-4); c.lineTo(144,y-21); c.stroke(); c.restore();
+   c.fillStyle="#fff"; c.font='500 38px "DM Sans",sans-serif'; y=vgTexto(c,t,176,y,W-300,48,2)+34; });
+  if(fim){ c.fillStyle="#fff"; c.font='700 44px "Urbanist",sans-serif'; c.fillText(cand.email?"Envie seu currículo":"Candidate-se",72,H-150); c.fillStyle="#9BE7CF"; c.font='700 48px "Urbanist",sans-serif'; c.fillText(cand.email||"Fale com o RH",72,H-90); }
+  return cv; };
+ const at=(sl.atividades&&sl.atividades.length?sl.atividades:E.atividades||[]), rq=(sl.requisitos&&sl.requisitos.length?sl.requisitos:E.requisitos||[]), bn=(sl.beneficios&&sl.beneficios.length?sl.beneficios:E.beneficios||[]);
+ return [{nome:"Feed 4x5",cv:capa(1080,1350)},{nome:"Story 9x16",cv:capa(1080,1920)},
+  {nome:"Carrossel 1 capa",cv:capa(1080,1350)},{nome:"Carrossel 2 atividades",cv:listaSlide("2/4","O que você vai fazer",at)},
+  {nome:"Carrossel 3 requisitos",cv:listaSlide("3/4","O que buscamos",rq)},{nome:"Carrossel 4 beneficios",cv:listaSlide("4/4",bn.length?"O que oferecemos":"Como se candidatar",bn.length?bn:[cand.texto],true)}];
+}
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
