@@ -991,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.69 (Sucesso do cliente: filtros e ordenação)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.70 (Performance: produtividade por colaborador corrigida)</footer>
   </div>
 </div>
 
@@ -2724,6 +2724,7 @@ async function loadWM(){
 // vincula o colaborador do Resiltrack ao do Dashboard Gestores: nome exato, senão primeiro + último nome (ex.: "Tracy Campos" = "TRACY LIMA CAMPOS")
 function _wmDe(nome){
   if(!WM||!WM.por) return null;
+  nome=String(nome||"").replace(/\s+-\s+.*$/,"").trim(); // o atendimento traz "Nome - Departamento X"
   const k=_semAcento(nome); const ex=WM.por[k];
   const _ign=new Set(["de","da","do","das","dos","e"]);
   const tk=s=>_semAcento(s).split(" ").filter(t=>t&&!_ign.has(t));
@@ -2735,7 +2736,13 @@ function _wmDe(nome){
   const cands=Object.values(WM.por).filter(a=>_sub(tk(a.nome)));
   const comDados=cands.filter(a=>a.dias>0);
   if(comDados.length===1) return comDados[0];
-  return ex||(cands.length===1?cands[0]:null);
+  if(ex||cands.length===1) return ex||cands[0];
+  // último recurso: todos os nomes aparecem no nome completo, em qualquer posição (ex.: "Jucélio Santos" = "Francisco Jucelio Vieira dos Santos")
+  const tudo=Object.values(WM.por).filter(a=>{ const u=new Set(tk(a.nome)); return t.every(x=>u.has(x)); });
+  if(tudo.length===1) return tudo[0];
+  // ou o nome cadastrado é mais curto que o do atendimento (ex.: "Ana Carolina" = "Ana Carolina Oliveira")
+  const curto=Object.values(WM.por).filter(a=>{ const u=tk(a.nome); return u.length>=2&&u[0]===t[0]&&u.every(x=>t.includes(x)); });
+  return curto.length===1?curto[0]:null;
 }
 // ---------- MODAL DE PRODUTIVIDADE (dia / semana / mês) ----------
 let PRODST={id:null,nome:"",modo:"dia",ref:"",seq:0};
@@ -2920,7 +2927,7 @@ function viewColaboradores(v){
     <input type="date" id="wmDia" class="fsel" value="${escAttr(WMPER.dia)}" title="Último dia do período">
     <span class="sub">${WMLOADING||!WM?'Carregando G-Click, Kronos ID e Work Monitor...':(WMERR?'<span style="color:var(--crit)">Não consegui ler os dados de produtividade: '+esc(WMERR)+'</span>':`Horas ${WMPER.modo==='dia'?'do dia '+fmtD(WM.fim):'por dia trabalhado, de '+fmtD(WM.ini)+' a '+fmtD(WM.fim)} · fonte: Dashboard Gestores`)}</span></div>
   <div class="card perf-card"><div class="perf-head"><div class="pi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 5"/></svg></div><div><b>Performance por Colaborador</b><span>Score, ranking, notas e produtividade por colaborador</span></div></div>
-  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th><th>Gestor</th>${th("gc_desc","G-Click","center")}${th("tg_desc","Ponto","center")}${th("wm_desc","Work Monitor","center")}${th("score_desc","Score","center")}<th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center">Canal</th><th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
+  <table class="perf-tbl"><thead><tr>${th("nome","Colaborador")}<th class="hide-md">Setor</th><th>Gestor</th>${th("gc_desc","G-Click","center")}${th("tg_desc","Ponto","center")}${th("wm_desc","Work Monitor","center")}${th("score_desc","Score","center")}<th class="center">#Empresa</th>${th("qtd_desc","Qtd","center")}${th("media_desc","Média","center")}<th class="center hide-md">Notas &lt; 7</th>${th("pct_desc","Notas ≥ 7","center")}<th class="center">Status</th><th class="center">Painel</th><th class="right">Ações</th></tr></thead><tbody>${
     rows.length?rows.map(r=>`<tr><td><div class="perf-colab"><span class="kav" style="background:${_corNome(r.nome)};width:30px;height:30px;font-size:11px">${esc(_iniciais(r.nome))}</span><div><button class="link-name" ${r.semAtend?'data-prod':'data-col'}="${escAttr(r.semAtend?r.nome:String(r.key))}">${esc(r.nome)}</button>${r.ativo===false?'<div class="sub">inativo</div>':''}${r.semAtend?'<div class="sub">sem atendimentos no Resiltrack</div>':''}</div></div></td>
       <td class="sub hide-md">${esc(r.setor||'—')}</td>
       <td class="sub gestorc">${esc((r.w&&r.w.gestor)||"—")}</td>
@@ -2929,7 +2936,6 @@ function viewColaboradores(v){
       <td class="center">${r.rkEmp?`<span class="rk dark">#${r.rkEmp}</span>`:'<span class="sub">—</span>'}</td>
       <td class="center"><span class="rk">${r.qtd}</span></td>
       <td class="center"><span class="score-num" style="color:${scoreColor(r.media)}">${r.media===null?"—":r.media.toFixed(2).replace(".",",")}</span></td>
-      <td class="center">${_canalBar(r.canais,r.qtd)}</td>
       <td class="center hide-md">${r.ab?`<span class="pillnum crit">${r.ab}<small>(${r.ab+r.ac?Math.round(r.ab/(r.ab+r.ac)*1000)/10:0}%)</small></span>`:'<span class="pillnum">0<small>(0,0%)</small></span>'}</td>
       <td class="center">${r.pct===null?'<span class="sub">—</span>':`<span class="pillnum good">${r.ac}<small>(${(Math.round(r.pct*10)/10).toString().replace(".",",")}%)</small></span>`}</td>
       <td class="center"><span class="dot" title="${perfTxt[r.status]}" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${r.status==='good'?'var(--good)':(r.status==='warn'?'var(--warn)':(r.status==='crit'?'var(--crit)':'var(--muted)'))}"></span></td>
