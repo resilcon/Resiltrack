@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.56 (Assistente de RH lê atendimentos, ponto, chegadas, G-Click e atas de 1x1)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.57 (Themis RH: conversas 1x1 gravadas ou coladas, com ata da IA)</footer>
   </div>
 </div>
 
@@ -11131,6 +11131,122 @@ html.pwa-app body{overscroll-behavior-y:none}
 }
 @media (max-width:420px){ #app header .logo-img{width:96px} .kpis,.cx{grid-template-columns:1fr 1fr!important} }
 `; document.head.appendChild(s); })();
+
+// ================= THEMIS RH · CONVERSAS 1x1 COM ATA DA IA (v3.57) =================
+// No card do colaborador (ficha do Themis RH) e no Assistente de RH: botão "Conversas 1x1".
+// Gravar 1x1 presencial: grava pelo microfone em pedaços de 8 minutos; cada pedaço vai para a edge function rh-1x1, que transcreve
+// na OpenAI e junta o texto (o áudio não é guardado). No fim, a IA monta a ata em rascunho; o gestor revisa e libera.
+// Colar transcrição: para 1x1 online (transcrição do Teams) ou anotações do gestor. Liberada, a transcrição é apagada.
+const U1_SEG_MS=8*60*1000;
+const U1_CAMPOS=[["pontos_discutidos","Pontos discutidos"],["feedback_positivo","Feedback positivo"],["pontos_melhoria","Pontos de melhoria"]];
+const u1Data=d=>d?new Date(d).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
+async function u1Fn(body){ const {data,error}=await sb.functions.invoke("rh-1x1",{body});
+ if(error){ let msg=""; try{ const j=await error.context.json(); msg=j.erro||""; }catch(_){} throw new Error(msg||(String(error.message||"").includes("404")?"A função rh-1x1 ainda não foi publicada no Supabase.":String(error.message||error))); }
+ if(data&&data.erro) throw new Error(data.erro); return data; }
+async function u1Abrir(colId,foco){
+ const c=(RHD&&rhPor(RHD.colaboradores,colId))||{nome:"Colaborador"};
+ const m=crmModal("Themis RH · Conversas 1x1",c.nome,"",`<div class="u1-box"><div class="card"><div class="empty">Carregando…</div></div></div>`); m.classList.remove("prodm");
+ const box=m.querySelector(".u1-box"); let L=[];
+ const pinta=()=>{ box.innerHTML=`<div class="u1-acoes"><button class="view-btn ce-pri" data-u1g>Gravar 1x1 presencial</button><button class="view-btn ghost" data-u1t>Colar transcrição ou anotações</button></div>
+  <p class="sub" style="margin:8px 0 14px">Online pelo Teams: baixe a transcrição da reunião e cole aqui. A ata fica em rascunho até você liberar; liberada, a pessoa vê no perfil dela na intranet.</p>
+  ${L.length?L.map(r=>{ const a=r.ata||{}; return `<div class="u1-it" data-u1="${r.id}"><div class="u1-it-h"><b>${u1Data(r.data)}</b><span class="pill ${r.status==="liberada"?"good":"warn"}">${r.status==="liberada"?"Liberada":"Rascunho"}</span>
+    <span class="sub">${r.modo==="online"?"Online":"Presencial"}${r.origem==="gravacao"?" · gravada":r.origem==="teams"?" · Teams":""}${r.gestor_nome?" · "+esc(r.gestor_nome):""}</span></div>
+    <p>${esc(a.resumo||(r.tem_transcricao?"Transcrição pronta. Falta gerar a ata.":"Sem ata ainda."))}</p></div>`; }).join(""):`<div class="empty">Nenhuma conversa 1x1 registrada ainda.</div>`}`;
+  box.querySelector("[data-u1g]").onclick=()=>u1Gravar(colId,c,recarrega);
+  box.querySelector("[data-u1t]").onclick=()=>u1Colar(colId,c,recarrega);
+  box.querySelectorAll("[data-u1]").forEach(x=>x.onclick=()=>u1Ata(L.find(r=>r.id===x.dataset.u1),c,recarrega)); };
+ const recarrega=async()=>{ try{ L=await crmRpc("rh_1x1",{p:{acao:"listar",colaborador:colId}})||[]; pinta(); }catch(e){ box.innerHTML=crmCaixaErro(e); } };
+ await recarrega(); if(foco==="gravar") u1Gravar(colId,c,recarrega);
+}
+function u1Colar(colId,c,depois){
+ const m=crmModal("Conversa 1x1",c.nome,"",`<div class="crm-form">
+  <label class="crm-f"><span>Data</span><input class="inp" type="date" id="u1Dt" value="${new Date().toISOString().slice(0,10)}"></label>
+  <label class="crm-f"><span>Como foi</span><select class="inp" id="u1Md"><option value="online">Online (Teams)</option><option value="presencial">Presencial</option></select></label>
+  <label class="crm-f crm-w2"><span>Transcrição do Teams ou suas anotações</span><textarea class="inp" id="u1Tx" rows="12" placeholder="Cole aqui a transcrição baixada do Teams (.docx ou .vtt aberto) ou escreva os pontos da conversa"></textarea></label></div>
+  <div class="crm-pe" style="margin-top:12px"><span class="sub" id="u1Msg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="u1Ok">Gerar ata com IA</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=()=>u1Abrir(colId);
+ m.querySelector("#u1Ok").onclick=async ev=>{ const tx=crmVal(m,"#u1Tx"), b=ev.currentTarget, msg=t=>m.querySelector("#u1Msg").textContent=t;
+  if(tx.length<40){ msg("Cole a transcrição ou escreva mais detalhes da conversa."); return; }
+  b.disabled=true; b.textContent="Gerando a ata…"; msg("Leva uns 20 segundos.");
+  try{ const md=crmVal(m,"#u1Md"); const r=await crmRpc("rh_1x1",{p:{acao:"criar",colaborador:colId,modo:md,origem:md==="online"?"teams":"manual",data:crmVal(m,"#u1Dt")+"T12:00:00-03:00",texto:tx}});
+   const o=await u1Fn({acao:"gerar_ata",id:r.id}); u1Ata({id:r.id,data:crmVal(m,"#u1Dt"),modo:md,status:"rascunho",ata:o.ata},c,()=>u1Abrir(colId)); }
+  catch(e){ b.disabled=false; b.textContent="Gerar ata com IA"; msg(e.message||String(e)); } };
+}
+function u1Gravar(colId,c,depois){
+ if(!navigator.mediaDevices||!window.MediaRecorder){ crmToast("Este navegador não grava áudio. Use o Chrome, o Edge ou o Safari atualizado."); return; }
+ const m=crmModal("Gravar 1x1 presencial",c.nome,"",`<div class="u1-rec">
+  <div class="u1-aviso"><b>Antes de começar:</b> avise a pessoa que a conversa vai ser gravada para a IA montar a ata. O áudio não fica guardado: só o texto, até você liberar a ata.</div>
+  <label class="u1-ok"><input type="checkbox" id="u1Cons"> A pessoa concordou com a gravação</label>
+  <div class="u1-pain" hidden><div class="u1-tempo" id="u1T">00:00</div><div class="u1-onda"><span></span><span></span><span></span><span></span><span></span></div><div class="sub" id="u1Est">Gravando…</div></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="u1Msg" style="flex:1"></span><button class="txt-btn" id="u1Canc">Cancelar</button>${crmPri('id="u1Ini">Começar a gravar</button>')}</div></div>`);
+ m.classList.remove("prodm");
+ let rec=null, stream=null, id=null, parte=0, ini=0, tim=null, segT=null, fila=Promise.resolve(), falhas=0, encerrando=false, lock=null;
+ const st=t=>m.querySelector("#u1Est").textContent=t, msg=t=>m.querySelector("#u1Msg").textContent=t;
+ const mime=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||"";
+ const b64=blob=>new Promise((ok,er)=>{ const fr=new FileReader(); fr.onload=()=>ok(String(fr.result).split(",")[1]||""); fr.onerror=er; fr.readAsDataURL(blob); });
+ const envia=(blob,n)=>{ fila=fila.then(async()=>{ if(!blob.size) return; for(let t=1;t<=3;t++){ try{ st(`Transcrevendo a parte ${n}…`); await u1Fn({acao:"transcrever",id,parte:n,mime:blob.type||mime,audio:await b64(blob),duracao_min:Math.round((Date.now()-ini)/60000)}); st(encerrando?"Finalizando…":"Gravando…"); return; }catch(e){ if(t===3){ falhas++; msg("Uma parte não foi transcrita: "+(e.message||e)); } else await new Promise(r=>setTimeout(r,3000*t)); } } }); };
+ const novoRec=()=>{ const r=new MediaRecorder(stream,mime?{mimeType:mime,audioBitsPerSecond:32000}:{audioBitsPerSecond:32000}); const pedacos=[]; const n=++parte;
+  r.ondataavailable=e=>{ if(e.data&&e.data.size) pedacos.push(e.data); };
+  r.onstop=()=>{ envia(new Blob(pedacos,{type:r.mimeType||mime}),n); if(!encerrando) { rec=novoRec(); } };
+  r.start(); clearTimeout(segT); segT=setTimeout(()=>{ if(r.state==="recording") r.stop(); },U1_SEG_MS); return r; };
+ const limpa=()=>{ clearInterval(tim); clearTimeout(segT); if(stream) stream.getTracks().forEach(t=>t.stop()); try{ lock&&lock.release(); }catch(_){} };
+ m.querySelector("#u1Canc").onclick=async()=>{ if(rec&&!confirm("Cancelar a gravação? O que já foi transcrito fica salvo como rascunho.")) return; encerrando=true; try{ rec&&rec.state==="recording"&&rec.stop(); }catch(_){} limpa(); u1Abrir(colId); };
+ m.querySelector("#u1Ini").onclick=async ev=>{ const b=ev.currentTarget;
+  if(!rec){ if(!m.querySelector("#u1Cons").checked){ msg("Marque que a pessoa concordou com a gravação."); return; }
+   try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }catch(_){ msg("Não consegui usar o microfone. Libere o acesso no navegador."); return; }
+   try{ id=(await crmRpc("rh_1x1",{p:{acao:"criar",colaborador:colId,modo:"presencial",origem:"gravacao",consentimento:true}})).id; }catch(e){ limpa(); msg(crmErro(e)); return; }
+   try{ lock=await navigator.wakeLock.request("screen"); }catch(_){}
+   ini=Date.now(); rec=novoRec(); m.querySelector(".u1-pain").hidden=false; m.querySelector(".u1-ok").hidden=true; m.querySelector(".u1-aviso").hidden=true; msg("");
+   tim=setInterval(()=>{ const s=Math.floor((Date.now()-ini)/1000); m.querySelector("#u1T").textContent=`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; },500);
+   b.textContent="Encerrar e gerar a ata"; return; }
+  encerrando=true; b.disabled=true; b.textContent="Finalizando…"; m.querySelector("#u1Canc").disabled=true;
+  await new Promise(ok=>{ if(rec.state==="recording"){ const o=rec.onstop; rec.onstop=()=>{ o(); ok(); }; rec.stop(); } else ok(); });
+  limpa(); st("Terminando de transcrever…"); await fila;
+  st("Montando a ata com IA…");
+  try{ const o=await u1Fn({acao:"gerar_ata",id}); u1Ata({id,data:new Date(ini).toISOString(),modo:"presencial",status:"rascunho",ata:o.ata},c,()=>u1Abrir(colId)); }
+  catch(e){ msg(e.message||String(e)); b.disabled=false; b.textContent="Tentar gerar a ata de novo"; b.onclick=async()=>{ b.disabled=true; try{ const o=await u1Fn({acao:"gerar_ata",id}); u1Ata({id,data:new Date(ini).toISOString(),modo:"presencial",status:"rascunho",ata:o.ata},c,()=>u1Abrir(colId)); }catch(e2){ b.disabled=false; msg(e2.message||String(e2)); } }; }
+ };
+}
+function u1Ata(r,c,depois){ if(!r) return; const a=r.ata||{}, lib=r.status==="liberada", rh=RHD&&RHD.eu&&RHD.eu.rh, ed=!lib||rh;
+ const lista=k=>(a[k]||[]).join("\n"), comb=(a.combinados||[]).map(x=>[x.acao,x.responsavel,x.prazo].filter(v=>v!=null).join(" | ")).join("\n");
+ const m=crmModal(`Ata da 1x1 · ${u1Data(r.data)}`,c.nome,`<span class="m-chip">${lib?"Liberada":"Rascunho"}</span>${a.gerada_por_ia?`<span class="m-chip">Gerada por IA, revise</span>`:""}`,`<div class="crm-form u1-ata">
+  <label class="crm-f crm-w2"><span>Resumo</span><textarea class="inp" id="u1Res" rows="4" ${ed?"":"disabled"}>${esc(a.resumo||"")}</textarea></label>
+  ${U1_CAMPOS.map(([k,t])=>`<label class="crm-f crm-w2"><span>${t} <small class="sub">(um por linha)</small></span><textarea class="inp" data-u1c="${k}" rows="3" ${ed?"":"disabled"}>${esc(lista(k))}</textarea></label>`).join("")}
+  <label class="crm-f crm-w2"><span>Combinados <small class="sub">(um por linha: ação | responsável | prazo)</small></span><textarea class="inp" id="u1Comb" rows="4" ${ed?"":"disabled"}>${esc(comb)}</textarea></label>
+  <label class="crm-f"><span>Clima da conversa</span><input class="inp" id="u1Cli" value="${escAttr(a.clima||"")}" ${ed?"":"disabled"}></label>
+  <label class="crm-f"><span>Próxima conversa</span><input class="inp" id="u1Prox" value="${escAttr(a.proxima_conversa||"")}" ${ed?"":"disabled"}></label></div>
+  <div class="crm-pe" style="margin-top:12px;flex-wrap:wrap;gap:8px">${!lib||rh?`<button class="txt-btn crm-perigo" id="u1Del">Excluir</button>`:""}<span class="sub" id="u1Msg" style="flex:1"></span><button class="txt-btn" data-close2>Voltar</button>
+   ${ed?`<button class="view-btn ghost" id="u1Sal">Salvar</button>`:""}${!lib?crmPri('id="u1Lib">Liberar para o colaborador</button>'):""}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=()=>depois&&depois();
+ const ler=()=>({...a,resumo:crmVal(m,"#u1Res"),...Object.fromEntries(U1_CAMPOS.map(([k])=>[k,m.querySelector(`[data-u1c="${k}"]`).value.split("\n").map(x=>x.trim()).filter(Boolean)])),
+  combinados:m.querySelector("#u1Comb").value.split("\n").map(x=>x.trim()).filter(Boolean).map(l=>{ const [acao,responsavel,prazo]=l.split("|").map(x=>(x||"").trim()); return {acao,responsavel:responsavel||"a definir",prazo:prazo||"a definir"}; }),
+  clima:crmVal(m,"#u1Cli"),proxima_conversa:crmVal(m,"#u1Prox"),revisada_em:new Date().toISOString()});
+ const msg=t=>m.querySelector("#u1Msg").textContent=t;
+ const sal=m.querySelector("#u1Sal"); if(sal) sal.onclick=async()=>{ try{ await crmRpc("rh_1x1",{p:{acao:"salvar_ata",id:r.id,ata:ler()}}); crmToast("Ata salva"); }catch(e){ msg(crmErro(e)); } };
+ const lb=m.querySelector("#u1Lib"); if(lb) lb.onclick=async()=>{ if(lb.dataset.ok!=="1"){ lb.dataset.ok="1"; lb.textContent="Confirmar: liberar e apagar a transcrição"; msg("Depois de liberar, a pessoa vê a ata na intranet e a transcrição é apagada."); return; }
+  try{ await crmRpc("rh_1x1",{p:{acao:"salvar_ata",id:r.id,ata:ler()}}); await crmRpc("rh_1x1",{p:{acao:"liberar",id:r.id}}); crmToast("Ata liberada"); depois&&depois(); }catch(e){ msg(crmErro(e)); } };
+ const dl=m.querySelector("#u1Del"); if(dl) dl.onclick=async()=>{ if(dl.dataset.ok!=="1"){ dl.dataset.ok="1"; dl.textContent="Clique de novo para excluir de vez"; return; }
+  try{ await crmRpc("rh_1x1",{p:{acao:"excluir",id:r.id}}); crmToast("Conversa excluída"); depois&&depois(); }catch(e){ msg(crmErro(e)); } };
+}
+// botão no card do colaborador (ficha) e no Assistente de RH
+const _rhFichaSemU1=rhFicha;
+rhFicha=function(id){ _rhFichaSemU1(id); try{ if(!id||!RHD||!RHD.eu) return; if(!RHD.eu.rh&&id===RHD.eu.id) return;
+ const pe=modal.querySelector(".crm-pe"); if(!pe||modal.querySelector("[data-u1abre]")) return;
+ const b=document.createElement("button"); b.className="txt-btn"; b.dataset.u1abre="1"; b.textContent="Conversas 1x1"; b.onclick=()=>u1Abrir(id); pe.insertBefore(b,pe.firstChild); }catch(_){} };
+const _iaPainelSemU1=iaPainel;
+iaPainel=async function(v){ await _iaPainelSemU1(v); const t=v.querySelector(".ia-top"); if(!t||!RHIA.sel||t.querySelector("[data-u1ia]")) return;
+ const d=document.createElement("div"); d.className="u1-ia"; d.innerHTML=`<button class="view-btn ghost" data-u1ia>Conversas 1x1</button><button class="view-btn ghost" data-u1ia2>Gravar 1x1 agora</button>`;
+ d.querySelector("[data-u1ia]").onclick=()=>u1Abrir(RHIA.sel); d.querySelector("[data-u1ia2]").onclick=()=>u1Abrir(RHIA.sel,"gravar"); t.appendChild(d); };
+(function(){ const s=document.createElement("style"); s.textContent=`
+.u1-acoes,.u1-ia{display:flex;gap:8px;flex-wrap:wrap}
+.u1-it{border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer}.u1-it:hover{border-color:var(--accent-2,#269A9E)}
+.u1-it-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.u1-it p{margin:6px 0 0;color:var(--ink-2);line-height:1.5}
+.u1-aviso{background:#fff8e6;border-radius:12px;padding:12px 14px;line-height:1.5}.u1-ok{display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:600}
+.u1-pain{text-align:center;padding:18px 0}.u1-tempo{font:800 46px/1 "Urbanist",sans-serif;letter-spacing:.02em}
+.u1-onda{display:flex;justify-content:center;gap:5px;height:28px;align-items:center;margin:12px 0}.u1-onda span{width:5px;border-radius:3px;background:#cf4257;animation:u1o 1s ease-in-out infinite}
+.u1-onda span:nth-child(2){animation-delay:.15s}.u1-onda span:nth-child(3){animation-delay:.3s}.u1-onda span:nth-child(4){animation-delay:.45s}.u1-onda span:nth-child(5){animation-delay:.6s}
+@keyframes u1o{0%,100%{height:6px}50%{height:26px}}
+@media(prefers-reduced-motion:reduce){.u1-onda span{animation:none;height:14px}}`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
