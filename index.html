@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.57 (Themis RH: conversas 1x1 gravadas ou coladas, com ata da IA)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.59 (Themis RH: histórico e evolução do perfil comportamental, usados pela IA)</footer>
   </div>
 </div>
 
@@ -4788,7 +4788,7 @@ function crmTarefaModal(t,ctx,depois){
  const ics=m.querySelector("#tIcs"); if(ics) ics.onclick=()=>crmBaixarIcs(t);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
  m.querySelectorAll("[data-dia]").forEach(b=>b.onclick=()=>m.querySelector("#tDia").value=b.dataset.dia);
- const del=m.querySelector("#tDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#tDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("crm_excluir",{p_tipo:"tarefa",p_id:t.id}); closeModal(); crmToast("Tarefa excluída"); crmResumoTarefas(true); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
  m.querySelector("#tOk").onclick=async ev=>{ const tit=crmVal(m,"#tTit"); if(!tit){ crmToast("Escreva o que precisa ser feito."); return; }
   const d=crmVal(m,"#tDia"), h=crmVal(m,"#tHora"); const vence=d?new Date(`${d}T${h||"18:00"}:00`).toISOString():"";
@@ -4878,7 +4878,7 @@ function crmContratoModal(ct,alvo,depois){
  let arq=null; const fi=m.querySelector("#kArq"); fi.onchange=()=>{ arq=fi.files[0]||null; m.querySelector("#kArqNome").textContent=arq?arq.name:""; };
  m.querySelector("#kSt").onchange=e=>{ const h=crmHojeISO(); if(e.target.value==="assinado"&&!crmVal(m,"#kAss")) m.querySelector("#kAss").value=h; if(e.target.value==="enviado"&&!crmVal(m,"#kEnv")) m.querySelector("#kEnv").value=h; };
  m.querySelectorAll("[data-arq]").forEach(b=>b.onclick=async()=>{ const {data,error}=await sb.storage.from("crm-arquivos").createSignedUrl(b.dataset.arq,120); if(error){ crmToast("Não consegui abrir o arquivo."); return; } window.open(data.signedUrl,"_blank","noopener"); });
- const del=m.querySelector("#kDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#kDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("crm_excluir",{p_tipo:"contrato",p_id:ct.id}); closeModal(); crmToast("Contrato excluído"); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
  m.querySelector("#kOk").onclick=async ev=>{ const b=ev.currentTarget; const st=crmVal(m,"#kSt");
   if(st==="assinado"&&!arq&&!ct.arquivo_path){ crmToast("Anexe o contrato assinado para marcar como assinado."); return; }
@@ -5017,7 +5017,7 @@ function crmRegraModal(r,depois){
   <div class="crm-pe">${!nova&&isAdmin()?`<button class="txt-btn crm-perigo" id="rDel">Excluir</button>`:""}<span style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rOk">Salvar automação</button>')}</div>`);
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
  const vis=()=>{ const g=crmVal(m,"#rGat"); m.querySelectorAll("[data-g]").forEach(e=>e.hidden=!e.dataset.g.split(" ").includes(g)); }; vis(); m.querySelector("#rGat").onchange=vis;
- const del=m.querySelector("#rDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#rDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("crm_salvar_automacao",{p_tipo:"regra_excluir",p:{id:r.id}}); closeModal(); crmToast("Automação excluída"); depois(); }catch(e){ crmToast(crmErro(e)); } };
  m.querySelector("#rOk").onclick=async()=>{ const g=crmVal(m,"#rGat"); const cfg={funil:"vendas"};
   if(g==="entrou_etapa") cfg.etapa=crmVal(m,"#rEt");
@@ -5350,7 +5350,7 @@ function crmFormEditor(s,depois){
   b.disabled=true; b.textContent="Salvando…";
   try{ await crmRpc("crm_salvar_formulario",{p:{id:s?s.id:null,nome,config:cfg}}); closeModal(); crmToast("Formulário salvo"); depois&&depois(); }
   catch(e){ b.disabled=false; b.textContent="Salvar"; crmToast(crmErro(e)); } };
- const del=m.querySelector("#frmDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#frmDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("crm_excluir_formulario",{p_id:s.id}); closeModal(); crmToast("Formulário excluído. O código já colado em páginas continua funcionando."); depois&&depois(); }catch(e){ crmToast(crmErro(e)); } };
 }
 
@@ -7699,7 +7699,7 @@ function rhEditDep(id){ const D=RHD, d=id?rhPor(D.departamentos,id):{cor:"#06678
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal; const msg=m.querySelector("#rdMsg"), ok=m.querySelector("#rdOk");
  ok.onclick=()=>{ const nome=m.querySelector("#rdNome").value.trim(); if(!nome){ msg.textContent="Informe o nome."; return; }
   rhSalvarSimples({acao:"departamento",id:id||"",nome,responsavel_id:m.querySelector("#rdResp").value,cor:m.querySelector("#rdCor").value,ordem:m.querySelector("#rdOrd").value,ativo:m.querySelector("#rdAt").value==="true"},msg,ok,"Departamento salvo"); };
- const del=m.querySelector("#rdDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; } rhSalvarSimples({acao:"departamento",id,excluir:"sim"},msg,del,"Departamento excluído"); };
+ const del=m.querySelector("#rdDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; } rhSalvarSimples({acao:"departamento",id,excluir:"sim"},msg,del,"Departamento excluído"); };
 }
 function rhEditCargo(id){ const D=RHD, g=id?rhPor(D.cargos,id):{nivel:"analista",ativo:true};
  const m=crmModal("Themis RH",id?g.nome:"Novo cargo","",`<div class="crm-form"><label class="crm-f crm-w2"><span>Nome do cargo *</span><input class="inp" id="rcNome" value="${escAttr(g.nome||"")}" placeholder="Ex.: Analista Fiscal Pleno"></label>
@@ -7710,7 +7710,7 @@ function rhEditCargo(id){ const D=RHD, g=id?rhPor(D.cargos,id):{nivel:"analista"
  m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal; const msg=m.querySelector("#rcMsg"), ok=m.querySelector("#rcOk");
  ok.onclick=()=>{ const nome=m.querySelector("#rcNome").value.trim(); if(!nome){ msg.textContent="Informe o nome."; return; }
   rhSalvarSimples({acao:"cargo",id:id||"",nome,nivel:m.querySelector("#rcNiv").value,descricao:m.querySelector("#rcDesc").value.trim(),ativo:m.querySelector("#rcAt").value==="true"},msg,ok,"Cargo salvo"); };
- const del=m.querySelector("#rcDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; } rhSalvarSimples({acao:"cargo",id,excluir:"sim"},msg,del,"Cargo excluído"); };
+ const del=m.querySelector("#rcDel"); if(del) del.onclick=()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; } rhSalvarSimples({acao:"cargo",id,excluir:"sim"},msg,del,"Cargo excluído"); };
 }
 
 (function(){ const st=document.createElement("style"); st.textContent=`
@@ -8090,7 +8090,7 @@ function rhaEditComp(x,v){ const m=crmModal("Competências",x.id?x.nome:"Nova co
  ok.onclick=async()=>{ const g=m.querySelector("#rqG").value, n=m.querySelector("#rqN").value.trim(); if(!n){ msg.textContent="Informe o nome."; return; } ok.disabled=true;
   try{ await rhaRpc("rh_aval_salvar",{acao:"competencia",id:x.id||"",grupo:g,nome:n,descricao:m.querySelector("#rqD").value.trim(),lideranca:g==="soft"&&m.querySelector("#rqL").value==="true",departamento_id:g==="hard"?m.querySelector("#rqDp").value:"",ordem:m.querySelector("#rqO").value,ativo:m.querySelector("#rqA").value==="true"}); fim("Competência salva"); }
   catch(e){ ok.disabled=false; msg.textContent=String(e&&e.message||"").includes("duplicate")?"Já existe uma competência com esse nome nesse grupo.":crmErro(e); } };
- const del=m.querySelector("#rqDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#rqDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ const r=await rhaRpc("rh_aval_salvar",{acao:"competencia",id:x.id,excluir:"sim"}); fim(r&&r.desativada?"Já usada em avaliações: ficou inativa":"Competência excluída"); }catch(e){ msg.textContent=crmErro(e); } };
 }
 
@@ -8173,12 +8173,15 @@ RHV_EXTRA.rh_disc=async function(v){
   <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Perfil</th><th>DISC</th><th>Último teste</th><th></th></tr></thead><tbody>
   ${ls.map(c=>{ const u=U[c.id], dep=(rhPor(RHD.departamentos,c.departamento_id)||{}).nome;
    return `<tr><td><b>${esc(c.nome)}</b>${dep?`<div class="sub">${esc(dep)}</div>`:""}</td><td>${u?`${discCod(u.codigo)} <b>${esc(u.nome||"")}</b>`:`<span class="sub">Sem teste</span>`}</td><td>${u?discMini(u.segmentos):""}</td><td>${u?discData(u.feito_em):""}</td>
-    <td class="right" style="white-space:nowrap">${u?`<button class="view-btn" data-dsv="${c.id}">Ver relatório</button>`:""}${rh?` <button class="txt-btn" data-dsa="${c.id}">${u?"Refazer":"Aplicar teste"}</button>`:""}</td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">O colaborador também pode responder pela intranet, em Meu desempenho. ${rh?"Você pode aplicar aqui quando a pessoa responder no papel ou com você.":""}</p>`;
+    <td class="right" style="white-space:nowrap">${u?`<button class="view-btn" data-dsv="${c.id}">Ver relatório</button>`:""}${rh&&u?(u.liberado?` <span class="chip" title="A pessoa pode refazer o teste pela intranet">Liberado na intranet</span> <button class="txt-btn" data-dsc="${c.id}">Cancelar</button>`:` <button class="txt-btn" data-dsl="${c.id}" title="Deixa a pessoa refazer o teste pela intranet">Liberar novo teste</button>`):""}${rh?` <button class="txt-btn" data-dsa="${c.id}">${u?"Aplicar aqui":"Aplicar teste"}</button>`:""}</td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Ninguém encontrado.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">O colaborador responde pela intranet, na aba Perfil comportamental do perfil dele, uma vez só. ${rh?"Para ele refazer, use Liberar novo teste: o teste anterior fica no histórico e a liberação vale para uma nova resposta. Aplicar aqui serve para quando a pessoa responde no papel ou com você.":""}</p>`;
   const qi=v.querySelector("#dsQ"); qi.oninput=()=>{ RHDISC.q=qi.value; const p=qi.selectionStart; pinta(); const n=v.querySelector("#dsQ"); n.focus(); n.setSelectionRange(p,p); };
   v.querySelector("#dsF").onchange=e=>{ RHDISC.f=e.target.value; pinta(); };
   v.querySelectorAll("[data-dsv]").forEach(b=>b.onclick=()=>{ RHDISC.sel=b.dataset.dsv; RHDISC.teste=0; discRelatorio(v,RHDISC.sel); });
-  v.querySelectorAll("[data-dsa]").forEach(b=>b.onclick=()=>discAplicar(rhPor(RHD.colaboradores,b.dataset.dsa),D.blocos||[],v)); };
+  v.querySelectorAll("[data-dsa]").forEach(b=>b.onclick=()=>discAplicar(rhPor(RHD.colaboradores,b.dataset.dsa),D.blocos||[],v));
+  v.querySelectorAll("[data-dsl],[data-dsc]").forEach(b=>b.onclick=async()=>{ const lib=!!b.dataset.dsl, id=b.dataset.dsl||b.dataset.dsc; b.disabled=true;
+   try{ await crmRpc("rh_disc_salvar",{p:lib?{liberar:id}:{cancelar_liberacao:id}}); U[id].liberado=lib; crmToast(lib?"Liberado: a pessoa já pode refazer o teste na intranet":"Liberação cancelada"); pinta(); }
+   catch(e){ b.disabled=false; crmToast(crmErro(e)); } }); };
  pinta();
 };
 
@@ -8202,6 +8205,21 @@ function discAplicar(c,B,v){ const R={};
   catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
 }
 
+// ---------- Evolução entre testes (histórico DISC, v3.59) ----------
+function discEvolucao(T){ if(!T||T.length<2) return "";
+ const L=T.slice().reverse(), F=["D","I","S","C"], nm={D:"Dominância",I:"Influência",S:"Estabilidade",C:"Conformidade"};
+ const pri=L[0].resultado||{}, ult=L[L.length-1].resultado||{}, pi=pri.intensidade||{}, ui=ult.intensidade||{};
+ const muda=F.map(f=>{ const d=(+ui[f]||0)-(+pi[f]||0); return {f,d}; }).filter(x=>Math.abs(x.d)>3);
+ const resumo=muda.length?muda.map(x=>`${nm[x.f]} ${x.d>0?"subiu":"caiu"} ${Math.abs(x.d)} pontos`).join("; "):"Sem mudança relevante nos fatores (variação de até 3 pontos é normal).";
+ return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><b>Evolução do perfil</b><span class="sub">${L.length} testes no histórico</span></div>
+  <p class="sub" style="margin:6px 0 10px">Do primeiro (${discData(L[0].feito_em)}) ao último (${discData(L[L.length-1].feito_em)}): ${esc(resumo)}</p>
+  <div style="overflow-x:auto"><table><thead><tr><th>Teste</th><th>Perfil</th>${F.map(f=>`<th class="right" title="${nm[f]}">${f}</th>`).join("")}</tr></thead><tbody>
+  ${L.map((t,i)=>{ const R=t.resultado||{}, I=R.intensidade||{}, A=i?((L[i-1].resultado||{}).intensidade||{}):null;
+   return `<tr><td>${discData(t.feito_em)}${t.origem?` <span class="sub">· ${t.origem==="intranet"?"intranet":"RH"}</span>`:""}</td><td>${discCod((R.perfil||{}).codigo)} ${esc((R.perfil||{}).nome||"")}</td>
+    ${F.map(f=>{ const d=A?(+I[f]||0)-(+A[f]||0):0; return `<td class="right">${I[f]??""}${A&&Math.abs(d)>3?` <span class="sub" style="font-weight:600">${d>0?"+":""}${d}</span>`:""}</td>`; }).join("")}</tr>`; }).join("")}
+  </tbody></table></div><p class="sub" style="margin:8px 0 0">Intensidade de 1 a 28. A análise do Assistente de RH usa esse histórico.</p></div>`;
+}
+
 // ---------- Relatório ----------
 async function discRelatorio(v,id){ const c=rhPor(RHD&&RHD.colaboradores,id)||{nome:""};
  v.innerHTML=`<button class="txt-btn rha-voltar" id="dsVolta">‹ Perfil comportamental</button>`+crmHead(esc(c.nome),"Relatório de perfil comportamental (DISC).","")+`<div id="rhBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
@@ -8210,11 +8228,12 @@ async function discRelatorio(v,id){ const c=rhPor(RHD&&RHD.colaboradores,id)||{n
  if(MODE!=="rh_disc"||RHDISC.sel!==id) return;
  const T=D.testes||[], rh=RHD.eu&&RHD.eu.rh; if(!T.length){ v.querySelector("#rhBox").innerHTML=`<div class="card"><div class="empty">Essa pessoa ainda não fez o teste.</div></div>`; return; }
  const t=T[Math.min(RHDISC.teste,T.length-1)];
- v.querySelector(".crm-acoes").innerHTML=`${T.length>1?`<select class="inp" id="dsT" aria-label="Teste">${crmOpt(T.map((x,i)=>[i,`Teste de ${discData(x.feito_em)}`]),RHDISC.teste)}</select>`:""}<button class="txt-btn" id="dsPrint">Imprimir ou salvar PDF</button>${rh?`<button class="txt-btn crm-perigo" id="dsDel">Excluir teste</button>`:""}`;
- v.querySelector("#rhBox").innerHTML=`<div class="disc-rel">${discRelHTML(c,t)}</div>`;
+ v.querySelector(".crm-acoes").innerHTML=`${T.length>1?`<select class="inp" id="dsT" aria-label="Teste">${crmOpt(T.map((x,i)=>[i,`Teste de ${discData(x.feito_em)}`]),RHDISC.teste)}</select>`:""}<button class="txt-btn" id="dsPrint">Imprimir ou salvar PDF</button>${rh?(D.liberado?`<span class="chip">Liberado na intranet</span><button class="txt-btn" id="dsLib" data-a="cancelar">Cancelar liberação</button>`:`<button class="txt-btn" id="dsLib" data-a="liberar">Liberar novo teste</button>`):""}${rh?`<button class="txt-btn crm-perigo" id="dsDel" title="Só para teste lançado por engano. Apaga do histórico.">Excluir (lançado por engano)</button>`:""}`;
+ const lb=v.querySelector("#dsLib"); if(lb) lb.onclick=async()=>{ lb.disabled=true; try{ await crmRpc("rh_disc_salvar",{p:lb.dataset.a==="liberar"?{liberar:id}:{cancelar_liberacao:id}}); crmToast(lb.dataset.a==="liberar"?"Liberado: a pessoa já pode refazer o teste na intranet":"Liberação cancelada"); discRelatorio(v,id); }catch(e){ lb.disabled=false; crmToast(crmErro(e)); } };
+ v.querySelector("#rhBox").innerHTML=discEvolucao(T)+`<div class="disc-rel">${discRelHTML(c,t)}</div>`;
  const st=v.querySelector("#dsT"); if(st) st.onchange=()=>{ RHDISC.teste=+st.value; discRelatorio(v,id); };
  v.querySelector("#dsPrint").onclick=()=>discImprimir(c,t);
- const del=v.querySelector("#dsDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=v.querySelector("#dsDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("rh_disc_salvar",{p:{excluir:t.id}}); crmToast("Teste excluído"); RHDISC.teste=0; if(T.length>1) discRelatorio(v,id); else { RHDISC.sel=null; RHV_EXTRA.rh_disc(v); } }catch(e){ crmToast(crmErro(e)); } };
 }
 
@@ -8356,7 +8375,7 @@ async function fbEditar(f,v,sol){ const novo=!f||!f.id; f=f||{tipo:""}; const ho
    closeModal(); crmToast(status==="rascunho"?"Rascunho salvo":"Feedback enviado"); RHV_EXTRA.rh_feed(v); }
   catch(e){ bt.forEach(b=>b.disabled=false); msg.textContent=crmErro(e); } };
  m.querySelector("#fbOk").onclick=()=>salvar("enviado"); const r=m.querySelector("#fbRas"); if(r) r.onclick=()=>salvar("rascunho");
- const del=m.querySelector("#fbDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#fbDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("rh_fp_salvar",{p:{acao:"feedback_excluir",id:f.id}}); closeModal(); crmToast("Feedback excluído"); RHV_EXTRA.rh_feed(v); }catch(e){ msg.textContent=crmErro(e); } };
 }
 
@@ -8432,7 +8451,7 @@ async function pdiEditar(x,v){ const novo=!x||!x.id; x=x||{}; const fixo=!novo||
     itens:[...m.querySelectorAll("#pdIt input:checked")].map(i=>i.value),feedback:x.feedback_id||""}});
    closeModal(); crmToast(novo?"Ação de PDI criada":"Ação atualizada"); if(MODE==="rh_pdi") RHV_EXTRA.rh_pdi(v); else setMode("rh_pdi"); }
   catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
- const del=m.querySelector("#pdDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Clique de novo para excluir"; return; }
+ const del=m.querySelector("#pdDel"); if(del) del.onclick=async()=>{ if(del.dataset.ok!=="1"){ del.dataset.ok="1"; del.textContent="Isso apaga o teste do histórico. Clique de novo para confirmar"; return; }
   try{ await crmRpc("rh_fp_salvar",{p:{acao:"pdi_excluir",id:x.id}}); closeModal(); crmToast("Ação excluída"); RHV_EXTRA.rh_pdi(v); }catch(e){ msg.textContent=crmErro(e); } };
 }
 
