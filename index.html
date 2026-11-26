@@ -991,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.68 (Atendimento: reunião semanal por setor)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.69 (Sucesso do cliente: filtros e ordenação)</footer>
   </div>
 </div>
 
@@ -3675,21 +3675,26 @@ function colaboradorReport(key){
 }
 const trendIco = t => t==="up"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.2"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>':(t==="down"?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2.2"><path d="M3 7l6 6 4-4 7 7"/><path d="M21 16v-4h-4"/></svg>':'<span class="sub">—</span>');
 const stDotPct = pct => `<span class="dot" style="background:${pct===null?'var(--muted)':(pct>=80?'var(--good)':(pct>=60?'var(--warn)':'var(--crit)'))}"></span>`;
-function _operacaoColabHTML(key){
+function _opGclickBox(key){
   const at=ATEND.find(a=>(a.atendente_id||a.atendente)===key);
   const dep=at?(deptDoAtendente(at.atendente_id,at.setor)||at.setor):null;
-  let gclickBox=`<div class="sub">Departamento do colaborador ainda não identificado para cruzar com o G-Click.</div>`;
-  if(dep){
-    const tok=_depTok(dep);
-    const d=_gclickDeps().find(x=>_depTok(x.dep)===tok);
-    gclickBox = d
+  if(!dep) return `<div class="sub">Departamento do colaborador ainda não identificado para cruzar com o G-Click.</div>`;
+  if(GTAREFAS===null) return `<div class="sub">Carregando as tarefas do G-Click...</div>`;
+  if(GTERR&&!(GTAREFAS||[]).length) return `<div class="sub" style="color:var(--crit)">Não consegui ler as tarefas do G-Click: ${esc(GTERR)}</div>`;
+  const tok=_depTok(dep);
+  const d=_gclickDeps().find(x=>_depTok(x.dep)===tok);
+  return d
       ? `<div class="cx" style="grid-template-columns:repeat(3,1fr)">
            <div class="tile"><div><div class="lbl">Pendentes (depto.)</div><div class="val num">${d.pend}</div></div></div>
            <div class="tile"><div><div class="lbl">Atrasadas (depto.)</div><div class="val num" style="color:var(--crit)">${d.atr}</div></div></div>
            <div class="tile"><div><div class="lbl">Concluídas hoje (depto.)</div><div class="val num" style="color:var(--good)">${d.hoje}</div></div></div>
-         </div><div class="sub" style="margin-top:8px">O G-Click não informa o responsável por tarefa, então esse número é do departamento (${esc(dep)}) como um todo, não só desse colaborador.</div>`
+         </div><div class="sub" style="margin-top:8px">Números do departamento (${esc(dep)}) como um todo, não só desse colaborador.</div>`
       : `<div class="sub">Sem tarefas do G-Click sincronizadas para o departamento ${esc(dep)}.</div>`;
-  }
+}
+function _operacaoColabHTML(key){
+  const at=ATEND.find(a=>(a.atendente_id||a.atendente)===key);
+  if(GTAREFAS===null&&!GTLOADING){ GTLOADING=true; loadGTarefas().then(()=>document.querySelectorAll(".op-gc").forEach(e=>e.innerHTML=_opGclickBox(e.dataset.gckey))); }
+  const gclickBox=`<div class="op-gc" data-gckey="${escAttr(String(key||""))}">${_opGclickBox(key)}</div>`;
   return `<div class="panel"><h4>Operação</h4>
     ${gclickBox}
     <div class="intg" style="margin-top:12px">
@@ -12042,26 +12047,57 @@ async function crmVSucesso(v){
  if(!SUC.d||Date.now()-SUC.em>300000){ try{ SUC.d=await crmRpc("crm_sucesso",{p:{acao:"listar"}}); SUC.em=Date.now(); }
   catch(e){ box.innerHTML=String(e&&e.message||"").includes("crm_sucesso")?`<div class="card"><div class="empty">Falta rodar o SQL 43 (sucesso do cliente) no Supabase.</div></div>`:crmCaixaErro(e); return; } }
  if(MODE!=="crm_sucesso") return;
- const L=SUC.d.clientes||[], com=L.filter(c=>c.score!=null);
+ if(!SUC.ord){ SUC.ord={k:"score",d:1}; try{ const x=JSON.parse(localStorage.getItem("suc_pref")||"null"); if(x){ SUC.cols=x.cols; SUC.ord=x.ord||SUC.ord; } }catch(_){} }
+ if(!SUC.cols) SUC.cols=SUC_FAT.map(f=>f[0]);
+ const guarda=()=>{ try{ localStorage.setItem("suc_pref",JSON.stringify({cols:SUC.cols,ord:SUC.ord})); }catch(_){} };
+ const L=(SUC.d.clientes||[]).map(c=>({...c,delta:c.anterior!=null&&c.score!=null?c.score-c.anterior:null}));
+ const com=L.filter(c=>c.score!=null);
  const cont=k=>com.filter(c=>c.faixa===k).length, media=com.length?Math.round(com.reduce((a,c)=>a+c.score,0)/com.length):null;
- const caiu=com.filter(c=>c.anterior!=null&&c.score<=c.anterior-10);
- const pinta=()=>{ const nq=crmNormTxt(SUC.q);
-  const ls=L.filter(c=>(!nq||crmNormTxt((c.nome||"")+" "+(c.cnpj||"")).includes(nq))&&(!SUC.f||(SUC.f==="caiu"?caiu.includes(c):SUC.f==="sem"?c.score==null:c.faixa===SUC.f)));
-  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Em risco",cont("risco"),cont("risco")?"crit":"")}${krTile("Atenção",cont("atencao"),cont("atencao")?"warn":"")}${krTile("Saudáveis",cont("saudavel"),"good")}${krTile("Índice médio da carteira",media==null?"—":media)}</div>
+ const caiu=com.filter(c=>c.delta!=null&&c.delta<=-10);
+ const fv=(c,k)=>{ const x=((c.fatores||{})[k]||{}).valor; return x==null?null:+x; };
+ const pinta=()=>{ const nq=crmNormTxt(SUC.q||"");
+  let ls=L.filter(c=>(!nq||crmNormTxt((c.nome||"")+" "+(c.cnpj||"")).includes(nq))
+   &&(!SUC.f||(SUC.f==="sem"?c.score==null:c.faixa===SUC.f))
+   &&(!SUC.fat||(fv(c,SUC.fat)!=null&&fv(c,SUC.fat)<55))
+   &&(!SUC.var||(SUC.var==="caiu"?c.delta!=null&&c.delta<=-10:SUC.var==="subiu"?c.delta!=null&&c.delta>=10:true))
+   &&(!SUC.risco||(((c.fatores||{}).atendimento||{}).risco))
+   &&(!SUC.sens||(c.fatores||{}).sensivel));
+  const o=SUC.ord, val=c=>o.k==="nome"?(c.nome||"").toLowerCase():o.k==="score"?c.score:o.k==="delta"?c.delta:o.k==="motivos"?(c.motivos||[]).length:fv(c,o.k);
+  ls=ls.slice().sort((a,b)=>{ const x=val(a), y=val(b); if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1; return (x<y?-1:x>y?1:0)*o.d; });
+  const th=(k,t,cls)=>`<th class="suc-th ${cls||""} ${o.k===k?"on":""}" data-ord="${k}" title="Ordenar por ${t.toLowerCase()}">${t}<span class="suc-arw">${o.k===k?(o.d>0?"▲":"▼"):"↕"}</span></th>`;
+  const cols=SUC_FAT.filter(f=>SUC.cols.includes(f[0]));
+  const filtrosAtivos=[SUC.f,SUC.fat,SUC.var,SUC.risco,SUC.sens,SUC.q].filter(Boolean).length;
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${[["risco","Em risco","crit"],["atencao","Atenção","warn"],["saudavel","Saudáveis","good"]].map(([k,t,c])=>`<button type="button" class="suc-tile ${SUC.f===k?"on":""}" data-fx="${k}">${krTile(t,cont(k),cont(k)?c:"")}</button>`).join("")}${krTile("Índice médio da carteira",media==null?"—":media)}</div>
   ${caiu.length?`<div class="suc-aviso"><b>${caiu.length} cliente${caiu.length>1?"s":""} caiu${caiu.length>1?"ram":""} 10 pontos ou mais</b> em relação ao mês passado. <button class="txt-btn" id="sucCaiu">Ver quem</button></div>`:""}
-  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="sucQ" type="search" value="${escAttr(SUC.q)}" placeholder="Buscar cliente ou CNPJ" aria-label="Buscar"></div>
-   <select class="inp" id="sucF" style="max-width:220px">${crmOpt([["risco","Em risco"],["atencao","Atenção"],["saudavel","Saudáveis"],["caiu","Caíram no mês"],["sem","Sem dado suficiente"]],SUC.f,"Todos os clientes")}</select></div>
-  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Cliente</th><th>Índice</th><th>Fatores</th><th>Por que está assim</th><th></th></tr></thead><tbody>
-  ${ls.slice(0,300).map(c=>{ const d=c.anterior!=null&&c.score!=null?c.score-c.anterior:null;
-   return `<tr class="crm-click" data-suc="${escAttr(c.id)}"><td><b>${esc(c.nome||"Cliente")}</b><div class="sub">${c.cnpj?esc(fmtCnpj(c.cnpj)):""}${(c.fatores||{}).sensivel?` · <span style="color:var(--crit)">sensível na intranet</span>`:""}</div></td>
-    <td style="white-space:nowrap">${sucPill(c.score,c.faixa)}${d?`<span class="suc-d ${d<0?"neg":"pos"}" title="Em relação ao mês passado">${d>0?"+":""}${d}</span>`:""}</td>
-    <td>${sucBarras(c.fatores)}</td>
-    <td class="suc-mot">${(c.motivos||[]).slice(0,2).map(m=>`<div>${esc(m)}</div>`).join("")||`<span class="sub">Nada fora da regra</span>`}${(c.motivos||[]).length>2?`<div class="sub">+${c.motivos.length-2} ponto(s)</div>`:""}</td>
-    <td class="right"><span class="view-btn">Detalhes</span></td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Nenhum cliente neste filtro.</div></td></tr>`}</tbody></table></div>
-  <p class="sub" style="margin-top:10px">Pesos: atendimento 35, prazos 25, impostos 15, balancete 10 e financeiro 15. Fator sem dado não conta e o peso vai para os outros.${SUC.d.calculado_em?` Calculado em ${new Date(SUC.d.calculado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""}</p>`;
+  <div class="suc-fil">
+   <div class="search" style="flex:1;min-width:200px"><input id="sucQ" type="search" value="${escAttr(SUC.q||"")}" placeholder="Buscar cliente ou CNPJ" aria-label="Buscar"></div>
+   <select class="inp" id="sucF" aria-label="Faixa">${crmOpt([["risco","Em risco"],["atencao","Atenção"],["saudavel","Saudáveis"],["sem","Sem dado suficiente"]],SUC.f,"Todas as faixas")}</select>
+   <select class="inp" id="sucFat" aria-label="Problema em">${crmOpt(SUC_FAT.map(([k,t])=>[k,`Problema em ${t.toLowerCase()}`]),SUC.fat,"Qualquer fator")}</select>
+   <select class="inp" id="sucVar" aria-label="Variação no mês">${crmOpt([["caiu","Caiu 10+ pontos no mês"],["subiu","Subiu 10+ pontos no mês"]],SUC.var,"Qualquer variação")}</select>
+   <label class="suc-chk"><input type="checkbox" id="sucRisco" ${SUC.risco?"checked":""}> Risco de troca</label>
+   <label class="suc-chk"><input type="checkbox" id="sucSens" ${SUC.sens?"checked":""}> Sensíveis na intranet</label>
+   <details class="suc-cols"><summary class="txt-btn">Colunas</summary><div>${SUC_FAT.map(([k,t])=>`<label class="suc-chk"><input type="checkbox" data-col="${k}" ${SUC.cols.includes(k)?"checked":""}> ${t}</label>`).join("")}<label class="suc-chk"><input type="checkbox" data-col="_mot" ${SUC.cols.includes("_mot")||!SUC.semMot?"checked":""}> Motivos</label></div></details>
+   ${filtrosAtivos?`<button class="txt-btn" id="sucLimpa">Limpar filtros</button>`:""}
+  </div>
+  <div class="sub" style="margin:0 0 8px">${ls.length} de ${L.length} cliente(s). Clique no título de uma coluna para ordenar; clique de novo para inverter.</div>
+  <div class="card" style="padding:0;overflow-x:auto"><table class="suc-tbl"><thead><tr>${th("nome","Cliente")}${th("score","Índice","center")}${th("delta","No mês","center")}${cols.map(([k,t])=>th(k,t,"center")).join("")}${SUC.semMot?"":th("motivos","Por que está assim")}</tr></thead><tbody>
+  ${ls.slice(0,400).map(c=>`<tr class="crm-click" data-suc="${escAttr(c.id)}"><td><b>${esc(c.nome||"Cliente")}</b><div class="sub">${c.cnpj?esc(fmtCnpj(c.cnpj)):""}${(c.fatores||{}).sensivel?` · <span style="color:var(--crit)">sensível na intranet</span>`:""}</div></td>
+    <td class="center">${sucPill(c.score,c.faixa)}</td>
+    <td class="center">${c.delta?`<span class="suc-d ${c.delta<0?"neg":"pos"}">${c.delta>0?"+":""}${c.delta}</span>`:`<span class="sub">—</span>`}</td>
+    ${cols.map(([k])=>{ const x=fv(c,k); return `<td class="center"><span class="suc-fn" style="color:${sucCor(x)}">${x==null?"—":x}</span></td>`; }).join("")}
+    ${SUC.semMot?"":`<td class="suc-mot">${(c.motivos||[]).slice(0,2).map(m=>`<div>${esc(m)}</div>`).join("")||`<span class="sub">Nada fora da regra</span>`}${(c.motivos||[]).length>2?`<div class="sub">+${c.motivos.length-2} ponto(s)</div>`:""}</td>`}</tr>`).join("")||`<tr><td colspan="${4+cols.length}"><div class="empty">Nenhum cliente com esses filtros.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Fatores de 0 a 100. Pesos: atendimento 35, prazos 25, impostos 15, balancete 10 e financeiro 15. "Problema em" mostra quem está abaixo de 55 naquele fator.${SUC.d.calculado_em?` Calculado em ${new Date(SUC.d.calculado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""}</p>`;
   const qi=box.querySelector("#sucQ"); qi.oninput=()=>{ SUC.q=qi.value; const p=qi.selectionStart; pinta(); const z=box.querySelector("#sucQ"); z.focus(); z.setSelectionRange(p,p); };
   box.querySelector("#sucF").onchange=e=>{ SUC.f=e.target.value; pinta(); };
-  const bc=box.querySelector("#sucCaiu"); if(bc) bc.onclick=()=>{ SUC.f="caiu"; pinta(); };
+  box.querySelector("#sucFat").onchange=e=>{ SUC.fat=e.target.value; pinta(); };
+  box.querySelector("#sucVar").onchange=e=>{ SUC.var=e.target.value; pinta(); };
+  box.querySelector("#sucRisco").onchange=e=>{ SUC.risco=e.target.checked; pinta(); };
+  box.querySelector("#sucSens").onchange=e=>{ SUC.sens=e.target.checked; pinta(); };
+  box.querySelectorAll("[data-fx]").forEach(b=>b.onclick=()=>{ SUC.f=SUC.f===b.dataset.fx?"":b.dataset.fx; pinta(); });
+  box.querySelectorAll("[data-col]").forEach(x=>x.onchange=()=>{ const k=x.dataset.col; if(k==="_mot") SUC.semMot=!x.checked; else SUC.cols=x.checked?[...new Set([...SUC.cols,k])]:SUC.cols.filter(y=>y!==k); guarda(); pinta(); box.querySelector(".suc-cols").open=true; });
+  const lp=box.querySelector("#sucLimpa"); if(lp) lp.onclick=()=>{ SUC.f=SUC.fat=SUC.var=SUC.q=""; SUC.risco=SUC.sens=false; pinta(); };
+  const bc=box.querySelector("#sucCaiu"); if(bc) bc.onclick=()=>{ SUC.var="caiu"; pinta(); };
+  box.querySelectorAll("[data-ord]").forEach(t=>t.onclick=()=>{ const k=t.dataset.ord; SUC.ord=SUC.ord.k===k?{k,d:-SUC.ord.d}:{k,d:k==="nome"||k==="score"||SUC_FAT.some(f=>f[0]===k)?1:-1}; guarda(); pinta(); });
   box.querySelectorAll("[data-suc]").forEach(r=>r.onclick=()=>sucDetalhe(r.dataset.suc,L.find(c=>c.id===r.dataset.suc))); };
  pinta();
 }
@@ -12103,7 +12139,11 @@ async function sucFicha(m,gid){
 .suc-d{margin-left:6px;font-size:12px;font-weight:700}.suc-d.neg{color:var(--crit)}.suc-d.pos{color:var(--good)}
 .suc-bars{display:flex;align-items:flex-end;gap:5px;height:40px}.suc-b{display:flex;flex-direction:column;align-items:center;gap:2px;width:26px}
 .suc-b i{display:block;width:14px;border-radius:4px 4px 2px 2px}.suc-b em{font-style:normal;font-size:10px;color:var(--muted)}
-.suc-mot{font-size:13px;max-width:380px}.suc-mot div+div{margin-top:3px}
+.suc-mot{font-size:13px;max-width:380px}
+.suc-fil{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 8px}.suc-fil .inp{max-width:220px}.suc-chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;cursor:pointer}
+.suc-cols{position:relative}.suc-cols summary{list-style:none;cursor:pointer}.suc-cols>div{position:absolute;z-index:20;top:calc(100% + 6px);right:0;background:var(--panel,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 30px rgba(5,48,61,.14);padding:10px 12px;display:grid;gap:8px;min-width:170px}
+.suc-th{cursor:pointer;user-select:none;white-space:nowrap}.suc-th:hover{color:var(--ink)}.suc-th.on{color:var(--accent,#066789)}.suc-arw{margin-left:4px;font-size:10px;opacity:.6}.suc-th.on .suc-arw{opacity:1}
+.suc-fn{font-weight:700;font-size:14px}.suc-tbl td:first-child{min-width:230px}.suc-tile{all:unset;display:block;cursor:pointer;border-radius:18px}.suc-tile.on .tile{outline:2px solid var(--accent,#066789)}.suc-tile:focus-visible{outline:2px solid var(--accent)}.suc-mot div+div{margin-top:3px}
 .suc-aviso{margin-top:14px;padding:10px 14px;border-radius:12px;background:var(--crit-soft,#fbe6ea);font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .suc-top{display:flex;gap:14px;align-items:center;margin-bottom:12px;flex-wrap:wrap}.suc-top .suc-sc{height:44px;min-width:56px;font-size:20px}.suc-top>div{flex:1;min-width:200px}
 .suc-hist{display:flex;align-items:flex-end;gap:4px;height:62px}.suc-hist span{display:flex;flex-direction:column;align-items:center;gap:2px}.suc-hist i{display:block;width:16px;border-radius:4px}.suc-hist em{font-style:normal;font-size:10px;color:var(--muted)}
