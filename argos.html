@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argos · Produtividade e tempo por cliente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --pagina:#e6e7e9;--tela:#f1f1f2;--card:#f9f9fa;--card2:#ffffff;--tinta:#18181b;--sub:#8b8b93;--borda:rgba(20,20,25,.07);--linha:#e6e6e9;
+  --lima:#c9ec55;--lima2:#dff58f;--lima-t:#38450c;--escuro:#1c1c1f;--hover:#f0f0f2;--sombra:0 30px 60px -30px rgba(20,20,30,.25);
+  --c-prod:#c4e84d;--c-neu:#d5d7da;--c-dis:#26262a;--c-oci:#9ea3ab;
+  --verde:#5f8a0b;--vermelho:#d14b3a;--amarelo:#b7860b;--azul:#1c1c1f;
+  --listra:repeating-linear-gradient(135deg,#bfc2c6 0 1.5px,transparent 1.5px 6px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pagina:#0d0e10;--tela:#141518;--card:#1b1c20;--card2:#212227;--tinta:#f1f1f3;--sub:#8e8e97;--borda:rgba(255,255,255,.06);--linha:#2a2b31;--hover:#24252a;--escuro:#f1f1f3;--c-neu:#4a4c53;--c-dis:#e9e9ec;--c-oci:#6e737b;--sombra:none;--azul:#f1f1f3;--listra:repeating-linear-gradient(135deg,#565961 0 1.5px,transparent 1.5px 6px)}}
+:root[data-theme="dark"]{--pagina:#0d0e10;--tela:#141518;--card:#1b1c20;--card2:#212227;--tinta:#f1f1f3;--sub:#8e8e97;--borda:rgba(255,255,255,.06);--linha:#2a2b31;--hover:#24252a;--escuro:#f1f1f3;--c-neu:#4a4c53;--c-dis:#e9e9ec;--c-oci:#6e737b;--sombra:none;--azul:#f1f1f3;--listra:repeating-linear-gradient(135deg,#565961 0 1.5px,transparent 1.5px 6px)}
+*{box-sizing:border-box}
+html{background:var(--pagina)}
+body{margin:0;font-family:"Manrope","Segoe UI",system-ui,sans-serif;background:var(--pagina);color:var(--tinta);font-size:14px;padding:18px}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--tinta)}
+.tela{max-width:1560px;margin:0 auto;background:var(--tela);border-radius:36px;box-shadow:var(--sombra);padding:22px 26px 30px;min-height:calc(100vh - 36px)}
+/* topo */
+.barra{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:10px;margin-right:18px}
+.marca svg{width:34px;height:34px}
+.marca b{font-size:17px;letter-spacing:-.3px}
+.pilulas{display:flex;gap:6px;flex-wrap:wrap}
+.pil{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:999px;border:1px solid var(--borda);background:var(--card2);cursor:pointer;font-size:13px;white-space:nowrap;color:var(--tinta)}
+.pil svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
+.pil:hover{background:var(--hover)}
+.pil.on{background:var(--escuro);color:var(--tela);border-color:var(--escuro)}
+.direita{margin-left:auto;display:flex;align-items:center;gap:10px}
+.avatares{display:flex;align-items:center}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:3px solid var(--tela);margin-left:-10px;background:var(--lima2);color:var(--lima-t)}
+.av:first-child{margin-left:0}
+.av.mais{background:var(--escuro);color:var(--tela)}
+.circ{width:42px;height:42px;border-radius:50%;border:1px solid var(--borda);background:var(--card2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex:none;color:var(--tinta)}
+.circ svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7}
+.circ.esc{background:var(--escuro);color:var(--tela);border-color:var(--escuro)}
+.circ .pt{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--lima);color:var(--lima-t);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.corpo{display:grid;grid-template-columns:58px 1fr;gap:22px;margin-top:26px}
+.trilho{display:flex;flex-direction:column;gap:12px;align-items:center;padding-top:96px}
+.trilho .circ.on{background:var(--escuro);color:var(--tela);border-color:var(--escuro)}
+.trilho .circ[data-dica]:hover::after{content:attr(data-dica);position:absolute;left:52px;white-space:nowrap;background:var(--escuro);color:var(--tela);padding:6px 10px;border-radius:10px;font-size:12px;z-index:5}
+.migalha{display:flex;gap:16px;color:var(--sub);font-size:12px;margin-left:4px}
+.titulo{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 22px}
+.titulo h1{margin:0;font-weight:400;font-size:42px;letter-spacing:-1.6px;line-height:1.05}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filtros select,.filtros input,.inp{padding:10px 14px;border:1px solid var(--borda);border-radius:999px;background:var(--card2);min-width:0;appearance:none;-webkit-appearance:none}
+.filtros select{padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.inp{border-radius:14px}
+.btn{padding:10px 16px;border:1px solid var(--borda);border-radius:999px;background:var(--card2);cursor:pointer;white-space:nowrap;font-size:13px}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--escuro);border-color:var(--escuro);color:var(--tela)}
+.btn.ok{background:var(--lima);border-color:var(--lima);color:var(--lima-t);font-weight:700}
+.btn.no{background:var(--card2);color:var(--vermelho)}
+.btn.peq{padding:6px 12px;font-size:12px}
+main{min-width:0}
+/* cards */
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}
+.g21{grid-template-columns:2fr 1fr}.g12{grid-template-columns:1fr 2fr}
+.home{display:grid;gap:16px;grid-template-columns:1.05fr 1fr 2fr}
+.home .alto{grid-row:span 2}.home .s2{grid-column:span 2}.home .s3{grid-column:1/-1}
+@media(max-width:1200px){.home{grid-template-columns:1fr 1fr}.home .s2,.home .s3{grid-column:1/-1}.home .alto{grid-row:auto}}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g21,.g12{grid-template-columns:1fr}}
+@media(max-width:760px){body{padding:0}.tela{border-radius:0;padding:14px 12px}.corpo{grid-template-columns:1fr}.trilho{flex-direction:row;padding:0;overflow-x:auto;order:-1}.g4,.g2,.home{grid-template-columns:1fr}.titulo h1{font-size:30px}.direita .avatares{display:none}}
+.card{background:var(--card);border:1px solid var(--borda);border-radius:28px;padding:20px 22px;min-width:0;position:relative}
+.card h3{margin:0 0 14px;font-size:17px;font-weight:500;letter-spacing:-.3px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 small{font-weight:400;color:var(--sub);font-size:12px;letter-spacing:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.acoes-c{position:absolute;top:16px;right:16px;display:flex;gap:6px}
+.acoes-c .circ{width:36px;height:36px}
+.kpi .rot{color:var(--tinta);font-size:15px;font-weight:500;letter-spacing:-.2px;padding-right:40px}
+.kpi .val{font-size:38px;font-weight:300;letter-spacing:-1.6px;margin-top:14px;line-height:1}
+.kpi .det{font-size:12px;color:var(--sub);margin-top:8px}
+.leg-p{font-size:12px;color:var(--sub)}
+.grande{font-size:48px;font-weight:300;letter-spacing:-2px;line-height:1}
+.grande small{font-size:18px;letter-spacing:0;margin-left:2px}
+.sobe{color:var(--verde);font-weight:600}.desce{color:var(--vermelho);font-weight:600}
+/* destaque com bolhas */
+.destaque{overflow:hidden;padding:0;display:flex;flex-direction:column;background:var(--card2)}
+.bolhas{position:relative;height:250px;flex:none;overflow:hidden}
+.bolhas i{position:absolute;border-radius:50%;background:radial-gradient(circle at 32% 30%,#f2ffc2 0,#c9ec55 38%,#7fa51b 78%,#55720c 100%);box-shadow:0 6px 14px -6px rgba(60,80,0,.5)}
+.destaque .cab-d{position:absolute;top:20px;left:22px;font-size:17px;font-weight:500;z-index:2}
+.vidro{margin:-60px 12px 12px;border-radius:24px;padding:18px;background:rgba(255,255,255,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.7);position:relative;flex:1;display:flex;flex-direction:column}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vidro{background:rgba(30,31,36,.7);border-color:rgba(255,255,255,.06)}}
+.vidro .par{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 18px}
+.vidro .par b{font-size:30px;font-weight:300;letter-spacing:-1px}
+.vidro .par small{color:var(--sub);font-size:12px;margin-left:4px}
+.colunas{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;align-items:end;min-height:200px}
+.coluna{display:flex;flex-direction:column;justify-content:flex-end;gap:10px;height:100%}
+.coluna .tubo{border-radius:22px;background:var(--lima);padding:14px;color:var(--lima-t);display:flex;flex-direction:column;justify-content:flex-start;min-height:70px}
+.coluna .tubo b{font-size:22px;font-weight:600;letter-spacing:-.5px}
+.coluna .tubo span{font-size:12px}
+.coluna .cresc{font-size:20px;font-weight:300}
+.coluna .cresc small{display:block;font-size:11px;color:var(--sub)}
+/* donut */
+.donut{width:170px;height:170px;border-radius:50%;position:relative;flex:none}
+.donut::after{content:"";position:absolute;inset:20px;border-radius:50%;background:var(--card)}
+.donut span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;font-size:32px;font-weight:300;letter-spacing:-1px}
+.donut span small{font-size:11px;color:var(--sub);letter-spacing:0}
+.leg{display:flex;flex-direction:column;gap:10px;font-size:13px;flex:1;min-width:180px}
+.leg>div{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:14px;background:var(--card2);border:1px solid var(--borda)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.leg b{margin-left:auto;font-weight:500}
+/* barras de progresso */
+.pbar{height:8px;border-radius:8px;background:var(--linha);overflow:hidden;min-width:60px;display:flex}
+.pbar i{display:block;height:100%}
+.pilula-val{display:flex;align-items:center;gap:10px;margin:8px 0}
+.pilula-val .rot{width:170px;color:var(--sub);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pilula-val .fx{flex:1;height:34px;border-radius:12px;background:var(--card2);border:1px solid var(--borda);position:relative;overflow:hidden;display:flex;align-items:center;padding:0 12px;font-size:13px}
+.pilula-val .fx i{position:absolute;left:0;top:0;bottom:0;background:var(--lima2);z-index:0}
+.pilula-val .fx span{position:relative;z-index:1}
+/* tabela */
+.tab{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.tab th{text-align:left;color:var(--sub);font-weight:500;font-size:12px;padding:10px;border-bottom:1px solid var(--linha);white-space:nowrap;cursor:pointer;position:sticky;top:0;background:var(--card);z-index:1}
+.tab td{padding:11px 10px;border-bottom:1px solid var(--linha);vertical-align:middle}
+.tab tr:last-child td{border-bottom:0}
+.tab tr.cl{cursor:pointer}.tab tr.cl:hover td{background:var(--hover)}
+.tab tr.cl:hover td:first-child{border-radius:14px 0 0 14px}.tab tr.cl:hover td:last-child{border-radius:0 14px 14px 0}
+.tab .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rolar{overflow:auto;max-height:640px}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;background:var(--card2);border:1px solid var(--borda);color:var(--sub);white-space:nowrap}
+.chip.produtivo,.chip.aprovado{background:var(--lima2);border-color:transparent;color:var(--lima-t)}
+.chip.distracao,.chip.alto,.chip.recusado{background:var(--escuro);border-color:transparent;color:var(--tela)}
+.chip.atencao,.chip.pendente{background:#f6e3a8;border-color:transparent;color:#6b4e00}
+.chip.info{background:var(--card2)}
+.est{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.est.online{background:var(--lima);box-shadow:0 0 0 3px rgba(201,236,85,.3)}.est.ocioso{background:#e8c04f}.est.offline{background:#bfc2c6}
+.vivo{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.vivo .card{padding:16px 18px;border-radius:24px}
+.vivo .nm{font-weight:600}.vivo .rc{font-size:12px;color:var(--sub);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.rec .it{min-width:160px;border-radius:22px;padding:14px;background:var(--card2);border:1px solid var(--borda)}
+.rec .it:first-child{background:var(--lima);color:var(--lima-t);border-color:transparent}
+.rec .it:first-child .ajuda,.rec .it:first-child .pos{color:var(--lima-t)}
+.rec .it .pos{color:var(--sub);font-size:11px}.rec .it b{display:block;margin:6px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rec .it .t{font-size:22px;font-weight:300;letter-spacing:-.6px}
+.alerta{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--linha);font-size:13px;align-items:flex-start}.alerta:last-child{border:0}
+.vazio{color:var(--sub);padding:22px;text-align:center}
+svg text{fill:var(--sub);font-size:11px;font-family:inherit}
+/* gaveta */
+.gaveta{position:fixed;inset:0;background:rgba(10,10,14,.35);backdrop-filter:blur(3px);z-index:50;display:none}
+.gaveta.on{display:block}
+.gaveta .pn{position:absolute;right:12px;top:12px;bottom:12px;width:min(1000px,calc(100% - 24px));background:var(--tela);overflow:auto;padding:22px;border-radius:32px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.gaveta .cab{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.gaveta h2{margin:0;font-size:30px;font-weight:400;letter-spacing:-1px}
+.linha-t{position:relative;height:44px;border-radius:14px;background:var(--card2);border:1px solid var(--borda);overflow:hidden}
+.linha-t i{position:absolute;top:6px;bottom:6px;border-radius:4px}
+.horas{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:6px}
+.busca{max-width:280px}
+.msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--escuro);color:var(--tela);padding:12px 18px;border-radius:999px;z-index:60;display:none}
+.login{max-width:380px;margin:12vh auto;display:flex;flex-direction:column;gap:12px}
+.demo{max-width:1560px;margin:0 auto 10px;background:var(--lima2);color:var(--lima-t);padding:8px 18px;font-size:12px;border-radius:999px}
+.ajuda{font-size:12px;color:var(--sub);line-height:1.5}
+.oculto{display:none!important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="gaveta" id="gaveta"><div class="pn" id="gpn"></div></div>
+<div class="msg" id="msg"></div>
+<script>
+try { const t = localStorage.getItem('argos_tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+// ================= ARGOS · painel do Resiltrack =================
+// Dentro do Resiltrack usa a sessão do pai (window.parent.__RT_SB). Fora dele mostra login próprio.
+// ?demo=1 mostra dados de exemplo (para conhecer o painel antes de ter dados reais).
+const SB_URL = 'https://aumfhrqrnudmprvmvesb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1bWZocnFybnVkbXBydm12ZXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDIyMTMsImV4cCI6MjA5NDE3ODIxM30.22-HmoqH01ADpOSNo1lzrLu0kcv6QNRqON6BnveThhs';
+const DEMO = new URLSearchParams(location.search).has('demo');
+let sb = null;
+try { if (window.parent && window.parent !== window && window.parent.__RT_SB) sb = window.parent.__RT_SB; } catch (e) {}
+if (!sb && !DEMO && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const H = s => { s = Math.round(s || 0); const h = Math.floor(s/3600), m = Math.floor(s%3600/60); return h + 'h' + String(m).padStart(2,'0'); };
+const Hd = h => H((h || 0) * 3600);
+const N = n => (n == null ? '-' : Number(n).toLocaleString('pt-BR'));
+const P = n => (n == null ? '-' : Number(n).toLocaleString('pt-BR', {maximumFractionDigits:1}) + '%');
+const R$ = n => (n == null ? '-' : Number(n).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}));
+const hoje = () => new Date(Date.now() - 3*3600e3).toISOString().slice(0,10);
+const addDias = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0,10); };
+const dataBR = d => d ? d.slice(8,10) + '/' + d.slice(5,7) : '';
+const horaBR = t => t ? new Date(t).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo'}) : '';
+const dataHoraBR = t => t ? new Date(t).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo'}) : '';
+const CAT = {produtivo:'Produtivo', neutro:'Neutro', distracao:'Distração', ocioso:'Parado'};
+const COR = {produtivo:'var(--c-prod)', neutro:'var(--c-neu)', distracao:'var(--c-dis)', ocioso:'var(--c-oci)'};
+function aviso(t) { const m = $('#msg'); m.textContent = t; m.style.display = 'block'; clearTimeout(aviso.t); aviso.t = setTimeout(() => m.style.display = 'none', 3500); }
+function delta(a, b) { if (a == null || b == null) return ''; const d = Math.round((a - b) * 10) / 10; return `<span class="${d >= 0 ? 'sobe' : 'desce'}">${d >= 0 ? '+' : ''}${d.toLocaleString('pt-BR')} p.p.</span> vs período anterior`; }
+
+const S = { aba: 'geral', de: hoje(), ate: hoje(), depto: '', colaborador: '', filtros: null, cache: {} };
+function params(extra) { return Object.assign({de: S.de, ate: S.ate, depto: S.depto, colaborador: S.colaborador}, extra || {}); }
+async function rpc(acao, p, fn = 'argos_painel') {
+  if (DEMO) return demo(acao, p || {});
+  const { data, error } = await sb.rpc(fn, { p_acao: acao, p: p || {} });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// ---------- estrutura ----------
+const IC = {
+  geral:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
+  vivo:'<svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>',
+  pessoas:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.6 1.8 5.3 4.6"/></svg>',
+  clientes:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  ponto:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  recursos:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M8 21h8M12 17v4"/></svg>',
+  arquivos:'<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  extras:'<svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/></svg>',
+  alertas:'<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
+  inventario:'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"/><circle cx="12" cy="16.5" r="1"/><path d="M9 7h6M9 10h6"/></svg>',
+  comparar:'<svg viewBox="0 0 24 24"><path d="M7 4v16M17 4v16M3 8l4-4 4 4M13 16l4 4 4-4"/></svg>',
+  config:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+  seta:'<svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>',
+  voltar:'<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
+  cal:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  baixar:'<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  atual:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>',
+  tema:'<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>'
+};
+const ABAS = [['geral','Visão geral'],['vivo','Ao vivo'],['pessoas','Colaboradores'],['clientes','Clientes'],['ponto','Ponto'],['recursos','Programas e sites'],
+  ['arquivos','Arquivos abertos'],['extras','Atividades extras'],['alertas','Alertas'],['inventario','Inventário'],['comparar','Argos x WorkMonitor'],['config','Configurações']];
+const TOPO = ['geral','vivo','pessoas','clientes','ponto','recursos'];
+const TITULOS = {geral:'Produtividade da equipe', vivo:'Quem está trabalhando agora', pessoas:'Desempenho por colaborador', clientes:'Tempo dedicado a cada cliente',
+  ponto:'Ponto gerencial automático', recursos:'Programas e sites mais usados', arquivos:'Auditoria de arquivos', extras:'Atividades extras',
+  alertas:'Análises e alertas', inventario:'Inventário tecnológico', comparar:'Argos x WorkMonitor', config:'Configurações do Argos'};
+const LOGO = '<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="#1c1c1f"/><ellipse cx="17" cy="17" rx="11" ry="6.6" fill="#c9ec55"/><circle cx="17" cy="17" r="4" fill="#1c1c1f"/><circle cx="18.4" cy="15.6" r="1.2" fill="#c9ec55"/></svg>';
+const iniciais = n => String(n || '').split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+
+function montar() {
+  const nome = n => (ABAS.find(a => a[0] === n) || [, n])[1];
+  $('#app').innerHTML = `
+  ${DEMO ? '<div class="demo">Modo demonstração: dados de exemplo, nada aqui é real.</div>' : ''}
+  <div class="tela">
+    <div class="barra">
+      <div class="marca">${LOGO}<b>Argos</b></div>
+      <nav class="pilulas" id="abas">${TOPO.map(k => `<button class="pil" data-a="${k}">${IC[k]}${nome(k)}</button>`).join('')}</nav>
+      <div class="direita">
+        <div class="avatares" id="avs" title="Online agora"></div>
+        <button class="pil" id="b-vivo">${IC.vivo}<span id="n-on">online</span></button>
+        <button class="circ" id="b-alertas" title="Alertas">${IC.alertas}<span class="pt oculto" id="c-alertas"></span></button>
+        <button class="circ" id="b-tema" title="Tema claro ou escuro">${IC.tema}</button>
+      </div>
+    </div>
+    <div class="corpo">
+      <aside class="trilho" id="trilho">${ABAS.filter(a => !TOPO.includes(a[0])).map(([k, n]) => `<button class="circ" data-a="${k}" data-dica="${n}">${IC[k]}${k === 'extras' ? '<span class="pt oculto" id="c-extras"></span>' : ''}</button>`).join('')}</aside>
+      <section style="min-width:0">
+        <div class="migalha"><span>Argos</span><span id="mig"></span></div>
+        <div class="titulo">
+          <h1 id="tit"></h1>
+          <div class="filtros">
+            <select id="f-per">
+              <option value="hoje">Hoje</option><option value="ontem">Ontem</option><option value="7">Últimos 7 dias</option>
+              <option value="30">Últimos 30 dias</option><option value="mes">Este mês</option><option value="mesant">Mês passado</option><option value="custom">Escolher datas</option>
+            </select>
+            <span class="circ esc" title="Período">${IC.cal}</span>
+            <input type="date" id="f-de" class="oculto"><input type="date" id="f-ate" class="oculto">
+            <span class="btn" id="f-datas"></span>
+            <select id="f-depto"><option value="">Todos os departamentos</option></select>
+            <select id="f-colab"><option value="">Todos os colaboradores</option></select>
+            <button class="circ" id="f-atual" title="Atualizar">${IC.atual}</button>
+          </div>
+        </div>
+        <main id="conteudo"><div class="vazio">Carregando...</div></main>
+      </section>
+    </div>
+  </div>`;
+  const f = S.filtros;
+  $('#f-depto').innerHTML += (f.deptos || []).map(d => `<option value="${d.id}">${esc(d.nome)}</option>`).join('');
+  $('#f-colab').innerHTML += (f.colaboradores || []).map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  if (!f.editor) document.querySelector('[data-a="config"]').classList.add('oculto');
+  $('#f-per').onchange = e => { const v = e.target.value, t = hoje();
+    $('#f-de').classList.toggle('oculto', v !== 'custom'); $('#f-ate').classList.toggle('oculto', v !== 'custom'); $('#f-datas').classList.toggle('oculto', v === 'custom');
+    if (v === 'hoje') { S.de = S.ate = t; } else if (v === 'ontem') { S.de = S.ate = addDias(t, -1); }
+    else if (v === '7' || v === '30') { S.de = addDias(t, -(+v) + 1); S.ate = t; }
+    else if (v === 'mes') { S.de = t.slice(0,8) + '01'; S.ate = t; }
+    else if (v === 'mesant') { const i = addDias(t.slice(0,8) + '01', -1); S.de = i.slice(0,8) + '01'; S.ate = i; }
+    else { $('#f-de').value = S.de; $('#f-ate').value = S.ate; return; }
+    pintar(); };
+  $('#f-de').onchange = e => { S.de = e.target.value; pintar(); };
+  $('#f-ate').onchange = e => { S.ate = e.target.value; pintar(); };
+  $('#f-depto').onchange = e => { S.depto = e.target.value; pintar(); };
+  $('#f-colab').onchange = e => { S.colaborador = e.target.value; pintar(); };
+  $('#f-atual').onclick = () => pintar();
+  const ir = a => { S.aba = a; try { localStorage.setItem('argos_aba', a); } catch (x) {} pintar(); };
+  $('#abas').onclick = e => { const b = e.target.closest('button'); if (b) ir(b.dataset.a); };
+  $('#trilho').onclick = e => { const b = e.target.closest('button'); if (b) ir(b.dataset.a); };
+  $('#b-vivo').onclick = () => ir('vivo'); $('#b-alertas').onclick = () => ir('alertas');
+  $('#b-tema').onclick = () => { const r = document.documentElement, escuro = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    r.dataset.theme = escuro ? 'light' : 'dark'; try { localStorage.setItem('argos_tema', r.dataset.theme); } catch (x) {} };
+  try { const a = localStorage.getItem('argos_aba'); if (a && ABAS.some(x => x[0] === a)) S.aba = a; } catch (x) {}
+  avatares();
+}
+async function avatares() {
+  try { const l = (await rpc('aovivo', {})).filter(x => x.estado !== 'offline'), mx = 4;
+    $('#avs').innerHTML = l.slice(0, mx).map(x => `<span class="av" title="${esc(x.nome)}">${iniciais(x.nome)}</span>`).join('') + (l.length > mx ? `<span class="av mais">+${l.length - mx}</span>` : '');
+    $('#n-on').textContent = l.length + ' online';
+  } catch (e) {}
+}
+
+async function pintar() {
+  document.querySelectorAll('#abas .pil, #trilho .circ').forEach(b => b.classList.toggle('on', b.dataset.a === S.aba));
+  $('#tit').textContent = TITULOS[S.aba]; $('#mig').textContent = (ABAS.find(a => a[0] === S.aba) || [])[1];
+  $('#f-datas').textContent = S.de === S.ate ? dataBR(S.de) + '/' + S.de.slice(0, 4) : dataBR(S.de) + ' a ' + dataBR(S.ate);
+  const c = $('#conteudo');
+  c.innerHTML = '<div class="vazio">Carregando...</div>';
+  try { await TELAS[S.aba](c); }
+  catch (e) { c.innerHTML = `<div class="card vazio">Não foi possível carregar: ${esc(e.message)}</div>`; }
+}
+
+// ---------- componentes ----------
+function kpi(rot, val, det) { return `<div class="card kpi"><div class="acoes-c"><span class="circ">${IC.seta}</span></div><div class="rot">${rot}</div><div class="val">${val}</div><div class="det">${det || '&nbsp;'}</div></div>`; }
+function pbar(partes, total) { total = total || partes.reduce((a, p) => a + (p[0] || 0), 0) || 1;
+  return `<div class="pbar">${partes.map(([v, c]) => `<i style="width:${(v || 0) / total * 100}%;background:${c === 'var(--azul)' ? 'var(--lima)' : c}"></i>`).join('')}</div>`; }
+function donut(itens, centro, sub) {
+  const tot = itens.reduce((a, i) => a + (i.v || 0), 0) || 1; let ac = 0;
+  const g = itens.map(i => { const a = ac; ac += (i.v || 0) / tot * 100; return `${i.c} ${a}% ${ac}%`; }).join(',');
+  return `<div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap"><div class="donut" style="background:conic-gradient(${g || 'var(--linha) 0 100%'})"><span>${centro}<small>${sub}</small></span></div>
+    <div class="leg">${itens.map(i => `<div><i style="background:${i.c}"></i>${i.n}<b>${Math.round((i.v || 0) / tot * 100)}% · ${H(i.v)}</b></div>`).join('')}</div></div>`;
+}
+function tabela(cols, linhas, op = {}) {
+  if (!linhas.length) return `<div class="vazio">${op.vazio || 'Sem dados no período.'}</div>`;
+  const id = 't' + Math.random().toString(36).slice(2, 8);
+  setTimeout(() => {
+    const t = document.getElementById(id); if (!t) return;
+    t.querySelectorAll('th').forEach((th, i) => th.onclick = () => {
+      const c = cols[i]; if (!c.v) return; const dir = th.dataset.d === 'a' ? 'd' : 'a'; th.dataset.d = dir;
+      linhas.sort((a, b) => { const x = c.v(a), y = c.v(b); return (x > y ? 1 : x < y ? -1 : 0) * (dir === 'a' ? 1 : -1); });
+      t.querySelector('tbody').innerHTML = corpo(); ligar(); });
+    const ligar = () => { if (op.clique) t.querySelectorAll('tbody tr').forEach((tr, i) => tr.onclick = ev => { if (!ev.target.closest('button,input,select,a')) op.clique(linhas[i]); }); if (op.depois) op.depois(t, linhas); };
+    ligar();
+  });
+  const corpo = () => linhas.map(l => `<tr class="${op.clique ? 'cl' : ''}">${cols.map(c => `<td class="${c.n ? 'n' : ''}">${c.f(l)}</td>`).join('')}</tr>`).join('');
+  tabela.ultima = { cols, linhas };
+  return `<div class="rolar"><table class="tab" id="${id}"><thead><tr>${cols.map(c => `<th class="${c.n ? 'n' : ''}" title="${esc(c.d || '')}">${c.t}</th>`).join('')}</tr></thead><tbody>${corpo()}</tbody></table></div>`;
+}
+function csv(nome, cols, linhas) {
+  const tira = s => String(s ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+  const txt = [cols.map(c => c.t), ...linhas.map(l => cols.map(c => c.x ? c.x(l) : tira(c.f(l))))]
+    .map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + txt], {type: 'text/csv'}));
+  a.download = nome + '_' + S.de + '_' + S.ate + '.csv'; a.click();
+}
+let _pad = 0;
+function padraoListra() { const id = 'lst' + (++_pad); return [id, `<defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--card2)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--c-oci)" stroke-width="2"/></pattern></defs>`]; }
+// barras arredondadas; com uma série só, a maior fica listrada com o valor numa etiqueta lima (como na referência)
+function barrasEmpilhadas(serie, chaves, op = {}) {
+  if (!serie.length) return '<div class="vazio">Sem dados.</div>';
+  const W = op.w || 900, Hh = op.h || 190, top = 34, larg = (W - 10) / serie.length, bw = Math.max(6, Math.min(56, larg * 0.62));
+  const tot = d => chaves.reduce((a, k) => a + (d[k[0]] || 0), 0);
+  const max = Math.max(...serie.map(tot), 0.01), imax = serie.map(tot).indexOf(max);
+  const [pid, defs] = padraoListra();
+  let s = `<svg viewBox="0 0 ${W} ${Hh + 22}" width="100%" style="height:${Hh + 22}px" preserveAspectRatio="none">${defs}`;
+  serie.forEach((d, i) => {
+    const x = 5 + i * larg + (larg - bw) / 2, util = Hh - top;
+    if (chaves.length === 1) {
+      const h = Math.max(6, tot(d) / max * util), y = Hh - h;
+      s += `<rect x="${x}" y="${top - 6}" width="${bw}" height="${util + 6}" rx="${Math.min(14, bw / 2)}" fill="var(--card2)" stroke="var(--borda)"/>`;
+      s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="${Math.min(14, bw / 2)}" fill="${i === imax ? `url(#${pid})` : 'var(--linha)'}" ${i === imax ? 'stroke="var(--c-oci)" stroke-opacity=".5"' : ''}><title>${esc(op.rot ? op.rot(d) : '')}: ${op.fmt ? op.fmt(tot(d)) : tot(d)}</title></rect>`;
+      if (i === imax) { const t = op.fmt ? op.fmt(max) : max, lw = Math.max(46, String(t).length * 7 + 16);
+        s += `<rect x="${x + bw / 2 - lw / 2}" y="${y - 30}" width="${lw}" height="22" rx="8" fill="var(--lima)"/><text x="${x + bw / 2}" y="${y - 15}" text-anchor="middle" style="fill:var(--lima-t);font-weight:700">${esc(t)}</text>`; }
+    } else {
+      let y = Hh; const r = Math.min(10, bw / 2);
+      const partes = chaves.map(([k, c]) => [(d[k] || 0) / max * (Hh - 12), c, k]).filter(p => p[0] > 0);
+      partes.forEach(([h, c, k], j) => { y -= h; const topo = j === partes.length - 1;
+        s += `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h, 1)}" rx="${topo && h > 2 * r ? r : 2}" fill="${c}"><title>${esc(op.rot ? op.rot(d) : '')} ${esc(CAT[k] || k)}: ${op.fmt ? op.fmt(d[k]) : d[k]}</title></rect>`; });
+    }
+    if (serie.length <= 31 || i % Math.ceil(serie.length / 20) === 0) s += `<text x="${x + bw / 2}" y="${Hh + 16}" text-anchor="middle">${esc(op.rot ? op.rot(d) : i)}</text>`;
+  });
+  return s + '</svg>';
+}
+// linha suave com pontos, área listrada e etiqueta lima no maior valor
+function linhaSuave(serie, chave, op = {}) {
+  if (serie.length < 2) return '<div class="vazio">Sem dados suficientes.</div>';
+  const W = op.w || 900, Hh = op.h || 200, px = 14, top = 36, vals = serie.map(d => d[chave] || 0), max = Math.max(...vals, 0.01);
+  const P = vals.map((v, i) => [px + i * (W - 2 * px) / (vals.length - 1), Hh - 8 - v / max * (Hh - top - 8)]);
+  let d = `M${P[0][0]},${P[0][1]}`;
+  for (let i = 1; i < P.length; i++) { const [x0, y0] = P[i - 1], [x1, y1] = P[i], cx = (x0 + x1) / 2; d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`; }
+  const [pid, defs] = padraoListra(), im = vals.indexOf(max);
+  const media = vals.reduce((a, v) => a + v, 0) / vals.length, ym = Hh - 8 - media / max * (Hh - top - 8);
+  let s = `<svg viewBox="0 0 ${W} ${Hh + 22}" width="100%" style="height:${Hh + 22}px" preserveAspectRatio="none">${defs}
+    <path d="${d} L${P[P.length - 1][0]},${Hh} L${P[0][0]},${Hh} Z" fill="url(#${pid})" opacity=".55"/>
+    <line x1="${px}" x2="${W - px}" y1="${ym}" y2="${ym}" stroke="var(--sub)" stroke-dasharray="3 5" stroke-opacity=".6"/>
+    <path d="${d}" fill="none" stroke="var(--tinta)" stroke-width="2"/>`;
+  P.forEach(([x, y], i) => { if (serie.length <= 31) s += `<circle cx="${x}" cy="${y}" r="${i === im ? 5 : 3.2}" fill="${i === im ? 'var(--lima)' : 'var(--tinta)'}" stroke="var(--card)" stroke-width="2"><title>${esc(op.rot ? op.rot(serie[i]) : '')}: ${op.fmt ? op.fmt(vals[i]) : vals[i]}</title></circle>`;
+    if (serie.length <= 12 || i % Math.ceil(serie.length / 10) === 0) s += `<text x="${x}" y="${Hh + 16}" text-anchor="middle">${esc(op.rot ? op.rot(serie[i]) : i)}</text>`; });
+  const t = op.fmt ? op.fmt(max) : max, lw = Math.max(46, String(t).length * 7 + 16), [xm, ymx] = P[im];
+  s += `<rect x="${Math.min(W - lw, Math.max(0, xm - lw / 2))}" y="${ymx - 32}" width="${lw}" height="22" rx="8" fill="var(--lima)"/><text x="${Math.min(W - lw / 2, Math.max(lw / 2, xm))}" y="${ymx - 17}" text-anchor="middle" style="fill:var(--lima-t);font-weight:700">${esc(t)}</text>`;
+  return s + '</svg>';
+}
+function bolhas() {
+  const B = [[62,14,58],[118,8,46],[160,40,64],[96,62,40],[212,18,36],[30,58,30],[200,74,50],[140,100,30],[248,60,28],[60,110,22],[180,128,20],[230,108,26],[18,118,16],[100,140,14],[270,96,18],[150,8,20],[285,30,22],[40,150,12],[215,150,12],[125,160,10]];
+  return `<div class="bolhas">${B.map(([x, y, r]) => `<i style="left:${x + 20}px;top:${y + 46}px;width:${r}px;height:${r}px"></i>`).join('')}</div>`;
+}
+
+// ---------- telas ----------
+const TELAS = {};
+
+TELAS.geral = async c => {
+  const [d, ev] = await Promise.all([rpc('home', params()), rpc('evolucao', params({dias: 30}))]);
+  const k = d.kpis || {}, pes = d.pessoas || [];
+  $('#c-extras').textContent = k.extras_pend || ''; $('#c-extras').classList.toggle('oculto', !k.extras_pend);
+  $('#c-alertas').textContent = k.alertas || ''; $('#c-alertas').classList.toggle('oculto', !k.alertas);
+  const totalDist = (k.produtivo || 0) + (k.neutro || 0) + (k.distracao || 0) + (k.ocioso || 0);
+  const ent = pes.map(x => x.primeira).filter(Boolean).sort(), sai = pes.map(x => x.ultima).filter(Boolean).sort();
+  const mediana = l => l.length ? l[Math.floor(l.length / 2)] : '--:--';
+  const dif = (a, b) => (a == null || b == null) ? '' : `${a - b >= 0 ? '+' : ''}${(Math.round((a - b) * 10) / 10).toLocaleString('pt-BR')}`;
+  const sem = ev.slice(-7).map(x => Object.assign({}, x, {tot: (x.produtivo || 0) + (x.neutro || 0) + (x.distracao || 0)}));
+  const semDia = dd => ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(dd + 'T12:00').getDay()];
+  const totCli = (d.top_clientes || []).reduce((a, x) => a + x.seg, 0) || 1;
+  c.innerHTML = `
+  <div class="home">
+    <div class="card destaque alto">
+      <div class="cab-d">Equipe no período</div>${bolhas()}
+      <div class="vidro">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-weight:500">Jornada típica</b><div class="ajuda">entrada e saída mais comuns</div></div><span class="circ" style="width:36px;height:36px">${IC.seta}</span></div>
+        <div class="par"><span><b>${mediana(ent)}</b><small>entrada</small></span><span><b>${mediana(sai)}</b><small>saída</small></span></div>
+        <div class="colunas">
+          <div class="coluna"><div class="cresc">${dif(k.produtivo_pct, k.ant_produtivo_pct) || '-'}<small>p.p. vs anterior</small></div>
+            <div class="tubo" style="height:${Math.max(32, Math.min(100, k.produtivo_pct || 0))}%"><b>${P(k.produtivo_pct)}</b><span>produtivo</span></div></div>
+          <div class="coluna"><div class="cresc">${dif(k.cliente_pct, k.ant_cliente_pct) || '-'}<small>p.p. vs anterior</small></div>
+            <div class="tubo" style="height:${Math.max(32, Math.min(100, (k.cliente_pct || 0) * 1.3))}%"><b>${P(k.cliente_pct)}</b><span>com clientes</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><h3>Atividade</h3><div class="acoes-c"><span class="circ" data-ir="pessoas">${IC.seta}</span></div>
+      <div class="leg-p">Horas trabalhadas nos últimos 7 dias</div>
+      <div class="grande">${Hd(sem.reduce((a, x) => a + x.tot, 0))}</div>
+      ${barrasEmpilhadas(sem, [['tot', 'var(--linha)']], {rot: x => semDia(x.dia), fmt: v => Hd(v), h: 170, w: 330})}</div>
+    <div class="card"><h3>Evolução do tempo produtivo</h3><div class="acoes-c"><span class="circ" data-ir="pessoas">${IC.seta}</span></div>
+      <div class="leg-p">Últimos 30 dias, horas produtivas somadas da equipe</div>
+      <div class="grande">${Hd(ev.reduce((a, x) => a + (x.produtivo || 0), 0))}</div>
+      ${linhaSuave(ev, 'produtivo', {rot: x => dataBR(x.dia), fmt: v => Hd(v), h: 180, w: 560})}</div>
+    <div class="card"><h3>Distribuição</h3>${donut([
+      {n:'Produtivo', v:k.produtivo, c:COR.produtivo}, {n:'Neutro', v:k.neutro, c:COR.neutro},
+      {n:'Distração', v:k.distracao, c:COR.distracao}, {n:'Parado', v:k.ocioso, c:COR.ocioso}],
+      P(totalDist ? ((k.produtivo || 0) + (k.neutro || 0) + (k.distracao || 0)) / totalDist * 100 : null), 'atividade')}</div>
+    <div class="card"><h3>Tempo com clientes</h3><div class="acoes-c"><span class="circ" data-ir="clientes">${IC.seta}</span></div>
+      <div class="leg-p">No período, somando a equipe</div>
+      <div class="grande" style="margin-bottom:12px">${H(k.cliente)}</div>
+      ${(d.top_clientes || []).slice(0, 5).map(x => `<div class="pilula-val" style="cursor:pointer" data-emp="${esc(x.empresa_id)}"><span class="rot" title="${esc(x.nome)}">${esc(x.nome)}</span><div class="fx"><i style="width:${x.seg / totCli * 100}%"></i><span>${P(x.seg / totCli * 100)} · ${H(x.seg)}</span></div></div>`).join('') || '<div class="vazio">Nenhum cliente identificado ainda.</div>'}</div>
+    <div class="s3 grid g4">
+      ${kpi('Atividade', P(k.atividade_pct), `${dif(k.atividade_pct, k.ant_atividade_pct) || '0'} p.p. · tempo em uso sobre a jornada`)}
+      ${kpi('Score médio', k.score == null ? '-' : N(k.score), `${N(k.pessoas)} pessoas · <a href="#" id="l-score">como calcula</a>`)}
+      ${kpi('Parado sem justificar', H(k.ocioso), `extras aprovadas ${H(k.extras)} · ${N(k.extras_pend)} esperando`)}
+      ${kpi('Teclas e cliques', N((k.teclas || 0) + (k.cliques || 0)), `${N(k.teclas)} teclas · ${N(k.cliques)} cliques`)}
+    </div>
+    <div class="card s2"><h3>Performance por departamento <small>produtivo, atual x período anterior</small></h3>
+      ${tabela([
+        {t:'Departamento', f:x => `<b style="font-weight:600">${esc(x.depto)}</b>`, v:x => x.depto},
+        {t:'Pessoas', n:1, f:x => N(x.pessoas), v:x => x.pessoas},
+        {t:'Produtivo', f:x => `<div style="display:flex;gap:10px;align-items:center"><span style="width:50px">${P(x.produtivo)}</span>${pbar([[x.produtivo, 'var(--c-prod)'], [100 - (x.produtivo || 0), 'transparent']], 100)}</div>`, v:x => x.produtivo},
+        {t:'Anterior', n:1, f:x => P(x.produtivo_ant) + ' ' + (x.produtivo_ant == null ? '' : `<span class="${x.produtivo >= x.produtivo_ant ? 'sobe' : 'desce'}">${x.produtivo >= x.produtivo_ant ? '&#9650;' : '&#9660;'}</span>`), v:x => x.produtivo_ant},
+        {t:'Atividade', n:1, f:x => P(x.atividade), v:x => x.atividade},
+        {t:'Com clientes', n:1, f:x => Hd(x.cliente_h), v:x => x.cliente_h}], d.deptos || [])}</div>
+    <div class="card"><h3>Alertas recentes</h3>${(d.alertas || []).slice(0, 6).map(a => `<div class="alerta"><span class="chip ${a.nivel}">${a.nivel === 'alto' ? 'alto' : a.nivel === 'atencao' ? 'atenção' : 'info'}</span><div><b style="font-weight:600">${esc(a.nome)}</b><div class="ajuda">${esc(a.texto)}</div></div></div>`).join('') || '<div class="vazio">Nenhum alerta no período.</div>'}</div>
+    <div class="card s3"><h3>Ranking de utilização <small>programas e sites</small></h3>
+      <div class="rec">${(d.recursos || []).map((r, i) => `<div class="it"><div class="pos">${i + 1}º · ${CAT[r.categoria] || r.categoria}</div><b title="${esc(r.recurso)}">${esc(r.recurso || '(sem nome)')}</b><div class="t">${H(r.seg)}</div><div class="ajuda">${P(r.seg / (k.captadas || 1) * 100)} · ${N(r.pessoas)} pessoas</div></div>`).join('') || '<div class="vazio">Sem dados.</div>'}</div></div>
+    <div class="card s3"><h3>Ranking de colaboradores <small><button class="btn peq" id="csv-p">Exportar</button></small></h3>${tabPessoas(pes)}</div>
+  </div>`;
+  c.querySelectorAll('[data-emp]').forEach(el => el.onclick = () => abrirCliente(el.dataset.emp));
+  c.querySelectorAll('[data-ir]').forEach(el => el.onclick = () => { S.aba = el.dataset.ir; pintar(); });
+  $('#l-score').onclick = e => { e.preventDefault(); explicarScore(); };
+  $('#csv-p').onclick = () => csv('argos_colaboradores', COLS_P, pes);
+};
+let COLS_P;
+function tabPessoas(pes) {
+  COLS_P = [
+    {t:'Colaborador', f:x => `<b style="white-space:nowrap">${esc(x.nome)}</b><div class="ajuda">${esc(x.depto)}</div>`, v:x => x.nome, x:x => x.nome},
+    {t:'Atividade', f:x => `<div style="min-width:90px"><b>${P(x.atividade_pct)}</b>${pbar([[x.produtivo, COR.produtivo], [x.neutro, COR.neutro], [x.distracao, COR.distracao], [x.ocioso, COR.ocioso]])}</div>`, v:x => x.atividade_pct, x:x => x.atividade_pct},
+    {t:'Captadas', n:1, d:'Tempo com o computador em uso', f:x => H(x.captadas), v:x => x.captadas},
+    {t:'Produtivas', n:1, f:x => H(x.produtivo + x.extras_prod), v:x => x.produtivo + x.extras_prod},
+    {t:'Neutras', n:1, f:x => H(x.neutro + x.extras_neutro), v:x => x.neutro},
+    {t:'Distração', n:1, f:x => `<span class="${x.distracao > 1800 ? 'desce' : ''}">${H(x.distracao)}</span>`, v:x => x.distracao},
+    {t:'Parado', n:1, f:x => H(x.ocioso), v:x => x.ocioso},
+    {t:'Com clientes', n:1, f:x => H(x.cliente), v:x => x.cliente},
+    {t:'Entrada', n:1, f:x => x.primeira || '-', v:x => x.primeira},
+    {t:'Saída', n:1, f:x => x.ultima || '-', v:x => x.ultima},
+    {t:'Teclas', n:1, f:x => N(x.teclas), v:x => x.teclas},
+    {t:'Cliques', n:1, f:x => N(x.cliques), v:x => x.cliques},
+    {t:'Trocas', n:1, d:'Trocas de programa', f:x => N(x.trocas), v:x => x.trocas},
+    {t:'Maior bloco', n:1, d:'Maior tempo seguido de uso sem pausa', f:x => H(x.maior_continua), v:x => x.maior_continua},
+    {t:'Dias', n:1, f:x => N(x.dias), v:x => x.dias},
+    {t:'Alertas', n:1, f:x => x.alertas ? `<span class="chip atencao">${x.alertas}</span>` : '0', v:x => x.alertas},
+    {t:'Score', n:1, f:x => `<b>${N(x.score)}</b>`, v:x => x.score}];
+  return tabela(COLS_P, pes, {clique: x => abrirPessoa(x.colaborador_id, x.nome)});
+}
+function explicarScore() {
+  abrirGaveta(`<div class="cab"><h2>Como o score é calculado</h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div><div class="card ajuda" style="font-size:14px">
+  <p>O score vai de 0 a 100 e junta quatro coisas, para não depender só de "ficar no computador":</p>
+  <p><b>45%</b> tempo produtivo sobre o tempo em uso (inclui atividades extras aprovadas, como reunião com cliente).<br>
+  <b>25%</b> atividade: tempo em uso dividido pela jornada (8h48 por dia, ajustável), limitado a 100%.<br>
+  <b>20%</b> tempo ligado a algum cliente sobre o tempo em uso.<br>
+  <b>10%</b> ausência de distração (100% menos o tempo em sites e programas de distração).</p>
+  <p>Use como termômetro, não como sentença: quem trabalha muito em reunião presencial, ligação ou papel precisa justificar as pausas para aparecer bem.</p></div>`);
+}
+
+TELAS.vivo = async c => {
+  const l = await rpc('aovivo', params());
+  const cont = s => l.filter(x => x.estado === s).length;
+  c.innerHTML = `<div class="grid g4">${kpi('Todos', N(l.length))}${kpi('<span class="est online"></span>Online', N(cont('online')))}${kpi('<span class="est ocioso"></span>Parado', N(cont('ocioso')))}${kpi('<span class="est offline"></span>Desligado ou sem sinal', N(cont('offline')))}</div>
+  <div class="vivo" style="margin-top:14px">${l.map(x => `<div class="card cl" data-id="${x.colaborador_id}" style="cursor:pointer">
+    <div class="nm"><span class="est ${x.estado}"></span>${esc(x.nome)}</div><div class="ajuda">${esc(x.depto || '')}</div>
+    <div class="rc">${x.estado === 'offline' ? 'Último sinal ' + dataHoraBR(x.ultimo_contato) : (x.estado === 'ocioso' ? 'Parado desde ' : 'Desde ') + horaBR(x.desde)}</div>
+    ${x.estado !== 'offline' && x.recurso ? `<div class="rc">Em: <b>${esc(x.recurso)}</b></div>` : ''}
+    ${x.estado !== 'offline' && x.cliente ? `<div class="rc">Cliente: <b>${esc(x.cliente)}</b></div>` : ''}</div>`).join('') || '<div class="vazio">Nenhum computador com o Argos ainda.</div>'}</div>
+  <p class="ajuda">Atualiza sozinho a cada 30 segundos. O Argos não mostra a tela de ninguém: só o programa ou site em uso e o cliente identificado.</p>`;
+  c.querySelectorAll('[data-id]').forEach(el => el.onclick = () => abrirPessoa(el.dataset.id, l.find(x => x.colaborador_id === el.dataset.id).nome));
+  clearTimeout(TELAS.vivo.t); TELAS.vivo.t = setTimeout(() => { if (S.aba === 'vivo' && !$('#gaveta').classList.contains('on')) pintar(); }, 30000);
+};
+
+TELAS.pessoas = async c => {
+  const d = await rpc('home', params());
+  c.innerHTML = `<div class="card"><h3>Colaboradores <small>clique para ver o detalhe · <button class="btn peq" id="csv">Exportar</button></small></h3>${tabPessoas(d.pessoas || [])}</div>`;
+  $('#csv').onclick = () => csv('argos_colaboradores', COLS_P, d.pessoas || []);
+};
+
+TELAS.clientes = async c => {
+  const l = await rpc('clientes', params()), adm = S.filtros.admin;
+  const tot = l.reduce((a, x) => a + x.seg, 0);
+  const cols = [
+    {t:'Cliente', f:x => `<b>${esc(x.nome)}</b>`, v:x => x.nome, x:x => x.nome},
+    {t:'Tempo', n:1, f:x => H(x.seg), v:x => x.seg, x:x => (x.seg / 3600).toFixed(2)},
+    {t:'% do total', f:x => `<div style="display:flex;gap:8px;align-items:center"><span style="width:44px">${P(x.seg / (tot || 1) * 100)}</span>${pbar([[x.seg, 'var(--azul)']], l[0] ? l[0].seg : 1)}</div>`, v:x => x.seg},
+    {t:'Pessoas', n:1, f:x => N(x.pessoas), v:x => x.pessoas},
+    {t:'Dias', n:1, f:x => N(x.dias), v:x => x.dias},
+    {t:'Departamentos', f:x => (x.deptos || []).map(d => `<span class="chip">${esc(d)}</span>`).join(' '), v:x => (x.deptos || []).length, x:x => (x.deptos || []).join(', ')},
+    {t:'Arquivos', n:1, f:x => N(x.arquivos), v:x => x.arquivos},
+    {t:'Reuniões/ligações', n:1, d:'Atividades extras aprovadas ligadas ao cliente', f:x => H(x.extras_seg), v:x => x.extras_seg}];
+  if (adm) cols.push({t:'Custo da equipe', n:1, d:'Horas x custo/hora pela folha do Themis RH (salário x encargos / horas do mês)', f:x => R$(x.custo), v:x => x.custo || 0, x:x => x.custo});
+  c.innerHTML = `<div class="grid g4">${kpi('Clientes atendidos', N(l.length))}${kpi('Tempo com clientes', H(tot))}${kpi('Média por cliente', H(l.length ? tot / l.length : 0))}${adm ? kpi('Custo da equipe com clientes', R$(l.reduce((a, x) => a + (x.custo || 0), 0)), 'só administradores veem') : kpi('Arquivos de clientes abertos', N(l.reduce((a, x) => a + x.arquivos, 0)))}</div>
+  <div class="card" style="margin-top:14px"><h3>Tempo por cliente <small><input class="inp busca" id="bc" placeholder="Buscar cliente"> <button class="btn peq" id="csv">Exportar</button></small></h3><div id="tc">${tabela(cols, l, {clique: x => abrirCliente(x.empresa_id)})}</div></div>`;
+  $('#bc').oninput = e => { const q = e.target.value.toLowerCase(); $('#tc').innerHTML = tabela(cols, l.filter(x => x.nome.toLowerCase().includes(q)), {clique: x => abrirCliente(x.empresa_id)}); };
+  $('#csv').onclick = () => csv('argos_clientes', cols, l);
+};
+
+TELAS.ponto = async c => {
+  const d = await rpc('ponto', params()), l = d.linhas || [];
+  const cols = [
+    {t:'Colaborador', f:x => `<b style="white-space:nowrap">${esc(x.nome)}</b><div class="ajuda">${esc(x.depto)}</div>`, v:x => x.nome, x:x => x.nome},
+    {t:'Dia', f:x => dataBR(x.dia), v:x => x.dia, x:x => x.dia},
+    {t:'Entrada', n:1, f:x => `${x.entrada}${x.atraso_min > 0 ? ` <span class="chip atencao">+${x.atraso_min} min</span>` : ''}`, v:x => x.entrada, x:x => x.entrada},
+    {t:'Saída', n:1, f:x => `${x.saida}${x.saida_antes_min > 0 ? ` <span class="chip atencao">-${x.saida_antes_min} min</span>` : ''}`, v:x => x.saida, x:x => x.saida},
+    {t:'Intervalo', n:1, d:'Maior pausa entre 11h e 15h', f:x => H(x.intervalo), v:x => x.intervalo},
+    {t:'Captadas', n:1, f:x => H(x.captadas), v:x => x.captadas},
+    {t:'Produtivas', n:1, f:x => H(x.produtivo), v:x => x.produtivo},
+    {t:'Extras aprovadas', n:1, f:x => H(x.extras), v:x => x.extras},
+    {t:'Saldo x jornada', n:1, f:x => `<span class="${x.saldo_min >= 0 ? 'sobe' : 'desce'}">${x.saldo_min >= 0 ? '+' : '-'}${H(Math.abs(x.saldo_min) * 60)}</span>`, v:x => x.saldo_min, x:x => x.saldo_min}];
+  c.innerHTML = `<div class="card"><h3>Ponto gerencial automático <small>entrada prevista ${esc(d.entrada_prevista)} · saída ${esc(d.saida_prevista)} · jornada ${H(d.jornada_min * 60)} · tolerância ${d.tolerancia_min} min · <button class="btn peq" id="csv">Exportar</button></small></h3>
+  <p class="ajuda">Entrada e saída aqui são a primeira e a última atividade no computador. Não substituem o ponto oficial do Kronos ID: servem para comparar.</p>${tabela(cols, l)}</div>`;
+  $('#csv').onclick = () => csv('argos_ponto', cols, l);
+};
+
+TELAS.recursos = async c => {
+  const l = await rpc('recursos', params()), ed = S.filtros.editor;
+  const tot = l.reduce((a, x) => a + x.seg, 0);
+  const cols = [
+    {t:'#', n:1, f:x => l.indexOf(x) + 1},
+    {t:'Programa ou site', f:x => `<b>${esc(x.recurso || '(sem nome)')}</b><div class="ajuda">${esc(x.app || '')}</div>`, v:x => x.recurso, x:x => x.recurso},
+    {t:'Classificação', f:x => ed ? `<select class="inp cat" data-r="${esc(x.recurso)}">${['produtivo','neutro','distracao'].map(k => `<option value="${k}" ${x.categoria === k ? 'selected' : ''}>${CAT[k]}</option>`).join('')}</select>` : `<span class="chip ${x.categoria}">${CAT[x.categoria] || x.categoria}</span>`, v:x => x.categoria, x:x => x.categoria},
+    {t:'Tempo', n:1, f:x => H(x.seg), v:x => x.seg, x:x => (x.seg / 3600).toFixed(2)},
+    {t:'%', n:1, f:x => P(x.seg / (tot || 1) * 100), v:x => x.seg},
+    {t:'Pessoas', n:1, f:x => N(x.pessoas), v:x => x.pessoas},
+    {t:'Teclas', n:1, f:x => N(x.teclas), v:x => x.teclas},
+    {t:'Clique esq.', n:1, f:x => N(x.cliques), v:x => x.cliques},
+    {t:'Clique dir.', n:1, f:x => N(x.cliques_dir), v:x => x.cliques_dir},
+    {t:'Rolagem', n:1, f:x => N(x.rolagem), v:x => x.rolagem}];
+  c.innerHTML = `<div class="card"><h3>Ranking de programas e sites <small>${ed ? 'mude a classificação para valer daqui em diante (e nos últimos 30 dias sem cliente) · ' : ''}<button class="btn peq" id="csv">Exportar</button></small></h3>${tabela(cols, l, {depois: t => t.querySelectorAll('.cat').forEach(s => s.onchange = async () => {
+    try { const r = await rpc('salvar_categoria', {alvo: 'titulo', padrao: s.dataset.r.toLowerCase(), categoria: s.value}, 'argos_admin'); aviso(`Classificação salva. ${N(r.reclassificados)} registros ajustados.`); } catch (e) { aviso(e.message); } })})}</div>`;
+  $('#csv').onclick = () => csv('argos_programas', cols, l);
+};
+
+TELAS.arquivos = async c => {
+  let l = await rpc('arquivos', params({limite: 1000}));
+  const cols = [
+    {t:'Quando', f:x => dataHoraBR(x.quando), v:x => x.quando, x:x => x.quando},
+    {t:'Colaborador', f:x => esc(x.pessoa), v:x => x.pessoa},
+    {t:'Tipo', f:x => x.pasta ? '<span class="chip">pasta</span>' : `<span class="chip">${esc(x.ext || '?')}</span>`, v:x => x.ext},
+    {t:'Arquivo ou pasta', f:x => `<b>${esc(x.nome)}</b><div class="ajuda" style="word-break:break-all">${esc(x.caminho)}</div>`, v:x => x.nome, x:x => x.caminho},
+    {t:'Cliente', f:x => x.cliente ? esc(x.cliente) : '<span class="ajuda">não identificado</span>', v:x => x.cliente || '', x:x => x.cliente},
+    {t:'Depto. da pasta', f:x => esc(x.depto_pasta || ''), v:x => x.depto_pasta || ''}];
+  const porExt = {}; l.forEach(x => { const k = x.pasta ? 'pasta' : (x.ext || '?'); porExt[k] = (porExt[k] || 0) + 1; });
+  c.innerHTML = `<div class="grid g4">${kpi('Arquivos e pastas abertos', N(l.length))}${kpi('Com cliente identificado', N(l.filter(x => x.cliente).length), P(l.length ? l.filter(x => x.cliente).length / l.length * 100 : null))}${kpi('Clientes diferentes', N(new Set(l.map(x => x.cliente).filter(Boolean)).size))}${kpi('Tipos mais abertos', Object.entries(porExt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => esc(e[0])).join(', ') || '-')}</div>
+  <div class="card" style="margin-top:14px"><h3>Auditoria de arquivos <small><input class="inp busca" id="ba" placeholder="Buscar no caminho"> <button class="btn peq" id="csv">Exportar</button></small></h3><div id="ta">${tabela(cols, l)}</div></div>`;
+  $('#ba').onchange = async e => { l = await rpc('arquivos', params({limite: 1000, busca: e.target.value})); $('#ta').innerHTML = tabela(cols, l); };
+  $('#csv').onclick = () => csv('argos_arquivos', cols, l);
+};
+
+TELAS.extras = async c => {
+  const l = await rpc('extras', params()), ed = S.filtros.editor;
+  const pend = l.filter(x => x.status === 'pendente');
+  const cols = [
+    ...(ed ? [{t:'<input type="checkbox" id="sel-tudo">', f:x => x.status === 'pendente' ? `<input type="checkbox" class="sel" value="${x.id}">` : ''}] : []),
+    {t:'Colaborador', f:x => esc(x.pessoa), v:x => x.pessoa},
+    {t:'Quando', f:x => `${dataBR(new Date(x.inicio).toISOString().slice(0,10))} ${horaBR(x.inicio)} às ${horaBR(x.fim)}`, v:x => x.inicio, x:x => x.inicio},
+    {t:'Duração', n:1, f:x => H(x.seg), v:x => x.seg},
+    {t:'Atividade', f:x => `${esc(x.tipo)} <span class="chip ${x.categoria}">${CAT[x.categoria]}</span>`, v:x => x.tipo},
+    {t:'Cliente', f:x => esc(x.cliente || ''), v:x => x.cliente || ''},
+    {t:'Observação', f:x => esc(x.obs || ''), v:x => x.obs || ''},
+    {t:'Situação', f:x => `<span class="chip ${x.status}">${x.status}</span>${x.decidido_por ? `<div class="ajuda">${esc(x.decidido_por)}</div>` : ''}`, v:x => x.status}];
+  const porTipo = {}; l.filter(x => x.status !== 'recusado').forEach(x => porTipo[x.tipo] = (porTipo[x.tipo] || 0) + x.seg);
+  c.innerHTML = `<div class="grid g4">${kpi('Esperando aprovação', N(pend.length), H(pend.reduce((a, x) => a + x.seg, 0)))}${kpi('Aprovadas', N(l.filter(x => x.status === 'aprovado').length), H(l.filter(x => x.status === 'aprovado').reduce((a, x) => a + x.seg, 0)))}${kpi('Recusadas', N(l.filter(x => x.status === 'recusado').length))}${kpi('Mais comum', esc(Object.entries(porTipo).sort((a, b) => b[1] - a[1])[0]?.[0] || '-'))}</div>
+  <div class="card" style="margin-top:14px"><h3>Atividades extras <small>pausas justificadas pelos colaboradores (reunião, ligação, trabalho externo...)</small></h3>
+  ${ed ? '<div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn ok" id="ap">Aprovar selecionadas</button><button class="btn no" id="rc">Recusar selecionadas</button></div>' : ''}${tabela(cols, l, {vazio: 'Nenhuma atividade extra no período.'})}</div>`;
+  if (ed) {
+    setTimeout(() => { const t = $('#sel-tudo'); if (t) t.onclick = () => c.querySelectorAll('.sel').forEach(s => s.checked = t.checked); });
+    const decidir = async st => { const ids = [...c.querySelectorAll('.sel:checked')].map(s => +s.value); if (!ids.length) return aviso('Selecione pelo menos uma.');
+      try { await rpc('decidir_extra', {ids, status: st}, 'argos_admin'); aviso(st === 'aprovado' ? 'Aprovadas.' : 'Recusadas.'); pintar(); } catch (e) { aviso(e.message); } };
+    $('#ap').onclick = () => decidir('aprovado'); $('#rc').onclick = () => decidir('recusado');
+  }
+};
+
+TELAS.alertas = async c => {
+  const l = await rpc('alertas', params());
+  const NOMES = {distracao:'Distração', ocio_alto:'Muito tempo parado', sem_cliente:'Pouco tempo com clientes', fora_horario:'Fora do horário', indice_muito_alto:'Índice de atividade muito alto', sem_pausa:'Sem pausa', queda_produtividade:'Queda de produtividade'};
+  const porTipo = {}; l.forEach(a => porTipo[a.tipo] = (porTipo[a.tipo] || 0) + 1);
+  c.innerHTML = `<div class="grid g4">${Object.entries(NOMES).slice(0, 4).map(([k, n]) => kpi(n, N(porTipo[k] || 0))).join('')}</div>
+  <div class="card" style="margin-top:14px"><h3>Análises e alertas <small>regras calculadas de hora em hora</small></h3>${tabela([
+    {t:'Dia', f:x => dataBR(x.dia), v:x => x.dia},
+    {t:'Nível', f:x => `<span class="chip ${x.nivel}">${x.nivel === 'atencao' ? 'atenção' : x.nivel}</span>`, v:x => x.nivel},
+    {t:'Colaborador', f:x => `<b>${esc(x.pessoa)}</b>`, v:x => x.pessoa},
+    {t:'Tipo', f:x => esc(NOMES[x.tipo] || x.tipo), v:x => x.tipo},
+    {t:'O que aconteceu', f:x => esc(x.texto), v:x => x.texto}], l, {clique: x => abrirPessoa(x.colaborador_id, x.pessoa), vazio: 'Nenhum alerta no período.'})}
+  <p class="ajuda">Regras: distração acima de 30 min; mais de 2 h parado no expediente sem justificar; menos de 20% do tempo com clientes (em dias com 2 h ou mais); 30 min ou mais fora do horário; teclado e mouse sem parar por 15 min ou mais (sobrecarga ou automação); 3 h seguidas sem pausa de 5 min; produtividade 15 pontos abaixo da média dos últimos 30 dias.</p></div>`;
+};
+
+TELAS.inventario = async c => {
+  const l = await rpc('inventario', params()), adm = S.filtros.admin;
+  const cols = [
+    {t:'Colaborador', f:x => `<b style="white-space:nowrap">${esc(x.nome)}</b><div class="ajuda">${esc(x.usuario || '')}</div>`, v:x => x.nome, x:x => x.nome},
+    {t:'Último sinal', f:x => dataHoraBR(x.ultimo_contato), v:x => x.ultimo_contato || ''},
+    {t:'Computador', f:x => `${esc(x.hostname)}<div class="ajuda">${esc([x.dados?.fabricante, x.dados?.modelo].filter(Boolean).join(' '))}</div>`, v:x => x.hostname},
+    {t:'Processador', f:x => `${esc(x.dados?.cpu || '-')}<div class="ajuda">${x.dados?.nucleos ? x.dados.nucleos + ' núcleos' : ''}</div>`, v:x => x.dados?.cpu || ''},
+    {t:'Memória', n:1, f:x => x.dados?.ram_gb ? x.dados.ram_gb + ' GB' : '-', v:x => x.dados?.ram_gb || 0},
+    {t:'Disco C:', n:1, f:x => x.dados?.disco_gb ? `${x.dados.disco_gb} GB<div class="ajuda">${x.dados.disco_livre_gb} GB livres</div>` : '-', v:x => x.dados?.disco_livre_gb || 0},
+    {t:'Sistema', f:x => esc(x.dados?.so || '-'), v:x => x.dados?.so || ''},
+    {t:'Rede', f:x => (x.dados?.rede || []).map(r => `${esc((r.ips || []).join(', '))}<div class="ajuda">${esc(r.mac)}</div>`).join(''), x:x => (x.dados?.rede || []).map(r => (r.ips || []).join(',')).join(' ')},
+    {t:'Programas', n:1, f:x => `<a href="#" class="sw" data-id="${x.dispositivo_id}">${N((x.dados?.softwares || []).length)}</a>`, v:x => (x.dados?.softwares || []).length},
+    {t:'Argos', f:x => `${esc(x.versao || '')}${x.ativo ? '' : ' <span class="chip recusado">desativado</span>'}`, v:x => x.versao || ''}];
+  if (adm) cols.push({t:'', f:x => `<button class="btn peq at" data-id="${x.dispositivo_id}" data-v="${x.ativo ? 0 : 1}">${x.ativo ? 'Desativar' : 'Reativar'}</button>`});
+  c.innerHTML = `<div class="card"><h3>Inventário tecnológico <small><button class="btn peq" id="csv">Exportar</button></small></h3>${tabela(cols, l, {vazio: 'Nenhum computador com o Argos ainda.', depois: t => {
+    t.querySelectorAll('.sw').forEach(a => a.onclick = e => { e.preventDefault(); const x = l.find(y => y.dispositivo_id === a.dataset.id);
+      abrirGaveta(`<div class="cab"><h2>Programas instalados · ${esc(x.nome)}</h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div><div class="card">${tabela([{t:'Programa', f:s => esc(s.nome), v:s => s.nome}, {t:'Versão', f:s => esc(s.versao), v:s => s.versao}, {t:'Fabricante', f:s => esc(s.fabricante), v:s => s.fabricante}], x.dados?.softwares || [])}</div>`); });
+    t.querySelectorAll('.at').forEach(b => b.onclick = async () => { if (!confirm(b.dataset.v === '1' ? 'Reativar este computador?' : 'Desativar este computador? Ele para de enviar dados.')) return;
+      try { await rpc('ativar_dispositivo', {id: b.dataset.id, ativo: b.dataset.v === '1'}, 'argos_admin'); pintar(); } catch (e) { aviso(e.message); } }); }})}</div>`;
+  $('#csv').onclick = () => csv('argos_inventario', cols, l);
+};
+
+TELAS.comparar = async c => {
+  const l = await rpc('comparar_workmonitor', params());
+  const dif = (a, b) => (a == null || b == null) ? '' : `<span class="${Math.abs(a - b) > 1 ? 'desce' : 'sobe'}">${a - b >= 0 ? '+' : ''}${(a - b).toFixed(1)}h</span>`;
+  const cols = [
+    {t:'Dia', f:x => dataBR(x.dia), v:x => x.dia, x:x => x.dia},
+    {t:'Colaborador', f:x => esc(x.nome), v:x => x.nome},
+    {t:'Argos ativo', n:1, f:x => Hd(x.argos_ativo_h), v:x => x.argos_ativo_h, x:x => x.argos_ativo_h},
+    {t:'WM total', n:1, f:x => x.wm_total_h == null ? '-' : Hd(x.wm_total_h), v:x => x.wm_total_h, x:x => x.wm_total_h},
+    {t:'Diferença', n:1, f:x => dif(x.argos_ativo_h, x.wm_total_h), v:x => (x.argos_ativo_h || 0) - (x.wm_total_h || 0)},
+    {t:'Argos produtivo', n:1, f:x => Hd(x.argos_produtivo_h), v:x => x.argos_produtivo_h, x:x => x.argos_produtivo_h},
+    {t:'WM produtivo', n:1, f:x => x.wm_produtivo_h == null ? '-' : Hd(x.wm_produtivo_h), v:x => x.wm_produtivo_h, x:x => x.wm_produtivo_h},
+    {t:'Teclas A / WM', n:1, f:x => `${N(x.argos_teclas)} / ${N(x.wm_teclas)}`, v:x => x.argos_teclas},
+    {t:'Cliques A / WM', n:1, f:x => `${N(x.argos_cliques)} / ${N(x.wm_cliques)}`, v:x => x.argos_cliques},
+    {t:'Início A / WM', n:1, f:x => `${x.argos_inicio || '-'} / ${x.wm_inicio || '-'}`, v:x => x.argos_inicio},
+    {t:'Fim A / WM', n:1, f:x => `${x.argos_fim || '-'} / ${x.wm_fim || '-'}`, v:x => x.argos_fim}];
+  c.innerHTML = `<div class="card"><h3>Argos x WorkMonitor <small>período em paralelo, para validar os números antes de desligar o WorkMonitor · <button class="btn peq" id="csv">Exportar</button></small></h3>
+  <p class="ajuda">Diferença acima de 1 hora fica em vermelho. Os dados do WorkMonitor vêm da importação diária (neocode_diario) e chegam no dia seguinte.</p>${tabela(cols, l)}</div>`;
+  $('#csv').onclick = () => csv('argos_x_workmonitor', cols, l);
+};
+
+TELAS.config = async c => {
+  const d = await rpc('config', {}), adm = S.filtros.admin, cf = d.config || {};
+  const opCli = (d.clientes || []).map(x => `<option value="${esc(x.nome)}" data-id="${x.id}">`).join('');
+  const PAR = [['ocioso_seg','Segundos sem teclado/mouse para considerar parado'],['envio_seg','Intervalo de envio (segundos)'],['extra_min_seg','Pausa mínima para pedir justificativa (segundos)'],
+    ['jornada_min','Jornada diária (minutos)'],['entrada_prevista','Entrada prevista (HH:MM)'],['saida_prevista','Saída prevista (HH:MM)'],['tolerancia_min','Tolerância (minutos)'],
+    ['retencao_titulos_dias','Dias que os títulos de janela ficam guardados'],['fator_encargos','Fator de encargos sobre o salário (custo/hora)'],['horas_mes','Horas por mês (custo/hora)'],
+    ['contar_teclas','Contar teclas e cliques (true/false)'],['coletar_arquivos','Registrar arquivos abertos (true/false)']];
+  c.innerHTML = `<div class="grid g2">
+  <div class="card"><h3>Parâmetros ${adm ? '' : '<small>só administradores mudam</small>'}</h3>
+    ${PAR.map(([k, n]) => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><label style="flex:1" class="ajuda">${n}</label><input class="inp par" data-k="${k}" value="${esc(typeof cf[k] === 'string' ? cf[k] : JSON.stringify(cf[k] ?? ''))}" ${adm ? '' : 'disabled'} style="width:120px"></div>`).join('')}
+    ${adm ? '<button class="btn pri" id="sv-par">Salvar parâmetros</button>' : ''}
+    ${adm ? `<hr style="border:0;border-top:1px solid var(--borda);margin:14px 0"><div class="ajuda">Chave de instalação (vai no instalar-argos.ps1): <b style="font-family:monospace">${esc(d.chave_instalacao || '')}</b> <button class="btn peq" id="nova-chave">Gerar nova</button><br>Gerar nova chave não desliga quem já está instalado; só impede instalações novas com a chave antiga.</div>` : ''}
+    <p class="ajuda">Códigos de pasta do Questor ligados a clientes: ${N(d.codigos)} (o Argos aprende sozinho quando reconhece uma pasta "0241 - NOME" pelo nome).</p></div>
+  <div class="card"><h3>Regras de cliente <small>trecho do título ou do caminho que indica o cliente, para todos</small></h3>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><input class="inp" id="rg-p" placeholder="Trecho (ex.: folha obra 77)" style="flex:1"><input class="inp" id="rg-c" list="dl-cli" placeholder="Cliente" style="flex:1"><button class="btn pri" id="rg-s">Adicionar</button></div>
+    <datalist id="dl-cli">${opCli}</datalist>
+    ${tabela([{t:'Trecho', f:x => `<code>${esc(x.padrao)}</code>`, v:x => x.padrao}, {t:'Cliente', f:x => esc(x.cliente), v:x => x.cliente}, {t:'De quem', f:x => x.pessoa ? esc(x.pessoa) : '<span class="chip info">todos</span>', v:x => x.pessoa || ''},
+      {t:'', f:x => x.pessoa ? '' : `<button class="btn peq rm-r" data-id="${x.id}">Remover</button>`}], d.regras || [], {vazio: 'Nenhuma regra ainda. As regras pessoais aparecem quando os colaboradores marcam "lembrar" no Meu dia.'})}</div>
+  <div class="card"><h3>Classificação de programas e sites</h3>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><select class="inp" id="ct-a"><option value="titulo">Título/site contém</option><option value="app">Programa (exe) contém</option></select><input class="inp" id="ct-p" placeholder="ex.: youtube ou excel.exe" style="flex:1"><select class="inp" id="ct-c"><option value="produtivo">Produtivo</option><option value="neutro">Neutro</option><option value="distracao">Distração</option></select><button class="btn pri" id="ct-s">Salvar</button></div>
+    ${tabela([{t:'Onde', f:x => x.alvo === 'app' ? 'programa' : 'título/site', v:x => x.alvo}, {t:'Contém', f:x => `<code>${esc(x.padrao)}</code>`, v:x => x.padrao}, {t:'Classificação', f:x => `<span class="chip ${x.categoria}">${CAT[x.categoria]}</span>`, v:x => x.categoria}, {t:'', f:x => `<button class="btn peq rm-c" data-id="${x.id}">Remover</button>`}], d.categorias || [])}</div>
+  <div class="card"><h3>Tipos de atividade extra <small>o que o colaborador escolhe ao justificar uma pausa</small></h3>
+    ${tabela([{t:'Nome', f:x => `<input class="inp te" data-c="${x.codigo}" data-k="nome" value="${esc(x.nome)}" style="width:100%">`},
+      {t:'Conta como', f:x => `<select class="inp te" data-c="${x.codigo}" data-k="categoria"><option value="produtivo" ${x.categoria === 'produtivo' ? 'selected' : ''}>Produtivo</option><option value="neutro" ${x.categoria === 'neutro' ? 'selected' : ''}>Neutro</option></select>`},
+      {t:'Precisa aprovar', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="exige_aprovacao" ${x.exige_aprovacao ? 'checked' : ''}>`},
+      {t:'Pede cliente', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="pede_cliente" ${x.pede_cliente ? 'checked' : ''}>`},
+      {t:'Ativo', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="ativo" ${x.ativo ? 'checked' : ''}>`}], d.tipos_extra || [])}
+    <button class="btn pri" id="sv-te" style="margin-top:10px">Salvar tipos</button></div>
+  </div>`;
+  const idCli = nome => (d.clientes || []).find(x => x.nome.toLowerCase() === nome.trim().toLowerCase())?.id;
+  const ok = async (acao, p, txt) => { try { const r = await rpc(acao, p, 'argos_admin'); aviso(txt + (r && r.reclassificados != null ? ` ${N(r.reclassificados)} registros ajustados.` : '')); pintar(); } catch (e) { aviso(e.message); } };
+  if ($('#sv-par')) $('#sv-par').onclick = () => { const v = {}; c.querySelectorAll('.par').forEach(i => { let x = i.value.trim(); try { x = JSON.parse(x); } catch (e) {} v[i.dataset.k] = x; }); ok('salvar_config', {valores: v}, 'Parâmetros salvos.'); };
+  if ($('#nova-chave')) $('#nova-chave').onclick = () => confirm('Gerar uma chave de instalação nova?') && ok('nova_chave', {}, 'Chave nova gerada.');
+  $('#rg-s').onclick = () => { const id = idCli($('#rg-c').value); if (!id || $('#rg-p').value.trim().length < 4) return aviso('Informe um trecho (4+ letras) e escolha o cliente da lista.'); ok('salvar_regra', {padrao: $('#rg-p').value, empresa_id: id}, 'Regra salva.'); };
+  $('#ct-s').onclick = () => $('#ct-p').value.trim() ? ok('salvar_categoria', {alvo: $('#ct-a').value, padrao: $('#ct-p').value, categoria: $('#ct-c').value}, 'Classificação salva.') : aviso('Informe o trecho.');
+  setTimeout(() => {
+    c.querySelectorAll('.rm-r').forEach(b => b.onclick = () => ok('remover_regra', {id: b.dataset.id}, 'Regra removida.'));
+    c.querySelectorAll('.rm-c').forEach(b => b.onclick = () => ok('remover_categoria', {id: b.dataset.id}, 'Removida.'));
+  });
+  $('#sv-te').onclick = async () => { for (const t of d.tipos_extra || []) { const p = Object.assign({}, t); c.querySelectorAll(`.te[data-c="${t.codigo}"]`).forEach(i => p[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value);
+      try { await rpc('salvar_tipo_extra', p, 'argos_admin'); } catch (e) { return aviso(e.message); } } aviso('Tipos salvos.'); };
+};
+
+// ---------- gavetas de detalhe ----------
+function abrirGaveta(html) { $('#gpn').innerHTML = html; $('#gaveta').classList.add('on'); $('#gpn').scrollTop = 0; }
+function fecharGaveta() { $('#gaveta').classList.remove('on'); }
+$('#gaveta').onclick = e => { if (e.target.id === 'gaveta') fecharGaveta(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharGaveta(); });
+
+async function abrirPessoa(id, nome) {
+  abrirGaveta(`<div class="cab"><h2>${esc(nome)}</h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div><div class="vazio">Carregando...</div>`);
+  const d = await rpc('pessoa', params({colaborador: id})), r = d.resumo || {};
+  const um = S.de === S.ate;
+  let linha = '';
+  if (um && (d.linha || []).length) {
+    const ini = new Date(d.linha[0].i).getTime(), fim = new Date(d.linha[d.linha.length - 1].f).getTime(), tot = Math.max(fim - ini, 1);
+    linha = `<div class="card"><h3>Linha do tempo do dia <small>passe o mouse para ver o que era</small></h3><div class="linha-t">${d.linha.map(s => {
+      const x = (new Date(s.i).getTime() - ini) / tot * 100, w = Math.max(0.15, (new Date(s.f).getTime() - new Date(s.i).getTime()) / tot * 100);
+      const cor = s.ocioso ? COR.ocioso : (COR[s.categoria] || COR.neutro);
+      return `<i style="left:${x}%;width:${w}%;background:${cor}" title="${horaBR(s.i)} às ${horaBR(s.f)} · ${s.ocioso ? 'Parado' : esc(s.recurso)}${s.cliente ? ' · ' + esc(s.cliente) : ''}"></i>`; }).join('')}</div>
+      <div class="horas"><span>${horaBR(d.linha[0].i)}</span><span>${horaBR(d.linha[d.linha.length - 1].f)}</span></div>
+      <div class="leg" style="flex-direction:row;gap:14px;margin-top:8px;flex-wrap:wrap">${Object.keys(COR).map(k => `<div><i style="background:${COR[k]}"></i>${CAT[k]}</div>`).join('')}</div></div>`;
+  }
+  const lst = (itens, nomeF, maxSeg) => itens.length ? itens.map(i => `<div class="alerta"><div style="flex:1;min-width:0"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nomeF(i)}</div>${pbar([[i.seg, 'var(--azul)']], maxSeg)}</div><b>${H(i.seg)}</b></div>`).join('') : '<div class="vazio">Nada no período.</div>';
+  $('#gpn').innerHTML = `<div class="cab"><h2>${esc(nome)} <small class="ajuda">${esc(r.depto || '')}</small></h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div>
+  <div class="grid g4">${kpi('Atividade', P(r.atividade_pct), `${H(r.captadas)} captadas em ${N(r.dias)} dia(s)`)}${kpi('Produtivo', P(r.produtivo_pct), `distração ${H(r.distracao)}`)}${kpi('Com clientes', H(r.cliente), P(r.captadas ? r.cliente / r.captadas * 100 : null) + ' do tempo')}${kpi('Score', N(r.score), d.custo_hora != null ? 'custo/hora ' + R$(d.custo_hora) : '&nbsp;')}
+  ${kpi('Entrada / saída', `${r.primeira || '-'} / ${r.ultima || '-'}`, `parado ${H(r.ocioso)}`)}${kpi('Teclas e cliques', N((r.teclas || 0) + (r.cliques || 0)), `${N(r.teclas)} teclas · ${N(r.cliques)} cliques · ${N(r.rolagem)} rolagens`)}${kpi('Trocas de programa', N(r.trocas), `maior bloco sem pausa ${H(r.maior_continua)}`)}${kpi('Atividades extras', H((r.extras_prod || 0) + (r.extras_neutro || 0)), `${N(r.extras_pend)} esperando aprovação`)}</div>
+  <div style="margin-top:14px">${linha}</div>
+  <div class="card" style="margin-top:14px"><h3>Por hora do dia <small>tempo e intensidade (teclas + cliques)</small></h3>${barrasEmpilhadas(Array.from({length: 24}, (_, h) => Object.assign({h, pro: 0, neu: 0, dis: 0, oci: 0}, (d.por_hora || []).find(x => x.h === h))).filter(x => x.h >= 6 && x.h <= 22),
+    [['pro', COR.produtivo], ['neu', COR.neutro], ['dis', COR.distracao], ['oci', COR.ocioso]], {rot: x => x.h + 'h', fmt: v => H(v), h: 140})}</div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3>Programas e sites</h3>${lst(d.recursos || [], i => `${esc(i.recurso)} <span class="chip ${i.categoria}">${CAT[i.categoria] || ''}</span>`, d.recursos?.[0]?.seg)}</div>
+    <div class="card"><h3>Clientes</h3>${lst(d.clientes || [], i => `<a href="#" data-emp="${esc(i.empresa_id)}">${esc(i.nome)}</a>`, d.clientes?.[0]?.seg)}</div>
+  </div>
+  ${um ? '' : `<div class="card" style="margin-top:14px"><h3>Dia a dia</h3>${tabela([{t:'Dia', f:x => dataBR(x.dia), v:x => x.dia}, {t:'Entrada', n:1, f:x => x.entrada}, {t:'Saída', n:1, f:x => x.saida}, {t:'Captadas', n:1, f:x => H(x.cap), v:x => x.cap}, {t:'Produtivas', n:1, f:x => H(x.pro), v:x => x.pro}, {t:'Com clientes', n:1, f:x => H(x.cli), v:x => x.cli}, {t:'Parado', n:1, f:x => H(x.oci), v:x => x.oci}], d.por_dia || [])}</div>`}
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3>Atividades extras</h3>${(d.extras || []).map(x => `<div class="alerta"><span class="chip ${x.status}">${x.status}</span><div>${dataHoraBR(x.inicio)} · ${H(x.seg)} · <b>${esc(x.tipo)}</b>${x.cliente ? ' · ' + esc(x.cliente) : ''}${x.obs ? `<div class="ajuda">${esc(x.obs)}</div>` : ''}</div></div>`).join('') || '<div class="vazio">Nenhuma.</div>'}</div>
+    <div class="card"><h3>Alertas</h3>${(d.alertas || []).map(a => `<div class="alerta"><span class="chip ${a.nivel}">${a.nivel === 'atencao' ? 'atenção' : a.nivel}</span><div>${dataBR(a.dia)} · ${esc(a.texto)}</div></div>`).join('') || '<div class="vazio">Nenhum.</div>'}</div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Arquivos e pastas abertos</h3>${tabela([{t:'Quando', f:x => dataHoraBR(x.quando), v:x => x.quando}, {t:'Arquivo', f:x => `${x.pasta ? '<span class="chip">pasta</span> ' : ''}<b>${esc(x.nome)}</b><div class="ajuda" style="word-break:break-all">${esc(x.caminho)}</div>`, v:x => x.nome}, {t:'Cliente', f:x => esc(x.cliente || ''), v:x => x.cliente || ''}, {t:'Depto.', f:x => esc(x.depto_pasta || '')}], d.arquivos || [], {vazio: 'Nenhum arquivo registrado.'})}</div>`;
+  $('#gpn').querySelectorAll('[data-emp]').forEach(a => a.onclick = e => { e.preventDefault(); abrirCliente(a.dataset.emp); });
+}
+
+async function abrirCliente(emp) {
+  abrirGaveta(`<div class="cab"><h2>Cliente</h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div><div class="vazio">Carregando...</div>`);
+  const d = await rpc('cliente', params({empresa: emp, colaborador: ''})), e = d.empresa || {};
+  const tot = (d.pessoas || []).reduce((a, x) => a + x.seg, 0), custo = (d.pessoas || []).reduce((a, x) => a + (x.custo || 0), 0);
+  const lst = (itens, nomeF) => itens.length ? itens.map(i => `<div class="alerta"><div style="flex:1;min-width:0"><div>${nomeF(i)}</div>${pbar([[i.seg, 'var(--azul)']], itens[0].seg)}</div><b>${H(i.seg)}</b></div>`).join('') : '<div class="vazio">Nada.</div>';
+  $('#gpn').innerHTML = `<div class="cab"><h2>${esc(e.nome || emp)} <small class="ajuda">${esc(e.cnpj || '')} ${esc(e.ramo || '')}</small></h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div>
+  <div class="grid g4">${kpi('Tempo da equipe', H(tot))}${kpi('Pessoas', N((d.pessoas || []).length))}${kpi('Arquivos abertos', N((d.arquivos || []).length))}${S.filtros.admin ? kpi('Custo da equipe', R$(custo), 'pela folha do Themis RH') : kpi('Reuniões e ligações', H((d.extras || []).filter(x => x.status === 'aprovado').reduce((a, x) => a + x.seg, 0)))}</div>
+  <div class="card" style="margin-top:14px"><h3>Tempo por dia</h3>${barrasEmpilhadas(d.por_dia || [], [['seg', 'var(--azul)']], {rot: x => dataBR(x.dia), fmt: v => H(v), h: 130})}</div>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card"><h3>Quem trabalhou</h3>${lst(d.pessoas || [], i => `${esc(i.nome)} <span class="ajuda">${esc(i.depto)}</span>${i.custo != null ? ` <span class="ajuda">${R$(i.custo)}</span>` : ''}`)}</div>
+    <div class="card"><h3>Por departamento</h3>${lst(d.deptos || [], i => esc(i.depto))}</div>
+    <div class="card"><h3>Programas e sites</h3>${lst(d.recursos || [], i => esc(i.recurso))}</div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Arquivos do cliente abertos no período</h3>${tabela([{t:'Quando', f:x => dataHoraBR(x.quando), v:x => x.quando}, {t:'Quem', f:x => esc(x.pessoa), v:x => x.pessoa}, {t:'Arquivo', f:x => `<b>${esc(x.nome)}</b><div class="ajuda" style="word-break:break-all">${esc(x.caminho)}</div>`, v:x => x.nome}], d.arquivos || [], {vazio: 'Nenhum arquivo registrado.'})}</div>`;
+}
+
+// ---------- início ----------
+async function iniciar() {
+  if (!DEMO && !sb) { $('#app').innerHTML = '<div class="card login">Não foi possível carregar a conexão com o Resiltrack.</div>'; return; }
+  if (!DEMO) {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return telaLogin();
+  }
+  try { S.filtros = await rpc('filtros', {}); }
+  catch (e) { $('#app').innerHTML = `<div class="card login"><b>Sem acesso ao Argos</b><span class="ajuda">${esc(e.message)}. Peça a um administrador para liberar o módulo Argos no Admin do Resiltrack.</span></div>`; return; }
+  montar(); pintar();
+}
+function telaLogin() {
+  $('#app').innerHTML = `<div class="card login"><div class="marca">${LOGO}<div>Argos<br><small>entre com a conta do Resiltrack</small></div></div>
+    <input class="inp" id="lg-e" type="email" placeholder="E-mail"><input class="inp" id="lg-s" type="password" placeholder="Senha"><button class="btn pri" id="lg-b">Entrar</button><span class="ajuda" id="lg-m"></span></div>`;
+  $('#lg-b').onclick = async () => { const { error } = await sb.auth.signInWithPassword({ email: $('#lg-e').value, password: $('#lg-s').value });
+    if (error) $('#lg-m').textContent = 'Não deu certo: ' + error.message; else iniciar(); };
+}
+
+// ---------- dados de exemplo (?demo=1) ----------
+function demo(acao, p) {
+  const rnd = (a, b, s) => { const x = Math.sin(s * 9301 + 49297) * 233280; return a + (x - Math.floor(x)) * (b - a); };
+  const NOMES = ['Ana Carolina','Bruno Silva','Clissy Santana','Daniele Brito','Davi Sodre','Esther Lima','Geovanna Lopes','Julia Nascimento','Lucas Cabral','Marina Amorim','Natiele','Vitoria Silveira'];
+  const DEP = ['Dpto. Fiscal','Dpto. Fiscal','Dpto. Fiscal','Dpto. Contábil','Dpto. Contábil','Dpto. Contábil','Dpto. Contábil','Dpto. Sucesso do Cliente','Dpto. Fiscal','Dpto. Fiscal','Dpto. Pessoal','Dpto. Pessoal'];
+  const CLI = ['PINEX LOGISTIC SOLUTION LTDA','FOUR MED DISTRIBUIDORA HOSPITALAR','EZLY TECNOLOGIA LTDA','OFFSERVICE TERCEIRIZACAO','FARMAV DROGARIA E PERFUMARIA','TABOAO BOLOS AVMB LTDA','FIRE SOLUTION COMERCIO','EOA SERVICOS ADMINISTRATIVOS'];
+  const REC = [['Teams','produtivo'],['Digisac','produtivo'],['Questor - Folha','produtivo'],['Questor - Contabilidade','produtivo'],['G-Click','produtivo'],['Microsoft Excel','produtivo'],['Questor - Fiscal','produtivo'],['Outlook','produtivo'],['Explorador de Arquivos','neutro'],['ChatGPT','produtivo'],['Claude','produtivo'],['e-CAC','produtivo'],['WhatsApp Web','neutro'],['YouTube','distracao'],['Calculadora','produtivo']];
+  const dias = Math.max(1, Math.round((new Date(S.ate) - new Date(S.de)) / 864e5) + 1);
+  const pessoa = (n, i) => { const cap = dias * rnd(4.5, 7.4, i) * 3600, pro = cap * rnd(.7, .93, i + 1), dis = cap * rnd(0, .06, i + 2), cli = cap * rnd(.35, .75, i + 3);
+    const ex = dias * rnd(0, 1200, i + 4);
+    return {colaborador_id: 'c' + i, nome: n, depto: DEP[i], dias, captadas: cap, produtivo: pro, neutro: cap - pro - dis, distracao: dis, ocioso: dias * rnd(1.5, 3, i + 5) * 3600, cliente: cli,
+      extras_prod: ex, extras_neutro: 0, extras_pend: i % 4 === 0 ? 1 : 0, teclas: Math.round(cap / 3600 * rnd(1400, 3200, i + 6)), cliques: Math.round(cap / 3600 * rnd(900, 2100, i + 7)),
+      cliques_dir: Math.round(cap / 3600 * 20), rolagem: Math.round(cap / 3600 * 600), trocas: Math.round(cap / 3600 * rnd(60, 140, i + 8)), maior_continua: rnd(1500, 7200, i + 9),
+      primeira: '08:' + String(Math.round(rnd(0, 25, i + 10))).padStart(2, '0'), ultima: '17:' + String(Math.round(rnd(40, 59, i + 11))).padStart(2, '0'), alertas: i % 5 === 0 ? 1 : 0,
+      atividade_pct: Math.round((cap + ex) / (dias * 528 * 60) * 1000) / 10, produtivo_pct: Math.round((pro + ex) / (cap + ex) * 1000) / 10, score: Math.round(rnd(55, 92, i + 12) * 10) / 10}; };
+  const pes = NOMES.map(pessoa);
+  const sum = k => pes.reduce((a, x) => a + x[k], 0);
+  if (acao === 'filtros') return {admin: true, editor: true, jornada_min: 528, deptos: [...new Set(DEP)].map((d, i) => ({id: 'd' + i, nome: d})), colaboradores: NOMES.map((n, i) => ({id: 'c' + i, nome: n}))};
+  if (acao === 'home') {
+    const deps = {}; pes.forEach(x => { (deps[x.depto] = deps[x.depto] || []).push(x); });
+    return {kpis: {pessoas: pes.length, captadas: sum('captadas'), produtivo: sum('produtivo') + sum('extras_prod'), neutro: sum('neutro'), distracao: sum('distracao'), ocioso: sum('ocioso'), cliente: sum('cliente'), extras: sum('extras_prod'), extras_pend: 3, teclas: sum('teclas'), cliques: sum('cliques'), alertas: 4,
+        atividade_pct: 78.4, produtivo_pct: 86.1, cliente_pct: 54.2, score: 74.3, ant_atividade_pct: 75.9, ant_produtivo_pct: 84.0, ant_cliente_pct: 57.5},
+      deptos: Object.entries(deps).map(([d, l], i) => ({depto: d, pessoas: l.length, produtivo: Math.round(rnd(78, 93, i) * 10) / 10, produtivo_ant: Math.round(rnd(76, 92, i + 20) * 10) / 10, atividade: Math.round(rnd(70, 88, i + 3) * 10) / 10, cliente_h: Math.round(l.reduce((a, x) => a + x.cliente, 0) / 360) / 10})),
+      recursos: REC.map(([r, c], i) => ({recurso: r, categoria: c, seg: sum('captadas') * (0.14 / (1 + i * 0.35)), pessoas: 12 - (i % 8)})),
+      pessoas: pes.sort((a, b) => b.score - a.score),
+      top_clientes: CLI.map((n, i) => ({empresa_id: 'e' + i, nome: n, seg: sum('cliente') * 0.22 / (1 + i * 0.5), pessoas: 6 - (i % 5)})),
+      alertas: [{dia: S.ate, nome: 'Natiele', tipo: 'indice_muito_alto', nivel: 'atencao', texto: 'Índice de atividade muito alto por 18 min (teclado e mouse sem parar). Pode ser sobrecarga ou automação.'},
+        {dia: S.ate, nome: 'Davi Sodre', tipo: 'distracao', nivel: 'atencao', texto: 'Passou 34 min em sites ou programas de distração.'},
+        {dia: S.ate, nome: 'Julia Nascimento', tipo: 'sem_pausa', nivel: 'info', texto: 'Ficou 3,4 h seguidas sem pausa de 5 minutos.'},
+        {dia: S.ate, nome: 'Bruno Silva', tipo: 'fora_horario', nivel: 'info', texto: 'Trabalhou 42 min fora do horário (antes das 7h, depois das 19h ou fim de semana).'}]};
+  }
+  if (acao === 'evolucao') return Array.from({length: 30}, (_, i) => { const d = addDias(S.ate, i - 29), fds = [0, 6].includes(new Date(d + 'T12:00').getDay()), f = fds ? 0.05 : 1;
+    return {dia: d, produtivo: f * rnd(48, 62, i), neutro: f * rnd(6, 11, i + 1), distracao: f * rnd(0.5, 3, i + 2), ocioso: f * rnd(14, 24, i + 3), cliente: f * rnd(25, 38, i + 4), pessoas: fds ? 1 : 12}; });
+  if (acao === 'aovivo') return NOMES.map((n, i) => ({colaborador_id: 'c' + i, nome: n, depto: DEP[i], hostname: 'DESKTOP-' + (1000 + i), estado: i === 3 ? 'ocioso' : i === 7 ? 'offline' : 'online', desde: new Date(Date.now() - rnd(60, 5000, i) * 1000).toISOString(), ultimo_contato: new Date(Date.now() - (i === 7 ? 4e6 : 30e3)).toISOString(), recurso: REC[i % REC.length][0], cliente: i % 3 ? CLI[i % CLI.length] : null, versao: '0.2.0'}));
+  if (acao === 'pessoa') { const i = +String(p.colaborador).slice(1) || 0, r = pes.find(x => x.colaborador_id === p.colaborador) || pes[0];
+    let t = new Date(S.ate + 'T08:05:00-03:00').getTime(); const linha = [];
+    for (let k = 0; t < new Date(S.ate + 'T17:55:00-03:00').getTime(); k++) { const oc = k % 7 === 6, dur = (oc ? rnd(4, 25, k + i) : rnd(3, 40, k + i)) * 60e3, rc = REC[Math.floor(rnd(0, REC.length, k * 3 + i))];
+      if (new Date(t).getUTCHours() === 15 && !linha.some(x => x.almoco)) { linha.push({i: new Date(t).toISOString(), f: new Date(t + 3600e3).toISOString(), seg: 3600, ocioso: true, almoco: 1}); t += 3600e3; continue; }
+      linha.push({i: new Date(t).toISOString(), f: new Date(t + dur).toISOString(), seg: dur / 1000, ocioso: oc, recurso: rc[0], categoria: rc[1], cliente: !oc && k % 2 ? CLI[k % CLI.length] : null}); t += dur; }
+    return {resumo: r, custo_hora: 38.5, linha, por_hora: Array.from({length: 11}, (_, h) => ({h: h + 8, pro: rnd(1800, 3300, h + i), neu: rnd(100, 600, h), dis: rnd(0, 200, h + 2), oci: h === 12 ? 3000 : rnd(0, 500, h + 3), teclas: rnd(500, 3000, h), cliques: rnd(300, 1800, h)})),
+      por_dia: Array.from({length: dias}, (_, k) => ({dia: addDias(S.de, k), cap: rnd(18000, 27000, k), pro: rnd(15000, 23000, k), cli: rnd(9000, 16000, k), oci: rnd(5000, 9000, k), entrada: '08:0' + (k % 9), saida: '17:5' + (k % 9)})),
+      recursos: REC.slice(0, 10).map(([rr, c], k) => ({recurso: rr, categoria: c, seg: 9000 / (1 + k * 0.4) * dias})), clientes: CLI.slice(0, 6).map((n, k) => ({empresa_id: 'e' + k, nome: n, seg: 7000 / (1 + k * 0.6) * dias})),
+      arquivos: [{quando: new Date().toISOString(), nome: 'relatorio_difal_241_202610.xlsx', caminho: 'C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal\\_2026\\2026-10\\002 - Relatorios\\relatorio_difal_241_202610.xlsx', cliente: CLI[0], depto_pasta: 'Fiscal', ext: 'xlsx'},
+        {quando: new Date(Date.now() - 6e5).toISOString(), nome: '002 - Fiscal', caminho: 'C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal', cliente: CLI[0], depto_pasta: 'Fiscal', pasta: true}],
+      extras: [{inicio: S.ate + 'T13:10:00-03:00', fim: S.ate + 'T13:55:00-03:00', seg: 2700, tipo: 'Reunião com cliente', status: 'aprovado', cliente: CLI[1], obs: 'Reunião de fechamento'}],
+      alertas: i % 5 === 0 ? [{dia: S.ate, tipo: 'sem_pausa', nivel: 'info', texto: 'Ficou 3,1 h seguidas sem pausa de 5 minutos.'}] : []}; }
+  if (acao === 'clientes') return CLI.map((n, i) => ({empresa_id: 'e' + i, nome: n, seg: dias * 30000 / (1 + i * 0.45), extras_seg: i % 3 ? 0 : 2700, pessoas: 6 - (i % 5), dias, deptos: [DEP[i], DEP[(i + 4) % 12]].filter((v, k, a) => a.indexOf(v) === k), arquivos: Math.round(rnd(5, 60, i)), custo: Math.round(dias * 30000 / (1 + i * 0.45) / 3600 * 41 * 100) / 100}));
+  if (acao === 'cliente') { const i = +String(p.empresa).slice(1) || 0; return {empresa: {id: p.empresa, nome: CLI[i], cnpj: '30.104.500/0001-34', ramo: 'Logística'},
+    pessoas: NOMES.slice(0, 5).map((n, k) => ({nome: n, depto: DEP[k], seg: 14000 / (1 + k * 0.6) * dias, custo: Math.round(14000 / (1 + k * 0.6) * dias / 3600 * 40)})),
+    deptos: [{depto: 'Fiscal', seg: 22000 * dias}, {depto: 'Contábil', seg: 9000 * dias}, {depto: 'Pessoal', seg: 4000 * dias}],
+    por_dia: Array.from({length: Math.max(dias, 7)}, (_, k) => ({dia: addDias(S.ate, k - Math.max(dias, 7) + 1), seg: rnd(5000, 30000, k + i)})),
+    recursos: REC.slice(0, 6).map(([r], k) => ({recurso: r, seg: 12000 / (1 + k * 0.5) * dias})), arquivos: [{quando: new Date().toISOString(), pessoa: NOMES[2], nome: 'SAIDAS.xlsx', caminho: 'C:\\...\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal\\_2026\\2026-10\\002 - Relatorios\\icms\\SAIDAS.xlsx'}], extras: []}; }
+  if (acao === 'ponto') return {entrada_prevista: '08:00', saida_prevista: '17:48', jornada_min: 528, tolerancia_min: 10, linhas: pes.flatMap((x, i) => Array.from({length: dias}, (_, k) => {
+    const ent = rnd(-10, 35, i * 7 + k), sai = rnd(-30, 25, i * 5 + k), cap = rnd(6.2, 8.6, i + k) * 3600;
+    return {colaborador_id: x.colaborador_id, nome: x.nome, depto: x.depto, dia: addDias(S.de, k), entrada: '08:' + String(Math.max(0, Math.round(ent))).padStart(2, '0'), saida: '17:' + String(Math.min(59, Math.max(0, Math.round(48 + sai)))).padStart(2, '0'),
+      captadas: cap, produtivo: cap * 0.86, extras: k % 3 ? 0 : 1800, intervalo: rnd(2700, 4200, i + k), atraso_min: Math.max(0, Math.round(ent) - 10), saida_antes_min: Math.max(0, Math.round(-sai) - 10), saldo_min: Math.round(cap / 60) - 528}; }))};
+  if (acao === 'recursos') return REC.map(([r, c], i) => ({recurso: r, app: r.toLowerCase().replace(/ .*/, '') + '.exe', categoria: c, seg: sum('captadas') * (0.14 / (1 + i * 0.35)), pessoas: 12 - (i % 8), teclas: Math.round(rnd(5000, 90000, i)), cliques: Math.round(rnd(3000, 12000, i + 1)), cliques_dir: Math.round(rnd(30, 150, i)), rolagem: Math.round(rnd(3000, 22000, i))}));
+  if (acao === 'arquivos') return Array.from({length: 25}, (_, i) => ({quando: new Date(Date.now() - i * 7e5).toISOString(), pessoa: NOMES[i % 12], nome: ['relatorio_difal.xlsx', 'SAIDAS.xlsx', 'GRUPO EFETIVO.xls', 'CLIMATRIZ DEFINITIVO.pdf', '002 - Fiscal'][i % 5], ext: ['xlsx', 'xlsx', 'xls', 'pdf', ''][i % 5], pasta: i % 5 === 4,
+    caminho: `C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0${241 - i} - ${CLI[i % 8]}\\00${2 + i % 3} - ${['Fiscal', 'Contábil', 'Pessoal'][i % 3]}`, cliente: i % 6 ? CLI[i % 8] : null, depto_pasta: ['Fiscal', 'Contábil', 'Pessoal'][i % 3]}));
+  if (acao === 'extras') return [{id: 1, pessoa: 'Bruno Silva', inicio: S.ate + 'T10:12:00-03:00', fim: S.ate + 'T10:58:00-03:00', seg: 2760, tipo: 'Reunião com cliente', categoria: 'produtivo', status: 'aprovado', cliente: CLI[0], obs: 'Fechamento mensal'},
+    {id: 2, pessoa: 'Natiele', inicio: S.ate + 'T14:20:00-03:00', fim: S.ate + 'T14:47:00-03:00', seg: 1620, tipo: 'Trabalho com papel ou documentos físicos', categoria: 'produtivo', status: 'pendente', cliente: CLI[3], obs: 'Conferência de holerites impressos'},
+    {id: 3, pessoa: 'Esther Lima', inicio: S.ate + 'T15:30:00-03:00', fim: S.ate + 'T15:52:00-03:00', seg: 1320, tipo: 'Ligação com cliente (VoIP ou celular)', categoria: 'produtivo', status: 'aprovado', cliente: CLI[2]},
+    {id: 4, pessoa: 'Davi Sodre', inicio: S.ate + 'T16:05:00-03:00', fim: S.ate + 'T16:40:00-03:00', seg: 2100, tipo: 'Outra (explicar)', categoria: 'neutro', status: 'pendente', obs: 'Ajuda ao colega com a impressora'}];
+  if (acao === 'alertas') return demo('home', p).alertas.map((a, i) => Object.assign({pessoa: a.nome, colaborador_id: 'c' + i}, a));
+  if (acao === 'inventario') return NOMES.map((n, i) => ({nome: n, hostname: 'DESKTOP-' + (1000 + i), usuario: 'RESILCON\\' + n.split(' ')[0].toLowerCase(), versao: '0.2.0', ativo: true, dispositivo_id: 'dv' + i, ultimo_contato: new Date(Date.now() - 4e4).toISOString(),
+    dados: {fabricante: 'Dell Inc.', modelo: 'Vostro 3520', cpu: i % 2 ? '11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz' : 'Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz', nucleos: 8, ram_gb: i % 3 ? 32 : 8, disco_gb: 476, disco_livre_gb: Math.round(rnd(40, 300, i)), so: 'Windows 10 Enterprise 22H2',
+      rede: [{nome: 'Ethernet', mac: '6c:2b:59:aa:0' + i + ':11', ips: ['192.168.1.' + (100 + i)]}], softwares: [{nome: 'AnyDesk', versao: '8.0', fabricante: 'AnyDesk'}, {nome: 'Google Chrome', versao: '131', fabricante: 'Google'}, {nome: 'Receitanet BX', versao: '1.9', fabricante: 'Receita Federal'}]}}));
+  if (acao === 'comparar_workmonitor') return pes.slice(0, 8).map((x, i) => ({dia: S.ate, nome: x.nome, argos_ativo_h: x.captadas / 3600 / dias, wm_total_h: x.captadas / 3600 / dias + rnd(-0.6, 0.6, i), argos_produtivo_h: x.produtivo / 3600 / dias, wm_produtivo_h: x.produtivo / 3600 / dias + rnd(-0.8, 0.5, i + 1),
+    argos_teclas: x.teclas, wm_teclas: Math.round(x.teclas * rnd(0.9, 1.1, i)), argos_cliques: x.cliques, wm_cliques: Math.round(x.cliques * rnd(0.9, 1.1, i + 2)), argos_inicio: x.primeira, wm_inicio: x.primeira, argos_fim: x.ultima, wm_fim: x.ultima}));
+  if (acao === 'config') return {config: {ocioso_seg: 180, envio_seg: 60, extra_min_seg: 600, jornada_min: 528, entrada_prevista: '08:00', saida_prevista: '17:48', tolerancia_min: 10, retencao_titulos_dias: 60, fator_encargos: 1.8, horas_mes: 220, contar_teclas: true, coletar_arquivos: true},
+    chave_instalacao: 'demo-chave', codigos: 109, clientes: CLI.map((n, i) => ({id: 'e' + i, nome: n})),
+    regras: [{id: 1, padrao: 'folha obra 77', cliente: CLI[4], pessoa: null}, {id: 2, padrao: 'climatriz', cliente: CLI[1], pessoa: 'Beatriz Borges'}],
+    categorias: [{id: 1, alvo: 'app', padrao: 'excel.exe', categoria: 'produtivo'}, {id: 2, alvo: 'titulo', padrao: 'youtube', categoria: 'distracao'}, {id: 3, alvo: 'titulo', padrao: 'whatsapp', categoria: 'neutro'}],
+    tipos_extra: [{codigo: 'reuniao_cliente', nome: 'Reunião com cliente', categoria: 'produtivo', exige_aprovacao: false, pede_cliente: true, ativo: true, ordem: 1}, {codigo: 'papel', nome: 'Trabalho com papel ou documentos físicos', categoria: 'produtivo', exige_aprovacao: true, pede_cliente: true, ativo: true, ordem: 4}, {codigo: 'intervalo', nome: 'Intervalo ou almoço', categoria: 'neutro', exige_aprovacao: false, pede_cliente: false, ativo: true, ordem: 9}]};
+  return {ok: true, reclassificados: 0};
+}
+
+iniciar();
+</script>
+</body>
+</html>
