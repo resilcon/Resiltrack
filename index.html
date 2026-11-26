@@ -991,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.67 (Hermes CRM: índice de sucesso do cliente)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.68 (Atendimento: reunião semanal por setor)</footer>
   </div>
 </div>
 
@@ -1329,6 +1329,7 @@ function render(){ renderSide(); const v=document.getElementById("view"); const 
   else if(TAB==="colaboradores") viewColaboradores(v);
   else if(TAB==="contestacoes") viewContestacoes(v);
   else if(TAB==="setor") viewSetor(v);
+  else if(TAB==="rito") viewRito(v);
   else if(TAB==="relatorio") viewRelatorio(v);
   else if(TAB==="admin") viewAdmin(v);
   else if(TAB==="financeiro") viewFinanceiro(v);
@@ -12108,6 +12109,85 @@ async function sucFicha(m,gid){
 .suc-hist{display:flex;align-items:flex-end;gap:4px;height:62px}.suc-hist span{display:flex;flex-direction:column;align-items:center;gap:2px}.suc-hist i{display:block;width:16px;border-radius:4px}.suc-hist em{font-style:normal;font-size:10px;color:var(--muted)}
 .suc-fat{display:grid;gap:12px;margin:6px 0 10px}.suc-fh{display:flex;gap:8px;align-items:baseline}.suc-fh b{font-size:14px}.suc-fv{margin-left:auto;font-weight:700}
 .suc-track{height:8px;border-radius:99px;background:var(--surface-2,#eef1f3);overflow:hidden;margin:5px 0 4px}.suc-track i{display:block;height:100%;border-radius:99px}
+`; document.head.appendChild(s); })();
+
+// ================= Resiltrack Atendimento · REUNIÃO SEMANAL (v3.68) =================
+// Rito de segunda-feira (ideia da aula): abre a semana anterior, setor por setor. Para cada setor aparecem os
+// atendimentos abaixo de 7, os 3 colaboradores e os 3 clientes que mais puxaram a nota para baixo. O gestor registra
+// o que aconteceu, o que foi feito e o combinado; na semana seguinte o combinado volta na tela para cobrar.
+// Banco: atendimentos.rito_semanal via public.atend_rito (SQL 44). Os números são calculados aqui, a partir de ATEND.
+TABS_ALL.rito="Reunião semanal";
+const _allowedTabKeys0=allowedTabKeys; allowedTabKeys=function(){ const t=_allowedTabKeys0(); const i=t.indexOf("setor"); if(i>=0&&!t.includes("rito")) t.splice(i+1,0,"rito"); return t; };
+let RITO={ini:null,d:null,abertos:{}};
+const ritoSeg=d=>{ const x=new Date(d); x.setHours(0,0,0,0); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; };
+const ritoIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const ritoBR=d=>d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+function ritoAg(list){ const cn=list.filter(a=>okNota(a)); const ab=cn.filter(a=>a.nota<7);
+ return {n:list.length,q:cn.length,media:cn.length?cn.reduce((s,a)=>s+a.nota,0)/cn.length:null,ab:ab.length,pct:cn.length?(cn.length-ab.length)/cn.length*100:null,baixos:ab.sort((x,y)=>x.nota-y.nota)}; }
+function ritoTop(baixos,chave,todos){ const m=new Map(); baixos.forEach(a=>{ const k=a[chave]; if(!k||k==="—"||k==="Não identificado") return; if(!m.has(k)) m.set(k,{nome:k,ab:0}); m.get(k).ab++; });
+ return [...m.values()].map(x=>({...x,tot:todos.filter(a=>okNota(a)&&a[chave]===x.nome).length})).sort((a,b)=>b.ab-a.ab||b.ab/b.tot-a.ab/a.tot).slice(0,3); }
+async function viewRito(v){
+ if(!RITO.ini){ const s=ritoSeg(new Date()); s.setDate(s.getDate()-7); RITO.ini=s; }
+ const ini=new Date(RITO.ini), fim=new Date(ini); fim.setDate(fim.getDate()+6); fim.setHours(23,59,59,999);
+ const pIni=new Date(ini); pIni.setDate(pIni.getDate()-7); const pFim=new Date(fim); pFim.setDate(pFim.getDate()-7);
+ const semIso=ritoIso(ini), atual=ritoSeg(new Date()).getTime()<=ini.getTime();
+ v.innerHTML=`<div class="page-head"><h2>Reunião semanal de atendimento</h2><p>a semana anterior, setor por setor: atendimentos abaixo de 7, quem e quais clientes mais puxaram a nota para baixo, e o que o gestor fez</p></div>
+  <div class="mesnav"><button class="navb" id="rtPrev" title="Semana anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
+   <span class="rt-sem">Semana de ${ritoBR(ini)} a ${ritoBR(fim)}</span>
+   <button class="navb" id="rtNext" ${atual?"disabled":""} title="Próxima semana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></button></div>
+  <div id="rtBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ v.querySelector("#rtPrev").onclick=()=>{ const d=new Date(RITO.ini); d.setDate(d.getDate()-7); RITO.ini=d; RITO.d=null; viewRito(v); };
+ v.querySelector("#rtNext").onclick=()=>{ const d=new Date(RITO.ini); d.setDate(d.getDate()+7); RITO.ini=d; RITO.d=null; viewRito(v); };
+ const box=v.querySelector("#rtBox");
+ if(!RITO.d||RITO.d.semana!==semIso){ try{ RITO.d=await sb.rpc("atend_rito",{p:{acao:"listar",semana:semIso}}).then(r=>{ if(r.error) throw r.error; return r.data; }); }
+  catch(e){ const m=String(e&&e.message||e); box.innerHTML=`<div class="card"><div class="empty">${m.includes("atend_rito")?"Falta rodar o SQL 44 (reunião semanal) no Supabase.":m.includes("sem_permissao")?"Só gestores e administradores registram a reunião semanal.":esc(m)}</div></div>`; return; } }
+ if(TAB!=="rito") return;
+ const R=RITO.d.registros||{}, ANT=RITO.d.anterior||{};
+ const sem=atendRange(ini.getTime(),fim.getTime()), ant=atendRange(pIni.getTime(),pFim.getTime());
+ const setores=[...new Set(sem.map(a=>a.setor||"—"))].filter(s=>s!=="—");
+ const rows=setores.map(s=>{ const l=sem.filter(a=>a.setor===s); return {setor:s,l,ag:ritoAg(l),pv:ritoAg(ant.filter(a=>a.setor===s))}; }).filter(r=>r.ag.q>0)
+  .sort((a,b)=>b.ag.ab-a.ag.ab||(a.ag.pct??100)-(b.ag.pct??100));
+ const G=ritoAg(sem), GP=ritoAg(ant), reg=rows.filter(r=>R[r.setor]&&(R[r.setor].analise||R[r.setor].acao)).length;
+ const dlt=(a,b,inv)=>a==null||b==null?"":`<small class="rt-dl ${(inv?b-a:a-b)<0?"neg":(inv?b-a:a-b)>0?"pos":""}">${a-b>0?"+":""}${(Math.round((a-b)*10)/10).toString().replace(".",",")} vs semana anterior</small>`;
+ box.innerHTML=`<div class="cx" style="grid-template-columns:repeat(4,1fr);margin-top:6px">
+   <div class="tile"><div><div class="lbl">Atendimentos avaliados</div><div class="val num">${G.q}</div>${dlt(G.q,GP.q)}</div></div>
+   <div class="tile"><div><div class="lbl">Nota média</div><div class="val num" style="color:${scoreColor(G.media)}">${fmt1(G.media)}</div>${dlt(G.media,GP.media)}</div></div>
+   <div class="tile"><div><div class="lbl">Abaixo de 7</div><div class="val num" style="color:var(--crit)">${G.ab}</div>${dlt(G.ab,GP.ab,true)}</div></div>
+   <div class="tile"><div><div class="lbl">Setores registrados</div><div class="val num">${reg} de ${rows.length}</div></div></div></div>
+  ${rows.map((r,ix)=>{ const rg=R[r.setor]||{}, tr=new Set(rg.tratados||[]), an=ANT[r.setor];
+   const tc=ritoTop(r.ag.baixos,"atendente",r.l), tcl=ritoTop(r.ag.baixos,"cliente",r.l), feitos=r.ag.baixos.filter(a=>tr.has(a.id)).length;
+   return `<div class="card rt-card" data-rt="${ix}"><div class="rt-h"><div><h3>${esc(r.setor)}</h3>
+     <div class="sub">${r.ag.q} atendimento(s) · nota média <b style="color:${scoreColor(r.ag.media)}">${fmt1(r.ag.media)}</b> · ${r.ag.pct==null?"—":Math.round(r.ag.pct)+"%"} acima de 7 ${dlt(r.ag.media,r.pv.media)}</div></div>
+     ${rg.analise||rg.acao?`<span class="pillnum good" title="${escAttr(rg.registrado_por||"")}">Registrado</span>`:r.ag.ab?`<span class="pillnum crit">Falta registrar</span>`:`<span class="pillnum good">Sem nota baixa</span>`}</div>
+    ${an&&an.acao?`<div class="rt-ant"><b>Combinado na semana passada:</b> ${esc(an.acao)}</div>`:""}
+    ${r.ag.ab?`<div class="rt-g"><div><h5 class="crt-h5">Quem mais puxou para baixo</h5>${tc.map(x=>`<div class="ce-row"><span>${esc(x.nome)}</span><span class="sub">${x.ab} de ${x.tot} abaixo de 7</span></div>`).join("")||`<p class="sub">—</p>`}</div>
+      <div><h5 class="crt-h5">Clientes com nota abaixo de 7</h5>${tcl.map(x=>`<div class="ce-row"><span>${esc(x.nome)}</span><span class="sub">${x.ab} atendimento(s)</span></div>`).join("")||`<p class="sub">—</p>`}</div></div>
+     <h5 class="crt-h5">Atendimentos abaixo de 7 <span class="sub" style="font-weight:400;text-transform:none;letter-spacing:0">· ${feitos} de ${r.ag.ab} tratados</span></h5>
+     <div class="rt-list">${r.ag.baixos.map(a=>`<label class="rt-at"><input type="checkbox" data-trat="${escAttr(String(a.id))}" ${tr.has(a.id)?"checked":""}><span class="nota ${notaClass(a.nota)} num">${fmt1(a.nota)}</span>
+       <span class="rt-at-t"><b>${esc(a.assunto)}</b><small>${esc(a.atendente)} · ${esc(a.cliente)} · ${a.data}</small></span><button type="button" class="view-btn" data-rtver="${ATEND.indexOf(a)}">Ver</button></label>`).join("")}</div>`:""}
+    <div class="rt-form"><label class="crm-f"><span>${r.ag.ab?"O que aconteceu":"Parabéns. O que funcionou nesta semana?"}</span><textarea class="inp" rows="2" data-f="analise" maxlength="3000">${esc(rg.analise||"")}</textarea></label>
+     <label class="crm-f"><span>O que foi feito e o combinado para a próxima semana</span><textarea class="inp" rows="2" data-f="acao" maxlength="3000">${esc(rg.acao||"")}</textarea></label>
+     <div class="rt-pe"><span class="sub" data-msg>${rg.registrado_por?`Último registro: ${esc(rg.registrado_por)} · ${new Date(rg.registrado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}`:""}</span><button class="view-btn ce-pri" data-salvar>Salvar</button></div></div></div>`; }).join("")||`<div class="card"><div class="empty">Nenhum atendimento avaliado nesta semana.</div></div>`}`;
+ box.querySelectorAll("[data-rtver]").forEach(b=>b.onclick=ev=>{ ev.preventDefault(); openAvaliacao(+b.dataset.rtver); });
+ box.querySelectorAll(".rt-card").forEach(c=>{ const r=rows[+c.dataset.rt];
+  c.querySelector("[data-salvar]").onclick=async ev=>{ const b=ev.currentTarget, msg=c.querySelector("[data-msg]"); b.disabled=true; msg.textContent="Salvando…";
+   const payload={acao:"salvar",semana:semIso,setor:r.setor,analise:c.querySelector('[data-f="analise"]').value,combinado:c.querySelector('[data-f="acao"]').value,tratados:[...c.querySelectorAll("[data-trat]:checked")].map(x=>x.dataset.trat)};
+   try{ const {error}=await sb.rpc("atend_rito",{p:payload}); if(error) throw error; }
+   catch(e){ b.disabled=false; msg.textContent=String(e.message||e); return; }
+   b.disabled=false; msg.textContent="Salvo agora"; RITO.d=null; };
+ });
+}
+(function(){ const s=document.createElement("style"); s.textContent=`
+.rt-sem{font-weight:700;font-size:15px;padding:0 8px}
+.rt-card{margin-top:14px;padding:18px 20px}.rt-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.rt-h h3{margin:0 0 4px;font-size:18px}
+.rt-dl{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}.rt-dl.neg{color:var(--crit)}.rt-dl.pos{color:var(--good)}.rt-h .rt-dl{display:inline;margin-left:6px}
+.rt-ant{margin-top:10px;padding:9px 12px;border-radius:10px;background:var(--warn-soft);font-size:13px}
+.rt-g{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}@media(max-width:760px){.rt-g{grid-template-columns:1fr}}
+.rt-list{display:grid;gap:6px}.rt-at{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;cursor:pointer}
+.rt-at input{width:17px;height:17px;flex:none}.rt-at-t{flex:1;min-width:0;display:flex;flex-direction:column}.rt-at-t small{color:var(--muted);font-size:12px}
+.rt-at:has(input:checked){opacity:.55}.rt-at:has(input:checked) .rt-at-t b{text-decoration:line-through}
+.rt-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.rt-form .crm-f{display:grid;gap:5px}.rt-pe{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px}
+@media(max-width:760px){.rt-form{grid-template-columns:1fr}}
 `; document.head.appendChild(s); })();
 
 (async function init(){
