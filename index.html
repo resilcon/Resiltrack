@@ -420,6 +420,11 @@
   .kpi-card .ksub{font-size:11px;color:var(--ink-2);line-height:1.35}
   .kpi-card .kdl{font-size:10.5px;font-weight:600;color:var(--muted)}.kpi-card .kdl.ok{color:var(--good)}.kpi-card .kdl.ruim{color:var(--crit)}
   .kpi-card .kf{display:flex;gap:8px;align-items:flex-end;justify-content:space-between}.kpi-card .kspark{flex:none;color:var(--brand,#2a6f97);opacity:.85}
+  .kpi-click{cursor:pointer;transition:box-shadow .15s,border-color .15s}.kpi-click:hover,.kpi-click:focus-visible{border-color:var(--brand,#2a6f97);box-shadow:0 4px 18px rgba(15,31,71,.12);outline:none}
+  .kdtopo{display:flex;flex-direction:column;gap:4px}.kdtopo .kv{font-size:30px;font-weight:700}.kdtopo .kv .un{font-size:13px;color:var(--muted);margin-left:3px}.kdtopo .kv.todo{font-size:16px;color:var(--muted)}
+  .kdtopo .kv.good{color:var(--good)}.kdtopo .kv.warn{color:var(--warn)}.kdtopo .kv.crit{color:var(--crit)}.kdtopo .ksub{font-size:13px;color:var(--ink-2)}.kdtopo .kdl{font-size:12px;font-weight:600;color:var(--muted)}.kdtopo .kdl.ok{color:var(--good)}.kdtopo .kdl.ruim{color:var(--crit)}
+  .kdsec{margin-top:18px}.kdsec h4{margin:0 0 8px;font-size:13.5px}.kdt td,.kdt th{padding:7px 10px;font-size:12.5px}
+  .kbar{display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:120px}.kbar span{display:block;height:7px;border-radius:4px;background:var(--brand,#2a6f97);opacity:.75;max-width:110px;flex:none}.kbar b{font-weight:600;min-width:44px;text-align:right}
   .kpi-card .kpi-lnk{align-self:flex-start;background:none;border:0;padding:2px 0;color:var(--brand,#2a6f97);font-size:11.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
   .kpi-edit{position:absolute;bottom:11px;right:11px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;display:grid;place-items:center}
   .kpi-edit:hover{border-color:var(--accent);color:var(--accent)}
@@ -800,6 +805,130 @@
   .crm-email-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
   .crm-email-prev{width:100%;height:520px;border:1px solid var(--border);border-radius:12px;background:#EDEFF0}
   @media (max-width:860px){.crm-email-g{grid-template-columns:1fr}.crm-email-prev{height:380px}}
+
+  /* ================= PAINEL DO GESTOR · layout novo (v3.61) =================
+     Referência: painel claro, cartões grandes e arredondados, números leves, botões em pílula.
+     Paleta Resilcon: petróleo #066789, azul-marinho #0F1F47, verde-água #269A9E. */
+  .gpage{--gp-bg:#EEF2F3;--gp-card:#FFFFFF;--gp-ink:#0F1F47;--gp-soft:#E6EEF0;--gp-acc:#066789;--gp-acc2:#269A9E;--gp-hl:#CFEDE6;--gp-r:26px;
+    background:var(--gp-bg);border-radius:32px;padding:26px 26px 30px;margin:18px 0 8px}
+  .gp-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .gp-crumb{display:flex;gap:14px;font-size:12px;color:var(--muted)}.gp-crumb span::before{content:"";display:inline-block;width:7px;height:7px;border:1.5px solid currentColor;border-radius:2px;margin-right:6px;vertical-align:0}
+  .gp-title{font-family:"Urbanist",sans-serif;font-size:40px!important;font-weight:500!important;letter-spacing:-.035em;color:var(--gp-ink);margin-top:6px!important;line-height:1.05}
+  .gp-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .gp-pill{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:999px;background:var(--gp-card);border:0;font:600 13px "DM Sans",sans-serif;color:var(--gp-ink);box-shadow:0 1px 2px rgba(15,31,71,.05);cursor:default}
+  button.gp-pill{cursor:pointer}.gp-pill.gp-dark{background:var(--gp-ink);color:#fff}button.gp-pill:hover{filter:brightness(1.08)}
+  .gp-tabs{display:flex;gap:8px;margin:20px 0 6px;flex-wrap:wrap}
+  .gp-tab{height:38px;padding:0 18px;border-radius:999px;border:0;background:var(--gp-card);color:var(--ink-2);font:600 13px "DM Sans",sans-serif;cursor:pointer;transition:background .15s,color .15s}
+  .gp-tab:hover{color:var(--gp-ink)}.gp-tab.on{background:var(--gp-ink);color:#fff}
+  .gpage .gsec-h{margin:22px 4px 2px;align-items:baseline}.gpage .gsec-h h3{font-family:"Urbanist",sans-serif;font-size:22px;font-weight:600;color:var(--gp-ink);letter-spacing:-.02em}
+  .gpage .gsec-h span{font-size:12.5px}
+  .gpage .wall{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:12px}
+  .gpage .kpi-card{background:var(--gp-card);border:0;border-radius:var(--gp-r);box-shadow:0 1px 2px rgba(15,31,71,.04);padding:20px 20px 18px;min-height:190px;gap:0}
+  .gpage .kpi-card.kpi-wide{grid-column:span 2}
+  .gpage .kpi-click:hover,.gpage .kpi-click:focus-visible{box-shadow:0 10px 30px rgba(15,31,71,.10);transform:translateY(-1px);border:0}
+  .gpage .kpi-click{transition:box-shadow .18s,transform .18s}
+  .gpage .kc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .gpage .kpi-card .kn{font-family:"Urbanist",sans-serif;font-size:17px;font-weight:600;color:var(--gp-ink);padding:0;letter-spacing:-.01em}
+  .gpage .kpi-card .km{font-size:12px;color:var(--muted);margin-top:2px}
+  .gpage .kc-go{flex:none;width:34px;height:34px;border-radius:50%;background:var(--gp-soft);color:var(--gp-ink);display:grid;place-items:center;transition:background .15s,color .15s}
+  .gpage .kpi-click:hover .kc-go{background:var(--gp-ink);color:#fff}
+  .gpage .kc-b{display:flex;gap:14px;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:14px}
+  .gpage .kc-v{min-width:0;display:flex;flex-direction:column;gap:4px}
+  .gpage .kpi-card .kv{font-family:"Urbanist",sans-serif;font-size:42px;font-weight:500;letter-spacing:-.035em;line-height:1;color:var(--gp-ink);margin:0}
+  .gpage .kpi-card .kv .un{font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;letter-spacing:0;margin-left:5px}
+  .gpage .kpi-card .kv.good{color:var(--gp-ink)}.gpage .kpi-card .kv.warn{color:#B7791F}.gpage .kpi-card .kv.crit{color:var(--crit)}
+  .gpage .kpi-card .kv.todo{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--muted)}
+  .gpage .kpi-card .ksub{font-size:12px;color:var(--ink-2)}
+  .gpage .kpi-card .kdl{display:inline-flex;align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--gp-soft);color:var(--ink-2);margin-top:2px}
+  .gpage .kpi-card .kdl.ok{background:var(--gp-hl);color:#0E6B5C}.gpage .kpi-card .kdl.ruim{background:#FBE3E7;color:#B3263D}
+  .gpage .kc-a{margin-top:10px}.gpage .kpi-card .kpi-lnk{display:inline-flex;align-items:center;height:30px;padding:0 13px;border-radius:999px;background:var(--gp-soft);color:var(--gp-ink);text-decoration:none;font-size:12px}
+  .gpage .kpi-card .kpi-lnk:hover{background:var(--gp-ink);color:#fff}
+  .gpage .kc-bars{flex:none;display:flex;align-items:flex-end;gap:6px;height:74px;width:112px}
+  .gpage .kc-bars.big{height:128px;width:min(54%,300px);gap:10px}
+  .gpage .kc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end;min-width:0}
+  .gpage .kc-col span{font-size:10px;color:var(--muted);line-height:1}
+  .gpage .kc-bar{width:100%;border-radius:10px 10px 6px 6px;background:var(--gp-soft);position:relative;min-height:6px}
+  .gpage .kc-bar.on{background:repeating-linear-gradient(135deg,var(--gp-acc) 0 2px,#E3F1F4 2px 7px);border:1.5px solid var(--gp-acc)}
+  .gpage .kc-bar em{position:absolute;top:-30px;left:50%;transform:translateX(-50%);white-space:nowrap;font-style:normal;font-size:11px;font-weight:700;background:var(--gp-hl);color:#0E6B5C;padding:3px 8px;border-radius:8px}
+  /* Revisão diária: o quadro escuro vira cartão claro */
+  .gpage .gsec{margin-top:6px}
+  .gpage .wb{background:var(--gp-card)!important;color:var(--gp-ink)!important;border-radius:var(--gp-r);box-shadow:0 1px 2px rgba(15,31,71,.04);padding:22px}
+  .gpage .wb-title{font-family:"Urbanist",sans-serif;font-size:18px;color:var(--gp-ink)}.gpage .wb-title span,.gpage .wb-clock .d,.gpage .wb-tile .l,.gpage .wb-tile .s,.gpage .wb-gauge .ring .hole small,.gpage .wb-ring-item .lbl,.gpage .wb-empty{color:var(--muted)!important}
+  .gpage .wb-clock .t{color:var(--gp-ink);font-weight:500}
+  .gpage .wb-monthnav,.gpage .wb-depsel{background:var(--gp-soft)!important;border:0!important;color:var(--gp-ink)!important;border-radius:999px!important}
+  .gpage .wb-depsel{height:38px;padding:0 14px}.gpage .wb-monthnav button{color:var(--gp-ink)!important;border-radius:50%}.gpage .wb-monthnav button:hover{background:#fff!important}
+  .gpage .wb-back{border:0!important;background:var(--gp-ink)!important;color:#fff!important;border-radius:999px!important;height:34px;padding:0 14px!important}
+  .gpage .wb-tile{background:var(--gp-bg)!important;border:0!important;border-radius:20px!important}
+  .gpage .wb-tile::before{display:none}
+  .gpage .wb-tile .v{font-weight:500!important;color:var(--gp-ink)!important;font-size:36px!important;letter-spacing:-.03em}
+  .gpage .wb-tile.c-crit .v{color:var(--crit)!important}.gpage .wb-tile.c-warn .v{color:#B7791F!important}.gpage .wb-tile.c-good .v{color:#0E6B5C!important}.gpage .wb-tile.c-accent .v{color:var(--gp-acc)!important}
+  .gpage .wb-gauge .ring .hole,.gpage .wb-ring-item .ring .hole{background:#fff!important}
+  .gpage .wb-gauge .ring .hole b,.gpage .wb-ring-item .ring .hole b{color:var(--gp-ink)}
+  .gpage .wb-gauge .lbl,.gpage .wb-list-h{color:var(--ink-2)!important}
+  .gpage .wb-row{border-top-color:var(--gp-soft)!important}.gpage .wb-row .rn{color:var(--gp-ink)!important}.gpage .wb-row .rn:hover{color:var(--gp-acc)!important}
+  .gpage .wb-row .rbar{background:var(--gp-soft)!important;border-radius:999px}.gpage .wb-row .rbar i{background:repeating-linear-gradient(135deg,#CF4257 0 2px,#F7D3DA 2px 6px)!important}
+  .gpage .wb-row .rc{color:var(--ink-2)!important}
+  /* blocos Pessoas, Clientes e Processos */
+  .gpage .acc{background:var(--gp-card);border:0;border-radius:var(--gp-r);margin-top:12px;box-shadow:0 1px 2px rgba(15,31,71,.04)}
+  .gpage .acc>summary{padding:18px 20px!important;font-family:"Urbanist",sans-serif;font-size:17px;font-weight:600;color:var(--gp-ink)}
+  .gpage .acc>summary .acc-ic{width:40px;height:40px;border-radius:50%;background:var(--gp-soft);color:var(--gp-ink)}
+  .gpage .acc[open]>summary .acc-ic{background:var(--gp-ink);color:#fff}
+  .gpage .acc .acc-cta{font-family:"DM Sans",sans-serif;font-size:12px;font-weight:600;background:var(--gp-soft);padding:5px 12px;border-radius:999px;color:var(--ink-2)}
+  @media(max-width:1100px){ .gpage .wall{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media(max-width:640px){ .gpage{padding:16px 12px 20px;border-radius:22px;margin:10px -8px} .gp-title{font-size:30px!important} .gpage .wall{grid-template-columns:1fr} .gpage .kpi-card.kpi-wide{grid-column:auto} .gpage .kc-bars.big{width:46%;height:96px} .gpage .kpi-card .kv{font-size:34px} }
+
+  /* ================= PAINEL DO GESTOR · liquid glass (v3.62) ================= */
+  .gpage{position:relative;overflow:hidden;isolation:isolate;
+    background:
+      radial-gradient(60% 50% at 8% 0%,rgba(38,154,158,.40) 0%,rgba(38,154,158,0) 70%),
+      radial-gradient(50% 45% at 100% 12%,rgba(6,103,137,.35) 0%,rgba(6,103,137,0) 70%),
+      radial-gradient(55% 40% at 70% 100%,rgba(140,222,196,.45) 0%,rgba(140,222,196,0) 70%),
+      radial-gradient(45% 35% at 0% 85%,rgba(15,31,71,.18) 0%,rgba(15,31,71,0) 70%),
+      linear-gradient(180deg,#E8F0F2 0%,#EEF3F4 100%)}
+  .gpage::before,.gpage::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(40px);opacity:.55;pointer-events:none}
+  .gpage::before{width:420px;height:420px;left:-120px;top:240px;background:radial-gradient(circle,#7FD8C4 0%,rgba(127,216,196,0) 70%)}
+  .gpage::after{width:520px;height:520px;right:-160px;top:620px;background:radial-gradient(circle,#2A8FB0 0%,rgba(42,143,176,0) 70%)}
+  .gpage .kpi-card,.gpage .wb,.gpage .acc,.gp-pill,.gp-tab{
+    background:linear-gradient(150deg,rgba(255,255,255,.78) 0%,rgba(255,255,255,.46) 100%)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+    border:1px solid rgba(255,255,255,.75)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.25),0 8px 32px rgba(15,31,71,.08)!important}
+  .gp-pill.gp-dark,.gp-tab.on{background:linear-gradient(150deg,rgba(15,31,71,.92),rgba(6,103,137,.88))!important;color:#fff!important;border-color:rgba(255,255,255,.25)!important}
+  .gpage .kpi-click:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 18px 40px rgba(15,31,71,.14)!important;transform:translateY(-2px)}
+  .gpage .kc-go{background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(15,31,71,.08)}
+  .gpage .kpi-card .kdl{background:rgba(255,255,255,.65)}.gpage .kpi-card .kdl.ok{background:rgba(140,222,196,.55)}.gpage .kpi-card .kdl.ruim{background:rgba(251,213,220,.8)}
+  .gpage .kpi-card .kpi-lnk{background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.9)}
+  .gpage .kc-bar{background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.9)}
+  .gpage .kc-bar.on{background:repeating-linear-gradient(135deg,rgba(6,103,137,.85) 0 2px,rgba(255,255,255,.55) 2px 7px);border:1.5px solid rgba(6,103,137,.8)}
+  .gpage .kc-bar em{background:#9BE7CF;color:#0B4F45}
+  .gpage .wb-tile{background:rgba(255,255,255,.55)!important;border:1px solid rgba(255,255,255,.85)!important}
+  .gpage .wb-monthnav,.gpage .wb-depsel{background:rgba(255,255,255,.7)!important}
+  .gpage .acc>summary .acc-ic{background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.9)}
+  /* cartão de destaque */
+  .gpage .gp-hero{grid-column:span 2;grid-row:span 2;min-height:400px;overflow:hidden;position:relative;padding:22px!important;
+    background:linear-gradient(160deg,rgba(255,255,255,.70) 0%,rgba(230,244,246,.40) 100%)!important}
+  .gp-hero .gh-top{position:relative;z-index:2}.gp-hero .kn{font-size:20px!important}
+  .gp-orbs{position:absolute;inset:-4% -2% 34% 30%;z-index:0;pointer-events:none}
+  .gp-orbs i{position:absolute;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 32% 28%,#FFFFFF 0%,#D9FBF1 10%,#8EE3CC 26%,#2FA79F 55%,#066789 82%,#0F3B5A 100%);
+    box-shadow:inset -6px -8px 14px rgba(4,40,60,.35),inset 4px 5px 10px rgba(255,255,255,.6),0 10px 18px rgba(6,103,137,.25);
+    animation:gpFlutua 7s ease-in-out infinite}
+  @keyframes gpFlutua{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 6px))}}
+  @media (prefers-reduced-motion:reduce){.gp-orbs i{animation:none}}
+  .gh-glass{position:absolute;left:14px;right:14px;bottom:14px;z-index:2;border-radius:22px;padding:18px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;
+    background:linear-gradient(150deg,rgba(255,255,255,.55),rgba(255,255,255,.25));-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+    border:1px solid rgba(255,255,255,.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 30px rgba(15,31,71,.10)}
+  .gh-nums{display:flex;flex-direction:column;gap:12px}
+  .gh-nums b{display:block;font-family:"Urbanist",sans-serif;font-size:34px;font-weight:500;letter-spacing:-.035em;color:var(--gp-ink);line-height:1}
+  .gh-nums span{font-size:12px;color:var(--ink-2)}
+  .gh-bars{display:flex;gap:12px;align-items:flex-end;height:190px}
+  .gh-bar{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;width:78px}
+  .gh-bar small{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.2}
+  .gh-fill{width:100%;border-radius:22px 22px 14px 14px;background:linear-gradient(180deg,#B8F0DD 0%,#6ED3BC 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 8px 18px rgba(38,154,158,.25);
+    padding:10px 8px;display:flex;flex-direction:column;justify-content:flex-start;min-height:44px}
+  .gh-fill b{font-family:"Urbanist",sans-serif;font-size:18px;font-weight:600;color:#0B4F45;line-height:1}.gh-fill span{font-size:10.5px;color:#0B4F45;opacity:.8}
+  @media(max-width:1100px){ .gpage .gp-hero{grid-row:auto} }
+  @media(max-width:640px){ .gpage .gp-hero{grid-column:auto;min-height:420px} .gh-glass{grid-template-columns:1fr} .gh-bars{height:130px} .gh-nums b{font-size:28px} }
 </style>
 </head>
 <body>
@@ -839,7 +968,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.60 (Olimpo: KPIs automáticos com histórico mensal)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.62 (Olimpo: visual liquid glass e detalhe de cada KPI)</footer>
   </div>
 </div>
 
@@ -1266,6 +1395,23 @@ function kpiAuto(id){
 }
 const _kn=(n,d)=>n==null||isNaN(n)?"—":Number(n).toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d==null?1:d});
 const _kr=n=>n==null||isNaN(n)?"—":Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+const GP_LARGOS=["horas_econ","adocao"];
+// cartão de destaque com esferas (liquid glass), no estilo da referência
+function gpEsferas(){ const P=[[29.9,76.8,10],[26.6,61.9,10],[38.2,76.2,10],[39.6,73.0,10],[30.7,82.9,10],[98,14.8,12],[26.6,75.9,12],[35.2,72.4,13],[38.1,77.9,14],[43.4,73.1,15],[32.5,59.0,16],[41.5,72.2,16],[42.2,68.3,17],[41.5,55.3,17],[37.5,61.2,17],[88.4,2,21],[81.7,11.0,21],[80.1,29.5,22],[87.3,2.7,26],[56.0,65.9,27],[37.5,56.0,27],[84.5,15.2,27],[51.2,54.3,31],[50.0,70.9,31],[65.4,37.8,33],[70.6,51.4,34],[58.0,44.2,42],[53.2,49.3,43],[55.9,45.8,43],[54.2,32.8,44],[52.6,71.1,44],[37.1,43.1,46],[83.1,32.0,47],[56.1,43.6,48],[51.7,53.0,48],[66.2,40.9,49],[66.7,33.8,51],[71.2,40.5,51],[62.3,64.7,51],[77.6,30.3,52],[66.5,37.6,55],[61.6,42.8,59],[54.3,61.5,59],[58.1,42.1,61],[53.1,42.1,72],[72.1,41.8,74]];
+  return `<div class="gp-orbs" aria-hidden="true">${P.map(([x,y,d],i)=>`<i style="left:${x}%;top:${y}%;width:${d}px;height:${d}px;animation-delay:${(i%7)*-0.9}s"></i>`).join("")}</div>`; }
+function gpHero(){ const A=(PKPI&&PKPI.atual)||{}, ad=(A.adocao||{}).valor, he=(A.horas_econ||{}).valor, au=(A.demandas_elim||{}).valor, ec=(A.economia||{}).valor;
+  const cob=kpiAuto("cobertura"), pr=(A.projetos_result||{}).valor;
+  const barra=(v,rot,sub)=>`<div class="gh-bar"><div class="gh-fill" style="height:${v==null?6:Math.max(14,Math.min(100,v))}%"><b>${v==null?"—":_kn(v,0)+"%"}</b><span>${rot}</span></div><small>${sub}</small></div>`;
+  return `<div class="kpi-card gp-hero">${gpEsferas()}
+    <div class="gh-top"><div><div class="kn">Inovação na Resilcon</div><div class="km">o que as plataformas e automações já entregam</div></div></div>
+    <div class="gh-glass">
+      <div class="gh-nums"><div><b>${he==null?"—":_kn(he,0)}</b><span>h/mês economizadas</span></div><div><b>${au==null?"—":_kn(au,0)}</b><span>automações no ar</span></div><div><b>${ec==null?"—":_kr(ec)}</b><span>economia por mês</span></div></div>
+      <div class="gh-bars">${barra(ad,"adoção","uso das ferramentas")}${barra(cob,"avaliados","atendimentos")}</div>
+    </div></div>`; }
+function kpiBarras(k,larga){ const H=((PKPI&&PKPI.historico)||{})[k.id]; if(!H) return ""; const L=H.filter(x=>x.mes>="2026-09-01"&&x.valor!=null); if(L.length<2) return "";
+  const vs=L.map(x=>+x.valor), mn=Math.min(0,...vs), mx=Math.max(...vs), rg=(mx-mn)||1, ult=L.length-1;
+  return `<div class="kc-bars${larga?" big":""}" aria-label="Histórico mensal">${L.map((x,i)=>{ const h=Math.max(8,Math.round((+x.valor-mn)/rg*100));
+    return `<div class="kc-col"><div class="kc-bar${i===ult?" on":""}" style="height:${h}%" title="${_kmes(x.mes)}: ${esc(_kfmt(k,+x.valor))}">${i===ult&&larga?`<em>${esc(_kfmt(k,+x.valor))}</em>`:""}</div><span>${_kmes(x.mes).slice(0,3)}</span></div>`; }).join("")}</div>`; }
 function kpiSpark(id){ const H=((PKPI&&PKPI.historico)||{})[id]; if(!H) return ""; const L=H.filter(x=>x.mes>="2026-09-01"&&x.valor!=null);
   if(L.length<2) return ""; const vs=L.map(x=>+x.valor), mn=Math.min(...vs), mx=Math.max(...vs), W=64, Hh=18;
   const pts=vs.map((v,i)=>`${(i/(vs.length-1)*W).toFixed(1)},${(Hh-2-(mx===mn?Hh/2-2:(v-mn)/(mx-mn)*(Hh-4))).toFixed(1)}`).join(" ");
@@ -1303,15 +1449,98 @@ function kpiRender(k){
     else if(k.id==="projetos_result"){ disp=`<span class="kv">${_kn(v,0)}${un("%")}</span>`; sub=`${A.com_resultado} de ${A.total} com ganho medido`; }
     sub=(sub?`<div class="ksub">${esc(sub)}</div>`:"")+kpiDelta(k,v,B.valor==null?null:+B.valor);
   }
-  const badge=`<span class="kpi-badge auto">auto</span>`;
-  return `<div class="kpi-card">${badge}<div class="kn">${esc(k.nome)}</div><div class="km">${esc(k.mede)}</div>${disp}${sub}<div class="kf"><span>Como medir: ${esc(k.medir)}</span>${k.front?"":kpiSpark(k.id)}</div>${acao}</div>`;
+  const larga=GP_LARGOS.includes(k.id), barras=(k.front||!larga)?"":kpiBarras(k,larga);
+  return `<div class="kpi-card kpi-click${larga?" kpi-wide":""}" data-kdet="${k.id}" tabindex="0" role="button" aria-label="Ver detalhes de ${escAttr(k.nome)}">
+    <div class="kc-h"><div><div class="kn">${esc(k.nome)}</div><div class="km">${esc(k.mede)}</div></div><span class="kc-go" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg></span></div>
+    <div class="kc-b"><div class="kc-v">${disp}${sub}</div>${barras}</div>${acao?`<div class="kc-a">${acao}</div>`:""}</div>`;
 }
 function wallboardHTML(){
   if(!PKPI&&!PKPI_LOAD&&!PKPI_ERR) setTimeout(()=>pkpiCarregar(),0);
-  return `<div class="gsec-h" style="margin-top:8px"><h3>Wallboard de KPIs</h3><span>indicadores do supervisor de inovação · últimos 30 dias, atualizados todo dia${PKPI_ERR?` · <b style="color:var(--crit)">${esc(PKPI_ERR)}</b>`:""}</span></div>`
-    +`<div class="wall">`+GEST_KPIS.map(kpiRender).join("")+`</div>`;
+  return `<div class="gsec-h"><h3>Indicadores</h3><span>supervisor de inovação · últimos 30 dias · clique num card para ver o detalhe${PKPI_ERR?` · <b style="color:var(--crit)">${esc(PKPI_ERR)}</b>`:""}</span></div>`
+    +`<div class="wall">`+gpHero()+GEST_KPIS.filter(k=>GP_LARGOS.includes(k.id)).concat(GEST_KPIS.filter(k=>!GP_LARGOS.includes(k.id))).map(kpiRender).join("")+`</div>`;
 }
-function bindWall(w){ w.querySelectorAll("[data-kact]").forEach(b=>b.onclick=()=>b.dataset.kact==="horas"?pkpiHoras():pkpiCusto()); }
+function bindWall(w){
+  w.querySelectorAll("[data-kact]").forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); b.dataset.kact==="horas"?pkpiHoras():pkpiCusto(); });
+  w.querySelectorAll("[data-kdet]").forEach(c=>{ c.onclick=()=>pkpiDetalhe(c.dataset.kdet); c.onkeydown=ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); pkpiDetalhe(c.dataset.kdet); } }; }); }
+
+// ---------- detalhe de cada KPI (pop-up) ----------
+let PKDET=null;
+const _kt=(cols,rows,vazio)=>rows&&rows.length?`<div style="overflow-x:auto"><table class="kdt"><thead><tr>${cols.map(c=>`<th${c.r?' class="right"':""}>${esc(c.t)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td${c.r?' class="right"':""}>${c.f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:`<div class="empty" style="padding:14px">${esc(vazio||"Sem dados no período.")}</div>`;
+const _kbar=(v,max,txt)=>`<div class="kbar"><span style="width:${max?Math.max(2,Math.min(100,v/max*100)):0}%"></span><b>${txt}</b></div>`;
+const _ksec=(t,html,nota)=>`<div class="kdsec"><h4>${esc(t)}</h4>${nota?`<p class="sub" style="margin:-4px 0 8px">${esc(nota)}</p>`:""}${html}</div>`;
+const _kmes=m=>{ const n=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]; return `${n[+String(m).slice(5,7)-1]}/${String(m).slice(2,4)}`; };
+function _kfmt(k,v){ if(v==null||isNaN(v)) return "—"; if(k.unid==="R$") return _kr(v); if(k.unid==="%") return _kn(v,1)+"%"; if(k.unid==="/h") return _kn(v,2); if(k.unid==="min") return _kn(v,0)+" min"; if(k.unid==="h") return _kn(v,k.id==="reducao_horas"?2:0)+" h"; return _kn(v,0); }
+async function pkpiDetalhe(id){
+  const k=GEST_KPIS.find(x=>x.id===id); if(!k) return;
+  const card=document.querySelector(`[data-kdet="${id}"]`);
+  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">KPI · ${esc(k.mede)}</div><h3 style="margin:2px 0 0;font-size:18px">${esc(k.nome)}</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff" aria-label="Fechar">✕</button></div>
+   <div style="padding:18px 22px" id="kdBox"><div class="empty">Carregando…</div></div>`);
+  modal.classList.add("prodm"); modal.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  const box=modal.querySelector("#kdBox");
+  if(!k.front&&!PKDET){ try{ PKDET=await crmRpc("painel_kpis",{p:{acao:"detalhe"}}); }catch(e){ box.innerHTML=`<div class="empty">${esc(crmErro(e))}</div>`; return; } }
+  const D=PKDET||{}, A=((PKPI&&PKPI.atual)||{})[id]||{}, B=((PKPI&&PKPI.anterior)||{})[id]||{};
+  // topo: o valor do card, o método e quando foi calculado
+  const topo=card?`<div class="kdtopo">${card.querySelector(".kv")?card.querySelector(".kv").outerHTML:""}${card.querySelector(".ksub")?card.querySelector(".ksub").outerHTML:""}${card.querySelector(".kdl")?card.querySelector(".kdl").outerHTML:""}</div>`:"";
+  const metodo=`<p class="sub" style="margin:8px 0 0"><b>Como é medido:</b> ${esc(k.medir)}.${PKPI&&PKPI.calculado_em&&!k.front?` Atualizado em ${new Date(PKPI.calculado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""}</p>`;
+  let corpo="";
+  const H=(((PKPI&&PKPI.historico)||{})[id]||[]).filter(x=>x.mes>="2026-09-01");
+  const hist=H.length?_ksec("Mês a mês",_kt([{t:"Mês",f:r=>_kmes(r.mes)},{t:k.nome,r:1,f:r=>_kfmt(k,r.valor==null?null:+r.valor)}],H.slice().reverse()),"O mês atual vai até ontem."):"";
+  const comp=(rot)=>_ksec("Últimos 30 dias contra os 30 anteriores",_kt([{t:"",f:r=>esc(r[0])},{t:"Últimos 30 dias",r:1,f:r=>r[1]},{t:"30 dias antes",r:1,f:r=>r[2]}],rot));
+  const proj=(D.projetos||[]);
+  const fonteTx={confirmada:"Confirmada",informada:"Informada",ia:"Estimativa da IA",sem:"Sem horas"};
+  if(id==="horas_econ"||id==="reducao_horas"){
+    const L=proj.filter(p=>p.status==="No ar"), mx=Math.max(1,...L.map(p=>+p.horas||0));
+    corpo=comp([["Horas economizadas por mês",_kfmt({unid:"h"},A.valor),_kfmt({unid:"h"},B.valor)],["Ainda estimadas pela IA",_kfmt({unid:"h"},A.horas_ia),_kfmt({unid:"h"},B.horas_ia)]].concat(id==="reducao_horas"?[["Clientes ativos no G-Click",_kn(A.clientes,0),_kn(B.clientes,0)]]:[]))
+     +_ksec("Projetos no ar e quanto cada um economiza",_kt([{t:"Projeto",f:p=>`<b>${esc(p.nome||"")}</b><div class="sub">${esc([p.tipo,p.responsavel].filter(Boolean).join(" · "))}</div>`},{t:"Origem",f:p=>`<span class="chip${p.fonte==="ia"?" err":""}">${fonteTx[p.fonte]||p.fonte}</span>`},{t:"Horas/mês",r:1,f:p=>_kbar(+p.horas||0,mx,p.horas==null?"—":_kn(p.horas,1)+" h")}],L),"Para corrigir uma estimativa, use Conferir horas no card.");
+  } else if(id==="economia"){
+    const L=proj.filter(p=>p.status==="No ar"&&(+p.horas>0||+p.economia_mes>0)), ch=((PKPI&&PKPI.atual&&PKPI.atual.custo_cliente)||{}).custo_hora;
+    corpo=comp([["Economia total por mês",_kr(A.valor),_kr(B.valor)],["Vinda das horas economizadas",A.de_horas==null?"falta custo/hora":_kr(A.de_horas),B.de_horas==null?"—":_kr(B.de_horas)],["Custos eliminados (ferramentas)",_kr(A.de_ferramentas),_kr(B.de_ferramentas)]])
+     +_ksec("De onde vem a economia",_kt([{t:"Projeto",f:p=>`<b>${esc(p.nome||"")}</b>`},{t:"Horas/mês",r:1,f:p=>p.horas==null?"—":_kn(p.horas,1)+" h"},{t:"Em reais (horas)",r:1,f:p=>ch&&p.horas?_kr(p.horas*ch):"—"},{t:"Custos eliminados",r:1,f:p=>p.economia_mes?_kr(p.economia_mes):"—"}],L,"Nenhum projeto com horas ou custos eliminados informados."),ch?`Custo/hora usado: ${_kr(ch)}.`:"Defina o custo/hora para transformar horas em reais.");
+  } else if(id==="demandas_elim"){
+    const L=proj.filter(p=>p.tipo==="Automação"&&p.status==="No ar").sort((a,b)=>String(b.no_ar_em||"").localeCompare(String(a.no_ar_em||"")));
+    corpo=comp([["Automações no ar",_kn(A.valor,0),_kn(B.valor,0)],["Novas no período",_kn(A.novas,0),_kn(B.novas,0)]])
+     +_ksec("Automações no ar, das mais recentes para as mais antigas",_kt([{t:"Automação",f:p=>`<b>${esc(p.nome||"")}</b><div class="sub">${esc(p.responsavel||"")}</div>`},{t:"No ar desde",r:1,f:p=>p.no_ar_em?fmtD(p.no_ar_em):"—"}],L));
+  } else if(id==="projetos_result"){
+    const com=proj.filter(p=>(p.fonte==="confirmada"||p.fonte==="informada")&&+p.horas>0||+p.economia_mes>0), sem=proj.filter(p=>!com.includes(p));
+    corpo=comp([["Com ganho medido",`${A.com_resultado} de ${A.total}`,`${B.com_resultado} de ${B.total}`],["Percentual",_kfmt(k,A.valor),_kfmt(k,B.valor)]])
+     +_ksec(`Com ganho medido (${com.length})`,_kt([{t:"Projeto",f:p=>`<b>${esc(p.nome||"")}</b>`},{t:"Horas/mês",r:1,f:p=>p.horas==null?"—":_kn(p.horas,1)+" h"},{t:"Custos eliminados",r:1,f:p=>p.economia_mes?_kr(p.economia_mes):"—"}],com))
+     +_ksec(`Ainda sem ganho medido (${sem.length})`,_kt([{t:"Projeto",f:p=>`<b>${esc(p.nome||"")}</b><div class="sub">${esc([p.tipo,p.status].filter(Boolean).join(" · "))}</div>`},{t:"Situação",f:p=>`<span class="chip">${fonteTx[p.fonte]||p.fonte}</span>`}],sem),"Estimativa da IA não conta como ganho medido: conta depois de confirmada em Conferir horas.");
+  } else if(id==="custo_cliente"){
+    corpo=comp([["Custo por cliente por mês",A.valor==null?"—":_kr(A.valor),B.valor==null?"—":_kr(B.valor)],["Custo por hora",A.custo_hora==null?"falta definir":_kr(A.custo_hora),B.custo_hora==null?"—":_kr(B.custo_hora)],["Clientes ativos no G-Click",_kn(A.clientes,0),_kn(B.clientes,0)]])
+     +_ksec("Como a conta é feita",`<p style="margin:0;font-size:13px;line-height:1.55">Custo por hora × jornada mensal (220 h) × pessoas ativas no Themis RH ÷ clientes com tarefa no G-Click nos últimos 60 dias.<br>${A.fonte==="folha"?"O custo por hora vem da folha do Themis RH (só o total; nenhum salário aparece aqui).":A.fonte==="fixo"?"O custo por hora é o valor fixo definido pelo administrador.":"Falta o custo por hora: cadastre os salários no Themis RH (pelo menos 80% da equipe) ou defina um valor fixo em Custo/hora."}</p>`);
+  } else if(id==="produtividade"){
+    const E=D.entregas_depto||[], Hd=D.horas_depto||[], me=Math.max(1,...E.map(x=>x.entregas)), mh=Math.max(1,...Hd.map(x=>+x.horas));
+    corpo=comp([["Entregas por hora",_kn(A.valor,2),_kn(B.valor,2)],["Entregas concluídas no G-Click",_kn(A.entregas,0),_kn(B.entregas,0)],["Horas trabalhadas no Kronos",_kn(A.horas,0)+" h",_kn(B.horas,0)+" h"]])
+     +_ksec("Entregas concluídas por departamento (G-Click)",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"No prazo",r:1,f:x=>x.entregas?_kn(100*x.no_prazo/x.entregas,0)+"%":"—"},{t:"Entregas",r:1,f:x=>_kbar(x.entregas,me,_kn(x.entregas,0))}],E),"Sem o Financeiro.")
+     +_ksec("Horas trabalhadas por departamento (Kronos ID)",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Pessoas",r:1,f:x=>_kn(x.pessoas,0)},{t:"Horas",r:1,f:x=>_kbar(+x.horas,mh,_kn(x.horas,0)+" h")}],Hd),"Só dias com o ponto apurado. Quem ainda não bate ponto no Kronos não entra nas horas.");
+  } else if(id==="adocao"){
+    const Ap=D.adocao_apps||[], Dp=D.adocao_depto||[], ma=Math.max(1,...Ap.map(x=>x.pessoas));
+    corpo=comp([["Pessoas usando",`${A.usando} de ${A.ativos}`,`${B.usando} de ${B.ativos}`],["Adoção",_kfmt(k,A.valor),_kfmt(k,B.valor)]])
+     +_ksec("Por ferramenta (últimas 4 semanas)",_kt([{t:"Ferramenta",f:x=>esc(x.app)},{t:"Tempo de uso",r:1,f:x=>_kn(x.horas,1)+" h"},{t:"Pessoas",r:1,f:x=>_kbar(x.pessoas,ma,_kn(x.pessoas,0))}],Ap))
+     +_ksec("Por departamento",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Usando",r:1,f:x=>`${x.usando} de ${x.total}`},{t:"Adoção",r:1,f:x=>_kbar(x.usando,x.total,x.total?_kn(100*x.usando/x.total,0)+"%":"—")}],Dp),"Base: colaboradores ativos monitorados pelo Neocode nas últimas 4 semanas.");
+  } else if(id==="tempo_resol"){
+    const F=D.faixas_duracao||{}, fx=[["Até 15 min","ate_15"],["15 a 60 min","15_60"],["1 a 4 h","1_4h"],["4 a 24 h","4_24h"],["Mais de 1 dia","mais_1_dia"]], mf=Math.max(1,...fx.map(x=>+F[x[1]]||0)), Ad=D.atend_depto||[];
+    corpo=comp([["Mediana",_kfmt(k,A.valor),_kfmt(k,B.valor)]])
+     +_ksec("Quanto duram os atendimentos",_kt([{t:"Duração",f:x=>x[0]},{t:"Atendimentos",r:1,f:x=>_kbar(+F[x[1]]||0,mf,_kn(F[x[1]],0))}],fx),"Do início ao fim da conversa. Atendimentos que ficam abertos de um dia para o outro puxam a média para cima, por isso o KPI usa a mediana.")
+     +_ksec("Por departamento",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Atendimentos",r:1,f:x=>_kn(x.atendimentos,0)},{t:"Mediana",r:1,f:x=>x.mediana_min==null?"—":_kn(x.mediana_min,0)+" min"}],Ad));
+  } else if(id==="reincidencia"){
+    const R=D.reinc_assuntos||[], Ad=D.atend_depto||[], mr=Math.max(1,...R.map(x=>x.vezes));
+    corpo=comp([["Reincidência",_kfmt(k,A.valor),_kfmt(k,B.valor)],["Atendimentos que voltaram",`${A.voltaram} de ${A.atendimentos}`,`${B.voltaram} de ${B.atendimentos}`]])
+     +_ksec("Assuntos que mais voltaram",_kt([{t:"Assunto",f:x=>esc(x.assunto)},{t:"Vezes",r:1,f:x=>_kbar(x.vezes,mr,_kn(x.vezes,0))}],R))
+     +_ksec("Por departamento",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Atendimentos",r:1,f:x=>_kn(x.atendimentos,0)},{t:"Reincidência",r:1,f:x=>x.reincidencia==null?"—":_kn(x.reincidencia,1)+"%"}],Ad),"Conta quando o atendimento foi dado como resolvido (ou não resolvido) e o mesmo contato volta em até 7 dias com assunto parecido.");
+  } else if(id==="retrabalho"){
+    const Rd=(D.retif_depto||[]).filter(x=>x.entregas>0), Rt=D.retif_tipos||[], mt=Math.max(1,...Rt.map(x=>x.retificacoes)), Ad=(D.atend_depto||[]).filter(x=>x.documento_errado>0);
+    corpo=comp([["Entregas retificadas",_kn(A.taxa_atual,2)+"%",_kn(A.taxa_anterior,2)+"%"],["Atendimentos com documento errado",_kn(A.documento_errado,0),_kn(B.documento_errado,0)]])
+     +_ksec("Retificações por departamento (G-Click)",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Entregas",r:1,f:x=>_kn(x.entregas,0)},{t:"Retificações",r:1,f:x=>_kn(x.retificacoes,0)},{t:"Taxa",r:1,f:x=>_kn(100*x.retificacoes/x.entregas,2)+"%"}],Rd))
+     +_ksec("Obrigações que mais precisaram de retificação",_kt([{t:"Obrigação",f:x=>esc(x.tipo||"")},{t:"Retificações",r:1,f:x=>_kbar(x.retificacoes,mt,_kn(x.retificacoes,0))}],Rt,"Nenhuma retificação no período."))
+     +_ksec("Documento errado enviado ao cliente, por departamento",_kt([{t:"Departamento",f:x=>esc(x.depto)},{t:"Atendimentos",r:1,f:x=>_kn(x.documento_errado,0)}],Ad,"Nenhum no período."));
+  } else if(id==="cobertura"||id==="nota_media"){
+    const by={}; ATEND.forEach(a=>{ const s=a.setor||"—"; (by[s]=by[s]||{s,t:0,c:0,n:0}); by[s].t++; if(okNota(a)){ by[s].c++; by[s].n+=a.nota; } });
+    const L=Object.values(by).sort((a,b)=>b.t-a.t);
+    corpo=_ksec("Por departamento",_kt([{t:"Departamento",f:x=>esc(x.s)},{t:"Atendimentos",r:1,f:x=>_kn(x.t,0)},{t:"Avaliados",r:1,f:x=>x.t?_kn(100*x.c/x.t,0)+"%":"—"},{t:"Nota média",r:1,f:x=>x.c?_kn(x.n/x.c,1):"—"}],L),"Mesmo período escolhido no topo da tela (atendimentos carregados).");
+  }
+  box.innerHTML=topo+metodo+corpo+hist;
+}
 function openKpiEdit(){}
 
 // horas economizadas por projeto: a IA estima, o gestor confirma
@@ -1586,11 +1815,25 @@ function bindGestor(v){
 function viewGestor(v){
   loadKpiVals();
   if(GTAREFAS===null && !GTLOADING){ GTLOADING=true; loadGTarefas(); }
-  v.innerHTML =
-    `<div class="page-head"><h2>Painel do Gestor</h2><p>indicadores, revisão diária e blocos de gestão${isGestor()?" · "+esc((ACCESS.departamentos||[]).join(", ")):""}</p></div>`
+  const hoje=new Date(), ini=new Date(Date.now()-30*864e5), dd=d=>d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}).replace(".","");
+  v.innerHTML = `<div class="gpage">
+    <div class="gp-top">
+      <div><div class="gp-crumb"><span>Olimpo</span><span>${isGestor()?esc((ACCESS.departamentos||[]).join(", ")):"Todos os departamentos"}</span></div>
+        <h2 class="gp-title">Painel do Gestor</h2></div>
+      <div class="gp-tools">
+        <span class="gp-pill">${dd(ini)}</span><span class="gp-pill">${dd(hoje)}</span>
+        <button class="gp-pill gp-dark" id="gpAtualizar" title="Recarregar os indicadores"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Atualizar</button>
+      </div>
+    </div>
+    <nav class="gp-tabs" aria-label="Seções do painel">
+      <button class="gp-tab on" data-gpgo="g-wallboard">Indicadores</button><button class="gp-tab" data-gpgo="g-revisao">Revisão diária</button>
+      <button class="gp-tab" data-gpgo="g-pessoas">Pessoas</button><button class="gp-tab" data-gpgo="g-clientes">Clientes</button><button class="gp-tab" data-gpgo="g-processos">Processos</button>
+    </nav>`
     + `<div id="g-wallboard">`+wallboardHTML()+`</div>`
     + revisaoHTML()
-    + blocosHTML();
+    + blocosHTML() + `</div>`;
+  v.querySelectorAll("[data-gpgo]").forEach(b=>b.onclick=()=>{ v.querySelectorAll(".gp-tab").forEach(x=>x.classList.toggle("on",x===b)); const t=document.getElementById(b.dataset.gpgo); if(!t) return; if(t.tagName==="DETAILS") t.open=true; t.scrollIntoView({behavior:"smooth",block:"start"}); });
+  const ga=v.querySelector("#gpAtualizar"); if(ga) ga.onclick=()=>{ PKPI=null; PKDET=null; pkpiCarregar(true); crmToast("Atualizando os indicadores"); };
   bindGestor(v);
 }
 
