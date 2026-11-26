@@ -991,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.65 (Themis RH: artes de vaga com diagramação em grid)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.67 (Hermes CRM: índice de sucesso do cliente)</footer>
   </div>
 </div>
 
@@ -4392,7 +4392,7 @@ function crmView(v){
  const sec=MODE.slice(4);
  v.innerHTML=`<div class="card"><div class="empty">Carregando…</div></div>`;
  const pronto=((sec==="indic"||sec==="contratos")&&!podeVendas())?Promise.resolve():crmBase(); crmResumoTarefas();
- pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,simulacoes:crmVSimulacoes,personas:crmVPersonas,modelos:crmVModelos,config:crmVConfig})[sec](v);
+ pronto.then(()=>{ if(MODE!=="crm_"+sec) return; ({funil:crmVFunil,tarefas:crmVTarefas,relatorios:crmVRelatorios,contatos:crmVContatos,contratos:crmVContratos,indic:crmVIndic,importar:crmVImportar,formularios:crmVFormularios,precos:crmVPrecos,sucesso:(x=>crmVSucesso(x)),simulacoes:crmVSimulacoes,personas:crmVPersonas,modelos:crmVModelos,config:crmVConfig})[sec](v);
    const nav=document.createElement("div"); nav.className="crm-nav-mob"; nav.innerHTML=CRM_SECOES.filter(([m])=>crmSecaoPode(m)).map(([m,t])=>`<button data-ir-mob="${m}" class="${MODE===m?"on":""}">${crmSecLabel(m,t)}</button>`).join("");
    nav.querySelectorAll("[data-ir-mob]").forEach(b=>b.onclick=()=>setMode(b.dataset.irMob)); v.prepend(nav); })
   .catch(e=>{ if(MODE==="crm_"+sec) v.innerHTML=crmCaixaErro(e); });
@@ -4797,7 +4797,7 @@ async function crmFichaCliente(gid){
   <div class="panel"><h4>Indicações feitas</h4>${(f.indicacoes||[]).map(i=>`<div class="ce-row"><span>${esc(i.indicado_empresa||i.indicado_nome)}<span class="sub"> · ${crmData(i.criado_em)}</span></span>${cePill(CRM_IND_ST,i.status)}</div>`).join("")||`<p class="sub" style="margin:4px 0">Nenhuma indicação ainda.</p>`}
    <button class="view-btn ce-pri" id="fInd" style="margin-top:10px">Registrar indicação deste cliente</button></div>
  </div><div class="crm-colline">${crmTarefasPainel(tars,{gclick_empresa_id:gid})}<h4 class="crm-h4">Linha do tempo</h4>${crmLinhaHTML(f.linha,{gclick_empresa_id:gid})}</div></div>`);
- crmLigarLinha(m,()=>crmFichaCliente(gid)); crmLigarTarefas(m,tars,()=>crmFichaCliente(gid)); crmLigarContratos(m,ks,()=>crmFichaCliente(gid)); crmLigarResiltrack(m,rt,gid);
+ crmLigarLinha(m,()=>crmFichaCliente(gid)); crmLigarTarefas(m,tars,()=>crmFichaCliente(gid)); crmLigarContratos(m,ks,()=>crmFichaCliente(gid)); crmLigarResiltrack(m,rt,gid); sucFicha(m,gid);
  m.querySelectorAll("[data-fase]").forEach(b=>b.onclick=async()=>{ if(b.dataset.fase===fase) return;
   try{ await crmRpc("crm_fase_cliente",{p_empresa_id:gid,p_fase:b.dataset.fase,p_obs:crmVal(m,"#fObs")}); crmToast("Fase atualizada"); crmFichaCliente(gid); if(MODE==="crm_funil") crmVFunil(document.getElementById("view")); }catch(e){ crmToast(crmErro(e)); } });
  m.querySelector("#fInd").onclick=()=>crmNovaIndicacao(gid);
@@ -8853,6 +8853,7 @@ async function krView(v){
  if(MODE==="kr_saldos") return krSaldos(v);
  if(MODE==="kr_registro") return krRegistro(v);
  if(MODE==="kr_ajustes") return krAjustes(v);
+ if(MODE==="kr_solic") return krSolicitacoes(v);
  if(MODE==="kr_fiscal") return krFiscal(v);
  return krPainel(v);
 }
@@ -11916,6 +11917,198 @@ async function vgArtes(E,extras){ await vgFontes(); const im=await vgImgs(), Dv=
   {nome:"Carrossel 3 o que esperamos",cv:interna("3/4",kick,"O QUE ESPERAMOS DE VOCÊ",null,req.concat((E.desejaveis||[]).slice(0,2).map(d=>d+" (diferencial)")).slice(0,6),VG_C.teal,vgIconeBarras)},
   {nome:"Carrossel 4 beneficios",cv:interna("4/4",kick,"BENEFÍCIOS DE FAZER PARTE",null,ben.length?ben:["Fale com o RH para saber os benefícios"],VG_C.red,vgIconeEstrela,true)}];
 }
+
+// ================= KRONOS ID · SOLICITAÇÕES DO COLABORADOR E FÉRIAS (v3.66) =================
+// O colaborador pede pela intranet (perfil > Meu ponto): inclusão de batida esquecida, atestado e férias.
+// Ajuste de ponto e férias: decide o gestor da pessoa (ou o responsável do departamento) e o RH.
+// Atestado é dado de saúde: só o RH vê e decide. Ao aprovar um ajuste, a batida entra em kronos.ajustes;
+// ao aprovar um atestado, o período vira abono e não desconta do banco de horas. Banco: public.kronos_solicitacoes (SQL 42).
+KR_SECOES.splice(3,0,["kr_solic","Solicitações"]);
+const KS_ST={pendente:["warn","Pendente"],aprovada:["good","Aprovada"],recusada:["crit","Recusada"],cancelada:["neutro","Cancelada"]};
+const KS_MOT={esquecimento:"Esqueci de bater",falha_relogio:"Falha no relógio ou no sistema",trabalho_externo:"Trabalho externo",batida_errada:"Bati no horário errado",outro:"Outro motivo"};
+let KS={f:"pendente",t:""};
+const ksPill=s=>{ const [c,t]=KS_ST[s]||["neutro",s]; return `<span class="kr-pill kr-${c}">${t}</span>`; };
+const ksQuando=d=>d?new Date(d).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"";
+async function ksAnexo(id,btn){
+ const t=btn.textContent; btn.disabled=true; btn.textContent="Abrindo…"; const w=window.open("","_blank");
+ try{ const {data,error}=await sb.functions.invoke("kronos-anexo",{body:{id}}); if(error){ let m=""; try{ m=(await error.context.json()).erro||""; }catch(_){} throw new Error(m||"Não consegui abrir o anexo."); }
+  if(w) w.location.href=data.url; else window.open(data.url,"_blank"); }
+ catch(e){ if(w) w.close(); crmToast(crmErro(e)); } finally{ btn.disabled=false; btn.textContent=t; }
+}
+function ksDecidir(tipo,x,aprovar,v){
+ const quem=esc(x.colaborador), oque=tipo==="ferias"?`férias de ${krDataBR(x.inicio)} a ${krDataBR(x.fim)} (${x.dias} dias${x.abono_dias?` + ${x.abono_dias} vendidos`:""})`
+  :x.tipo==="atestado"?`atestado de ${krDataBR(x.data)}${x.data_fim&&x.data_fim!==x.data?` a ${krDataBR(x.data_fim)}`:""}`:`batida das ${esc(x.hora)} em ${krDataBR(x.data)}`;
+ const m=crmModal("Kronos ID · solicitações",aprovar?"Aprovar pedido":"Recusar pedido","",`<p style="margin:0 0 12px">${quem}: ${oque}.</p>
+  ${aprovar?`<p class="sub" style="margin:0 0 12px">${tipo==="ferias"?"As férias ficam marcadas como aprovadas e saem do saldo da pessoa. O DP faz o aviso e o pagamento.":x.tipo==="atestado"?"Os dias do atestado viram abono: não contam como falta nem descontam do banco de horas.":"A batida entra no espelho como ajuste. A marcação original do relógio continua guardada."}</p>`:""}
+  <label class="crm-f crm-w2"><span>${aprovar?"Recado para a pessoa (opcional)":"Motivo da recusa *"}</span><textarea class="inp" id="ksR" rows="3" maxlength="500" placeholder="${aprovar?"":"Ex.: o horário não confere com o acesso ao prédio. Fale comigo."}"></textarea></label>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="ksMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri(`id="ksOk">${aprovar?"Aprovar":"Recusar"}</button>`)}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const ok=m.querySelector("#ksOk"), msg=m.querySelector("#ksMsg");
+ ok.onclick=async()=>{ const r=m.querySelector("#ksR").value.trim(); if(!aprovar&&r.length<5){ msg.textContent="Explique o motivo da recusa."; return; } ok.disabled=true; msg.textContent="Salvando…";
+  try{ await crmRpc("kronos_solicitacoes",{p:{acao:"decidir",tipo,id:x.id,decisao:aprovar?"aprovar":"recusar",resposta:r}}); closeModal(); crmToast(aprovar?"Pedido aprovado":"Pedido recusado"); krSolicitacoes(v); }
+  catch(e){ ok.disabled=false; msg.textContent=crmErro(e).replace("sem_permissao","Você não pode decidir este pedido."); } };
+}
+async function krSolicitacoes(v){
+ const box=krMoldura(v,"kr_solic","Solicitações","Pedidos que a equipe fez pela intranet: batida esquecida, atestado e férias. O gestor decide ajustes e férias da própria equipe; atestados ficam só com o RH.","");
+ let D; try{ D=await crmRpc("kronos_solicitacoes",{p:{acao:"listar"}}); }catch(e){ box.innerHTML=String(e&&e.message||"").includes("kronos_solicitacoes")?`<div class="card"><div class="empty">Falta rodar o SQL 42 (autoatendimento do Kronos) no Supabase.</div></div>`:krSemAcesso(e); return; }
+ if(MODE!=="kr_solic") return;
+ const P=D.ponto||[], F=D.ferias||[];
+ const pend=P.filter(x=>x.status==="pendente"), fpend=F.filter(x=>x.status==="pendente");
+ const pinta=()=>{
+  const fp=x=>!KS.f||(KS.f==="pendente"?x.status==="pendente":x.status!=="pendente");
+  const pts=P.filter(x=>fp(x)&&(!KS.t||KS.t===x.tipo)), fer=(!KS.t||KS.t==="ferias")?F.filter(fp):[];
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Batidas a aprovar",pend.filter(x=>x.tipo==="ajuste").length,pend.some(x=>x.tipo==="ajuste")?"warn":"")}${krTile("Atestados a conferir",pend.filter(x=>x.tipo==="atestado").length,pend.some(x=>x.tipo==="atestado")?"warn":"")}${krTile("Férias a aprovar",fpend.length,fpend.length?"warn":"")}${krTile("Decididos (45 dias)",P.length-pend.length+F.length-fpend.length)}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="seg">${[["pendente","Pendentes"],["decididas","Decididas"],["","Todas"]].map(([k,t])=>`<button type="button" data-ksf="${k}" class="${KS.f===k?"on":""}">${t}</button>`).join("")}</div>
+   <select class="inp" id="ksT" style="max-width:220px">${crmOpt([["ajuste","Ajuste de ponto"],...(D.rh?[["atestado","Atestado"]]:[]),["ferias","Férias"]],KS.t,"Todos os tipos")}</select></div>
+  ${(KS.t!=="ferias")?`<div class="card" style="padding:0;overflow-x:auto;margin-bottom:16px"><table><thead><tr><th>Pedido</th><th>Colaborador</th><th>O que pediu</th><th>Batidas do dia</th><th>Situação</th><th></th></tr></thead><tbody>
+  ${pts.map(x=>`<tr><td style="white-space:nowrap"><b>${x.tipo==="atestado"?"Atestado":"Incluir batida"}</b><div class="sub">${ksQuando(x.criado_em)}</div></td><td><b>${esc(x.colaborador)}</b></td>
+   <td>${x.tipo==="atestado"?`<b>${krDataBR(x.data)}${x.data_fim&&x.data_fim!==x.data?` a ${krDataBR(x.data_fim)}`:""}</b>${x.observacao?`<div class="sub">${esc(x.observacao)}</div>`:""}`
+     :`<b>${krDataBR(x.data)} às ${esc(x.hora)}</b><div class="sub">${esc(KS_MOT[x.motivo]||x.motivo||"")}: ${esc(x.justificativa||"")}</div>${x.observacao?`<div class="sub">${esc(x.observacao)}</div>`:""}`}
+     ${x.tem_anexo?`<div style="margin-top:6px"><button class="txt-btn" data-ksa="${x.id}">Ver anexo</button></div>`:""}</td>
+   <td>${x.tipo==="ajuste"?krBatidas(x.batidas):`<span class="sub">Não se aplica</span>`}</td>
+   <td>${ksPill(x.status)}${x.decidido_por?`<div class="sub">${esc(x.decidido_por)} · ${ksQuando(x.decidido_em)}</div>`:""}${x.resposta?`<div class="sub">${esc(x.resposta)}</div>`:""}</td>
+   <td class="right" style="white-space:nowrap">${x.status==="pendente"&&x.pode?`<button class="txt-btn crm-perigo" data-ksd="p|${x.id}|0">Recusar</button> ${crmPri(`data-ksd="p|${x.id}|1">Aprovar</button>`)}`:""}</td></tr>`).join("")||`<tr><td colspan="6"><div class="empty">${KS.f==="pendente"?"Nenhum pedido de ponto esperando decisão.":"Nada por aqui."}</div></td></tr>`}</tbody></table></div>`:""}
+  ${(!KS.t||KS.t==="ferias")?`<div class="sec-title" style="margin:6px 0 10px"><h3 style="margin:0">Férias</h3></div><div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Período de férias</th><th>Dias</th><th>Extras</th><th>Situação</th><th></th></tr></thead><tbody>
+  ${fer.map(x=>`<tr><td><b>${esc(x.colaborador)}</b><div class="sub">Pedido em ${ksQuando(x.criado_em)}</div></td><td><b>${krDataBR(x.inicio)} a ${krDataBR(x.fim)}</b><div class="sub">Período aquisitivo de ${krDataBR(x.periodo_inicio)}</div>${x.justificativa?`<div class="sub">${esc(x.justificativa)}</div>`:""}</td>
+   <td>${x.dias}</td><td>${[x.abono_dias?`Vende ${x.abono_dias} dias`:"",x.adiant_13?"Adiantar 1ª parcela do 13º":""].filter(Boolean).join("<br>")||`<span class="sub">Nenhum</span>`}</td>
+   <td>${ksPill(x.status)}${x.decidido_por?`<div class="sub">${esc(x.decidido_por)} · ${ksQuando(x.decidido_em)}</div>`:""}${x.resposta?`<div class="sub">${esc(x.resposta)}</div>`:""}</td>
+   <td class="right" style="white-space:nowrap">${x.status==="pendente"&&x.pode?`<button class="txt-btn crm-perigo" data-ksd="f|${x.id}|0">Recusar</button> ${crmPri(`data-ksd="f|${x.id}|1">Aprovar</button>`)}`:""}</td></tr>`).join("")||`<tr><td colspan="6"><div class="empty">${KS.f==="pendente"?"Nenhum pedido de férias esperando decisão.":"Nada por aqui."}</div></td></tr>`}</tbody></table></div>`:""}`;
+  box.querySelectorAll("[data-ksf]").forEach(b=>b.onclick=()=>{ KS.f=b.dataset.ksf; pinta(); });
+  box.querySelector("#ksT").onchange=e=>{ KS.t=e.target.value; pinta(); };
+  box.querySelectorAll("[data-ksa]").forEach(b=>b.onclick=()=>ksAnexo(b.dataset.ksa,b));
+  box.querySelectorAll("[data-ksd]").forEach(b=>b.onclick=()=>{ const [t,id,ok]=b.dataset.ksd.split("|"); const x=(t==="f"?F:P).find(y=>y.id===id); if(x) ksDecidir(t==="f"?"ferias":"ponto",x,ok==="1",v); });
+ };
+ pinta();
+}
+
+// ---------- Themis RH · Férias: conferência do saldo inicial ----------
+// A API do Tangerino não expõe férias. O RH confere uma vez, pessoa por pessoa, qual período aquisitivo está em aberto
+// e quantos dias dele já foram tirados. Daí em diante o saldo anda sozinho com os pedidos aprovados na intranet.
+RH_SECOES.push(["rh_ferias","Férias"]);
+let RHFR={q:"",f:""};
+function rhfPeriodos(adm){ const L=[]; if(!adm) return L; const a=new Date(adm+"T12:00:00"), hoje=new Date();
+ for(let i=0;i<8;i++){ const d=new Date(a); d.setFullYear(a.getFullYear()+i); if(d>hoje) break; L.push(d.toISOString().slice(0,10)); } return L.reverse(); }
+function rhfResumo(r){ const P=(r&&r.periodos)||[]; if(r&&r.sem_admissao) return `<span class="sub">Sem data de admissão no cadastro</span>`;
+ return P.map(p=>`<div style="white-space:nowrap"><b>${p.saldo} dias</b> <span class="sub">de ${krDataBR(p.inicio)}${p.vencido?" · <b style='color:var(--crit)'>concessivo vencido</b>":p.completo?` · tirar até ${krDataBR(p.data_limite)}`:" · em aquisição"}</span></div>`).join("")||`<span class="sub">Sem saldo</span>`; }
+RHV_EXTRA.rh_ferias=async function(v){
+ v.innerHTML=crmHead("Férias","Saldo de férias de cada pessoa, que a equipe vê e usa para pedir férias na intranet. Confira o saldo inicial de quem ainda não foi conferido: a API do Tangerino não traz férias, então o ponto de partida é o RH quem confirma.","")+`<div id="rhfBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ const box=v.querySelector("#rhfBox");
+ let L; try{ L=await crmRpc("kronos_solicitacoes",{p:{acao:"ferias_saldos"}}); }catch(e){ box.innerHTML=String(e&&e.message||"").includes("sem_permissao")?`<div class="card"><div class="empty">Só o RH confere o saldo de férias.</div></div>`:String(e&&e.message||"").includes("kronos_solicitacoes")?`<div class="card"><div class="empty">Falta rodar o SQL 42 no Supabase.</div></div>`:crmCaixaErro(e); return; }
+ if(MODE!=="rh_ferias") return;
+ const venc=x=>((x.resumo||{}).periodos||[]).some(p=>p.vencido&&p.saldo>0), prox=x=>((x.resumo||{}).periodos||[]).some(p=>!p.vencido&&p.completo&&p.saldo>0&&new Date(p.data_limite)-new Date()<90*864e5);
+ const pinta=()=>{ const nq=crmNormTxt(RHFR.q), ls=L.filter(x=>(!nq||crmNormTxt(x.nome+" "+(x.departamento||"")).includes(nq))&&(!RHFR.f||(RHFR.f==="pend"?!x.conferido_em:RHFR.f==="venc"?venc(x):prox(x))));
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Saldos conferidos",`${L.filter(x=>x.conferido_em).length} de ${L.length}`)}${krTile("Falta conferir",L.filter(x=>!x.conferido_em).length,L.some(x=>!x.conferido_em)?"warn":"")}${krTile("Limite em até 90 dias",L.filter(prox).length,L.some(prox)?"warn":"")}${krTile("Concessivo vencido",L.filter(venc).length,L.some(venc)?"crit":"")}</div>
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="rhfQ" type="search" value="${escAttr(RHFR.q)}" placeholder="Buscar pessoa ou departamento" aria-label="Buscar"></div>
+   <select class="inp" id="rhfF" style="max-width:220px">${crmOpt([["pend","Falta conferir"],["prox","Limite em até 90 dias"],["venc","Concessivo vencido"]],RHFR.f,"Todas as pessoas")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Colaborador</th><th>Admissão</th><th>Saldo por período aquisitivo</th><th>Conferência</th><th></th></tr></thead><tbody>
+  ${ls.map(x=>`<tr><td><b>${esc(x.nome)}</b><div class="sub">${esc(x.departamento||"")}</div></td><td>${x.admissao?krDataBR(x.admissao):`<span class="sub">Sem data</span>`}</td><td>${x.conferido_em?rhfResumo(x.resumo):`<span class="sub">Aguardando conferência</span>`}</td>
+   <td>${x.conferido_em?`<span class="kr-pill kr-good">Conferido</span><div class="sub">${esc(x.conferido_por||"")} · ${krDataBR(x.conferido_em)}</div>`:`<span class="kr-pill kr-warn">Falta conferir</span>`}</td>
+   <td class="right"><button class="view-btn" data-rhf="${x.id}" ${x.admissao?"":"disabled title='Cadastre a admissão no Themis RH'"}>${x.conferido_em?"Ajustar":"Conferir"}</button></td></tr>`).join("")||`<tr><td colspan="5"><div class="empty">Ninguém neste filtro.</div></td></tr>`}</tbody></table></div>`;
+  const qi=box.querySelector("#rhfQ"); qi.oninput=()=>{ RHFR.q=qi.value; const p=qi.selectionStart; pinta(); const z=box.querySelector("#rhfQ"); z.focus(); z.setSelectionRange(p,p); };
+  box.querySelector("#rhfF").onchange=e=>{ RHFR.f=e.target.value; pinta(); };
+  box.querySelectorAll("[data-rhf]").forEach(b=>b.onclick=()=>rhfConferir(L.find(y=>y.id===b.dataset.rhf),v)); };
+ pinta();
+};
+function rhfConferir(x,v){
+ const per=rhfPeriodos(x.admissao), sel=x.periodo_inicio||per.slice().reverse().find((p,i)=>{ const f=new Date(p+"T12:00:00"); f.setFullYear(f.getFullYear()+2); return f>new Date(); })||per[0];
+ const m=crmModal("Themis RH · férias",x.nome,crmChip("Admissão "+krDataBR(x.admissao)),`<p class="sub" style="margin:0 0 12px">Confira no Tangerino ou na folha qual é o período aquisitivo mais antigo que ainda tem dias de férias e quantos dias dele a pessoa já tirou (ou vendeu). Os períodos seguintes começam com 30 dias.</p>
+  <div class="crm-form"><label class="crm-f"><span>Período aquisitivo em aberto *</span><select class="inp" id="rfP">${per.map(p=>{ const f=new Date(p+"T12:00:00"); f.setFullYear(f.getFullYear()+1); f.setDate(f.getDate()-1); return `<option value="${p}" ${p===sel?"selected":""}>${krDataBR(p)} a ${krDataBR(f.toISOString().slice(0,10))}</option>`; }).join("")}</select></label>
+  <label class="crm-f"><span>Dias já tirados ou vendidos nele</span><input class="inp" type="number" id="rfD" min="0" max="30" value="${x.dias_gozados||0}"></label>
+  <label class="crm-f crm-w2"><span>Observação</span><input class="inp" id="rfO" maxlength="300" value="${escAttr(x.observacao||"")}" placeholder="Ex.: conferido no Tangerino em ${new Date().toLocaleDateString("pt-BR")}"></label></div>
+  <div class="crm-pe" style="margin-top:14px"><span class="sub" id="rfMsg" style="flex:1"></span><button class="txt-btn" data-close2>Cancelar</button>${crmPri('id="rfOk">Salvar conferência</button>')}</div>`);
+ m.classList.remove("prodm"); m.querySelector("[data-close2]").onclick=closeModal;
+ const ok=m.querySelector("#rfOk"), msg=m.querySelector("#rfMsg");
+ ok.onclick=async()=>{ const d=+m.querySelector("#rfD").value; if(!(d>=0&&d<=30)){ msg.textContent="Os dias tirados vão de 0 a 30."; return; } ok.disabled=true; msg.textContent="Salvando…";
+  try{ await crmRpc("kronos_solicitacoes",{p:{acao:"ferias_saldo_salvar",colaborador:x.id,periodo_inicio:m.querySelector("#rfP").value,dias_gozados:d,observacao:m.querySelector("#rfO").value.trim()}}); closeModal(); crmToast("Saldo conferido"); RHV_EXTRA.rh_ferias(v); }
+  catch(e){ ok.disabled=false; msg.textContent=crmErro(e); } };
+}
+
+// ================= Hermes CRM · SUCESSO DO CLIENTE (v3.67) =================
+// Índice de 0 a 100 por cliente, recalculado a cada hora (SQL 43, RPC crm_sucesso). Não é só o atendimento:
+// junta nota dos atendimentos, entregas no prazo do G-Click, guias com 2 dias de antecedência, fechamento contábil em dia e financeiro.
+// Faixas: 75+ saudável, 55 a 74 atenção, abaixo de 55 em risco. A lista já vem do pior para o melhor.
+CRM_SECOES.splice(1,0,["crm_sucesso","Sucesso do cliente","suc"]);
+const _crmSecaoPode0=crmSecaoPode; crmSecaoPode=function(m){ return m==="crm_sucesso"?podeCRM():_crmSecaoPode0(m); };
+const SUC_FX={saudavel:["good","Saudável","#0ca678"],atencao:["warn","Atenção","#e8a317"],risco:["crit","Em risco","#c92a2a"]};
+const SUC_FAT=[["atendimento","Atendimento",35],["prazos","Prazos",25],["impostos","Impostos",15],["balancete","Balancete",10],["financeiro","Financeiro",15]];
+let SUC={d:null,q:"",f:"",em:0};
+const sucCor=v=>v==null?"#adb5bd":v>=75?"#0ca678":v>=55?"#e8a317":"#c92a2a";
+const sucPill=(s,fx)=>s==null?`<span class="suc-sc suc-nd">sem dado</span>`:`<span class="suc-sc" style="--s:${sucCor(s)}" title="${(SUC_FX[fx]||[])[1]||""}">${s}</span>`;
+function sucBarras(ft){ return `<div class="suc-bars">${SUC_FAT.map(([k,t])=>{ const v=((ft||{})[k]||{}).valor; return `<span class="suc-b" title="${t}: ${v==null?"sem dado":v}"><i style="height:${v==null?4:Math.max(6,v*.28)}px;background:${sucCor(v)};${v==null?"opacity:.35":""}"></i><em>${t.slice(0,3)}</em></span>`; }).join("")}</div>`; }
+async function crmVSucesso(v){
+ v.innerHTML=crmHead("Sucesso do cliente","Quem está em risco de ir embora, olhando além do atendimento: entregas no prazo, guias com antecedência, balancete em dia e financeiro. Atualiza sozinho a cada hora.","")+`<div id="sucBox"><div class="card"><div class="empty">Carregando…</div></div></div>`;
+ const box=v.querySelector("#sucBox");
+ if(!SUC.d||Date.now()-SUC.em>300000){ try{ SUC.d=await crmRpc("crm_sucesso",{p:{acao:"listar"}}); SUC.em=Date.now(); }
+  catch(e){ box.innerHTML=String(e&&e.message||"").includes("crm_sucesso")?`<div class="card"><div class="empty">Falta rodar o SQL 43 (sucesso do cliente) no Supabase.</div></div>`:crmCaixaErro(e); return; } }
+ if(MODE!=="crm_sucesso") return;
+ const L=SUC.d.clientes||[], com=L.filter(c=>c.score!=null);
+ const cont=k=>com.filter(c=>c.faixa===k).length, media=com.length?Math.round(com.reduce((a,c)=>a+c.score,0)/com.length):null;
+ const caiu=com.filter(c=>c.anterior!=null&&c.score<=c.anterior-10);
+ const pinta=()=>{ const nq=crmNormTxt(SUC.q);
+  const ls=L.filter(c=>(!nq||crmNormTxt((c.nome||"")+" "+(c.cnpj||"")).includes(nq))&&(!SUC.f||(SUC.f==="caiu"?caiu.includes(c):SUC.f==="sem"?c.score==null:c.faixa===SUC.f)));
+  box.innerHTML=`<div class="tiles kr-tiles kr-t4">${krTile("Em risco",cont("risco"),cont("risco")?"crit":"")}${krTile("Atenção",cont("atencao"),cont("atencao")?"warn":"")}${krTile("Saudáveis",cont("saudavel"),"good")}${krTile("Índice médio da carteira",media==null?"—":media)}</div>
+  ${caiu.length?`<div class="suc-aviso"><b>${caiu.length} cliente${caiu.length>1?"s":""} caiu${caiu.length>1?"ram":""} 10 pontos ou mais</b> em relação ao mês passado. <button class="txt-btn" id="sucCaiu">Ver quem</button></div>`:""}
+  <div class="filters crm-bar2" style="margin:14px 0 12px"><div class="search" style="flex:1;min-width:220px"><input id="sucQ" type="search" value="${escAttr(SUC.q)}" placeholder="Buscar cliente ou CNPJ" aria-label="Buscar"></div>
+   <select class="inp" id="sucF" style="max-width:220px">${crmOpt([["risco","Em risco"],["atencao","Atenção"],["saudavel","Saudáveis"],["caiu","Caíram no mês"],["sem","Sem dado suficiente"]],SUC.f,"Todos os clientes")}</select></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Cliente</th><th>Índice</th><th>Fatores</th><th>Por que está assim</th><th></th></tr></thead><tbody>
+  ${ls.slice(0,300).map(c=>{ const d=c.anterior!=null&&c.score!=null?c.score-c.anterior:null;
+   return `<tr class="crm-click" data-suc="${escAttr(c.id)}"><td><b>${esc(c.nome||"Cliente")}</b><div class="sub">${c.cnpj?esc(fmtCnpj(c.cnpj)):""}${(c.fatores||{}).sensivel?` · <span style="color:var(--crit)">sensível na intranet</span>`:""}</div></td>
+    <td style="white-space:nowrap">${sucPill(c.score,c.faixa)}${d?`<span class="suc-d ${d<0?"neg":"pos"}" title="Em relação ao mês passado">${d>0?"+":""}${d}</span>`:""}</td>
+    <td>${sucBarras(c.fatores)}</td>
+    <td class="suc-mot">${(c.motivos||[]).slice(0,2).map(m=>`<div>${esc(m)}</div>`).join("")||`<span class="sub">Nada fora da regra</span>`}${(c.motivos||[]).length>2?`<div class="sub">+${c.motivos.length-2} ponto(s)</div>`:""}</td>
+    <td class="right"><span class="view-btn">Detalhes</span></td></tr>`; }).join("")||`<tr><td colspan="5"><div class="empty">Nenhum cliente neste filtro.</div></td></tr>`}</tbody></table></div>
+  <p class="sub" style="margin-top:10px">Pesos: atendimento 35, prazos 25, impostos 15, balancete 10 e financeiro 15. Fator sem dado não conta e o peso vai para os outros.${SUC.d.calculado_em?` Calculado em ${new Date(SUC.d.calculado_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.`:""}</p>`;
+  const qi=box.querySelector("#sucQ"); qi.oninput=()=>{ SUC.q=qi.value; const p=qi.selectionStart; pinta(); const z=box.querySelector("#sucQ"); z.focus(); z.setSelectionRange(p,p); };
+  box.querySelector("#sucF").onchange=e=>{ SUC.f=e.target.value; pinta(); };
+  const bc=box.querySelector("#sucCaiu"); if(bc) bc.onclick=()=>{ SUC.f="caiu"; pinta(); };
+  box.querySelectorAll("[data-suc]").forEach(r=>r.onclick=()=>sucDetalhe(r.dataset.suc,L.find(c=>c.id===r.dataset.suc))); };
+ pinta();
+}
+function sucFatoresHTML(ft,fin){ ft=ft||{}; const a=ft.atendimento||{}, p=ft.prazos||{}, i=ft.impostos||{}, b=ft.balancete||{}, f=ft.financeiro||{};
+ const txt={atendimento:a.n?`Nota média ${crmNota(a.nota)} em ${a.n} atendimento(s) nos últimos 120 dias, ${a.baixos||0} abaixo de 7${a.insatisfeitos?`, ${a.insatisfeitos} insatisfeito(s)`:""}${a.risco?`, ${a.risco==="provavel"?"risco provável":"sinal de possível"} troca`:""}.`:"Sem atendimento analisado em 120 dias.",
+  prazos:p.concluidas||p.atrasadas?`${p.no_prazo||0} de ${p.concluidas||0} entregas dentro da meta interna em 90 dias${p.atrasadas?`, ${p.atrasadas} atrasada(s) em aberto`:""}.`:"Sem entregas suficientes no G-Click em 90 dias.",
+  impostos:i.guias?`${i.com_antecedencia||0} de ${i.guias} guias entregues com 2 dias ou mais de antecedência.`:"Sem guias suficientes em 90 dias.",
+  balancete:b.valor!=null?(b.atrasados?`${b.atrasados} fechamento(s) contábil(eis) atrasado(s).`:"Fechamento contábil em dia.")+(b.ultimo?` Último concluído em ${crmDia(b.ultimo)}.`:""):"Cliente sem fechamento contábil no G-Click.",
+  financeiro:f.valor==null?"":fin?(f.dias>0?`Título em atraso há ${f.dias} dias${f.valor_aberto?` (${brl(f.valor_aberto)})`:""}.`:"Sem título em atraso."):(f.valor<100?"Ponto de atenção no financeiro.":"Sem pendência no financeiro.")};
+ return `<div class="suc-fat">${SUC_FAT.map(([k,t,peso])=>{ const v=(ft[k]||{}).valor; return `<div class="suc-f"><div class="suc-fh"><b>${t}</b><span class="sub">peso ${peso}</span><span class="suc-fv" style="color:${sucCor(v)}">${v==null?"sem dado":v}</span></div>
+   <div class="suc-track"><i style="width:${v==null?0:v}%;background:${sucCor(v)}"></i></div><div class="sub">${esc(txt[k]||"")}</div></div>`; }).join("")}</div>`; }
+async function sucDetalhe(id,c){
+ c=c||{}; const m=crmModal("Hermes CRM · sucesso do cliente",c.nome||"Cliente",(c.score!=null?crmChip(`Índice ${c.score}`):"")+(c.faixa?crmChip((SUC_FX[c.faixa]||[])[1]||""):""),`<div id="sucDet"><div class="empty">Carregando…</div></div>`);
+ let D; try{ D=await crmRpc("crm_sucesso",{p:{acao:"cliente",cliente:id}}); }catch(e){ m.querySelector("#sucDet").innerHTML=`<div class="empty">${esc(crmErro(e))}</div>`; return; }
+ const s=D.sucesso||{}, H=D.historico||[], AB=D.atendimentos_baixos||[], EA=D.entregas_atrasadas||[], IC=D.impostos_em_cima||[];
+ const hist=H.length>1?`<div class="suc-hist">${H.map(h=>`<span title="${esc(h.mes)}: ${h.score}"><i style="height:${Math.max(4,h.score*.5)}px;background:${sucCor(h.score)}"></i><em>${h.mes.slice(5)}/${h.mes.slice(2,4)}</em></span>`).join("")}</div>`:"";
+ m.querySelector("#sucDet").innerHTML=`<div class="suc-top">${sucPill(s.score,s.faixa)}<div><b>${(SUC_FX[s.faixa]||[])[1]||"Sem dado suficiente"}</b><div class="sub">${(s.motivos||[]).length?esc(s.motivos.join(" · ")):"Nada fora da regra agora."}</div></div>${hist}</div>
+  ${sucFatoresHTML(s.fatores,D.fin)}
+  ${AB.length?`<h5 class="crt-h5">Atendimentos que pesaram</h5>${AB.map(x=>`<div class="ce-row"><span>${esc(x.assunto_principal||"Atendimento")}<span class="sub"> · ${crmDia(String(x.sessao_inicio).slice(0,10))} · ${esc(x.atendente_nome||"")}</span></span><b class="num" style="color:${sucCor((x.nota_final||0)*10)}">${crmNota(x.nota_final)}</b></div>`).join("")}`:""}
+  ${EA.length?`<h5 class="crt-h5">Entregas atrasadas em aberto</h5>${EA.map(x=>`<div class="ce-row"><span>${esc(x.obrigacao)}<span class="sub"> · ${esc(x.departamento||"")}</span></span><span class="sub">venceu ${crmDia(x.data_vencimento)}</span></div>`).join("")}`:""}
+  ${IC.length?`<h5 class="crt-h5">Guias entregues em cima do vencimento</h5>${IC.map(x=>`<div class="ce-row"><span>${esc(x.obrigacao)}</span><span class="sub">entregue ${crmDia(x.data_conclusao)}, vence ${crmDia(x.data_vencimento)}${x.dias_antes<0?" (depois do vencimento)":""}</span></div>`).join("")}`:""}
+  <div class="crm-pe" style="margin-top:14px"><span style="flex:1"></span><button class="txt-btn" data-close2>Fechar</button>${crmPri(`id="sucFicha">Abrir ficha do cliente</button>`)}</div>`;
+ m.querySelector("[data-close2]").onclick=closeModal;
+ m.querySelector("#sucFicha").onclick=()=>{ closeModal(); crmFichaCliente(id); };
+}
+// índice também na ficha do cliente
+async function sucFicha(m,gid){
+ const col=m.querySelector(".crm-colform"); if(!col) return;
+ let D; try{ D=await crmRpc("crm_sucesso",{p:{acao:"cliente",cliente:gid}}); }catch(_){ return; }
+ const s=(D&&D.sucesso)||null; if(!s||s.score==null) return;
+ const el=document.createElement("div"); el.className="panel suc-pan";
+ el.innerHTML=`<h4>Sucesso do cliente</h4><div class="suc-top">${sucPill(s.score,s.faixa)}<div><b>${(SUC_FX[s.faixa]||[])[1]||""}</b><div class="sub">${(s.motivos||[]).slice(0,3).map(esc).join(" · ")||"Nada fora da regra agora."}</div></div></div>${sucBarras(s.fatores)}<button class="txt-btn" style="margin-top:8px">Ver detalhes</button>`;
+ el.querySelector("button").onclick=()=>sucDetalhe(gid,{nome:m.querySelector("h3")?m.querySelector("h3").textContent:"",score:s.score,faixa:s.faixa});
+ col.prepend(el);
+}
+(function(){ const s=document.createElement("style"); s.textContent=`
+.suc-sc{display:inline-grid;place-items:center;min-width:40px;height:30px;padding:0 8px;border-radius:999px;font:700 14px "DM Sans",sans-serif;color:#fff;background:var(--s)}
+.suc-sc.suc-nd{background:var(--surface-2,#f1f3f5);color:var(--muted);font-weight:600;font-size:12px}
+.suc-d{margin-left:6px;font-size:12px;font-weight:700}.suc-d.neg{color:var(--crit)}.suc-d.pos{color:var(--good)}
+.suc-bars{display:flex;align-items:flex-end;gap:5px;height:40px}.suc-b{display:flex;flex-direction:column;align-items:center;gap:2px;width:26px}
+.suc-b i{display:block;width:14px;border-radius:4px 4px 2px 2px}.suc-b em{font-style:normal;font-size:10px;color:var(--muted)}
+.suc-mot{font-size:13px;max-width:380px}.suc-mot div+div{margin-top:3px}
+.suc-aviso{margin-top:14px;padding:10px 14px;border-radius:12px;background:var(--crit-soft,#fbe6ea);font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.suc-top{display:flex;gap:14px;align-items:center;margin-bottom:12px;flex-wrap:wrap}.suc-top .suc-sc{height:44px;min-width:56px;font-size:20px}.suc-top>div{flex:1;min-width:200px}
+.suc-hist{display:flex;align-items:flex-end;gap:4px;height:62px}.suc-hist span{display:flex;flex-direction:column;align-items:center;gap:2px}.suc-hist i{display:block;width:16px;border-radius:4px}.suc-hist em{font-style:normal;font-size:10px;color:var(--muted)}
+.suc-fat{display:grid;gap:12px;margin:6px 0 10px}.suc-fh{display:flex;gap:8px;align-items:baseline}.suc-fh b{font-size:14px}.suc-fv{margin-left:auto;font-weight:700}
+.suc-track{height:8px;border-radius:99px;background:var(--surface-2,#eef1f3);overflow:hidden;margin:5px 0 4px}.suc-track i{display:block;height:100%;border-radius:99px}
+`; document.head.appendChild(s); })();
 
 (async function init(){
   if(!window.supabase){ document.getElementById("loginErr").textContent="Falha ao carregar Supabase."; return; }
