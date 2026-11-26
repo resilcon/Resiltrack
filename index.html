@@ -417,6 +417,10 @@
   .kpi-badge{position:absolute;top:13px;right:13px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:6px}
   .kpi-badge.auto{background:var(--good-soft);color:var(--good)}
   .kpi-badge.man{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+  .kpi-card .ksub{font-size:11px;color:var(--ink-2);line-height:1.35}
+  .kpi-card .kdl{font-size:10.5px;font-weight:600;color:var(--muted)}.kpi-card .kdl.ok{color:var(--good)}.kpi-card .kdl.ruim{color:var(--crit)}
+  .kpi-card .kf{display:flex;gap:8px;align-items:flex-end;justify-content:space-between}.kpi-card .kspark{flex:none;color:var(--brand,#2a6f97);opacity:.85}
+  .kpi-card .kpi-lnk{align-self:flex-start;background:none;border:0;padding:2px 0;color:var(--brand,#2a6f97);font-size:11.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
   .kpi-edit{position:absolute;bottom:11px;right:11px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer;display:grid;place-items:center}
   .kpi-edit:hover{border-color:var(--accent);color:var(--accent)}
   .kpi-edit svg{width:13px;height:13px}
@@ -835,7 +839,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.59 (Themis RH: histórico e evolução do perfil comportamental, usados pela IA)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.60 (Olimpo: KPIs automáticos com histórico mensal)</footer>
   </div>
 </div>
 
@@ -1231,70 +1235,122 @@ function srlAberto(k,v){ if(!k) return true; const c="resiltrack_sub_"+k; try{ i
 function setMode(m){ if(m===MODE) return; MODE=m; try{localStorage.setItem("resiltrack_mode",m);}catch(e){} window.scrollTo(0,0); render(); }
 
 // ---------- PAINEL DO GESTOR ----------
+// KPIs do supervisor de inovação: calculados no banco (public.painel_kpis), com histórico mês a mês (v3.60).
+// Fontes: projetos do Escritório Virtual, atendimentos avaliados pela IA, G-Click, Kronos ID, Neocode e folha do Themis RH (só o total).
 const GEST_KPIS=[
-  {id:"reducao_horas",nome:"Redução de horas/cliente",mede:"Ganho de eficiência",medir:"Horas antes − horas depois",tipo:"manual",unid:"h"},
-  {id:"horas_econ",nome:"Horas economizadas",mede:"Tempo liberado por mês",medir:"Horas antes − horas depois",tipo:"manual",unid:"h"},
-  {id:"custo_cliente",nome:"Custo por cliente",mede:"Custo de atendimento",medir:"Custo total / nº de clientes",tipo:"manual",unid:"R$"},
-  {id:"produtividade",nome:"Produtividade",mede:"Capacidade operacional",medir:"Entregas / horas trabalhadas",tipo:"manual",unid:""},
-  {id:"adocao",nome:"Adoção das inovações",mede:"Uso dos novos processos",medir:"Usuários corretos / previstos × 100",tipo:"manual",unid:"%"},
-  {id:"cobertura",nome:"Cobertura de avaliação",mede:"% de atendimentos avaliados",medir:"Avaliados / total × 100",tipo:"auto",unid:"%"},
-  {id:"nota_media",nome:"Nota média de auditoria",mede:"Qualidade e conformidade",medir:"Soma das notas / atendimentos avaliados",tipo:"auto",unid:"nota"},
-  {id:"tempo_resol",nome:"Tempo médio de atendimento",mede:"Agilidade na solução",medir:"Tempo total / atendimentos",tipo:"auto",unid:"min"},
-  {id:"reincidencia",nome:"Reincidência de chamados",mede:"Problemas que voltaram",medir:"Repetidos / total × 100",tipo:"manual",unid:"%"},
-  {id:"retrabalho",nome:"Redução de retrabalho",mede:"Menos correções",medir:"(Antes − atual) / antes × 100",tipo:"manual",unid:"%"},
-  {id:"demandas_elim",nome:"Demandas eliminadas",mede:"Migradas para automação",medir:"Manuais eliminadas no período",tipo:"manual",unid:""},
-  {id:"economia",nome:"Economia financeira",mede:"Retorno dos projetos",medir:"Horas × custo/hora + custos eliminados",tipo:"manual",unid:"R$"},
-  {id:"projetos_result",nome:"Projetos com resultado",mede:"Efetividade",medir:"Meta atingida / concluídos × 100",tipo:"manual",unid:"%"}
+  {id:"reducao_horas",nome:"Redução de horas/cliente",mede:"Ganho de eficiência",medir:"Horas economizadas ÷ clientes ativos no G-Click",unid:"h",bom:"sobe"},
+  {id:"horas_econ",nome:"Horas economizadas",mede:"Tempo liberado por mês",medir:"Soma das horas/mês dos projetos no ar no Escritório Virtual",unid:"h",bom:"sobe"},
+  {id:"custo_cliente",nome:"Custo por cliente",mede:"Custo de atendimento",medir:"Custo/hora × jornada × equipe ÷ clientes ativos",unid:"R$",bom:"desce"},
+  {id:"produtividade",nome:"Produtividade",mede:"Capacidade operacional",medir:"Entregas concluídas no G-Click ÷ horas trabalhadas no Kronos",unid:"/h",bom:"sobe"},
+  {id:"adocao",nome:"Adoção das inovações",mede:"Uso dos novos processos",medir:"Quem usou Resiltrack, intranet ou Claude em 4 semanas (Neocode) ÷ equipe ativa",unid:"%",bom:"sobe"},
+  {id:"cobertura",nome:"Cobertura de avaliação",mede:"% de atendimentos avaliados",medir:"Avaliados ÷ total × 100",unid:"%",front:true},
+  {id:"nota_media",nome:"Nota média de auditoria",mede:"Qualidade e conformidade",medir:"Soma das notas ÷ atendimentos avaliados",unid:"nota",front:true},
+  {id:"tempo_resol",nome:"Tempo médio de atendimento",mede:"Agilidade na solução",medir:"Mediana da duração dos atendimentos (30 dias)",unid:"min",bom:"desce"},
+  {id:"reincidencia",nome:"Reincidência de chamados",mede:"Problemas que voltaram",medir:"Mesmo contato volta em até 7 dias com assunto parecido ÷ atendimentos encerrados",unid:"%",bom:"desce"},
+  {id:"retrabalho",nome:"Retrabalho",mede:"Entregas corrigidas",medir:"Retificações no G-Click ÷ entregas do período",unid:"%",bom:"desce"},
+  {id:"demandas_elim",nome:"Demandas eliminadas",mede:"Migradas para automação",medir:"Automações no ar no Escritório Virtual",unid:"",bom:"sobe"},
+  {id:"economia",nome:"Economia financeira",mede:"Retorno dos projetos",medir:"Horas economizadas × custo/hora + custos eliminados dos projetos",unid:"R$",bom:"sobe"},
+  {id:"projetos_result",nome:"Projetos com resultado",mede:"Efetividade",medir:"Projetos no ar ou concluídos com ganho medido ÷ total",unid:"%",bom:"sobe"}
 ];
-let KPIVAL={};
-function loadKpiVals(){ try{KPIVAL=JSON.parse(localStorage.getItem("resiltrack_kpi")||"{}")||{};}catch(e){KPIVAL={};} }
-function saveKpiVals(){ try{localStorage.setItem("resiltrack_kpi",JSON.stringify(KPIVAL));}catch(e){} }
+let PKPI=null, PKPI_LOAD=false, PKPI_ERR="";
+function loadKpiVals(){ /* os valores agora vêm do banco (painel_kpis) */ }
+async function pkpiCarregar(forcar){ if(PKPI_LOAD) return; if(PKPI&&!forcar) return; PKPI_LOAD=true; PKPI_ERR="";
+  try{ PKPI=await crmRpc("painel_kpis",{p:{acao:"ler"}}); }
+  catch(e){ PKPI_ERR=String(e&&e.message||e).includes("sem_permissao")?"Só gestores e administradores veem os KPIs.":(String(e&&e.message||"").includes("painel_kpis")?"Falta publicar a função dos KPIs no Supabase.":crmErro(e)); }
+  PKPI_LOAD=false; const w=document.getElementById("g-wallboard"); if(w&&MODE==="gestor"){ w.innerHTML=wallboardHTML(); bindWall(w); } }
 function kpiAuto(id){
   const com=comNota(ATEND), total=ATEND.length;
   if(id==="cobertura") return total? (com.length/total*100):null;
   if(id==="nota_media") return com.length? (com.reduce((s,a)=>s+a.nota,0)/com.length):null;
-  if(id==="tempo_resol"){ const ds=ATEND.map(a=>a.durMin).filter(x=>typeof x==="number"&&x>0); return ds.length? (ds.reduce((s,x)=>s+x,0)/ds.length):null; }
   return null;
 }
+const _kn=(n,d)=>n==null||isNaN(n)?"—":Number(n).toLocaleString("pt-BR",{minimumFractionDigits:d||0,maximumFractionDigits:d==null?1:d});
+const _kr=n=>n==null||isNaN(n)?"—":Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+function kpiSpark(id){ const H=((PKPI&&PKPI.historico)||{})[id]; if(!H) return ""; const L=H.filter(x=>x.mes>="2026-09-01"&&x.valor!=null);
+  if(L.length<2) return ""; const vs=L.map(x=>+x.valor), mn=Math.min(...vs), mx=Math.max(...vs), W=64, Hh=18;
+  const pts=vs.map((v,i)=>`${(i/(vs.length-1)*W).toFixed(1)},${(Hh-2-(mx===mn?Hh/2-2:(v-mn)/(mx-mn)*(Hh-4))).toFixed(1)}`).join(" ");
+  const tt=L.map(x=>`${String(x.mes).slice(5,7)}/${String(x.mes).slice(2,4)}: ${_kn(x.valor,2)}`).join(" · ");
+  return `<svg class="kspark" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" aria-label="Histórico mensal"><title>${esc(tt)}</title><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`; }
+function kpiDelta(k,at,an){ if(at==null||an==null||isNaN(at)||isNaN(an)) return ""; const d=at-an; if(Math.abs(d)<1e-9) return `<span class="kdl">igual aos 30 dias anteriores</span>`;
+  const bom=(k.bom==="sobe")===(d>0), un=k.unid==="R$"?"":k.unid==="%"?" p.p.":k.unid==="/h"?"":" "+k.unid;
+  const txt=k.unid==="R$"?_kr(Math.abs(d)):_kn(Math.abs(d),k.unid==="/h"?2:1)+un;
+  return `<span class="kdl ${bom?"ok":"ruim"}">${d>0?"▲":"▼"} ${txt} vs 30 dias antes</span>`; }
 function kpiRender(k){
-  let disp="";
-  if(k.tipo==="auto"){
+  let disp="", sub="", acao="";
+  if(k.front){
     const val=kpiAuto(k.id);
-    if(val==null){ disp=`<span class="kv todo">sem dados</span>`; }
+    if(val==null) disp=`<span class="kv todo">sem dados</span>`;
     else if(k.id==="nota_media"){ const cls=val>=8?"good":(val>=6?"warn":"crit"); disp=`<span class="kv ${cls}">${val.toFixed(1)}<span class="un">/10</span></span>`; }
-    else if(k.id==="cobertura"){ const cls=val>=90?"good":(val>=70?"warn":"crit"); disp=`<span class="kv ${cls}">${Math.round(val)}<span class="un">%</span></span>`; }
-    else if(k.id==="tempo_resol"){ disp=`<span class="kv">${val.toFixed(0)}<span class="un">min</span></span>`; }
-  } else {
-    const raw=KPIVAL[k.id];
-    if(raw==null||raw===""){ disp=`<span class="kv todo">a configurar</span>`; }
-    else if(k.unid==="R$"){ disp=`<span class="kv">R$ ${esc(String(raw))}</span>`; }
-    else if(k.unid&&k.unid!=="nota"){ disp=`<span class="kv">${esc(String(raw))}<span class="un">${esc(k.unid)}</span></span>`; }
-    else { disp=`<span class="kv">${esc(String(raw))}</span>`; }
+    else { const cls=val>=90?"good":(val>=70?"warn":"crit"); disp=`<span class="kv ${cls}">${Math.round(val)}<span class="un">%</span></span>`; }
+  } else if(PKPI_ERR){ disp=`<span class="kv todo">indisponível</span>`; }
+  else if(!PKPI){ disp=`<span class="kv todo">calculando…</span>`; }
+  else {
+    const A=(PKPI.atual||{})[k.id]||{}, B=(PKPI.anterior||{})[k.id]||{}, v=A.valor==null?null:+A.valor;
+    const un=u=>`<span class="un">${u}</span>`;
+    if(k.id==="horas_econ"){ disp=`<span class="kv">${_kn(v,0)}${un("h/mês")}</span>`; sub=+A.horas_ia>0?`${_kn(A.horas_ia,0)} h ainda são estimativa da IA`:(PKPI.pendentes_confirmar?"":"todas as horas confirmadas");
+      acao=`<button class="kpi-lnk" data-kact="horas">${PKPI.pendentes_confirmar?`Conferir horas (${PKPI.pendentes_confirmar})`:"Ver projetos"}</button>`; }
+    else if(k.id==="reducao_horas"){ disp=`<span class="kv">${_kn(v,2)}${un("h/cliente")}</span>`; sub=`${_kn(A.clientes,0)} clientes ativos no G-Click`; }
+    else if(k.id==="custo_cliente"){ if(v==null){ disp=`<span class="kv todo">falta o custo/hora</span>`; sub="Cadastre os salários no Themis RH ou defina um valor fixo."; }
+      else { disp=`<span class="kv">${_kr(v)}${un("/mês")}</span>`; sub=`custo/hora ${_kr(A.custo_hora)} · ${A.fonte==="folha"?"folha do Themis RH":"valor fixo"}`; }
+      if(PKPI.admin) acao=`<button class="kpi-lnk" data-kact="custo">Custo/hora</button>`; }
+    else if(k.id==="produtividade"){ disp=`<span class="kv">${_kn(v,2)}${un("entregas/h")}</span>`; sub=`${_kn(A.entregas,0)} entregas em ${_kn(A.horas,0)} h`; }
+    else if(k.id==="adocao"){ disp=`<span class="kv ${v>=80?"good":v>=50?"warn":"crit"}">${_kn(v,0)}${un("%")}</span>`; sub=`${A.usando} de ${A.ativos} pessoas em 4 semanas`; }
+    else if(k.id==="tempo_resol"){ disp=`<span class="kv">${_kn(v,0)}${un("min")}</span>`; sub="mediana, sem distorção de conversas abertas"; }
+    else if(k.id==="reincidencia"){ disp=`<span class="kv ${v<=5?"good":v<=10?"warn":"crit"}">${_kn(v,1)}${un("%")}</span>`; sub=`${A.voltaram} de ${A.atendimentos} atendimentos voltaram`; }
+    else if(k.id==="retrabalho"){ disp=`<span class="kv">${_kn(v,2)}${un("% das entregas")}</span>`; sub=`${A.documento_errado||0} atendimentos com documento errado`; }
+    else if(k.id==="demandas_elim"){ disp=`<span class="kv">${_kn(v,0)}${un("automações")}</span>`; sub=A.novas?`${A.novas} novas nos últimos 30 dias`:"nenhuma nova nos últimos 30 dias"; }
+    else if(k.id==="economia"){ disp=`<span class="kv">${_kr(v)}${un("/mês")}</span>`; sub=A.fonte==="sem"?`só custos eliminados: falta o custo/hora`:`horas ${_kr(A.de_horas)} + custos eliminados ${_kr(A.de_ferramentas)}`; }
+    else if(k.id==="projetos_result"){ disp=`<span class="kv">${_kn(v,0)}${un("%")}</span>`; sub=`${A.com_resultado} de ${A.total} com ganho medido`; }
+    sub=(sub?`<div class="ksub">${esc(sub)}</div>`:"")+kpiDelta(k,v,B.valor==null?null:+B.valor);
   }
-  const badge=k.tipo==="auto"?`<span class="kpi-badge auto">auto</span>`:`<span class="kpi-badge man">manual</span>`;
-  const edit=(k.tipo==="manual"&&podePainelGestor())?`<button class="kpi-edit" data-kpi="${esc(k.id)}" title="Definir valor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`:"";
-  return `<div class="kpi-card">${badge}<div class="kn">${esc(k.nome)}</div><div class="km">${esc(k.mede)}</div>${disp}<div class="kf">Como medir: ${esc(k.medir)}</div>${edit}</div>`;
+  const badge=`<span class="kpi-badge auto">auto</span>`;
+  return `<div class="kpi-card">${badge}<div class="kn">${esc(k.nome)}</div><div class="km">${esc(k.mede)}</div>${disp}${sub}<div class="kf"><span>Como medir: ${esc(k.medir)}</span>${k.front?"":kpiSpark(k.id)}</div>${acao}</div>`;
 }
 function wallboardHTML(){
-  return `<div class="gsec-h" style="margin-top:8px"><h3>Wallboard de KPIs</h3><span>indicadores do supervisor de inovação</span></div>`
+  if(!PKPI&&!PKPI_LOAD&&!PKPI_ERR) setTimeout(()=>pkpiCarregar(),0);
+  return `<div class="gsec-h" style="margin-top:8px"><h3>Wallboard de KPIs</h3><span>indicadores do supervisor de inovação · últimos 30 dias, atualizados todo dia${PKPI_ERR?` · <b style="color:var(--crit)">${esc(PKPI_ERR)}</b>`:""}</span></div>`
     +`<div class="wall">`+GEST_KPIS.map(kpiRender).join("")+`</div>`;
 }
-function openKpiEdit(id){
-  const k=GEST_KPIS.find(x=>x.id===id); if(!k) return;
-  const cur=KPIVAL[id]!=null?KPIVAL[id]:"";
-  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">Definir KPI</div><h3 style="margin:2px 0 0;font-size:18px">${esc(k.nome)}</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
+function bindWall(w){ w.querySelectorAll("[data-kact]").forEach(b=>b.onclick=()=>b.dataset.kact==="horas"?pkpiHoras():pkpiCusto()); }
+function openKpiEdit(){}
+
+// horas economizadas por projeto: a IA estima, o gestor confirma
+async function pkpiHoras(){
+  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">Horas economizadas</div><h3 style="margin:2px 0 0;font-size:18px">Projetos no ar</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
+   <div style="padding:18px 22px" id="phBox"><div class="empty">Carregando…</div></div>`);
+  modal.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  const box=modal.querySelector("#phBox");
+  let L; try{ L=await crmRpc("painel_kpis",{p:{acao:"projetos"}}); }catch(e){ box.innerHTML=`<div class="empty">${esc(crmErro(e))}</div>`; return; }
+  const sem=L.filter(x=>x.fonte==="sem").length, ia=L.filter(x=>x.fonte==="ia").length;
+  const fonte={confirmada:"Confirmada",informada:"Informada no projeto",ia:"Estimativa da IA",sem:"Sem estimativa"};
+  box.innerHTML=`<p class="sub" style="margin:0 0 10px">Quanto tempo manual cada projeto poupa por mês, somando a equipe toda. A IA sugere pela descrição do projeto e você confirma ou corrige. Até confirmar, o KPI usa a estimativa da IA.</p>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><span class="chip">${L.length} no ar</span><span class="chip">${ia} para confirmar</span><span class="chip">${sem} sem estimativa</span><span style="flex:1"></span>
+    ${sem?`<button class="btn-primary" id="phIA">Estimar com IA (${sem})</button>`:""}</div><div id="phMsg" class="sub" style="margin-bottom:8px"></div>
+   <div style="overflow-x:auto"><table><thead><tr><th>Projeto</th><th>Origem</th><th class="right">Horas/mês</th><th></th></tr></thead><tbody>
+   ${L.map(x=>`<tr><td><b>${esc(x.nome||"")}</b><div class="sub">${esc([x.tipo,x.responsavel].filter(Boolean).join(" · "))}</div>${x.justificativa_ia?`<div class="sub" style="margin-top:3px">IA: ${esc(x.justificativa_ia)}</div>`:""}</td>
+     <td><span class="chip${x.fonte==="ia"?" err":""}">${fonte[x.fonte]||x.fonte}</span></td>
+     <td class="right"><input class="inp" type="number" min="0" max="2000" step="0.5" style="width:90px;text-align:right" data-phv="${escAttr(x.id)}" value="${x.horas==null?"":x.horas}"></td>
+     <td class="right"><button class="txt-btn" data-phok="${escAttr(x.id)}">${x.fonte==="confirmada"?"Salvar":"Confirmar"}</button></td></tr>`).join("")}</tbody></table></div>`;
+  box.querySelectorAll("[data-phok]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.phok, i=box.querySelector(`[data-phv="${CSS.escape(id)}"]`); b.disabled=true;
+    try{ await crmRpc("painel_kpis",{p:{acao:"confirmar",id,horas:i.value}}); b.textContent="Confirmado"; const c=b.closest("tr").querySelector(".chip"); c.textContent="Confirmada"; c.classList.remove("err"); PKPI=null; }
+    catch(e){ b.disabled=false; crmToast(crmErro(e)); } });
+  const ia1=box.querySelector("#phIA"); if(ia1) ia1.onclick=async()=>{ ia1.disabled=true; const m=box.querySelector("#phMsg"); m.textContent="A IA está estimando os projetos. Leva até 1 minuto…";
+    try{ const {data,error}=await sb.functions.invoke("painel-horas-ia",{body:{}}); if(error){ let t=""; try{ t=(await error.context.json()).erro||""; }catch(_){} throw new Error(t||String(error.message||error)); }
+      if(data&&data.erro) throw new Error(data.erro); crmToast(`${data.feitos} projetos estimados${data.restantes?`, faltam ${data.restantes}`:""}`); PKPI=null; pkpiHoras(); }
+    catch(e){ ia1.disabled=false; m.textContent=crmErro(e); } };
+  const fechar=()=>{ if(!PKPI) pkpiCarregar(true); }; modal.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",fechar));
+}
+// custo por hora (só admin): usado enquanto a folha do Themis RH não tiver salários
+function pkpiCusto(){ const C=(PKPI&&PKPI.config)||{}, A=(PKPI&&PKPI.atual&&PKPI.atual.custo_cliente)||{};
+  openModal(`<div class="modal-head"><div><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.05em">KPIs</div><h3 style="margin:2px 0 0;font-size:18px">Custo por hora da equipe</h3></div><div class="spacer" style="flex:1"></div><button class="icon-btn" data-close style="background:rgba(255,255,255,.16);border:none;color:#fff">✕</button></div>
   <div style="padding:20px 24px">
-    <p style="font-size:13px;color:var(--ink-2);margin:0 0 4px">${esc(k.mede)}</p>
-    <p style="font-size:11.5px;color:var(--muted);margin:0 0 14px">Como medir: ${esc(k.medir)}</p>
-    <label style="font-size:12px;font-weight:600;color:var(--ink-2)">Valor${k.unid?` (${esc(k.unid)})`:""}</label>
-    <input id="kpiIn" class="inp" style="margin-top:6px" value="${esc(String(cur))}" placeholder="ex: 12,5">
-    <p style="font-size:11px;color:var(--muted);margin:10px 0 0">Salvo neste navegador por enquanto. Quando quiser esse número compartilhado entre os gestores, a gente liga no banco.</p>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
-      <button class="btn-line" data-close>Cancelar</button>
-      <button class="btn-primary" id="kpiSave">Salvar</button>
-    </div>
-  </div>`);
-  document.getElementById("kpiSave").onclick=()=>{ const val=document.getElementById("kpiIn").value.trim(); if(val==="") delete KPIVAL[id]; else KPIVAL[id]=val; saveKpiVals(); closeModal(); render(); };
+   <p class="sub" style="margin:0 0 12px">${A.fonte==="folha"?`Hoje o custo/hora vem da folha do Themis RH: ${_kr(A.custo_hora)}. O valor fixo abaixo só é usado se faltarem salários.`:"A folha do Themis RH ainda não tem salários suficientes (precisa de pelo menos 80% da equipe). Enquanto isso, o painel usa o valor fixo abaixo."} Nenhum salário individual aparece no painel.</p>
+   <label style="font-size:12px;font-weight:600">Custo médio por hora (R$)</label><input id="pcH" class="inp" type="number" step="0.01" min="0" style="margin:6px 0 12px" value="${C.custo_hora_fixo??""}" placeholder="ex.: 45">
+   <label style="font-size:12px;font-weight:600">Fator de encargos sobre a folha</label><input id="pcF" class="inp" type="number" step="0.05" min="1" max="3" style="margin:6px 0 4px" value="${C.fator_encargos??1}">
+   <p class="sub" style="margin:0">1 = só salário. 1,7 é uma referência comum para incluir encargos e benefícios.</p>
+   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px"><button class="btn-line" data-close>Cancelar</button><button class="btn-primary" id="pcOk">Salvar</button></div></div>`);
+  modal.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);
+  modal.querySelector("#pcOk").onclick=async()=>{ try{ await crmRpc("painel_kpis",{p:{acao:"config",custo_hora_fixo:modal.querySelector("#pcH").value,fator_encargos:modal.querySelector("#pcF").value||"1"}}); closeModal(); crmToast("Custo/hora salvo"); PKPI=null; pkpiCarregar(true); }catch(e){ crmToast(crmErro(e)); } };
 }
 
 // revisão diária
@@ -1521,7 +1577,7 @@ function blocosHTML(){
   </div>`;
 }
 function bindGestor(v){
-  v.querySelectorAll("[data-kpi]").forEach(b=>b.onclick=()=>openKpiEdit(b.dataset.kpi));
+  const wb=document.getElementById("g-wallboard"); if(wb) bindWall(wb);
   const sel=document.getElementById("revDepSel"); if(sel) sel.onchange=()=>{ REVDEP=sel.value; render(); };
   v.querySelectorAll("[data-mnav]").forEach(b=>b.onclick=()=>{ REVMES=_addMonths(REVMES||_curMonthStr(),+b.dataset.mnav); render(); });
   const back=document.getElementById("revVoltarHoje"); if(back) back.onclick=()=>{ REVMES=_curMonthStr(); render(); };
