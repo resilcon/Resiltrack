@@ -835,7 +835,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.54 (celular e tablet: menu em gaveta e atalhos embaixo; app instalável)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.56 (Assistente de RH lê atendimentos, ponto, chegadas, G-Click e atas de 1x1)</footer>
   </div>
 </div>
 
@@ -8859,7 +8859,7 @@ async function iaPainel(v){ const box=v.querySelector("#iaP"); if(!box) return;
  const c=rhPor(RHD.colaboradores,RHIA.sel)||{}, id=RHIA.sel;
  box.innerHTML=`<div class="card ia-top"><div><b>${esc(c.nome)}</b><div class="sub">${esc([(rhPor(RHD.cargos,c.cargo_id)||{}).nome,(rhPor(RHD.departamentos,c.departamento_id)||{}).nome].filter(Boolean).join(" · "))}</div></div>
   <div class="ia-ask"><textarea class="inp" id="iaPerg" rows="2" maxlength="1000" placeholder="Pergunta opcional. Ex.: como preparo uma conversa sobre prazos com essa pessoa?"></textarea>${crmPri('id="iaGo">Analisar com IA</button>')}</div>
-  <p class="sub ia-nota">A IA lê avaliações, feedbacks, PDI e perfil comportamental. Não recebe CPF, salário, nascimento nem contatos. Toda análise fica registrada.</p></div>
+  <p class="sub ia-nota">A IA lê avaliações, feedbacks, PDI, perfil comportamental, qualidade dos atendimentos, números do ponto e horário de chegada (Kronos ID), entregas do G-Click e atas de 1x1. Não recebe CPF, salário, nascimento, contatos nem motivo de ausência. Toda análise fica registrada.</p></div>
   <div id="iaRes"></div><div id="iaHist"></div>`;
  box.querySelector("#iaGo").onclick=()=>iaAnalisar(v,id);
  if(RHIA.res&&RHIA.res.colaborador===id) iaMostrar(v,RHIA.res.r,RHIA.res.quando,RHIA.res.pergunta);
@@ -8883,7 +8883,7 @@ function iaMostrar(v,r,quando,pergunta){ const out=v.querySelector("#iaRes"); if
  const lst=(tit,L,cls)=>(L||[]).length?`<div class="card ia-sec ${cls||""}"><h4>${tit}</h4><ul>${L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
  out.innerHTML=`${r.alerta?`<div class="rha-aviso"><b>Atenção:</b> ${esc(r.alerta)}</div>`:""}
   ${pergunta&&r.resposta?`<div class="card ia-sec ia-resp"><h4>Sua pergunta</h4><p class="sub" style="margin:0 0 6px">${esc(pergunta)}</p><p>${esc(r.resposta)}</p></div>`:""}
-  <div class="card ia-sec"><div class="ia-h"><h4>Resumo</h4><span class="pill ${t[0]}">${t[1]}</span><span class="sub" style="margin-left:auto">${iaData(quando)}</span></div><p>${esc(r.resumo||"")}</p></div>
+  <div class="card ia-sec"><div class="ia-h"><h4>Resumo</h4><span class="pill ${t[0]}">${t[1]}</span><span class="sub" style="margin-left:auto">${iaData(quando)}</span></div><p>${esc(r.resumo||"")}</p>${(r.fontes||[]).length?`<div class="ia-fontes"><span class="sub">Também usou:</span>${r.fontes.map(f=>`<span class="pill neutral">${esc({atendimentos_180_dias:"Atendimentos (180 dias)",ponto_90_dias:"Ponto Kronos (90 dias)",chegadas_90_dias:"Chegadas ao escritório (90 dias)",gclick_90_dias:"G-Click (90 dias)",reunioes_1x1:"Atas de 1x1"}[f]||f)}</span>`).join("")}</div>`:""}</div>
   <div class="ia-g2">${lst("Pontos fortes",r.pontos_fortes,"ia-f")}${lst("Pontos de atenção",r.pontos_atencao,"ia-a")}</div>
   ${(r.sugestoes_pdi||[]).length?`<div class="card ia-sec"><h4>Ações de PDI sugeridas</h4><div class="ia-pdis">${r.sugestoes_pdi.map((s,i)=>`<div class="ia-pdi"><b>${esc(s.nome||"")}</b><p>${esc(s.descricao||"")}</p>
     <div class="sub">${s.carga_horas?`${s.carga_horas}h`:""}${s.prazo_dias?` · prazo sugerido de ${s.prazo_dias} dias`:""}${(s.itens||[]).length?` · desenvolve ${esc(s.itens.join(", "))}`:""}</div><button class="txt-btn" data-iapdi="${i}">Criar ação de PDI</button></div>`).join("")}</div></div>`:""}
@@ -8921,7 +8921,7 @@ function iaHistorico(v){ const box=v.querySelector("#iaHist"); if(!box) return; 
 .ia-f{border-left:4px solid #0f7a5c!important}.ia-a{border-left:4px solid #d9a23b!important}.ia-resp{border-left:4px solid #066789!important}
 .ia-pdis{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.ia-pdi{border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}.ia-pdi p{margin:0;font-size:13.5px}.ia-pdi .txt-btn{align-self:flex-start;margin-top:auto}
 .ia-pq{margin:6px 0 10px;padding-left:20px;display:grid;gap:5px;color:var(--ink-2)}
-.ia-falta{margin:0}.ia-load{padding:18px!important;display:flex;align-items:center;gap:10px;color:var(--ink-2)}
+.ia-falta{margin:0}.ia-fontes{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.ia-load{padding:18px!important;display:flex;align-items:center;gap:10px;color:var(--ink-2)}
 .ia-dot{width:10px;height:10px;border-radius:50%;background:#269A9E;animation:iaP 1s ease-in-out infinite}@keyframes iaP{50%{opacity:.25;transform:scale(.7)}}
 .ia-hl{display:grid;gap:4px}.ia-hi{display:flex;gap:12px;align-items:baseline;border:0;background:none;text-align:left;padding:6px 4px;border-radius:8px;cursor:pointer;font:inherit;color:var(--ink)}.ia-hi:hover{background:var(--surface-2,#f3f6f7)}
 `; document.head.appendChild(st); })();
