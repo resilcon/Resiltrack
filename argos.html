@@ -187,8 +187,8 @@ const addDias = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.get
 const dataBR = d => d ? d.slice(8,10) + '/' + d.slice(5,7) : '';
 const horaBR = t => t ? new Date(t).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo'}) : '';
 const dataHoraBR = t => t ? new Date(t).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo'}) : '';
-const CAT = {produtivo:'Produtivo', neutro:'Neutro', distracao:'Distração', ocioso:'Parado'};
-const COR = {produtivo:'var(--c-prod)', neutro:'var(--c-neu)', distracao:'var(--c-dis)', ocioso:'var(--c-oci)'};
+const CAT = {produtivo:'Produtivo', neutro:'Neutro', distracao:'Distração', ocioso:'Longe da máquina', intervalo:'Intervalo (ponto)', fora_do_ponto:'Fora do ponto'};
+const COR = {produtivo:'var(--c-prod)', neutro:'var(--c-neu)', distracao:'var(--c-dis)', ocioso:'var(--c-oci)', intervalo:'#e9dcae', fora_do_ponto:'#ff9b73'};
 function aviso(t) { const m = $('#msg'); m.textContent = t; m.style.display = 'block'; clearTimeout(aviso.t); aviso.t = setTimeout(() => m.style.display = 'none', 3500); }
 function delta(a, b) { if (a == null || b == null) return ''; const d = Math.round((a - b) * 10) / 10; return `<span class="${d >= 0 ? 'sobe' : 'desce'}">${d >= 0 ? '+' : ''}${d.toLocaleString('pt-BR')} p.p.</span> vs período anterior`; }
 
@@ -223,7 +223,7 @@ const IC = {
   tema:'<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>'
 };
 const ABAS = [['geral','Visão geral'],['vivo','Ao vivo'],['pessoas','Colaboradores'],['clientes','Clientes'],['ponto','Ponto'],['recursos','Programas e sites'],
-  ['arquivos','Arquivos abertos'],['extras','Atividades extras'],['alertas','Alertas'],['inventario','Inventário'],['comparar','Argos x WorkMonitor'],['config','Configurações']];
+  ['arquivos','Arquivos abertos'],['alertas','Alertas'],['inventario','Inventário'],['comparar','Argos x WorkMonitor'],['config','Configurações']];
 const TOPO = ['geral','vivo','pessoas','clientes','ponto','recursos'];
 const TITULOS = {geral:'Produtividade da equipe', vivo:'Quem está trabalhando agora', pessoas:'Desempenho por colaborador', clientes:'Tempo dedicado a cada cliente',
   ponto:'Ponto gerencial automático', recursos:'Programas e sites mais usados', arquivos:'Auditoria de arquivos', extras:'Atividades extras',
@@ -403,7 +403,6 @@ const TELAS = {};
 TELAS.geral = async c => {
   const [d, ev] = await Promise.all([rpc('home', params()), rpc('evolucao', params({dias: 30}))]);
   const k = d.kpis || {}, pes = d.pessoas || [];
-  $('#c-extras').textContent = k.extras_pend || ''; $('#c-extras').classList.toggle('oculto', !k.extras_pend);
   $('#c-alertas').textContent = k.alertas || ''; $('#c-alertas').classList.toggle('oculto', !k.alertas);
   const totalDist = (k.produtivo || 0) + (k.neutro || 0) + (k.distracao || 0) + (k.ocioso || 0);
   const ent = pes.map(x => x.primeira).filter(Boolean).sort(), sai = pes.map(x => x.ultima).filter(Boolean).sort();
@@ -437,7 +436,7 @@ TELAS.geral = async c => {
       ${linhaSuave(ev, 'produtivo', {rot: x => dataBR(x.dia), fmt: v => Hd(v), h: 180, w: 560})}</div>
     <div class="card"><h3>Distribuição</h3>${donut([
       {n:'Produtivo', v:k.produtivo, c:COR.produtivo}, {n:'Neutro', v:k.neutro, c:COR.neutro},
-      {n:'Distração', v:k.distracao, c:COR.distracao}, {n:'Parado', v:k.ocioso, c:COR.ocioso}],
+      {n:'Distração', v:k.distracao, c:COR.distracao}, {n:'Longe da máquina', v:k.ocioso, c:COR.ocioso}],
       P(totalDist ? ((k.produtivo || 0) + (k.neutro || 0) + (k.distracao || 0)) / totalDist * 100 : null), 'atividade')}</div>
     <div class="card"><h3>Tempo com clientes</h3><div class="acoes-c"><span class="circ" data-ir="clientes">${IC.seta}</span></div>
       <div class="leg-p">No período, somando a equipe</div>
@@ -446,7 +445,7 @@ TELAS.geral = async c => {
     <div class="s3 grid g4">
       ${kpi('Atividade', P(k.atividade_pct), `${dif(k.atividade_pct, k.ant_atividade_pct) || '0'} p.p. · tempo em uso sobre a jornada`)}
       ${kpi('Score médio', k.score == null ? '-' : N(k.score), `${N(k.pessoas)} pessoas · <a href="#" id="l-score">como calcula</a>`)}
-      ${kpi('Parado sem justificar', H(k.ocioso), `extras aprovadas ${H(k.extras)} · ${N(k.extras_pend)} esperando`)}
+      ${kpi('Longe da máquina no expediente', H(k.ocioso), `intervalo batido ${H(k.intervalo)} · fora do ponto ${H(k.fora_do_ponto)}`)}
       ${kpi('Teclas e cliques', N((k.teclas || 0) + (k.cliques || 0)), `${N(k.teclas)} teclas · ${N(k.cliques)} cliques`)}
     </div>
     <div class="card s2"><h3>Performance por departamento <small>produtivo, atual x período anterior</small></h3>
@@ -473,13 +472,16 @@ function tabPessoas(pes) {
     {t:'Colaborador', f:x => `<b style="white-space:nowrap">${esc(x.nome)}</b><div class="ajuda">${esc(x.depto)}</div>`, v:x => x.nome, x:x => x.nome},
     {t:'Atividade', f:x => `<div style="min-width:90px"><b>${P(x.atividade_pct)}</b>${pbar([[x.produtivo, COR.produtivo], [x.neutro, COR.neutro], [x.distracao, COR.distracao], [x.ocioso, COR.ocioso]])}</div>`, v:x => x.atividade_pct, x:x => x.atividade_pct},
     {t:'Captadas', n:1, d:'Tempo com o computador em uso', f:x => H(x.captadas), v:x => x.captadas},
-    {t:'Produtivas', n:1, f:x => H(x.produtivo + x.extras_prod), v:x => x.produtivo + x.extras_prod},
-    {t:'Neutras', n:1, f:x => H(x.neutro + x.extras_neutro), v:x => x.neutro},
+    {t:'Produtivas', n:1, f:x => H(x.produtivo), v:x => x.produtivo},
+    {t:'Neutras', n:1, f:x => H(x.neutro), v:x => x.neutro},
     {t:'Distração', n:1, f:x => `<span class="${x.distracao > 1800 ? 'desce' : ''}">${H(x.distracao)}</span>`, v:x => x.distracao},
-    {t:'Parado', n:1, f:x => H(x.ocioso), v:x => x.ocioso},
+    {t:'Longe da máquina', n:1, d:'Parado dentro do expediente, sem batida de saída', f:x => H(x.ocioso), v:x => x.ocioso},
+    {t:'Intervalo', n:1, d:'Tempo entre as batidas de saída e volta', f:x => H(x.intervalo), v:x => x.intervalo},
+    {t:'Fora do ponto', n:1, d:'Computador em uso antes da entrada, no intervalo ou depois da saída', f:x => x.fora_do_ponto > 900 ? `<span class="chip atencao">${H(x.fora_do_ponto)}</span>` : H(x.fora_do_ponto), v:x => x.fora_do_ponto},
+    {t:'Ponto', n:1, d:'Primeira e última batida no Kronos', f:x => x.entrada_ponto ? `${x.entrada_ponto} / ${x.saida_ponto || '...'}` : '<span class="ajuda">sem batida</span>', v:x => x.entrada_ponto || ''},
     {t:'Com clientes', n:1, f:x => H(x.cliente), v:x => x.cliente},
-    {t:'Entrada', n:1, f:x => x.primeira || '-', v:x => x.primeira},
-    {t:'Saída', n:1, f:x => x.ultima || '-', v:x => x.ultima},
+    {t:'1ª atividade', n:1, f:x => x.primeira || '-', v:x => x.primeira},
+    {t:'Última', n:1, f:x => x.ultima || '-', v:x => x.ultima},
     {t:'Teclas', n:1, f:x => N(x.teclas), v:x => x.teclas},
     {t:'Cliques', n:1, f:x => N(x.cliques), v:x => x.cliques},
     {t:'Trocas', n:1, d:'Trocas de programa', f:x => N(x.trocas), v:x => x.trocas},
@@ -492,11 +494,11 @@ function tabPessoas(pes) {
 function explicarScore() {
   abrirGaveta(`<div class="cab"><h2>Como o score é calculado</h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div><div class="card ajuda" style="font-size:14px">
   <p>O score vai de 0 a 100 e junta quatro coisas, para não depender só de "ficar no computador":</p>
-  <p><b>45%</b> tempo produtivo sobre o tempo em uso (inclui atividades extras aprovadas, como reunião com cliente).<br>
+  <p><b>45%</b> tempo produtivo sobre o tempo em uso do computador.<br>
   <b>25%</b> atividade: tempo em uso dividido pela jornada (8h48 por dia, ajustável), limitado a 100%.<br>
   <b>20%</b> tempo ligado a algum cliente sobre o tempo em uso.<br>
   <b>10%</b> ausência de distração (100% menos o tempo em sites e programas de distração).</p>
-  <p>Use como termômetro, não como sentença: quem trabalha muito em reunião presencial, ligação ou papel precisa justificar as pausas para aparecer bem.</p></div>`);
+  <p>O tempo longe da máquina é separado pelo ponto do Kronos: o que fica entre a saída e a volta batidas conta como intervalo, e o que fica antes da entrada ou depois da saída nem entra na conta. Use o score como termômetro, não como sentença: reunião presencial e ligação fora do computador aparecem como tempo longe da máquina.</p></div>`);
 }
 
 TELAS.vivo = async c => {
@@ -530,7 +532,7 @@ TELAS.clientes = async c => {
     {t:'Dias', n:1, f:x => N(x.dias), v:x => x.dias},
     {t:'Departamentos', f:x => (x.deptos || []).map(d => `<span class="chip">${esc(d)}</span>`).join(' '), v:x => (x.deptos || []).length, x:x => (x.deptos || []).join(', ')},
     {t:'Arquivos', n:1, f:x => N(x.arquivos), v:x => x.arquivos},
-    {t:'Reuniões/ligações', n:1, d:'Atividades extras aprovadas ligadas ao cliente', f:x => H(x.extras_seg), v:x => x.extras_seg}];
+    ];
   if (adm) cols.push({t:'Custo da equipe', n:1, d:'Horas x custo/hora pela folha do Themis RH (salário x encargos / horas do mês)', f:x => R$(x.custo), v:x => x.custo || 0, x:x => x.custo});
   c.innerHTML = `<div class="grid g4">${kpi('Clientes atendidos', N(l.length))}${kpi('Tempo com clientes', H(tot))}${kpi('Média por cliente', H(l.length ? tot / l.length : 0))}${adm ? kpi('Custo da equipe com clientes', R$(l.reduce((a, x) => a + (x.custo || 0), 0)), 'só administradores veem') : kpi('Arquivos de clientes abertos', N(l.reduce((a, x) => a + x.arquivos, 0)))}</div>
   <div class="card" style="margin-top:14px"><h3>Tempo por cliente <small><input class="inp busca" id="bc" placeholder="Buscar cliente"> <button class="btn peq" id="csv">Exportar</button></small></h3><div id="tc">${tabela(cols, l, {clique: x => abrirCliente(x.empresa_id)})}</div></div>`;
@@ -540,18 +542,20 @@ TELAS.clientes = async c => {
 
 TELAS.ponto = async c => {
   const d = await rpc('ponto', params()), l = d.linhas || [];
+  const bat = x => (x.batidas || []).map((b, i) => `<span class="chip ${i % 2 ? '' : 'produtivo'}" title="${i % 2 ? 'saída' : 'entrada'}">${b}</span>`).join(' ');
   const cols = [
     {t:'Colaborador', f:x => `<b style="white-space:nowrap">${esc(x.nome)}</b><div class="ajuda">${esc(x.depto)}</div>`, v:x => x.nome, x:x => x.nome},
     {t:'Dia', f:x => dataBR(x.dia), v:x => x.dia, x:x => x.dia},
-    {t:'Entrada', n:1, f:x => `${x.entrada}${x.atraso_min > 0 ? ` <span class="chip atencao">+${x.atraso_min} min</span>` : ''}`, v:x => x.entrada, x:x => x.entrada},
-    {t:'Saída', n:1, f:x => `${x.saida}${x.saida_antes_min > 0 ? ` <span class="chip atencao">-${x.saida_antes_min} min</span>` : ''}`, v:x => x.saida, x:x => x.saida},
-    {t:'Intervalo', n:1, d:'Maior pausa entre 11h e 15h', f:x => H(x.intervalo), v:x => x.intervalo},
-    {t:'Captadas', n:1, f:x => H(x.captadas), v:x => x.captadas},
-    {t:'Produtivas', n:1, f:x => H(x.produtivo), v:x => x.produtivo},
-    {t:'Extras aprovadas', n:1, f:x => H(x.extras), v:x => x.extras},
-    {t:'Saldo x jornada', n:1, f:x => `<span class="${x.saldo_min >= 0 ? 'sobe' : 'desce'}">${x.saldo_min >= 0 ? '+' : '-'}${H(Math.abs(x.saldo_min) * 60)}</span>`, v:x => x.saldo_min, x:x => x.saldo_min}];
-  c.innerHTML = `<div class="card"><h3>Ponto gerencial automático <small>entrada prevista ${esc(d.entrada_prevista)} · saída ${esc(d.saida_prevista)} · jornada ${H(d.jornada_min * 60)} · tolerância ${d.tolerancia_min} min · <button class="btn peq" id="csv">Exportar</button></small></h3>
-  <p class="ajuda">Entrada e saída aqui são a primeira e a última atividade no computador. Não substituem o ponto oficial do Kronos ID: servem para comparar.</p>${tabela(cols, l)}</div>`;
+    {t:'Batidas no Kronos', f:x => x.origem === 'kronos' ? bat(x) + (x.atraso_min > 0 ? ` <span class="chip atencao">+${x.atraso_min} min</span>` : '') : `<span class="ajuda">sem batida · almoço deduzido ${bat(x)}</span>`, v:x => (x.batidas || [])[0] || '', x:x => (x.batidas || []).join(' ')},
+    {t:'1ª / última atividade', n:1, f:x => `${x.entrada} / ${x.saida}`, v:x => x.entrada, x:x => x.entrada + ' / ' + x.saida},
+    {t:'No computador', n:1, f:x => H(x.captadas), v:x => x.captadas},
+    {t:'Com clientes', n:1, f:x => H(x.cliente), v:x => x.cliente},
+    {t:'Intervalo', n:1, d:'Entre a saída e a volta batidas', f:x => H(x.intervalo), v:x => x.intervalo},
+    {t:'Longe da máquina', n:1, d:'Parado dentro do expediente, sem batida', f:x => H(x.parado), v:x => x.parado},
+    {t:'Fora do ponto', n:1, d:'Computador em uso antes da entrada, no intervalo ou depois da saída', f:x => x.fora_do_ponto > 900 ? `<span class="chip atencao">${H(x.fora_do_ponto)}</span>` : H(x.fora_do_ponto), v:x => x.fora_do_ponto},
+    {t:'Uso x jornada', n:1, d:'Tempo no computador menos a jornada (8h48)', f:x => `<span class="${x.saldo_min >= 0 ? 'sobe' : 'desce'}">${x.saldo_min >= 0 ? '+' : '-'}${H(Math.abs(x.saldo_min) * 60)}</span>`, v:x => x.saldo_min, x:x => x.saldo_min}];
+  c.innerHTML = `<div class="card"><h3>Ponto x uso do computador <small>jornada ${H(d.jornada_min * 60)} · entrada prevista ${esc(d.entrada_prevista)} · tolerância ${d.tolerancia_min} min · <button class="btn peq" id="csv">Exportar</button></small></h3>
+  <p class="ajuda">As batidas vêm do Kronos ID. O tempo longe da máquina é classificado sozinho: entre saída e volta batidas é intervalo; antes da entrada e depois da saída não conta; dentro do expediente fica como longe da máquina. Uso do computador fora das batidas aparece em "Fora do ponto". Quem não bateu ponto no dia tem o almoço deduzido pela maior parada entre 11h e 15h.</p>${tabela(cols, l)}</div>`;
   $('#csv').onclick = () => csv('argos_ponto', cols, l);
 };
 
@@ -673,7 +677,7 @@ TELAS.comparar = async c => {
 TELAS.config = async c => {
   const d = await rpc('config', {}), adm = S.filtros.admin, cf = d.config || {};
   const opCli = (d.clientes || []).map(x => `<option value="${esc(x.nome)}" data-id="${x.id}">`).join('');
-  const PAR = [['ocioso_seg','Segundos sem teclado/mouse para considerar parado'],['envio_seg','Intervalo de envio (segundos)'],['extra_min_seg','Pausa mínima para pedir justificativa (segundos)'],
+  const PAR = [['ocioso_seg','Segundos sem teclado/mouse para considerar parado'],['envio_seg','Intervalo de envio (segundos)'],
     ['jornada_min','Jornada diária (minutos)'],['entrada_prevista','Entrada prevista (HH:MM)'],['saida_prevista','Saída prevista (HH:MM)'],['tolerancia_min','Tolerância (minutos)'],
     ['retencao_titulos_dias','Dias que os títulos de janela ficam guardados'],['fator_encargos','Fator de encargos sobre o salário (custo/hora)'],['horas_mes','Horas por mês (custo/hora)'],
     ['contar_teclas','Contar teclas e cliques (true/false)'],['coletar_arquivos','Registrar arquivos abertos (true/false)']];
@@ -691,13 +695,7 @@ TELAS.config = async c => {
   <div class="card"><h3>Classificação de programas e sites</h3>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><select class="inp" id="ct-a"><option value="titulo">Título/site contém</option><option value="app">Programa (exe) contém</option></select><input class="inp" id="ct-p" placeholder="ex.: youtube ou excel.exe" style="flex:1"><select class="inp" id="ct-c"><option value="produtivo">Produtivo</option><option value="neutro">Neutro</option><option value="distracao">Distração</option></select><button class="btn pri" id="ct-s">Salvar</button></div>
     ${tabela([{t:'Onde', f:x => x.alvo === 'app' ? 'programa' : 'título/site', v:x => x.alvo}, {t:'Contém', f:x => `<code>${esc(x.padrao)}</code>`, v:x => x.padrao}, {t:'Classificação', f:x => `<span class="chip ${x.categoria}">${CAT[x.categoria]}</span>`, v:x => x.categoria}, {t:'', f:x => `<button class="btn peq rm-c" data-id="${x.id}">Remover</button>`}], d.categorias || [])}</div>
-  <div class="card"><h3>Tipos de atividade extra <small>o que o colaborador escolhe ao justificar uma pausa</small></h3>
-    ${tabela([{t:'Nome', f:x => `<input class="inp te" data-c="${x.codigo}" data-k="nome" value="${esc(x.nome)}" style="width:100%">`},
-      {t:'Conta como', f:x => `<select class="inp te" data-c="${x.codigo}" data-k="categoria"><option value="produtivo" ${x.categoria === 'produtivo' ? 'selected' : ''}>Produtivo</option><option value="neutro" ${x.categoria === 'neutro' ? 'selected' : ''}>Neutro</option></select>`},
-      {t:'Precisa aprovar', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="exige_aprovacao" ${x.exige_aprovacao ? 'checked' : ''}>`},
-      {t:'Pede cliente', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="pede_cliente" ${x.pede_cliente ? 'checked' : ''}>`},
-      {t:'Ativo', f:x => `<input type="checkbox" class="te" data-c="${x.codigo}" data-k="ativo" ${x.ativo ? 'checked' : ''}>`}], d.tipos_extra || [])}
-    <button class="btn pri" id="sv-te" style="margin-top:10px">Salvar tipos</button></div>
+
   </div>`;
   const idCli = nome => (d.clientes || []).find(x => x.nome.toLowerCase() === nome.trim().toLowerCase())?.id;
   const ok = async (acao, p, txt) => { try { const r = await rpc(acao, p, 'argos_admin'); aviso(txt + (r && r.reclassificados != null ? ` ${N(r.reclassificados)} registros ajustados.` : '')); pintar(); } catch (e) { aviso(e.message); } };
@@ -709,8 +707,7 @@ TELAS.config = async c => {
     c.querySelectorAll('.rm-r').forEach(b => b.onclick = () => ok('remover_regra', {id: b.dataset.id}, 'Regra removida.'));
     c.querySelectorAll('.rm-c').forEach(b => b.onclick = () => ok('remover_categoria', {id: b.dataset.id}, 'Removida.'));
   });
-  $('#sv-te').onclick = async () => { for (const t of d.tipos_extra || []) { const p = Object.assign({}, t); c.querySelectorAll(`.te[data-c="${t.codigo}"]`).forEach(i => p[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value);
-      try { await rpc('salvar_tipo_extra', p, 'argos_admin'); } catch (e) { return aviso(e.message); } } aviso('Tipos salvos.'); };
+
 };
 
 // ---------- gavetas de detalhe ----------
@@ -728,15 +725,15 @@ async function abrirPessoa(id, nome) {
     const ini = new Date(d.linha[0].i).getTime(), fim = new Date(d.linha[d.linha.length - 1].f).getTime(), tot = Math.max(fim - ini, 1);
     linha = `<div class="card"><h3>Linha do tempo do dia <small>passe o mouse para ver o que era</small></h3><div class="linha-t">${d.linha.map(s => {
       const x = (new Date(s.i).getTime() - ini) / tot * 100, w = Math.max(0.15, (new Date(s.f).getTime() - new Date(s.i).getTime()) / tot * 100);
-      const cor = s.ocioso ? COR.ocioso : (COR[s.categoria] || COR.neutro);
-      return `<i style="left:${x}%;width:${w}%;background:${cor}" title="${horaBR(s.i)} às ${horaBR(s.f)} · ${s.ocioso ? 'Parado' : esc(s.recurso)}${s.cliente ? ' · ' + esc(s.cliente) : ''}"></i>`; }).join('')}</div>
+      const cor = s.situacao === 'intervalo' ? COR.intervalo : s.situacao === 'fora_expediente' ? 'transparent' : s.ocioso ? COR.ocioso : s.situacao === 'fora_do_ponto' ? COR.fora_do_ponto : (COR[s.categoria] || COR.neutro);
+      return `<i style="left:${x}%;width:${w}%;background:${cor}" title="${horaBR(s.i)} às ${horaBR(s.f)} · ${s.situacao === 'intervalo' ? 'Intervalo (ponto)' : s.situacao === 'fora_expediente' ? 'Fora do expediente' : s.ocioso ? 'Longe da máquina' : esc(s.recurso) + (s.situacao === 'fora_do_ponto' ? ' (fora do ponto)' : '')}${s.cliente ? ' · ' + esc(s.cliente) : ''}"></i>`; }).join('')}</div>
       <div class="horas"><span>${horaBR(d.linha[0].i)}</span><span>${horaBR(d.linha[d.linha.length - 1].f)}</span></div>
       <div class="leg" style="flex-direction:row;gap:14px;margin-top:8px;flex-wrap:wrap">${Object.keys(COR).map(k => `<div><i style="background:${COR[k]}"></i>${CAT[k]}</div>`).join('')}</div></div>`;
   }
   const lst = (itens, nomeF, maxSeg) => itens.length ? itens.map(i => `<div class="alerta"><div style="flex:1;min-width:0"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nomeF(i)}</div>${pbar([[i.seg, 'var(--azul)']], maxSeg)}</div><b>${H(i.seg)}</b></div>`).join('') : '<div class="vazio">Nada no período.</div>';
   $('#gpn').innerHTML = `<div class="cab"><h2>${esc(nome)} <small class="ajuda">${esc(r.depto || '')}</small></h2><button class="btn" onclick="fecharGaveta()">Fechar</button></div>
   <div class="grid g4">${kpi('Atividade', P(r.atividade_pct), `${H(r.captadas)} captadas em ${N(r.dias)} dia(s)`)}${kpi('Produtivo', P(r.produtivo_pct), `distração ${H(r.distracao)}`)}${kpi('Com clientes', H(r.cliente), P(r.captadas ? r.cliente / r.captadas * 100 : null) + ' do tempo')}${kpi('Score', N(r.score), d.custo_hora != null ? 'custo/hora ' + R$(d.custo_hora) : '&nbsp;')}
-  ${kpi('Entrada / saída', `${r.primeira || '-'} / ${r.ultima || '-'}`, `parado ${H(r.ocioso)}`)}${kpi('Teclas e cliques', N((r.teclas || 0) + (r.cliques || 0)), `${N(r.teclas)} teclas · ${N(r.cliques)} cliques · ${N(r.rolagem)} rolagens`)}${kpi('Trocas de programa', N(r.trocas), `maior bloco sem pausa ${H(r.maior_continua)}`)}${kpi('Atividades extras', H((r.extras_prod || 0) + (r.extras_neutro || 0)), `${N(r.extras_pend)} esperando aprovação`)}</div>
+  ${kpi('1ª / última atividade', `${r.primeira || '-'} / ${r.ultima || '-'}`, r.entrada_ponto ? `ponto ${r.entrada_ponto} / ${r.saida_ponto || '...'}` : 'sem batida no Kronos')}${kpi('Teclas e cliques', N((r.teclas || 0) + (r.cliques || 0)), `${N(r.teclas)} teclas · ${N(r.cliques)} cliques · ${N(r.rolagem)} rolagens`)}${kpi('Trocas de programa', N(r.trocas), `maior bloco sem pausa ${H(r.maior_continua)}`)}${kpi('Fora do ponto', H(r.fora_do_ponto), `intervalo ${H(r.intervalo)} · longe da máquina ${H(r.ocioso)}`)}</div>
   <div style="margin-top:14px">${linha}</div>
   <div class="card" style="margin-top:14px"><h3>Por hora do dia <small>tempo e intensidade (teclas + cliques)</small></h3>${barrasEmpilhadas(Array.from({length: 24}, (_, h) => Object.assign({h, pro: 0, neu: 0, dis: 0, oci: 0}, (d.por_hora || []).find(x => x.h === h))).filter(x => x.h >= 6 && x.h <= 22),
     [['pro', COR.produtivo], ['neu', COR.neutro], ['dis', COR.distracao], ['oci', COR.ocioso]], {rot: x => x.h + 'h', fmt: v => H(v), h: 140})}</div>
@@ -746,7 +743,7 @@ async function abrirPessoa(id, nome) {
   </div>
   ${um ? '' : `<div class="card" style="margin-top:14px"><h3>Dia a dia</h3>${tabela([{t:'Dia', f:x => dataBR(x.dia), v:x => x.dia}, {t:'Entrada', n:1, f:x => x.entrada}, {t:'Saída', n:1, f:x => x.saida}, {t:'Captadas', n:1, f:x => H(x.cap), v:x => x.cap}, {t:'Produtivas', n:1, f:x => H(x.pro), v:x => x.pro}, {t:'Com clientes', n:1, f:x => H(x.cli), v:x => x.cli}, {t:'Parado', n:1, f:x => H(x.oci), v:x => x.oci}], d.por_dia || [])}</div>`}
   <div class="grid g2" style="margin-top:14px">
-    <div class="card"><h3>Atividades extras</h3>${(d.extras || []).map(x => `<div class="alerta"><span class="chip ${x.status}">${x.status}</span><div>${dataHoraBR(x.inicio)} · ${H(x.seg)} · <b>${esc(x.tipo)}</b>${x.cliente ? ' · ' + esc(x.cliente) : ''}${x.obs ? `<div class="ajuda">${esc(x.obs)}</div>` : ''}</div></div>`).join('') || '<div class="vazio">Nenhuma.</div>'}</div>
+    <div class="card"><h3>Batidas do ponto <small>Kronos ID</small></h3>${(d.ponto || []).map(x => `<div class="alerta"><b style="width:52px">${dataBR(x.dia)}</b><div>${x.origem === 'kronos' ? (x.batidas || []).map((b, i) => `<span class="chip ${i % 2 ? '' : 'produtivo'}">${b}</span>`).join(' ') : `<span class="ajuda">sem batida · expediente deduzido ${(x.batidas || []).join(' · ')}</span>`}</div></div>`).join('') || '<div class="vazio">Sem batidas no período.</div>'}</div>
     <div class="card"><h3>Alertas</h3>${(d.alertas || []).map(a => `<div class="alerta"><span class="chip ${a.nivel}">${a.nivel === 'atencao' ? 'atenção' : a.nivel}</span><div>${dataBR(a.dia)} · ${esc(a.texto)}</div></div>`).join('') || '<div class="vazio">Nenhum.</div>'}</div>
   </div>
   <div class="card" style="margin-top:14px"><h3>Arquivos e pastas abertos</h3>${tabela([{t:'Quando', f:x => dataHoraBR(x.quando), v:x => x.quando}, {t:'Arquivo', f:x => `${x.pasta ? '<span class="chip">pasta</span> ' : ''}<b>${esc(x.nome)}</b><div class="ajuda" style="word-break:break-all">${esc(x.caminho)}</div>`, v:x => x.nome}, {t:'Cliente', f:x => esc(x.cliente || ''), v:x => x.cliente || ''}, {t:'Depto.', f:x => esc(x.depto_pasta || '')}], d.arquivos || [], {vazio: 'Nenhum arquivo registrado.'})}</div>`;
@@ -797,8 +794,8 @@ function demo(acao, p) {
   const dias = Math.max(1, Math.round((new Date(S.ate) - new Date(S.de)) / 864e5) + 1);
   const pessoa = (n, i) => { const cap = dias * rnd(4.5, 7.4, i) * 3600, pro = cap * rnd(.7, .93, i + 1), dis = cap * rnd(0, .06, i + 2), cli = cap * rnd(.35, .75, i + 3);
     const ex = dias * rnd(0, 1200, i + 4);
-    return {colaborador_id: 'c' + i, nome: n, depto: DEP[i], dias, captadas: cap, produtivo: pro, neutro: cap - pro - dis, distracao: dis, ocioso: dias * rnd(1.5, 3, i + 5) * 3600, cliente: cli,
-      extras_prod: ex, extras_neutro: 0, extras_pend: i % 4 === 0 ? 1 : 0, teclas: Math.round(cap / 3600 * rnd(1400, 3200, i + 6)), cliques: Math.round(cap / 3600 * rnd(900, 2100, i + 7)),
+    return {colaborador_id: 'c' + i, nome: n, depto: DEP[i], dias, captadas: cap, produtivo: pro, neutro: cap - pro - dis, distracao: dis, ocioso: dias * rnd(0.4, 1.4, i + 5) * 3600, cliente: cli,
+      extras_prod: 0, extras_neutro: 0, extras_pend: 0, intervalo: dias * rnd(3300, 4200, i + 13), fora_do_ponto: i % 4 === 1 ? dias * rnd(900, 2600, i) : dias * rnd(0, 400, i), entrada_ponto: i === 5 ? null : '08:0' + (i % 9), saida_ponto: i === 5 ? null : '17:5' + (i % 9), dias_sem_ponto: i === 5 ? dias : 0, teclas: Math.round(cap / 3600 * rnd(1400, 3200, i + 6)), cliques: Math.round(cap / 3600 * rnd(900, 2100, i + 7)),
       cliques_dir: Math.round(cap / 3600 * 20), rolagem: Math.round(cap / 3600 * 600), trocas: Math.round(cap / 3600 * rnd(60, 140, i + 8)), maior_continua: rnd(1500, 7200, i + 9),
       primeira: '08:' + String(Math.round(rnd(0, 25, i + 10))).padStart(2, '0'), ultima: '17:' + String(Math.round(rnd(40, 59, i + 11))).padStart(2, '0'), alertas: i % 5 === 0 ? 1 : 0,
       atividade_pct: Math.round((cap + ex) / (dias * 528 * 60) * 1000) / 10, produtivo_pct: Math.round((pro + ex) / (cap + ex) * 1000) / 10, score: Math.round(rnd(55, 92, i + 12) * 10) / 10}; };
@@ -807,7 +804,7 @@ function demo(acao, p) {
   if (acao === 'filtros') return {admin: true, editor: true, jornada_min: 528, deptos: [...new Set(DEP)].map((d, i) => ({id: 'd' + i, nome: d})), colaboradores: NOMES.map((n, i) => ({id: 'c' + i, nome: n}))};
   if (acao === 'home') {
     const deps = {}; pes.forEach(x => { (deps[x.depto] = deps[x.depto] || []).push(x); });
-    return {kpis: {pessoas: pes.length, captadas: sum('captadas'), produtivo: sum('produtivo') + sum('extras_prod'), neutro: sum('neutro'), distracao: sum('distracao'), ocioso: sum('ocioso'), cliente: sum('cliente'), extras: sum('extras_prod'), extras_pend: 3, teclas: sum('teclas'), cliques: sum('cliques'), alertas: 4,
+    return {kpis: {pessoas: pes.length, captadas: sum('captadas'), produtivo: sum('produtivo') + sum('extras_prod'), neutro: sum('neutro'), distracao: sum('distracao'), ocioso: sum('ocioso'), cliente: sum('cliente'), intervalo: sum('intervalo'), fora_do_ponto: sum('fora_do_ponto'), teclas: sum('teclas'), cliques: sum('cliques'), alertas: 4,
         atividade_pct: 78.4, produtivo_pct: 86.1, cliente_pct: 54.2, score: 74.3, ant_atividade_pct: 75.9, ant_produtivo_pct: 84.0, ant_cliente_pct: 57.5},
       deptos: Object.entries(deps).map(([d, l], i) => ({depto: d, pessoas: l.length, produtivo: Math.round(rnd(78, 93, i) * 10) / 10, produtivo_ant: Math.round(rnd(76, 92, i + 20) * 10) / 10, atividade: Math.round(rnd(70, 88, i + 3) * 10) / 10, cliente_h: Math.round(l.reduce((a, x) => a + x.cliente, 0) / 360) / 10})),
       recursos: REC.map(([r, c], i) => ({recurso: r, categoria: c, seg: sum('captadas') * (0.14 / (1 + i * 0.35)), pessoas: 12 - (i % 8)})),
@@ -824,14 +821,14 @@ function demo(acao, p) {
   if (acao === 'pessoa') { const i = +String(p.colaborador).slice(1) || 0, r = pes.find(x => x.colaborador_id === p.colaborador) || pes[0];
     let t = new Date(S.ate + 'T08:05:00-03:00').getTime(); const linha = [];
     for (let k = 0; t < new Date(S.ate + 'T17:55:00-03:00').getTime(); k++) { const oc = k % 7 === 6, dur = (oc ? rnd(4, 25, k + i) : rnd(3, 40, k + i)) * 60e3, rc = REC[Math.floor(rnd(0, REC.length, k * 3 + i))];
-      if (new Date(t).getUTCHours() === 15 && !linha.some(x => x.almoco)) { linha.push({i: new Date(t).toISOString(), f: new Date(t + 3600e3).toISOString(), seg: 3600, ocioso: true, almoco: 1}); t += 3600e3; continue; }
-      linha.push({i: new Date(t).toISOString(), f: new Date(t + dur).toISOString(), seg: dur / 1000, ocioso: oc, recurso: rc[0], categoria: rc[1], cliente: !oc && k % 2 ? CLI[k % CLI.length] : null}); t += dur; }
+      if (new Date(t).getUTCHours() === 15 && !linha.some(x => x.almoco)) { linha.push({i: new Date(t).toISOString(), f: new Date(t + 3600e3).toISOString(), seg: 3600, ocioso: true, almoco: 1, situacao: 'intervalo'}); t += 3600e3; continue; }
+      linha.push({i: new Date(t).toISOString(), f: new Date(t + dur).toISOString(), seg: dur / 1000, ocioso: oc, situacao: oc ? 'parado' : (k === 0 ? 'fora_do_ponto' : 'trabalho'), recurso: rc[0], categoria: rc[1], cliente: !oc && k % 2 ? CLI[k % CLI.length] : null}); t += dur; }
     return {resumo: r, custo_hora: 38.5, linha, por_hora: Array.from({length: 11}, (_, h) => ({h: h + 8, pro: rnd(1800, 3300, h + i), neu: rnd(100, 600, h), dis: rnd(0, 200, h + 2), oci: h === 12 ? 3000 : rnd(0, 500, h + 3), teclas: rnd(500, 3000, h), cliques: rnd(300, 1800, h)})),
       por_dia: Array.from({length: dias}, (_, k) => ({dia: addDias(S.de, k), cap: rnd(18000, 27000, k), pro: rnd(15000, 23000, k), cli: rnd(9000, 16000, k), oci: rnd(5000, 9000, k), entrada: '08:0' + (k % 9), saida: '17:5' + (k % 9)})),
       recursos: REC.slice(0, 10).map(([rr, c], k) => ({recurso: rr, categoria: c, seg: 9000 / (1 + k * 0.4) * dias})), clientes: CLI.slice(0, 6).map((n, k) => ({empresa_id: 'e' + k, nome: n, seg: 7000 / (1 + k * 0.6) * dias})),
       arquivos: [{quando: new Date().toISOString(), nome: 'relatorio_difal_241_202610.xlsx', caminho: 'C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal\\_2026\\2026-10\\002 - Relatorios\\relatorio_difal_241_202610.xlsx', cliente: CLI[0], depto_pasta: 'Fiscal', ext: 'xlsx'},
         {quando: new Date(Date.now() - 6e5).toISOString(), nome: '002 - Fiscal', caminho: 'C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal', cliente: CLI[0], depto_pasta: 'Fiscal', pasta: true}],
-      extras: [{inicio: S.ate + 'T13:10:00-03:00', fim: S.ate + 'T13:55:00-03:00', seg: 2700, tipo: 'Reunião com cliente', status: 'aprovado', cliente: CLI[1], obs: 'Reunião de fechamento'}],
+      ponto: [{dia: S.ate, origem: 'kronos', batidas: ['08:12', '12:02', '13:01', '17:58']}], extras: [{inicio: S.ate + 'T13:10:00-03:00', fim: S.ate + 'T13:55:00-03:00', seg: 2700, tipo: 'Reunião com cliente', status: 'aprovado', cliente: CLI[1], obs: 'Reunião de fechamento'}],
       alertas: i % 5 === 0 ? [{dia: S.ate, tipo: 'sem_pausa', nivel: 'info', texto: 'Ficou 3,1 h seguidas sem pausa de 5 minutos.'}] : []}; }
   if (acao === 'clientes') return CLI.map((n, i) => ({empresa_id: 'e' + i, nome: n, seg: dias * 30000 / (1 + i * 0.45), extras_seg: i % 3 ? 0 : 2700, pessoas: 6 - (i % 5), dias, deptos: [DEP[i], DEP[(i + 4) % 12]].filter((v, k, a) => a.indexOf(v) === k), arquivos: Math.round(rnd(5, 60, i)), custo: Math.round(dias * 30000 / (1 + i * 0.45) / 3600 * 41 * 100) / 100}));
   if (acao === 'cliente') { const i = +String(p.empresa).slice(1) || 0; return {empresa: {id: p.empresa, nome: CLI[i], cnpj: '30.104.500/0001-34', ramo: 'Logística'},
@@ -840,9 +837,13 @@ function demo(acao, p) {
     por_dia: Array.from({length: Math.max(dias, 7)}, (_, k) => ({dia: addDias(S.ate, k - Math.max(dias, 7) + 1), seg: rnd(5000, 30000, k + i)})),
     recursos: REC.slice(0, 6).map(([r], k) => ({recurso: r, seg: 12000 / (1 + k * 0.5) * dias})), arquivos: [{quando: new Date().toISOString(), pessoa: NOMES[2], nome: 'SAIDAS.xlsx', caminho: 'C:\\...\\0241 - PINEX LOGISTIC SOLUTION\\002 - Fiscal\\_2026\\2026-10\\002 - Relatorios\\icms\\SAIDAS.xlsx'}], extras: []}; }
   if (acao === 'ponto') return {entrada_prevista: '08:00', saida_prevista: '17:48', jornada_min: 528, tolerancia_min: 10, linhas: pes.flatMap((x, i) => Array.from({length: dias}, (_, k) => {
-    const ent = rnd(-10, 35, i * 7 + k), sai = rnd(-30, 25, i * 5 + k), cap = rnd(6.2, 8.6, i + k) * 3600;
-    return {colaborador_id: x.colaborador_id, nome: x.nome, depto: x.depto, dia: addDias(S.de, k), entrada: '08:' + String(Math.max(0, Math.round(ent))).padStart(2, '0'), saida: '17:' + String(Math.min(59, Math.max(0, Math.round(48 + sai)))).padStart(2, '0'),
-      captadas: cap, produtivo: cap * 0.86, extras: k % 3 ? 0 : 1800, intervalo: rnd(2700, 4200, i + k), atraso_min: Math.max(0, Math.round(ent) - 10), saida_antes_min: Math.max(0, Math.round(-sai) - 10), saldo_min: Math.round(cap / 60) - 528}; }))};
+    const ent = Math.round(rnd(-8, 30, i * 7 + k)), cap = rnd(6.2, 8.4, i + k) * 3600, sem = i === 5;
+    const e = '08:' + String(Math.max(0, ent)).padStart(2, '0');
+    return {colaborador_id: x.colaborador_id, nome: x.nome, depto: x.depto, dia: addDias(S.de, k), origem: sem ? 'inferido' : 'kronos',
+      batidas: sem ? ['08:20', '12:14', '13:20', '17:40'] : [e, '12:0' + (i % 9), '13:0' + (i % 9), '17:5' + (k % 9)],
+      entrada: '08:' + String(Math.max(0, ent - 4)).padStart(2, '0'), saida: '17:5' + ((k + 3) % 9), captadas: cap, produtivo: cap * 0.86, cliente: cap * rnd(.35, .7, i),
+      intervalo: rnd(3300, 4100, i + k), parado: rnd(1200, 4800, i + k + 1), fora_do_ponto: i % 4 === 1 ? rnd(900, 2400, k) : rnd(0, 300, k),
+      atraso_min: sem ? null : Math.max(0, ent - 10), saldo_min: Math.round(cap / 60) - 528}; }))};
   if (acao === 'recursos') return REC.map(([r, c], i) => ({recurso: r, app: r.toLowerCase().replace(/ .*/, '') + '.exe', categoria: c, seg: sum('captadas') * (0.14 / (1 + i * 0.35)), pessoas: 12 - (i % 8), teclas: Math.round(rnd(5000, 90000, i)), cliques: Math.round(rnd(3000, 12000, i + 1)), cliques_dir: Math.round(rnd(30, 150, i)), rolagem: Math.round(rnd(3000, 22000, i))}));
   if (acao === 'arquivos') return Array.from({length: 25}, (_, i) => ({quando: new Date(Date.now() - i * 7e5).toISOString(), pessoa: NOMES[i % 12], nome: ['relatorio_difal.xlsx', 'SAIDAS.xlsx', 'GRUPO EFETIVO.xls', 'CLIMATRIZ DEFINITIVO.pdf', '002 - Fiscal'][i % 5], ext: ['xlsx', 'xlsx', 'xls', 'pdf', ''][i % 5], pasta: i % 5 === 4,
     caminho: `C:\\Users\\x\\RESILCON CONTABILIDADE\\Arquivos Resilcon - Arquivos\\0${241 - i} - ${CLI[i % 8]}\\00${2 + i % 3} - ${['Fiscal', 'Contábil', 'Pessoal'][i % 3]}`, cliente: i % 6 ? CLI[i % 8] : null, depto_pasta: ['Fiscal', 'Contábil', 'Pessoal'][i % 3]}));
