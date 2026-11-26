@@ -991,7 +991,7 @@
 
   <div class="wrap">
     <div id="view"></div>
-    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.70 (Performance: produtividade por colaborador corrigida)</footer>
+    <footer>Resiltrack · dados ao vivo do Supabase · versão 3.71 (Argos no menu, abaixo do Escritório Virtual)</footer>
   </div>
 </div>
 
@@ -1010,7 +1010,7 @@ const DEPARTAMENTOS=["Departamento Pessoal","Departamento Fiscal","Departamento 
 const MODULOS=[["financeiro","Mida$ Bank (ver)"],["financeiro_editar","Mida$ Bank (decidir cobrança)"],["comercial","Comercial (Hermes CRM)"],["comercial_gestor","Comercial: gestor (vê toda a equipe)"],["emails","Central de E-mails"],["iris","Íris TV (gestão das TVs)"]];
 let TAB="dashboard";
 let MODE="atendimentos"; // atendimentos | gestor
-try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="escritorio"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
+try{ const _m=localStorage.getItem("resiltrack_mode"); if(_m==="gestor"||_m==="atendimentos"||_m==="escritorio"||_m==="argos"||_m==="financeiro"||_m==="crm"||(_m&&(_m.startsWith("ce_")||_m.startsWith("crm_")))) MODE=_m; }catch(e){}
 let REVDEP=""; // departamento selecionado na revisão diária (admin)
 let REVMES=null; // mês (YYYY-MM) selecionado no wallboard da revisão diária
 let DSUB="colab"; // colab | health | setores | servico
@@ -1309,6 +1309,8 @@ function render(){ renderSide(); const v=document.getElementById("view"); const 
   if(MODE.startsWith("adm_")){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="escritorio" && podeEscritorio()){ tabsEl.classList.add("hidden"); escView(v); return; }
   if(MODE==="escritorio"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
+  if(MODE==="argos" && podeArgos()){ tabsEl.classList.add("hidden"); argosView(v); return; }
+  if(MODE==="argos"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="iris" && podeModulo("iris")){ tabsEl.classList.add("hidden"); irisView(v); return; }
   if(MODE==="iris"){ MODE="atendimentos"; try{localStorage.setItem("resiltrack_mode","atendimentos");}catch(e){} }
   if(MODE==="ce_funil"){ MODE="crm_funil"; return render(); }
@@ -1353,6 +1355,7 @@ function renderSide(){
     h+=`<button class="srl-item ${MODE==='atendimentos'?'on':''}" data-mode="atendimentos" ${temSub?`data-dobra="atend" aria-expanded="${ab}"`:""}>${_ICO_ATEND}Atendimentos${temSub?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(temSub) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="atend"><div>`+ks.map(k=>`<button data-atab="${k}" class="${k===TAB?'on':''}">${TABS_ALL[k]||k}</button>`).join("")+`</div></div>`; }
   if(podeEscritorio()) h+=`<button class="srl-item ${MODE==='escritorio'?'on':''}" data-mode="escritorio">${_ICO_ESC}Escritório Virtual</button>`;
+  if(podeArgos()) h+=`<button class="srl-item ${MODE==='argos'?'on':''}" data-mode="argos">${_ICO_ARGOS}Argos</button>`;
   if(podeGestorMod()){ const no=MODE==='gestor', ab=srlAberto("gestor");
     h+=`<button class="srl-item ${no?'on':''}" data-mode="gestor" ${no?`data-dobra="gestor" aria-expanded="${ab}"`:""}>${_ICO_GESTOR}Painel do Gestor${no?`<span class="srl-seta ${ab?'':'fech'}" aria-hidden="true"></span>`:""}</button>`;
     if(no) h+=`<div class="srl-sub srl-dobra ${ab?'':'fech'}" data-dobra-box="gestor"><div>`+
@@ -10914,9 +10917,11 @@ const ADM_MODS=[
  ["emails","Central de E-mails","Campanhas, réguas e envios"],
  ["iris","Íris TV","Gestão das TVs do escritório"],
  ["escritorio","Escritório Virtual","Ver o escritório em pixel: presença, salas, recepção, comunicados e troféus"],
- ["escritorio_editar","Escritório Virtual: editar","Editar projetos, ferramentas, colaboradores e lançamentos do escritório"]];
-const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris TV",escritorio:"Ver",escritorio_editar:"Editar"};
-const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["Themis RH",["rh","rh_editar"]],["Kronos ID",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$ Bank",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]],["Escritório Virtual",["escritorio","escritorio_editar"]]];
+ ["escritorio_editar","Escritório Virtual: editar","Editar projetos, ferramentas, colaboradores e lançamentos do escritório"],
+ ["argos","Argos","Ver produtividade, tempo por cliente, ponto x uso do computador, arquivos e alertas"],
+ ["argos_editar","Argos: editar","Classificar programas e sites, regras de cliente e parâmetros do Argos"]];
+const ADM_CURTO={painel_gestor:"Usar",rh:"Ver",rh_editar:"Gerenciar",kronos:"Usar",comercial:"Usar",comercial_gestor:"Gestor",financeiro:"Ver",financeiro_editar:"Decidir",emails:"E-mails",iris:"Íris TV",escritorio:"Ver",escritorio_editar:"Editar",argos:"Ver",argos_editar:"Editar"};
+const ADM_MOD_GRUPOS=[["Gestão",["painel_gestor"]],["Themis RH",["rh","rh_editar"]],["Kronos ID",["kronos"]],["Hermes CRM",["comercial","comercial_gestor"]],["Mida$ Bank",["financeiro","financeiro_editar"]],["Comunicação",["emails","iris"]],["Escritório Virtual",["escritorio","escritorio_editar"]],["Argos",["argos","argos_editar"]]];
 // mantém a lista usada no modal antigo igual à nova
 MODULOS.splice(0,MODULOS.length,...ADM_MODS.map(([k,t])=>[k,t]));
 const ADM_SECOES=[["adm_acessos","Usuários e acessos"],["adm_deps","Departamentos e atendentes"]];
@@ -11249,6 +11254,18 @@ function escView(v){
       <div><h2 style="margin:0;font-size:20px">Escritório Virtual</h2><div style="color:var(--muted);font-size:13px">Presença da equipe, salas, recepção, comunicados e troféus, ao vivo.</div></div>
       <a class="view-btn" href="escritorio.html" target="_blank" rel="noopener">Abrir em tela cheia</a></div>
     <iframe class="esc-frame" src="escritorio.html" title="Escritório Virtual" style="width:100%;height:calc(100vh - 150px);min-height:560px;border:1px solid var(--border);border-radius:12px;background:#0c0f16;display:block"></iframe>`;
+}
+
+// ================= ARGOS · TEMPO POR CLIENTE E PRODUTIVIDADE (v3.71) =================
+// O painel do Argos roda em argos.html, na mesma pasta deste index, e lê o schema argos pelas funções
+// public.argos_painel e public.argos_admin do Supabase. Acesso: admin, ou permissões "argos" (ver) e "argos_editar" no Admin.
+const _ICO_ARGOS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+function podeArgos(){ return isAdmin() || podeModulo("argos") || podeModulo("argos_editar"); }
+function argosView(v){
+  try{ window.__RT_SB=sb; }catch(e){}
+  const ja=v.querySelector("iframe.argos-frame"); if(ja) return;
+  v.innerHTML=`<div style="display:flex;justify-content:flex-end;margin:0 0 8px"><a class="view-btn" href="argos.html" target="_blank" rel="noopener">Abrir em tela cheia</a></div>
+    <iframe class="argos-frame" src="argos.html" title="Argos" style="width:100%;height:calc(100vh - 110px);min-height:620px;border:0;border-radius:24px;background:transparent;display:block"></iframe>`;
 }
 
 // ================= PAINEL DO GESTOR · KRONOS ID E THEMIS RH NO LUGAR DE TANGERINO E COHROS (v3.53) =================
