@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatsApp · Resiltrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Urbanist:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--azul:#006789;--azul2:#269A9E;--esc:#0f3a55;--fundo:#eef5f7;--card:#fff;--txt:#14262f;--sub:#5d7480;--linha:#dbe7ec;--ok:#2a9d6f;--alerta:#c98a1b;--erro:#c2453d;--r:18px}
+*{box-sizing:border-box}
+body{margin:0;font-family:"DM Sans",system-ui,sans-serif;background:var(--fundo);color:var(--txt);font-size:14px}
+h1,h2,h3,.num{font-family:Urbanist,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+.topo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.topo h1{margin:0;font-size:26px;color:var(--esc)}
+.topo .sub{color:var(--sub);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700}
+.chip.on{background:#dff3ea;color:#1d7a54}.chip.off{background:#f6e7d0;color:#8a5a0c}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 18px}
+.pills button{border:0;background:#fff;color:var(--esc);padding:9px 16px;border-radius:99px;font:600 13px "DM Sans";cursor:pointer;box-shadow:0 1px 0 var(--linha)}
+.pills button.ativa{background:var(--esc);color:#fff}
+.grid{display:grid;gap:14px}
+.g6{grid-template-columns:repeat(6,1fr)}.g2{grid-template-columns:1fr 1fr}
+.gmod{grid-template-columns:260px 1fr}
+@media(max-width:900px){.g6{grid-template-columns:repeat(2,1fr)}.g2,.gmod{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:0 1px 2px rgba(15,58,85,.06)}
+.kpi .num{font-size:30px;font-weight:800;color:var(--esc)}.kpi .rot{color:var(--sub);font-size:12px}
+.card h3{margin:0 0 12px;font-size:17px;color:var(--esc)}
+.aviso{background:#fff7e8;border:1px solid #f0d9a8;border-radius:14px;padding:12px 14px;margin-bottom:14px;color:#6b4a0a}
+.aviso.erro{background:#fdeceb;border-color:#f2c4c0;color:#8b2a23}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--linha);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+.tab-wrap{overflow-x:auto}
+.btn{border:0;border-radius:12px;padding:9px 14px;font:600 13px "DM Sans";cursor:pointer;background:var(--azul);color:#fff}
+.btn.sec{background:#e6f0f3;color:var(--esc)}.btn.peq{padding:5px 10px;font-size:12px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+input,select,textarea{font:14px "DM Sans";border:1px solid var(--linha);border-radius:10px;padding:8px 10px;background:#fff;color:var(--txt);width:100%}
+textarea{min-height:200px;resize:vertical;line-height:1.45}
+label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
+.linha{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.linha>*{flex:1;min-width:140px}
+.st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.st.pendente{background:#e8f1fb;color:#2a5f9e}.st.enviando{background:#eee6fb;color:#5b3fa0}.st.enviado{background:#dff3ea;color:#1d7a54}
+.st.falhou{background:#fdeceb;color:#a3342c}.st.cancelado{background:#eef1f2;color:#6b7b82}.st.pausado{background:#fff3da;color:#8a5a0c}
+.cmps{display:grid;gap:14px}
+.cmp{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start}
+@media(max-width:720px){.cmp{grid-template-columns:1fr}}
+.cmp img{width:100%;border-radius:12px;display:block;background:#0b2a3b;aspect-ratio:16/9;object-fit:cover}
+.cmp h3{margin:0 0 4px}.cmp .meta{color:var(--sub);font-size:12px}
+.barra{height:10px;border-radius:99px;background:#e6eef1;overflow:hidden;margin:12px 0 8px}.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--azul),var(--azul2))}
+.nums{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub)}.nums b{color:var(--txt)}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:6px}
+.imgs button{border:2px solid transparent;border-radius:10px;padding:0;background:none;cursor:pointer;overflow:hidden}.imgs button.on{border-color:var(--azul)}
+.imgs img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.bolha img{display:block;width:100%;border-radius:8px;margin-bottom:8px}
+.confirma{background:#fff7e8;border:1px solid #f0d9a8;border-radius:12px;padding:12px;margin-top:10px}
+.bolha{background:#dcf8c6;border-radius:12px 12px 12px 3px;padding:12px 14px;white-space:pre-wrap;line-height:1.45;max-width:420px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.zap{background:#e5ddd5;border-radius:14px;padding:16px}
+.mut{color:var(--sub);font-size:12px}
+.lista-mod button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px;border-radius:12px;cursor:pointer;font:14px "DM Sans"}
+.lista-mod button.ativa{background:#e6f0f3}
+.lista-mod .r{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 2px}
+.oculto{display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--esc);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;z-index:9;display:none}
+#login{max-width:360px;margin:80px auto}
+code{background:#eef3f5;padding:2px 6px;border-radius:6px;font-size:12px;word-break:break-all}
+</style>
+</head>
+<body>
+<div id="login" class="card oculto">
+  <h3>Entrar no WhatsApp do Resiltrack</h3>
+  <label>E-mail</label><input id="lEmail" type="email">
+  <label>Senha</label><input id="lSenha" type="password">
+  <p><button class="btn" id="lBtn">Entrar</button></p><p class="mut" id="lMsg"></p>
+</div>
+
+<div class="wrap oculto" id="app">
+  <div class="topo">
+    <h1>WhatsApp</h1><span id="chipAtivo" class="chip off">Pausado</span>
+    <span class="sub">Mensagens automáticas pelo Digisac, junto das réguas de e-mail</span>
+  </div>
+  <div id="avisos"></div>
+  <div class="pills" id="pills">
+    <button data-t="campanhas" class="ativa">Campanhas</button>
+    <button data-t="geral">Visão geral</button>
+    <button data-t="mensagens">Mensagens</button>
+    <button data-t="fila">Fila e histórico</button>
+    <button data-t="respostas">Respostas</button>
+    <button data-t="numeros">Números</button>
+    <button data-t="config">Configurações</button>
+  </div>
+
+  <section data-p="campanhas">
+    <div class="grid g2" style="grid-template-columns:1.25fr 1fr">
+      <div><h3 style="margin:0 0 10px;color:var(--esc)">Campanhas</h3><div class="cmps" id="listaCmp"></div></div>
+      <div class="card"><h3>Nova campanha</h3>
+        <label>Nome (só para você identificar)</label><input id="cNome" placeholder="RTE semana 19 · ...">
+        <div class="linha"><div><label>Público</label><select id="cPub"><option value="cliente">Clientes ativos</option><option value="lead">Leads com consentimento</option><option value="cliente,lead">Clientes e leads</option></select></div>
+          <div><label>Número que envia</label><select id="cNum"></select></div></div>
+        <label>Começa em</label><input id="cIni" type="datetime-local">
+        <label>Imagem (opcional)</label>
+        <div class="linha"><input id="cArq" type="file" accept="image/jpeg,image/png"><button class="btn sec" id="btnSubir" style="flex:0 0 auto">Subir imagem</button></div>
+        <div class="imgs" id="cImgs"></div>
+        <label>Texto (use {{nome}} e *negrito*)</label><textarea id="cTxt" style="min-height:220px"></textarea>
+        <div class="mut" id="cConta"></div>
+        <label>Como chega no celular (exemplo)</label><div class="zap"><div class="bolha" id="cPrev"></div></div>
+        <p class="mut" id="cEst" style="margin-top:10px"></p>
+        <p><button class="btn" id="btnCriar">Colocar na fila</button></p><div id="cConf"></div><p class="mut" id="cMsg"></p>
+      </div>
+    </div>
+  </section>
+
+  <section data-p="geral" class="oculto">
+    <div class="grid g6" id="kpis"></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>Situação</h3>
+        <div id="situacao"></div>
+        <p class="linha" style="margin-top:14px">
+          <button class="btn" id="btnAtivar">Ativar envios automáticos</button>
+          <button class="btn sec" id="btnConexao">Testar conexão com o Digisac</button>
+        </p>
+        <p class="mut" id="conexaoMsg"></p>
+      </div>
+      <div class="card">
+        <h3>Como funciona</h3>
+        <p class="mut" style="font-size:13px;line-height:1.55">As réguas <b>Jornada comercial</b> e <b>Sucesso do cliente</b> têm passos de WhatsApp logo depois de alguns e-mails. Quando a régua chega nesse passo, a mensagem entra na fila e sai pelo número escolhido, dentro do horário e dos limites das Configurações. Quem responde SAIR deixa de receber. Contatos de lista comprada sem consentimento nunca entram.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-p="mensagens" class="oculto">
+    <div class="grid gmod">
+      <div class="card lista-mod" id="listaMod"></div>
+      <div class="card">
+        <h3 id="modNome">Escolha uma mensagem</h3>
+        <div class="grid g2">
+          <div>
+            <label>Texto (use {{nome}}, {{consultor}} e *negrito*)</label>
+            <textarea id="modTexto"></textarea>
+            <div class="linha" style="justify-content:space-between;margin-top:6px"><span class="mut" id="modConta"></span>
+              <label style="margin:0;flex:0"><input type="checkbox" id="modAtivo" style="width:auto"> ativa</label></div>
+            <p><button class="btn" id="btnSalvarMod">Salvar mensagem</button></p>
+          </div>
+          <div>
+            <label>Como chega no celular (exemplo)</label>
+            <div class="zap"><div class="bolha" id="modPrevia"></div></div>
+            <label>Enviar teste para</label>
+            <div class="linha"><input id="tTel" placeholder="(11) 99999-9999"><select id="tNum"></select></div>
+            <p><button class="btn sec" id="btnTeste">Enviar teste agora</button></p>
+            <p class="mut" id="tMsg"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-p="fila" class="oculto">
+    <div class="card">
+      <div class="linha" style="margin-bottom:10px"><select id="filtroSt" style="max-width:220px">
+        <option value="">Todos</option><option>pendente</option><option>enviado</option><option>falhou</option><option>cancelado</option></select>
+        <span></span></div>
+      <div class="tab-wrap"><table><thead><tr><th>Quando</th><th>Contato</th><th>Mensagem</th><th>Situação</th><th></th></tr></thead><tbody id="tbFila"></tbody></table></div>
+    </div>
+  </section>
+
+  <section data-p="respostas" class="oculto">
+    <div class="grid g2">
+      <div class="card"><h3>Últimas respostas</h3><div class="tab-wrap"><table><thead><tr><th>Quando</th><th>Contato</th><th>Resposta</th></tr></thead><tbody id="tbResp"></tbody></table></div>
+        <p class="mut">As respostas chegam pelo webhook do Digisac. A conversa continua no Digisac normalmente.</p></div>
+      <div class="card"><h3>Bloquear ou liberar um telefone</h3>
+        <label>Telefone</label><input id="bTel" placeholder="(11) 99999-9999">
+        <p class="linha"><button class="btn sec" id="btnBloq">Bloquear</button><button class="btn sec" id="btnLib">Liberar</button></p>
+        <p class="mut" id="bMsg"></p></div>
+    </div>
+  </section>
+
+  <section data-p="numeros" class="oculto">
+    <div class="card">
+      <div class="linha" style="margin-bottom:10px"><button class="btn" id="btnBuscarNum" style="flex:0 0 auto">Buscar números no Digisac</button><span class="mut" id="numMsg"></span></div>
+      <div class="tab-wrap"><table><thead><tr><th>Número</th><th>Conexão</th><th>Uso</th><th>Limite por hora</th><th>Limite por dia</th><th></th></tr></thead><tbody id="tbNum"></tbody></table></div>
+      <p class="mut">Use para as réguas um número que não seja o principal do atendimento. Número conectado por QR code pode ser bloqueado pelo WhatsApp se mandar muito para quem não tem o contato salvo, por isso os limites começam baixos.</p>
+    </div>
+  </section>
+
+  <section data-p="config" class="oculto">
+    <div class="grid g2">
+      <div class="card"><h3>Ritmo de envio</h3>
+        <div class="linha"><div><label>Máximo por hora (por número)</label><input id="cHora" type="number" min="1" max="60"></div>
+          <div><label>Máximo por dia (por número)</label><input id="cDia" type="number" min="1" max="500"></div></div>
+        <div class="linha"><div><label>Intervalo mínimo entre mensagens (segundos)</label><input id="cInt" type="number" min="30"></div>
+          <div><label>Dias sem repetir o mesmo telefone</label><input id="cRep" type="number" min="0"></div></div>
+        <label>Horário de envio</label>
+        <div class="linha"><input id="cIni" type="time"><input id="cFim" type="time"></div>
+        <label>Dias</label><div class="linha" id="cDias"></div>
+        <label style="margin-top:12px"><input type="checkbox" id="cTicket" style="width:auto"> Não abrir chamado no Digisac ao enviar (a resposta do cliente abre)</label>
+        <p><button class="btn" id="btnSalvarCfg">Salvar</button></p>
+      </div>
+      <div class="card"><h3>Webhook de respostas</h3>
+        <p class="mut" style="font-size:13px">No Digisac, em Configurações › Webhooks, crie um webhook com o evento <b>message.created</b> e este endereço:</p>
+        <p><code id="urlWebhook"></code></p><p><button class="btn sec peq" id="btnCopiar">Copiar endereço</button></p>
+        <p class="mut">Assim o Resiltrack registra quem respondeu e bloqueia quem mandar SAIR.</p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = "https://aumfhrqrnudmprvmvesb.supabase.co";
+const SB_KEY = "sb_publishable_bDvvjpuVzD54iAlAHXMhmw_asJ0XMKF";
+let sb = null; try { sb = window.__RT_SB || (window.parent && window.parent.__RT_SB) || null; } catch (e) {}
+if (!sb) sb = supabase.createClient(SB_URL, SB_KEY);
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dt = (s) => s ? new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+const tel = (t) => { const d = String(t || "").replace(/\D/g, "").replace(/^55/, ""); return d.length >= 10 ? `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}` : t; };
+function toast(m) { const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = "none", 3200); }
+async function painel(acao, p = {}) { const { data, error } = await sb.rpc("whats_painel", { p_acao: acao, p }); if (error) throw new Error(error.message); return data; }
+async function edge(acao) { const { data, error } = await sb.functions.invoke("whatsapp-digisac", { body: { acao } }); if (error) { let m = error.message; try { m = (await error.context.json()).erro || m; } catch (e) {} throw new Error(m); } return data; }
+const zapHtml = (t) => esc(t).replace(/\*([^*\n]+)\*/g, "<b>$1</b>");
+let D = null, modSel = null;
+const DIAS = ["", "seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
+
+async function carregar() {
+  D = await painel("resumo");
+  const c = D.config, k = D.contagem;
+  $("chipAtivo").className = "chip " + (c.ativo ? "on" : "off"); $("chipAtivo").textContent = c.ativo ? "Envios ativos" : "Pausado";
+  $("btnAtivar").textContent = c.ativo ? "Pausar envios automáticos" : "Ativar envios automáticos";
+  const kp = [["Na fila", k.pendentes], ["Enviadas hoje", k.enviados_hoje], ["Enviadas em 7 dias", k.enviados_7d], ["Falhas em 7 dias", k.falhas_7d], ["Respostas em 7 dias", k.respostas_7d], ["Pediram para sair", k.saidas]];
+  $("kpis").innerHTML = kp.map(([r, n]) => `<div class="card kpi"><div class="num">${n}</div><div class="rot">${r}</div></div>`).join("");
+  const usados = D.numeros.filter((n) => n.uso !== "nenhum");
+  const av = [];
+  if (!D.numeros.length) av.push(`Nenhum número carregado ainda. Cadastre o segredo <b>DIGISAC_TOKEN</b> no Supabase e clique em <b>Números › Buscar números no Digisac</b>.`);
+  else if (!usados.length) av.push(`Escolha em <b>Números</b> qual número do Digisac vai mandar as mensagens das réguas.`);
+  if (k.falhas_7d > 0) av.push(`Há ${k.falhas_7d} mensagem(ns) com falha nos últimos 7 dias. Veja em Fila e histórico.`);
+  $("avisos").innerHTML = av.map((a) => `<div class="aviso">${a}</div>`).join("");
+  $("situacao").innerHTML = `<p>Números em uso: <b>${usados.map((n) => esc(n.nome)).join(", ") || "nenhum"}</b></p>
+    <p>Horário: <b>${c.janela.inicio} às ${c.janela.fim}</b>, ${(c.janela.dias || []).map((d) => DIAS[d]).join(", ")}</p>
+    <p>Limite por número: <b>${c.limite_hora} por hora</b> e <b>${c.limite_dia} por dia</b>, com pelo menos ${c.intervalo_min_seg}s entre uma e outra.</p>`;
+  // mensagens
+  const grupos = {}; D.modelos.forEach((m) => (grupos[m.regua || "outras"] ||= []).push(m));
+  const nomesR = { jornada_comercial: "Jornada comercial", sucesso_cliente: "Sucesso do cliente" };
+  $("listaMod").innerHTML = Object.entries(grupos).map(([r, ms]) => `<div class="r">${esc(nomesR[r] || r)}</div>` +
+    ms.map((m) => `<button data-m="${esc(m.chave)}" class="${modSel === m.chave ? "ativa" : ""}">${esc(m.nome.split("·").slice(1).join("·").trim() || m.nome)}${m.ativo ? "" : " <span class='mut'>(desligada)</span>"}</button>`).join("")).join("");
+  $("tNum").innerHTML = D.numeros.map((n) => `<option value="${esc(n.service_id)}">${esc(n.nome)}</option>`).join("") || `<option value="">sem números</option>`;
+  if (!modSel && D.modelos[0]) abrirModelo(D.modelos[0].chave);
+  // fila
+  desenharFila();
+  $("tbResp").innerHTML = D.respostas.map((r) => `<tr><td>${dt(r.recebido_em)}</td><td>${esc(r.nome || tel(r.telefone))}<div class="mut">${esc(r.empresa || "")}</div></td><td>${r.saida ? "<span class='st falhou'>SAIR</span> " : ""}${esc(r.texto)}</td></tr>`).join("") || `<tr><td colspan="3" class="mut">Nenhuma resposta ainda.</td></tr>`;
+  // números
+  $("tbNum").innerHTML = D.numeros.map((n) => `<tr data-s="${esc(n.service_id)}"><td><b>${esc(n.nome)}</b><div class="mut">${esc(tel(n.telefone) || "")}</div></td>
+    <td>${n.conectado === false ? "<span class='st falhou'>desconectado</span>" : n.conectado ? "<span class='st enviado'>conectado</span>" : "<span class='mut'>?</span>"}</td>
+    <td><select class="nUso">${[["nenhum", "Não usar"], ["reguas", "Réguas"], ["avisos", "Avisos"], ["todos", "Tudo"]].map(([v, l]) => `<option value="${v}" ${n.uso === v ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+    <td><input class="nH" type="number" placeholder="${c.limite_hora}" value="${n.limite_hora ?? ""}"></td><td><input class="nD" type="number" placeholder="${c.limite_dia}" value="${n.limite_dia ?? ""}"></td>
+    <td><button class="btn peq nSalvar">Salvar</button></td></tr>`).join("") || `<tr><td colspan="6" class="mut">Clique em Buscar números no Digisac.</td></tr>`;
+  // config
+  $("cHora").value = c.limite_hora; $("cDia").value = c.limite_dia; $("cInt").value = c.intervalo_min_seg; $("cRep").value = c.dias_sem_repetir;
+  $("cIni").value = c.janela.inicio; $("cFim").value = c.janela.fim; $("cTicket").checked = !!c.nao_abrir_chamado;
+  $("cDias").innerHTML = [1, 2, 3, 4, 5, 6, 7].map((d) => `<label style="flex:0;margin:0;white-space:nowrap"><input type="checkbox" value="${d}" ${(c.janela.dias || []).includes(d) ? "checked" : ""} style="width:auto"> ${DIAS[d]}</label>`).join("");
+  $("urlWebhook").textContent = `${SB_URL}/functions/v1/whatsapp-digisac?t=${D.webhook_token}`;
+}
+
+function desenharFila() {
+  const f = $("filtroSt").value;
+  const linhas = D.fila.filter((x) => !f || x.status === f);
+  $("tbFila").innerHTML = linhas.map((x) => `<tr><td>${dt(x.enviado_em || x.agendado_para)}<div class="mut">${x.origem}</div></td>
+    <td>${esc(x.nome || "")}<div class="mut">${esc(tel(x.telefone))}</div></td>
+    <td style="max-width:420px"><div class="mut">${esc(x.modelo || "")}</div>${esc((x.texto || "").slice(0, 140))}${(x.texto || "").length > 140 ? "…" : ""}${x.erro ? `<div class="mut" style="color:var(--erro)">${esc(x.erro)}</div>` : ""}</td>
+    <td><span class="st ${x.status}">${x.status}</span>${x.respondido_em ? "<div class='mut'>respondeu</div>" : ""}</td>
+    <td>${x.status === "pendente" ? `<button class="btn sec peq" data-cancelar="${x.id}">Cancelar</button>` : x.status === "falhou" ? `<button class="btn sec peq" data-reenviar="${x.id}">Tentar de novo</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="5" class="mut">Nada por aqui.</td></tr>`;
+}
+
+async function previa() {
+  const r = await painel("previa", { texto: $("modTexto").value });
+  $("modPrevia").innerHTML = zapHtml(r.texto);
+  $("modConta").textContent = `${$("modTexto").value.length} de 1000 caracteres`;
+}
+function abrirModelo(ch) {
+  modSel = ch; const m = D.modelos.find((x) => x.chave === ch); if (!m) return;
+  $("modNome").textContent = m.nome; $("modTexto").value = m.texto; $("modAtivo").checked = m.ativo;
+  document.querySelectorAll("#listaMod button").forEach((b) => b.classList.toggle("ativa", b.dataset.m === ch));
+  previa();
+}
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  try {
+    if (b.parentElement.id === "pills") {
+      document.querySelectorAll("#pills button").forEach((x) => x.classList.toggle("ativa", x === b));
+      document.querySelectorAll("section[data-p]").forEach((s) => s.classList.toggle("oculto", s.dataset.p !== b.dataset.t));
+    } else if (b.dataset.m) abrirModelo(b.dataset.m);
+    else if (b.dataset.cancelar) { await painel("cancelar", { id: +b.dataset.cancelar }); toast("Mensagem cancelada"); await carregar(); }
+    else if (b.dataset.reenviar) { await painel("reenviar", { id: +b.dataset.reenviar }); toast("Voltou para a fila"); await carregar(); }
+    else if (b.classList.contains("nSalvar")) {
+      const tr = b.closest("tr");
+      await painel("numero_salvar", { service_id: tr.dataset.s, uso: tr.querySelector(".nUso").value, limite_hora: tr.querySelector(".nH").value, limite_dia: tr.querySelector(".nD").value });
+      toast("Número salvo"); await carregar();
+    }
+  } catch (err) { toast(err.message); }
+});
+$("filtroSt").onchange = desenharFila;
+let tPrev; $("modTexto").oninput = () => { clearTimeout(tPrev); tPrev = setTimeout(previa, 350); };
+$("btnSalvarMod").onclick = async () => {
+  try { const m = D.modelos.find((x) => x.chave === modSel);
+    await painel("modelo_salvar", { chave: modSel, nome: m.nome, regua: m.regua, texto: $("modTexto").value, ativo: $("modAtivo").checked });
+    toast("Mensagem salva"); await carregar(); } catch (err) { toast(err.message); }
+};
+$("btnTeste").onclick = async () => {
+  const b = $("btnTeste"); b.disabled = true; $("tMsg").textContent = "Enviando…";
+  try {
+    const r = await painel("teste", { chave: modSel, texto: $("modTexto").value, telefone: $("tTel").value, service_id: $("tNum").value });
+    if (r.resultado !== "ok") throw new Error(r.resultado === "sem_telefone" ? "Telefone inválido" : r.resultado);
+    const e = await edge("processar");
+    $("tMsg").textContent = e.enviados ? "Teste enviado. Confira no celular." : `Não saiu: ${(e.itens && e.itens[0] && e.itens[0].erro) || "aguardando intervalo do número, tenta em 2 minutos (fica na fila)"}`;
+    await carregar();
+  } catch (err) { $("tMsg").textContent = err.message; } finally { b.disabled = false; }
+};
+$("btnAtivar").onclick = async () => {
+  try {
+    if (!D.config.ativo && !D.numeros.some((n) => n.uso !== "nenhum")) return toast("Escolha antes um número em Números");
+    await painel("config_salvar", { ativo: !D.config.ativo }); toast(D.config.ativo ? "Envios pausados" : "Envios ativados"); await carregar();
+  } catch (err) { toast(err.message); }
+};
+$("btnConexao").onclick = async () => {
+  $("conexaoMsg").textContent = "Testando…";
+  try { const r = await edge("conexao"); $("conexaoMsg").textContent = r.ok ? "Conexão com o Digisac funcionando." : `O Digisac respondeu HTTP ${r.status}. Confira o token.`; }
+  catch (err) { $("conexaoMsg").textContent = err.message; }
+};
+$("btnBuscarNum").onclick = async () => {
+  $("numMsg").textContent = "Buscando…";
+  try { const r = await edge("servicos"); $("numMsg").textContent = `${r.whatsapp.length} número(s) de WhatsApp encontrados.`; await carregar(); }
+  catch (err) { $("numMsg").textContent = err.message; }
+};
+$("btnSalvarCfg").onclick = async () => {
+  try {
+    const dias = [...document.querySelectorAll("#cDias input:checked")].map((i) => +i.value);
+    await painel("config_salvar", { limite_hora: +$("cHora").value, limite_dia: +$("cDia").value, intervalo_min_seg: +$("cInt").value,
+      dias_sem_repetir: +$("cRep").value, nao_abrir_chamado: $("cTicket").checked, janela: { dias, inicio: $("cIni").value, fim: $("cFim").value } });
+    toast("Configurações salvas"); await carregar();
+  } catch (err) { toast(err.message); }
+};
+$("btnCopiar").onclick = () => { navigator.clipboard.writeText($("urlWebhook").textContent); toast("Endereço copiado"); };
+$("btnBloq").onclick = async () => { try { await painel("suprimir", { telefone: $("bTel").value }); $("bMsg").textContent = "Telefone bloqueado."; await carregar(); } catch (err) { $("bMsg").textContent = err.message; } };
+$("btnLib").onclick = async () => { try { const r = await painel("liberar", { telefone: $("bTel").value }); $("bMsg").textContent = r.ok ? "Telefone liberado." : "Esse telefone não estava bloqueado."; } catch (err) { $("bMsg").textContent = err.message; } };
+
+
+// ---------- Campanhas ----------
+let C = null, cImg = "";
+const imgUrl = (n) => `${SB_URL}/storage/v1/object/public/whatsapp-midia/${encodeURIComponent(n)}`;
+async function camp(acao, p = {}) { const { data, error } = await sb.rpc("whats_campanhas", { p_acao: acao, p }); if (error) throw new Error(error.message); return data; }
+function cPrevia() {
+  const t = $("cTxt").value.replace(/\{\{nome\}\}/g, "Mariana");
+  $("cPrev").innerHTML = (cImg ? `<img src="${imgUrl(cImg)}" alt="">` : "") + zapHtml(t);
+  $("cConta").textContent = `${$("cTxt").value.length} de 1000 caracteres`;
+  if (C) { const pub = $("cPub").value.split(",").reduce((a, k) => a + (C.publico[k] || 0), 0); const dias = Math.ceil(pub / Math.max(1, C.limite_dia));
+    $("cEst").textContent = `Até ${pub} contato(s) no público escolhido. Com o limite de ${C.limite_dia} por dia, leva cerca de ${dias} dia(s) úteis, das ${C.janela.inicio} às ${C.janela.fim}. Telefones repetidos e quem pediu para sair ficam de fora.`; }
+}
+function cImgs() {
+  $("cImgs").innerHTML = (C.imagens || []).map((n) => `<button data-img="${esc(n)}" class="${n === cImg ? "on" : ""}" title="${esc(n)}"><img src="${imgUrl(n)}" alt="${esc(n)}"></button>`).join("") || `<span class="mut">Nenhuma imagem ainda.</span>`;
+  $("cImgs").querySelectorAll("button").forEach((b) => b.onclick = () => { cImg = cImg === b.dataset.img ? "" : b.dataset.img; cImgs(); cPrevia(); });
+}
+async function carregarCamp() {
+  C = await camp("listar");
+  $("cNum").innerHTML = (C.numeros || []).map((n) => `<option value="${esc(n.service_id)}" ${n.uso !== "nenhum" ? "selected" : ""}>${esc(n.nome)}</option>`).join("");
+  if (!$("cIni").value) { const d = new Date(Date.now() + 3600e3); d.setMinutes(0, 0, 0); $("cIni").value = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); }
+  cImgs(); cPrevia();
+  $("listaCmp").innerHTML = (C.campanhas || []).map((c) => {
+    const pct = c.total ? Math.round(100 * c.enviados / c.total) : 0;
+    const sit = c.pendentes ? (new Date(c.inicio) > new Date() ? "agendada" : "enviando") : c.pausados ? "pausada" : c.total && c.enviados + c.falhas + c.cancelados >= c.total ? "concluída" : "parada";
+    return `<div class="card cmp">${c.midia ? `<img src="${imgUrl(c.midia)}" alt="">` : `<div class="mut">Sem imagem</div>`}
+      <div><h3>${esc(c.nome)}</h3><div class="meta">Começa ${dt(c.inicio)} · <span class="st ${sit === "pausada" ? "pausado" : sit === "concluída" ? "enviado" : "pendente"}">${sit}</span></div>
+      <div class="barra"><i style="width:${pct}%"></i></div>
+      <div class="nums"><span><b>${c.enviados}</b> de ${c.total} enviadas (${pct}%)</span><span><b>${c.pendentes}</b> na fila</span>${c.pausados ? `<span><b>${c.pausados}</b> pausadas</span>` : ""}${c.falhas ? `<span style="color:var(--erro)"><b>${c.falhas}</b> falhas</span>` : ""}${c.cancelados ? `<span><b>${c.cancelados}</b> fora</span>` : ""}</div>
+      <div class="acoes">${c.pendentes ? `<button class="btn sec peq" data-cp="pausar" data-k="${c.chave}">Pausar</button>` : ""}${c.pausados ? `<button class="btn sec peq" data-cp="retomar" data-k="${c.chave}">Retomar</button>` : ""}${c.pendentes || c.pausados ? `<button class="btn sec peq" data-cp="cancelar" data-k="${c.chave}">Cancelar o restante</button>` : ""}
+        <input placeholder="Celular para teste" data-tel="${c.chave}" style="max-width:170px;padding:5px 8px;font-size:12px"><button class="btn sec peq" data-cp="teste" data-k="${c.chave}">Enviar teste</button></div>
+      <div data-conf="${c.chave}"></div></div></div>`;
+  }).join("") || `<div class="card mut">Nenhuma campanha ainda. Monte a primeira ao lado.</div>`;
+  $("listaCmp").querySelectorAll("[data-cp]").forEach((b) => b.onclick = async () => {
+    const k = b.dataset.k, a = b.dataset.cp;
+    try {
+      if (a === "cancelar") { const box = document.querySelector(`[data-conf="${k}"]`);
+        box.innerHTML = `<div class="confirma">As mensagens que ainda não saíram serão canceladas. <button class="btn peq" data-sim>Confirmar</button> <button class="btn sec peq" data-nao>Voltar</button></div>`;
+        box.querySelector("[data-nao]").onclick = () => box.innerHTML = "";
+        box.querySelector("[data-sim]").onclick = async () => { await camp("cancelar", { chave: k }); toast("Campanha cancelada"); carregarCamp(); }; return; }
+      if (a === "teste") { const tel = document.querySelector(`[data-tel="${k}"]`).value; if (!tel) return toast("Digite o celular");
+        await camp("teste", { chave: k, telefone: tel }); toast("Teste na fila. Sai em até 2 minutos."); edge("processar").catch(() => {}); return; }
+      await camp(a, { chave: k }); toast(a === "pausar" ? "Campanha pausada" : "Campanha retomada"); carregarCamp();
+    } catch (e) { toast(e.message); }
+  });
+}
+$("cTxt").oninput = cPrevia; $("cPub").onchange = cPrevia;
+$("btnSubir").onclick = async () => {
+  const f = $("cArq").files[0]; if (!f) return toast("Escolha um arquivo JPG ou PNG");
+  if (f.size > 5 * 1024 * 1024) return toast("Imagem acima de 5 MB");
+  const nome = Date.now() + "-" + f.name.toLowerCase().replace(/[^a-z0-9.\-]+/g, "-");
+  const { error } = await sb.storage.from("whatsapp-midia").upload(nome, f, { contentType: f.type, upsert: false });
+  if (error) return toast("Não consegui subir: " + error.message);
+  cImg = nome; toast("Imagem enviada"); await carregarCamp();
+};
+$("btnCriar").onclick = () => {
+  const nome = $("cNome").value.trim(), txt = $("cTxt").value.trim();
+  if (!nome || !txt) return toast("Preencha o nome e o texto");
+  const ini = new Date($("cIni").value);
+  $("cConf").innerHTML = `<div class="confirma">A campanha <b>${esc(nome)}</b> vai para a fila e começa a sair em <b>${ini.toLocaleString("pt-BR")}</b>${cImg ? " com a imagem escolhida" : ""}. Confirma?
+    <div class="acoes"><button class="btn peq" id="cSim">Confirmar e colocar na fila</button><button class="btn sec peq" id="cNao">Voltar</button></div></div>`;
+  $("cNao").onclick = () => $("cConf").innerHTML = "";
+  $("cSim").onclick = async () => {
+    try { const r = await camp("criar", { nome, texto: txt, midia: cImg, inicio: ini.toISOString(), service_id: $("cNum").value, publico: $("cPub").value });
+      $("cConf").innerHTML = ""; $("cMsg").textContent = `${r.enfileiradas} mensagem(ns) na fila. ${r.telefone_repetido ? r.telefone_repetido + " telefone(s) repetido(s) ficaram de fora. " : ""}${r.sem_telefone ? r.sem_telefone + " contato(s) sem telefone." : ""}`;
+      $("cNome").value = ""; $("cTxt").value = ""; cImg = ""; carregarCamp();
+    } catch (e) { $("cMsg").textContent = e.message; }
+  };
+};
+
+async function iniciar() {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { $("login").classList.remove("oculto"); return; }
+  $("app").classList.remove("oculto");
+  try { await carregar(); await carregarCamp(); } catch (err) { $("avisos").innerHTML = `<div class="aviso erro">${esc(err.message)}</div>`; }
+  setInterval(() => { if (!document.hidden) { carregar().catch(() => {}); carregarCamp().catch(() => {}); } }, 30000);
+}
+$("lBtn").onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $("lEmail").value, password: $("lSenha").value });
+  if (error) { $("lMsg").textContent = error.message; return; }
+  $("login").classList.add("oculto"); iniciar();
+};
+iniciar();
+</script>
+</body>
+</html>
